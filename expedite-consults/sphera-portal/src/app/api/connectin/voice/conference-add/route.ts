@@ -94,9 +94,36 @@ export async function POST(req: NextRequest) {
       name: recipientName,
     })
 
-    // 1. Ring recipient's ConnectLn devices via free Web Push,
-    // 2. Dispatch free internet Email call link if email is on file,
-    // 3. Sync invitee to the shared multi-party WebRTC call roster so all group tiles persist!
+    // 1. Sync invitee to the shared call store FIRST so polling sees the room before push/Pusher wakes devices,
+    // 2. Ring recipient's ConnectLn devices via free Web Push & Pusher,
+    // 3. Dispatch free internet Email call link if email is on file!
+    await fetch(`${origin}/api/v1/calls`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "upsert_invitee",
+        call_id: callId,
+        call_type: callMode,
+        skip_push: true,
+        user_id: hostUserId,
+        display_name: callerName,
+        initiator_phone: callerPhone || undefined,
+        target_recipient_name: recipientName,
+        target_recipient_phone: recipientPhone || undefined,
+        target_recipient_email: recipientEmail || undefined,
+        invited_member: {
+          id: inviteeId,
+          name: recipientName,
+          phone: recipientPhone || undefined,
+          email: recipientEmail || undefined,
+          avatar: recipientAvatar || undefined,
+          status: "invited",
+          callSid: "",
+          updated_at_ms: Date.now(),
+        },
+      }),
+    }).catch(() => null)
+
     const [pushRes, ringCellData] = await Promise.all([
       lookup.member
         ? sendIncomingCallWebPush({
@@ -124,32 +151,6 @@ export async function POST(req: NextRequest) {
       })
         .then((r) => r.json())
         .catch(() => null),
-      fetch(`${origin}/api/v1/calls`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "upsert_invitee",
-          call_id: callId,
-          call_type: callMode,
-          skip_push: true,
-          user_id: hostUserId,
-          display_name: callerName,
-          initiator_phone: callerPhone || undefined,
-          target_recipient_name: recipientName,
-          target_recipient_phone: recipientPhone || undefined,
-          target_recipient_email: recipientEmail || undefined,
-          invited_member: {
-            id: inviteeId,
-            name: recipientName,
-            phone: recipientPhone || undefined,
-            email: recipientEmail || undefined,
-            avatar: recipientAvatar || undefined,
-            status: "invited",
-            callSid: "",
-            updated_at_ms: Date.now(),
-          },
-        }),
-      }).catch(() => null),
     ])
 
     const digits = recipientPhone.replace(/[^\d]/g, "")

@@ -336,6 +336,7 @@ export function ConnectLnIncomingCallBanner({
             initiator_name: p.callerName,
             initiator_phone: p.callerPhone,
           }
+          realtimeRingRef.current = { call: callObj, untilMs: Date.now() + 25000 }
           triggerImmediateIncomingCallRinging(callObj)
           setIncomingCall(callObj)
           void reportIncomingCallToNativeOS({
@@ -562,15 +563,18 @@ export function ConnectLnIncomingCallBanner({
             (c) =>
               c?.id && !declinedIdsRef.current.has(c.id) && !isConnectLnCallHandled(c.id)
           ) || null
-        // A real-time pre-ring may briefly arrive before this server instance sees the call (up to 4.5s).
-        // Once seen in server poll OR ended/handled, never keep ringing from stale realtime state!
+        if (active) {
+          realtimeRingRef.current = { call: active, untilMs: Date.now() + 15000 }
+        }
+        // Keep a pushed/real-time incoming ring active across transient poll blips while minimized
+        // until the call is declined, answered/handled, ended, or its ring window expires.
         const rt = realtimeRingRef.current
         if (!active && rt) {
           const rtId = rt.call.id
           if (
             declinedIdsRef.current.has(rtId) ||
             isConnectLnCallHandled(rtId) ||
-            seenInServerPollRef.current.has(rtId) ||
+            endedIds.includes(rtId) ||
             rt.untilMs <= Date.now()
           ) {
             realtimeRingRef.current = null
@@ -622,7 +626,7 @@ export function ConnectLnIncomingCallBanner({
               initiator_name: d.callerName || "ConnectLn Caller",
               initiator_phone: d.callerPhone || "",
             }
-            realtimeRingRef.current = { call, untilMs: Date.now() + 4500 }
+            realtimeRingRef.current = { call, untilMs: Date.now() + 25000 }
             triggerImmediateIncomingCallRinging(call)
             setIncomingCall((prev) => prev || call)
             void checkIncoming()
@@ -682,12 +686,14 @@ export function ConnectLnIncomingCallBanner({
     }
 
     triggerImmediateIncomingCallRinging(incomingCall)
+  }, [incomingCall?.id, hasOpenModal])
 
+  useEffect(() => {
     return () => {
       stopLoudPhoneRingtone()
       stopTitleCallFlash()
     }
-  }, [incomingCall?.id, hasOpenModal])
+  }, [])
 
   if (hasOpenModal || isAlreadyInCallStudio) return null
 

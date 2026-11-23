@@ -1081,19 +1081,16 @@ export async function GET(req: NextRequest) {
       // or shared owner email so secondary devices signed in with the same owner email also ring.
       const primaryMatch = hasExplicitTargetPhone
         ? phoneMatchesTarget ||
-          Boolean(
-            incomingEmail &&
-              c.target_recipient_email &&
-              (c.target_recipient_email.toLowerCase() === incomingEmail ||
-                isSamePhoneOwnerEmail(incomingEmail, c.target_recipient_email))
-          )
+          matchesTarget(c.target_recipient_name, c.target_recipient_email, c.target_recipient_phone)
         : matchesTarget(c.target_recipient_name, c.target_recipient_email, c.target_recipient_phone)
 
       const rosterMatch = (c.invited_roster || []).some((inv) => {
         if (inv.status === "removed") return false
         const invDigits = String(inv.phone || "").replace(/[^\d]/g, "")
         if (invDigits.length >= 7 && incomingPhoneDigits.length >= 7) {
-          return invDigits === incomingPhoneDigits || invDigits.slice(-10) === incomingPhoneDigits.slice(-10)
+          if (invDigits === incomingPhoneDigits || invDigits.slice(-10) === incomingPhoneDigits.slice(-10)) {
+            return true
+          }
         }
         return matchesTarget(inv.name, inv.email, inv.phone)
       })

@@ -2086,6 +2086,7 @@ export function ConnectLnWhatsAppCallModal({
           if (cancelled || !data?.ok) return
           if (data.recipient?.name) setRecipientName(data.recipient.name)
           if (data.recipient?.phone) setRecipientPhone(data.recipient.phone)
+          if (data.recipient?.email) targetEmailRef.current = data.recipient.email
           if (data.recipient?.avatar) setRecipientAvatar(data.recipient.avatar)
         })
       }
