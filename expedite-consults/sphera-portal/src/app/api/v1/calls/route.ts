@@ -176,7 +176,7 @@ const ACTIVE_CALLS_STORE: Map<string, CommCallRecord> =
 globalForCalls.__vibeActiveCallsMap = ACTIVE_CALLS_STORE
 
 const TMP_CALLS_FILE = path.join(os.tmpdir(), "vibe_active_calls_v4.json")
-const PARTICIPANT_TTL_MS = 25000
+const PARTICIPANT_TTL_MS = 180000
 const CALLS_SYNC_MAP_NAME = "vibe_active_calls_map_v1"
 let lastDiskLoadMs = 0
 let lastDiskSaveMs = 0
@@ -449,7 +449,7 @@ async function pushCloudInvitedRoster(
       payloadObj.moderation_updated_at_ms = moderationUpdatedAtMs
     }
   }
-  await upsertTwilioSyncItem(auth, rosterKey, JSON.stringify(payloadObj), "300")
+  await upsertTwilioSyncItem(auth, rosterKey, JSON.stringify(payloadObj), "600")
 }
 
 async function pushCloudSharedMessages(
@@ -543,7 +543,7 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
       live_audio_chunk: null,
       recent_audio_chunks: undefined,
     }
-    await upsertTwilioSyncItem(auth, key, JSON.stringify(compactParticipant), "60").catch(() => {})
+    await upsertTwilioSyncItem(auth, key, JSON.stringify(compactParticipant), "600").catch(() => {})
   }
 }
 
@@ -861,7 +861,7 @@ function savePersistedCalls(force = false) {
         (p) => p.last_seen_ms && nowMs - p.last_seen_ms < PARTICIPANT_TTL_MS
       )
       const recentInvite = (v.invited_roster || []).some(
-        (m) => m.updated_at_ms && nowMs - m.updated_at_ms < 45000
+        (m) => m.updated_at_ms && nowMs - m.updated_at_ms < 180000
       )
       if (activeParts.length > 0 || recentInvite) {
         obj[k] = { ...v, participants: activeParts }
@@ -1514,7 +1514,7 @@ export async function POST(req: NextRequest) {
           hostParticipantToPush
             ? pushCloudCallParticipant(callId, hostParticipantToPush, true).catch(() => {})
             : Promise.resolve(),
-          changed
+          changed && !body.skip_push
             ? dispatchMinimizedWakeupPushForTargets({
                 callId,
                 callMode: record.call_type === "audio" ? "audio" : "video",
@@ -1563,15 +1563,6 @@ export async function POST(req: NextRequest) {
           event_type: "call.ended",
           occurred_at: now,
           call: endedRec || { id: callId, state: "ENDED", participants: [] },
-        })
-      }
-
-      if (body.is_answering_recipient === true && !ACTIVE_CALLS_STORE.has(callId)) {
-        return NextResponse.json({
-          protocol_version: 1,
-          event_type: "call.ended",
-          occurred_at: now,
-          call: { id: callId, state: "ENDED", participants: [] },
         })
       }
 

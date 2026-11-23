@@ -461,7 +461,33 @@ export function ConnectLnIncomingCallBanner({
     const cleanName = (viewerName || "").trim()
     const cleanEmail = (viewerEmail || "").trim()
     const cleanPhone = (myPhone || "").trim()
+
+    const postSwWatchState = (activeFlag: boolean) => {
+      try {
+        if (!("serviceWorker" in navigator)) return
+        const localPeerId = sessionStorage.getItem("vibe_call_participant_id") || ""
+        const qs = new URLSearchParams({
+          incoming_for: cleanName,
+          incoming_email: cleanEmail,
+          incoming_phone: cleanPhone,
+          viewer_peer_id: localPeerId,
+        })
+        const pollUrl = activeFlag ? `/api/v1/calls?${qs.toString()}` : ""
+        const payload = { type: "CONNECTLN_SW_WATCH_CALLS", pollUrl, active: activeFlag }
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage(payload)
+        } else {
+          navigator.serviceWorker.ready
+            .then((reg) => {
+              reg?.active?.postMessage(payload)
+            })
+            .catch(() => {})
+        }
+      } catch {}
+    }
+
     if ((!cleanName && !cleanEmail && !cleanPhone) || isAlreadyInCallStudio || hasOpenModal) {
+      postSwWatchState(false)
       setIncomingCall(null)
       stopLoudPhoneRingtone()
       stopTitleCallFlash()
@@ -544,30 +570,6 @@ export function ConnectLnIncomingCallBanner({
       } finally {
         inFlight = false
       }
-    }
-
-    const postSwWatchState = (activeFlag: boolean) => {
-      try {
-        if (!("serviceWorker" in navigator)) return
-        const localPeerId = sessionStorage.getItem("vibe_call_participant_id") || ""
-        const qs = new URLSearchParams({
-          incoming_for: cleanName,
-          incoming_email: cleanEmail,
-          incoming_phone: cleanPhone,
-          viewer_peer_id: localPeerId,
-        })
-        const pollUrl = `/api/v1/calls?${qs.toString()}`
-        const payload = { type: "CONNECTLN_SW_WATCH_CALLS", pollUrl, active: activeFlag }
-        if (navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage(payload)
-        } else {
-          navigator.serviceWorker.ready
-            .then((reg) => {
-              reg?.active?.postMessage(payload)
-            })
-            .catch(() => {})
-        }
-      } catch {}
     }
 
     // Real-time push (Pusher): ring instantly / stop instantly. Polling stays as a safety net.

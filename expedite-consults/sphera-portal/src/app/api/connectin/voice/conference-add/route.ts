@@ -131,6 +131,7 @@ export async function POST(req: NextRequest) {
           action: "upsert_invitee",
           call_id: callId,
           call_type: callMode,
+          skip_push: true,
           user_id: hostUserId,
           display_name: callerName,
           initiator_phone: callerPhone || undefined,

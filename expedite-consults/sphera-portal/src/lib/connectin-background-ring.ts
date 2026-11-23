@@ -987,31 +987,8 @@ function renderIncomingCallDomIntoWindow(
             ${isVideo ? "📹 Answer Video" : "📞 Answer Call"}
           </button>
         </div>
-        <audio id="popup-ring-audio" src="${getPhoneRingtoneWavUri()}" autoplay loop playsinline style="display:none;"></audio>
       </div>
     `
-
-    // Play ringtone directly inside the foreground PiP/Popup window too so Edge Efficiency Mode can NEVER mute it!
-    const popAudio = doc.getElementById("popup-ring-audio") as HTMLAudioElement | null
-    if (popAudio) {
-      popAudio.volume = 1.0
-      popAudio
-        .play()
-        .then(() => {
-          // Avoid echo: since foreground window audio is playing loud & clear, silence duplicate main-tab synth
-          if (activeRingSource) {
-            try {
-              activeRingSource.stop()
-              activeRingSource.disconnect()
-            } catch {}
-            activeRingSource = null
-          }
-          if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
-            fallbackWavRingAudio.pause()
-          }
-        })
-        .catch(() => {})
-    }
 
     const ansBtn = doc.getElementById("btn-answer")
     const decBtn = doc.getElementById("btn-decline")
@@ -1168,12 +1145,11 @@ export async function triggerSystemIncomingCallAlert(
   }
 
   const nowMs = Date.now()
-  const prevNotifiedAt = notifiedCallAtMsMap.get(spec.callId) || 0
-  if (nowMs - prevNotifiedAt < 8000) return
+  if (notifiedCallAtMsMap.has(spec.callId)) return
   notifiedCallAtMsMap.set(spec.callId, nowMs)
   if (notifiedCallAtMsMap.size > 100) {
     for (const [cid, ts] of notifiedCallAtMsMap.entries()) {
-      if (nowMs - ts > 120000) notifiedCallAtMsMap.delete(cid)
+      if (nowMs - ts > 300000) notifiedCallAtMsMap.delete(cid)
     }
   }
 
@@ -1203,7 +1179,7 @@ export async function triggerSystemIncomingCallAlert(
           icon: "/brand/connectln-icon-256.png",
           badge: "/brand/connectln-icon.png",
           tag: `connectln-call-${spec.callId}`,
-          renotify: true,
+          renotify: false,
           requireInteraction: true,
           silent: false,
           vibrate: [600, 220, 600, 220, 800, 250, 800],

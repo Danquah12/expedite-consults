@@ -86,6 +86,31 @@ export function markConnectLnCallHandled(callId: string): void {
       const next = [...arr.slice(-39), clean]
       window.sessionStorage.setItem(HANDLED_CALL_IDS_STORAGE_KEY, JSON.stringify(next))
     }
+    if ("serviceWorker" in navigator) {
+      const msg = { type: "CONNECTLN_SW_CALL_HANDLED", callId: clean }
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage(msg)
+      } else {
+        navigator.serviceWorker.ready
+          .then((reg) => {
+            reg?.active?.postMessage(msg)
+          })
+          .catch(() => {})
+      }
+      navigator.serviceWorker
+        .getRegistration("/")
+        .then((reg) => {
+          if (!reg || typeof reg.getNotifications !== "function") return
+          return reg.getNotifications({ tag: `connectln-call-${clean}` }).then((notifs) => {
+            notifs.forEach((n) => {
+              try {
+                n.close()
+              } catch {}
+            })
+          })
+        })
+        .catch(() => {})
+    }
   } catch {}
 }
 
@@ -1131,6 +1156,7 @@ export function ConnectLnWhatsAppCallModal({
   const onCloseRef = useRef<() => void>(onClose)
   const maxRemoteCountSeenRef = useRef<number>(0)
   const hasSentInitialReopenRef = useRef<boolean>(false)
+  const dialedOutboundCallIdRef = useRef<string>("")
 
   // Twilio Browser Conference Host Connection (`ConferenceRoom = conf_<callId>`)
   const pstnDeviceRef = useRef<any>(null)
@@ -1995,6 +2021,7 @@ export function ConnectLnWhatsAppCallModal({
       stopAllMedia()
       maxRemoteCountSeenRef.current = 0
       hasSentInitialReopenRef.current = false
+      dialedOutboundCallIdRef.current = ""
       wasMutedByHostRef.current = false
       lastProcessedHostUnmuteMsRef.current = 0
       setRemoteStreamsMap({})
@@ -2035,17 +2062,20 @@ export function ConnectLnWhatsAppCallModal({
     acquireCameraAndMic(initialMode === "video", "user")
 
     if (!isIncomingAnswer) {
-      addPersonToActiveCall({
-        targetPhone: targetPhone || (looksLikeClientPhone(targetLabel) ? targetLabel : undefined),
-        targetName: targetLabel,
-        targetEmail,
-        targetAvatar,
-      }).then((data) => {
-        if (cancelled || !data?.ok) return
-        if (data.recipient?.name) setRecipientName(data.recipient.name)
-        if (data.recipient?.phone) setRecipientPhone(data.recipient.phone)
-        if (data.recipient?.avatar) setRecipientAvatar(data.recipient.avatar)
-      })
+      if (dialedOutboundCallIdRef.current !== callId) {
+        dialedOutboundCallIdRef.current = callId
+        addPersonToActiveCall({
+          targetPhone: targetPhone || (looksLikeClientPhone(targetLabel) ? targetLabel : undefined),
+          targetName: targetLabel,
+          targetEmail,
+          targetAvatar,
+        }).then((data) => {
+          if (cancelled || !data?.ok) return
+          if (data.recipient?.name) setRecipientName(data.recipient.name)
+          if (data.recipient?.phone) setRecipientPhone(data.recipient.phone)
+          if (data.recipient?.avatar) setRecipientAvatar(data.recipient.avatar)
+        })
+      }
     } else {
       const origin = typeof window !== "undefined" ? window.location.origin : "https://conectln.com"
       setJoinLinkUrl(`${origin}/connectin?waCall=${encodeURIComponent(callId)}&mode=${initialMode}&autoAnswer=1`)
@@ -2475,7 +2505,7 @@ export function ConnectLnWhatsAppCallModal({
           body: JSON.stringify({
             action: "heartbeat",
             reopen: !isIncomingAnswer && reopenFlag,
-            is_answering_recipient: isIncomingAnswer || undefined,
+            is_answering_recipient: (isIncomingAnswer && reopenFlag) || undefined,
             call_id: callId,
             user_id: localPeerUid,
             peer_id: myPeerIdRef.current || undefined,

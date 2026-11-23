@@ -26,7 +26,7 @@ function buildCallNotificationSpec(payload) {
     icon: payload.callerAvatar || "/brand/connectln-icon-256.png",
     badge: "/brand/connectln-icon.png",
     tag: `connectln-call-${callId}`,
-    renotify: true,
+    renotify: false,
     requireInteraction: true,
     silent: false,
     vibrate: [600, 220, 600, 220, 800, 250, 800],
@@ -62,6 +62,7 @@ self.addEventListener("push", (event) => {
   if (payload && payload.ignore) return;
 
   const spec = buildCallNotificationSpec(payload);
+  if (swHandledCallIds.has(spec.callId)) return;
 
   event.waitUntil(
     (async () => {
@@ -81,7 +82,10 @@ self.addEventListener("push", (event) => {
           });
         } catch {}
       }
-      await self.registration.showNotification(spec.title, spec.options);
+      if (!swNotifiedCallIds.has(spec.callId)) {
+        rememberSwCallId(swNotifiedCallIds, spec.callId);
+        await self.registration.showNotification(spec.title, spec.options);
+      }
     })()
   );
 });
@@ -90,6 +94,10 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const data = event.notification.data || {};
   const callId = data.callId || "";
+  if (callId) {
+    rememberSwCallId(swHandledCallIds, String(callId));
+    rememberSwCallId(swNotifiedCallIds, String(callId));
+  }
 
   if (event.action === "decline") {
     if (callId) {
@@ -159,7 +167,19 @@ self.addEventListener("notificationclick", (event) => {
 let swWatchPollUrl = "";
 let swWatchTimer = null;
 let swPollInFlight = false;
-const swNotifiedCallAtMap = new Map();
+const swNotifiedCallIds = new Set();
+const swHandledCallIds = new Set();
+
+function rememberSwCallId(setRef, callId) {
+  const clean = String(callId || "").trim();
+  if (!clean) return;
+  if (setRef.has(clean)) return;
+  if (setRef.size >= 200) {
+    const oldest = setRef.values().next().value;
+    if (oldest) setRef.delete(oldest);
+  }
+  setRef.add(clean);
+}
 
 async function runSwMinimizedCallCheck() {
   if (!swWatchPollUrl || swPollInFlight) return;
@@ -188,11 +208,13 @@ async function runSwMinimizedCallCheck() {
     if (!res.ok) return;
     const data = await res.json();
     const list = Array.isArray(data && data.incoming_calls) ? data.incoming_calls : [];
-    const nowMs = Date.now();
 
     for (const c of list) {
       if (!c || !c.id) continue;
       const callId = String(c.id);
+      if (swHandledCallIds.has(callId) || swNotifiedCallIds.has(callId)) continue;
+      rememberSwCallId(swNotifiedCallIds, callId);
+
       const callerName =
         (c.participants && c.participants[0] && c.participants[0].display_name) ||
         c.initiator_name ||
@@ -214,23 +236,13 @@ async function runSwMinimizedCallCheck() {
         } catch {}
       }
 
-      const prevNotified = swNotifiedCallAtMap.get(callId) || 0;
-      if (nowMs - prevNotified >= 10000) {
-        swNotifiedCallAtMap.set(callId, nowMs);
-        const spec = buildCallNotificationSpec({
-          callId,
-          callMode,
-          callerName,
-          callerPhone,
-        });
-        await self.registration.showNotification(spec.title, spec.options).catch(() => {});
-      }
-    }
-
-    if (swNotifiedCallAtMap.size > 100) {
-      for (const [k, ts] of swNotifiedCallAtMap.entries()) {
-        if (nowMs - ts > 120000) swNotifiedCallAtMap.delete(k);
-      }
+      const spec = buildCallNotificationSpec({
+        callId,
+        callMode,
+        callerName,
+        callerPhone,
+      });
+      await self.registration.showNotification(spec.title, spec.options).catch(() => {});
     }
   } catch {
   } finally {
@@ -240,7 +252,28 @@ async function runSwMinimizedCallCheck() {
 
 self.addEventListener("message", (event) => {
   const msg = event && event.data;
-  if (!msg || msg.type !== "CONNECTLN_SW_WATCH_CALLS") return;
+  if (!msg) return;
+
+  if (msg.type === "CONNECTLN_SW_CALL_HANDLED" && msg.callId) {
+    const cid = String(msg.callId).trim();
+    rememberSwCallId(swHandledCallIds, cid);
+    rememberSwCallId(swNotifiedCallIds, cid);
+    if (cid && self.registration && typeof self.registration.getNotifications === "function") {
+      self.registration
+        .getNotifications({ tag: `connectln-call-${cid}` })
+        .then((notifs) => {
+          for (const n of notifs) {
+            try {
+              n.close();
+            } catch {}
+          }
+        })
+        .catch(() => {});
+    }
+    return;
+  }
+
+  if (msg.type !== "CONNECTLN_SW_WATCH_CALLS") return;
 
   if (!msg.active || !msg.pollUrl) {
     swWatchPollUrl = "";
