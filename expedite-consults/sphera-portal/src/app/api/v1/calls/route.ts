@@ -559,7 +559,7 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
 
 async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = false): Promise<void> {
   const nowMs = Date.now()
-  if (!forceRefresh && nowMs - lastCloudPullMs < 450) return
+  if (!forceRefresh && nowMs - lastCloudPullMs < 80) return
   lastCloudPullMs = nowMs
 
   try {
@@ -629,15 +629,18 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
         continue
       }
       if (!data.user_id) continue
-      if (excludeUserId && data.user_id === excludeUserId) continue
       if (data.kind === "audio" || String(item?.key || "").startsWith("a__")) {
-        audioItems.push(data)
+        if (!(excludeUserId && data.user_id === excludeUserId)) {
+          audioItems.push(data)
+        }
         continue
       }
       if (data.participant_state === "LEFT") {
-        const leftRecord = ACTIVE_CALLS_STORE.get(data.call_id)
-        if (leftRecord) {
-          leftRecord.participants = (leftRecord.participants || []).filter((p) => p.user_id !== data.user_id)
+        if (!(excludeUserId && data.user_id === excludeUserId)) {
+          const leftRecord = ACTIVE_CALLS_STORE.get(data.call_id)
+          if (leftRecord) {
+            leftRecord.participants = (leftRecord.participants || []).filter((p) => p.user_id !== data.user_id)
+          }
         }
         continue
       }
@@ -670,6 +673,7 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
       if (!record.initiator_name && data.display_name) {
         record.initiator_name = data.display_name
       }
+      if (excludeUserId && data.user_id === excludeUserId) continue
       const existingIdx = record.participants.findIndex((p) => p.user_id === data.user_id)
       if (existingIdx < 0) {
         record.participants.push(data as CommCallParticipant)
