@@ -108,6 +108,37 @@ export function ConnectLnIncomingCallBanner({
     onAcceptIncomingCallRef.current = onAcceptIncomingCall
   }, [onAcceptIncomingCall])
 
+  const declineAndEndIncomingCall = (targetCallId: string, notifyServer = true) => {
+    const cleanId = String(targetCallId || "").trim()
+    if (!cleanId) return
+    declinedIdsRef.current.add(cleanId)
+    if (realtimeRingRef.current?.call.id === cleanId) {
+      realtimeRingRef.current = null
+    }
+    markConnectLnCallHandled(cleanId)
+    setCallMediaSilenceActive(false, "incoming-call-banner")
+    stopLoudPhoneRingtone()
+    stopTitleCallFlash()
+    dismissFloatingCallPopups()
+    setIncomingCall((prev) => (prev && prev.id === cleanId ? null : prev))
+    if (notifyServer) {
+      let localPeerId = "declined_recipient"
+      try {
+        localPeerId = sessionStorage.getItem("vibe_call_participant_id") || "declined_recipient"
+      } catch {}
+      fetch("/api/v1/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({
+          action: "end",
+          call_id: cleanId,
+          user_id: localPeerId,
+        }),
+      }).catch(() => {})
+    }
+  }
+
   // Synchronously triggers ringtone, title flash, Always-On-Top PiP, and OS Notification without waiting
   // for React's deferred commit/useEffect cycle when the browser window is minimized (`document.hidden`).
   const triggerImmediateIncomingCallRinging = (call: IncomingCallSummary) => {
@@ -134,6 +165,9 @@ export function ConnectLnIncomingCallBanner({
         callerPhone: cPhone,
         callMode: mode,
         onAnswer: () => {
+          if (realtimeRingRef.current?.call.id === call.id) {
+            realtimeRingRef.current = null
+          }
           markConnectLnCallHandled(call.id)
           setCallMediaSilenceActive(true, "whatsapp-call-modal")
           setCallMediaSilenceActive(false, "incoming-call-banner")
@@ -144,13 +178,7 @@ export function ConnectLnIncomingCallBanner({
           onAcceptIncomingCallRef.current(call.id, cName, mode, call.initiator_phone)
         },
         onDecline: () => {
-          declinedIdsRef.current.add(call.id)
-          markConnectLnCallHandled(call.id)
-          setCallMediaSilenceActive(false, "incoming-call-banner")
-          stopLoudPhoneRingtone()
-          stopTitleCallFlash()
-          dismissFloatingCallPopups()
-          setIncomingCall(null)
+          declineAndEndIncomingCall(call.id, true)
         },
       })
     }
@@ -336,7 +364,7 @@ export function ConnectLnIncomingCallBanner({
             initiator_name: p.callerName,
             initiator_phone: p.callerPhone,
           }
-          realtimeRingRef.current = { call: callObj, untilMs: Date.now() + 25000 }
+          realtimeRingRef.current = { call: callObj, untilMs: Date.now() + 4500 }
           triggerImmediateIncomingCallRinging(callObj)
           setIncomingCall(callObj)
           void reportIncomingCallToNativeOS({
@@ -348,6 +376,9 @@ export function ConnectLnIncomingCallBanner({
         }
       } else if (msg.type === "CONNECTLN_ANSWER_CALL_FROM_NOTIFICATION" && msg.payload?.callId) {
         const p = msg.payload
+        if (realtimeRingRef.current?.call.id === p.callId) {
+          realtimeRingRef.current = null
+        }
         markConnectLnCallHandled(p.callId)
         setCallMediaSilenceActive(true, "whatsapp-call-modal")
         setCallMediaSilenceActive(false, "incoming-call-banner")
@@ -362,13 +393,7 @@ export function ConnectLnIncomingCallBanner({
           p.callerPhone
         )
       } else if (msg.type === "CONNECTLN_DECLINE_CALL_FROM_NOTIFICATION" && msg.payload?.callId) {
-        declinedIdsRef.current.add(msg.payload.callId)
-        markConnectLnCallHandled(msg.payload.callId)
-        setCallMediaSilenceActive(false, "incoming-call-banner")
-        stopLoudPhoneRingtone()
-        stopTitleCallFlash()
-        dismissFloatingCallPopups()
-        setIncomingCall(null)
+        declineAndEndIncomingCall(msg.payload.callId, false)
       }
     }
 
@@ -563,11 +588,8 @@ export function ConnectLnIncomingCallBanner({
             (c) =>
               c?.id && !declinedIdsRef.current.has(c.id) && !isConnectLnCallHandled(c.id)
           ) || null
-        if (active) {
-          realtimeRingRef.current = { call: active, untilMs: Date.now() + 15000 }
-        }
-        // Keep a pushed/real-time incoming ring active across transient poll blips while minimized
-        // until the call is declined, answered/handled, ended, or its ring window expires.
+        // A pushed/real-time pre-ring covers the brief startup window (<4.5s) before server poll sees the call.
+        // Once seen in server poll OR ended/declined/handled, immediately stop ringing if server poll no longer lists it!
         const rt = realtimeRingRef.current
         if (!active && rt) {
           const rtId = rt.call.id
@@ -575,6 +597,7 @@ export function ConnectLnIncomingCallBanner({
             declinedIdsRef.current.has(rtId) ||
             isConnectLnCallHandled(rtId) ||
             endedIds.includes(rtId) ||
+            seenInServerPollRef.current.has(rtId) ||
             rt.untilMs <= Date.now()
           ) {
             realtimeRingRef.current = null
@@ -626,7 +649,7 @@ export function ConnectLnIncomingCallBanner({
               initiator_name: d.callerName || "ConnectLn Caller",
               initiator_phone: d.callerPhone || "",
             }
-            realtimeRingRef.current = { call, untilMs: Date.now() + 25000 }
+            realtimeRingRef.current = { call, untilMs: Date.now() + 4500 }
             triggerImmediateIncomingCallRinging(call)
             setIncomingCall((prev) => prev || call)
             void checkIncoming()
@@ -790,13 +813,7 @@ export function ConnectLnIncomingCallBanner({
             <button
               type="button"
               onClick={() => {
-                declinedIdsRef.current.add(incomingCall.id)
-                markConnectLnCallHandled(incomingCall.id)
-                setCallMediaSilenceActive(false, "incoming-call-banner")
-                stopLoudPhoneRingtone()
-                stopTitleCallFlash()
-                dismissFloatingCallPopups()
-                setIncomingCall(null)
+                declineAndEndIncomingCall(incomingCall.id, true)
               }}
               style={{ color: "#FFFFFF" }}
               className="flex-1 sm:flex-none h-12 sm:h-11 sm:w-11 rounded-full bg-rose-600 hover:bg-rose-500 px-4 sm:px-0 flex items-center justify-center gap-1.5 text-sm sm:text-xs font-extrabold shadow-md cursor-pointer"
@@ -809,6 +826,9 @@ export function ConnectLnIncomingCallBanner({
               type="button"
               onClick={() => {
                 const targetId = incomingCall.id
+                if (realtimeRingRef.current?.call.id === targetId) {
+                  realtimeRingRef.current = null
+                }
                 markConnectLnCallHandled(targetId)
                 setCallMediaSilenceActive(true, "whatsapp-call-modal")
                 setCallMediaSilenceActive(false, "incoming-call-banner")

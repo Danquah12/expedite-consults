@@ -827,3 +827,88 @@ export async function sendIncomingCallWebPush(params: {
 
   return { deliveredCount, mobileDeliveredCount, attemptedCount: subs.length + fcmCount }
 }
+
+/**
+ * Broadcasts call cancellation across Pusher and Web Push so every ringing device
+ * (including minimized phones and Service Workers) stops ringing immediately on hangup/decline.
+ */
+export async function sendCallEndedWebPush(params: {
+  callId: string
+  phones?: Array<string | undefined>
+  targetEmail?: string
+  targetName?: string
+}): Promise<void> {
+  const cleanCallId = String(params.callId || "").trim()
+  if (!cleanCallId) return
+
+  const cache = await refreshWhatsAppDirectoryCache()
+  const matchedMembersMap = new Map<string, WhatsAppDirectoryMember>()
+  const rawPhonesSet = new Set<string>()
+  for (const rawPhone of params.phones || []) {
+    if (rawPhone && looksLikePhoneNumber(rawPhone)) {
+      const norm = normalizeDialablePhone(rawPhone)
+      rawPhonesSet.add(norm)
+      const direct = cache.get(norm)
+      if (direct) matchedMembersMap.set(direct.phone, direct)
+    }
+  }
+
+  const targetEmail = (params.targetEmail || "").trim().toLowerCase()
+  const targetNameLower = (params.targetName || "").trim().toLowerCase()
+  for (const m of cache.values()) {
+    const emailMatches = Boolean(
+      (targetEmail && m.email && isSamePhoneOwnerEmail(m.email, targetEmail)) ||
+        Array.from(matchedMembersMap.values()).some(
+          (seed) => seed.email && m.email && isSamePhoneOwnerEmail(m.email, seed.email)
+        )
+    )
+    const nameMatches = Boolean(
+      targetNameLower &&
+        m.name &&
+        !looksLikePhoneNumber(m.name) &&
+        m.name.trim().toLowerCase() === targetNameLower
+    )
+    if (rawPhonesSet.has(m.phone) || emailMatches || nameMatches) {
+      matchedMembersMap.set(m.phone, m)
+    }
+  }
+
+  const matchedMembers = Array.from(matchedMembersMap.values())
+  const allPhones = Array.from(
+    new Set([...rawPhonesSet, ...matchedMembers.map((m) => m.phone).filter(Boolean)])
+  )
+  await publishToPhones(allPhones, "call-ended", { callId: cleanCallId }).catch(() => {})
+
+  const subByEndpoint = new Map<string, StoredPushSubscription>()
+  for (const m of matchedMembers) {
+    for (const s of m.pushSubscriptions || []) {
+      if (s?.endpoint && s?.keys?.p256dh && s?.keys?.auth && !subByEndpoint.has(s.endpoint)) {
+        subByEndpoint.set(s.endpoint, s)
+      }
+    }
+  }
+  const subs = Array.from(subByEndpoint.values())
+  if (subs.length === 0) return
+
+  const vapid = await getOrCreateConnectLnVapidKeys()
+  webPush.setVapidDetails(
+    "mailto:auth@expediteconsults.com",
+    vapid.publicKey,
+    vapid.privateKey
+  )
+  const payloadStr = JSON.stringify({
+    type: "CALL_ENDED",
+    callId: cleanCallId,
+    ts: Date.now(),
+  })
+  await Promise.all(
+    subs.map((sub) =>
+      webPush
+        .sendNotification(sub as any, payloadStr, {
+          TTL: 30,
+          urgency: "high",
+        })
+        .catch(() => {})
+    )
+  )
+}

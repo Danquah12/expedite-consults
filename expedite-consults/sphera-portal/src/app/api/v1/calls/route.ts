@@ -5,10 +5,11 @@ import path from "path"
 import os from "os"
 import { recordGlobalUserActivity } from "@/lib/connectin-cloud-sync"
 import { publishToPhones } from "@/lib/connectin-realtime"
-import { firebaseKvSetItem, firebaseKvListItems } from "@/lib/connectin-firebase-kv"
+import { firebaseKvSetItem, firebaseKvListItems, firebaseKvDeleteItem } from "@/lib/connectin-firebase-kv"
 import {
   lookupWhatsAppRecipient,
   sendIncomingCallWebPush,
+  sendCallEndedWebPush,
   isSamePhoneOwnerEmail,
 } from "@/lib/connectin-whatsapp-directory"
 
@@ -959,15 +960,22 @@ export async function GET(req: NextRequest) {
     const iceServers = await getCachedTwilioIceServers()
     return NextResponse.json({ ice_servers: iceServers })
   }
-  loadPersistedCalls()
-  await pullCloudCallParticipants().catch(() => {})
-  const nowMs = Date.now()
   const callId = req.nextUrl.searchParams.get("call_id")
+  loadPersistedCalls()
+  await pullCloudCallParticipants(undefined, Boolean(callId)).catch(() => {})
+  const nowMs = Date.now()
   if (callId) {
     const call = ACTIVE_CALLS_STORE.get(callId)
+    if (isCallTombstoned(callId, nowMs) || !call || call.state === "ENDED") {
+      return NextResponse.json({
+        protocol_version: 1,
+        call: { id: callId, state: "ENDED", participants: [] },
+        ended_call_ids: [callId],
+      })
+    }
     return NextResponse.json({
       protocol_version: 1,
-      call: call || null,
+      call,
     })
   }
 
@@ -1299,18 +1307,31 @@ export async function POST(req: NextRequest) {
             ended_at: now,
             ended_at_ms: nowMs,
           }),
-          "120"
+          "300"
         ).catch(() => {}),
+        firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudRosterKey(endCallId)).catch(() => {}),
         publishToPhones(phonesToSilence, "call-ended", { callId: endCallId }).catch(() => {}),
+        sendCallEndedWebPush({
+          callId: endCallId,
+          phones: phonesToSilence,
+          targetEmail:
+            existing.target_recipient_email ||
+            (typeof body.target_recipient_email === "string"
+              ? body.target_recipient_email
+              : undefined),
+          targetName:
+            existing.target_recipient_name ||
+            (typeof body.target_recipient_name === "string"
+              ? body.target_recipient_name
+              : undefined),
+        }).catch(() => {}),
         pushCloudSharedStage(endCallId, null, true).catch(() => {}),
-        pushCloudInvitedRoster(endCallId, [], true, [], [], nowMs).catch(() => {}),
       ]
       for (const p of existing.participants || []) {
         cloudOps.push(
-          pushCloudCallParticipant(
-            endCallId,
-            { ...p, last_seen_ms: 0, left_at: now, participant_state: "LEFT" },
-            true
+          firebaseKvDeleteItem(
+            CALLS_SYNC_MAP_NAME,
+            makeCloudParticipantKey(endCallId, p.user_id)
           ).catch(() => {})
         )
       }
@@ -1481,7 +1502,15 @@ export async function POST(req: NextRequest) {
       const callId = String(body.call_id).trim()
       const userId = body.user_id || `host_${nowMs.toString().slice(-6)}`
       const displayName = body.display_name || "ConnectLn Host"
-      await pullCloudCallParticipants().catch(() => {})
+      await pullCloudCallParticipants(undefined, true).catch(() => {})
+      if (isCallTombstoned(callId, nowMs) || ACTIVE_CALLS_STORE.get(callId)?.state === "ENDED") {
+        return NextResponse.json({
+          protocol_version: 1,
+          event_type: "call.ended",
+          occurred_at: now,
+          call: { id: callId, state: "ENDED", participants: [] },
+        })
+      }
       const record = ensureCallRoom(callId, userId, displayName, callId)
       if (record.state === "ENDED") {
         record.state = "CONNECTED"

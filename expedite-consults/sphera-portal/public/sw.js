@@ -80,12 +80,16 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
 
   await self.registration.showNotification(spec.title, spec.options).catch(() => {});
 
-  for (let burst = 0; burst < 5; burst++) {
-    await new Promise((resolve) => setTimeout(resolve, 4500));
+  for (let step = 0; step < 15; step++) {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     if (swHandledCallIds.has(callId)) {
       await closeCallNotificationsByTag(callId);
       return;
     }
+
+    const windowClients = await self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .catch(() => []);
 
     try {
       const checkRes = await fetch(`/api/v1/calls?call_id=${encodeURIComponent(callId)}`, {
@@ -95,11 +99,19 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
         const data = await checkRes.json();
         const callObj = data && data.call;
         if (
-          callObj &&
-          (callObj.state === "ENDED" ||
-            (Array.isArray(callObj.participants) && callObj.participants.length >= 2))
+          !callObj ||
+          callObj.state === "ENDED" ||
+          (Array.isArray(callObj.participants) && callObj.participants.length >= 2)
         ) {
           rememberSwCallId(swHandledCallIds, callId);
+          for (const client of windowClients) {
+            try {
+              client.postMessage({
+                type: "CONNECTLN_DECLINE_CALL_FROM_NOTIFICATION",
+                payload: { callId },
+              });
+            } catch {}
+          }
           await closeCallNotificationsByTag(callId);
           return;
         }
@@ -111,29 +123,29 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
       return;
     }
 
-    const windowClients = await self.clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .catch(() => []);
     if (windowClients.some((c) => c.visibilityState === "visible")) {
       await closeCallNotificationsByTag(callId);
       return;
     }
-    for (const client of windowClients) {
-      try {
-        client.postMessage({
-          type: "CONNECTLN_PUSH_INCOMING_CALL",
-          payload: {
-            callId,
-            callMode: spec.isVideo ? "video" : "audio",
-            callerName: spec.callerName,
-            callerPhone: (payload && payload.callerPhone) || "",
-            callerAvatar: (payload && payload.callerAvatar) || "",
-            joinUrl: spec.joinUrl,
-          },
-        });
-      } catch {}
+
+    if (step % 3 === 2) {
+      for (const client of windowClients) {
+        try {
+          client.postMessage({
+            type: "CONNECTLN_PUSH_INCOMING_CALL",
+            payload: {
+              callId,
+              callMode: spec.isVideo ? "video" : "audio",
+              callerName: spec.callerName,
+              callerPhone: (payload && payload.callerPhone) || "",
+              callerAvatar: (payload && payload.callerAvatar) || "",
+              joinUrl: spec.joinUrl,
+            },
+          });
+        } catch {}
+      }
+      await self.registration.showNotification(spec.title, spec.options).catch(() => {});
     }
-    await self.registration.showNotification(spec.title, spec.options).catch(() => {});
   }
 }
 
@@ -145,6 +157,29 @@ self.addEventListener("push", (event) => {
     payload = { title: "ConnectLn Incoming Call", body: event.data ? event.data.text() : "" };
   }
   if (payload && payload.ignore) return;
+
+  if (payload && (payload.type === "CALL_ENDED" || payload.action === "end") && payload.callId) {
+    const endedId = String(payload.callId).trim();
+    rememberSwCallId(swHandledCallIds, endedId);
+    rememberSwCallId(swNotifiedCallIds, endedId);
+    event.waitUntil(
+      (async () => {
+        const allClients = await self.clients
+          .matchAll({ type: "window", includeUncontrolled: true })
+          .catch(() => []);
+        for (const client of allClients) {
+          try {
+            client.postMessage({
+              type: "CONNECTLN_DECLINE_CALL_FROM_NOTIFICATION",
+              payload: { callId: endedId },
+            });
+          } catch {}
+        }
+        await closeCallNotificationsByTag(endedId);
+      })()
+    );
+    return;
+  }
 
   const spec = buildCallNotificationSpec(payload);
   if (swHandledCallIds.has(spec.callId)) return;

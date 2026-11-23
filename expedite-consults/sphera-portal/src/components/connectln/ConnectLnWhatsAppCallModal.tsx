@@ -3085,7 +3085,9 @@ export function ConnectLnWhatsAppCallModal({
               display_name: callerName,
               participant_phone: myPhone || undefined,
               end_for_all: forceEndForAll || undefined,
-              target_recipient_phone: recipientPhone || undefined,
+              target_recipient_phone: recipientPhoneRef.current || recipientPhone || undefined,
+              target_recipient_email: targetEmailRef.current || targetEmail || undefined,
+              target_recipient_name: recipientNameRef.current || recipientName || undefined,
               invited_phones: cellLegs.map((l) => l.phone).filter(Boolean),
             }
       ),
