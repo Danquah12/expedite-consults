@@ -717,10 +717,10 @@ export function MessagingView({
     const fallbackCanvasAnimRef = useRef<number | null>(null);
     const [huddleMyPeerId, setHuddleMyPeerId] = useState<string>('');
     const [huddleRemoteStreams, setHuddleRemoteStreams] = useState<Record<string, MediaStream>>({});
+    const waitingForHuddleRemote =
+        Boolean(activeCallMode) && Object.keys(huddleRemoteStreams).length === 0;
     useEffect(() => {
-        const waitingForRemote =
-            Boolean(activeCallMode) && Object.keys(huddleRemoteStreams).length === 0;
-        if (waitingForRemote) {
+        if (waitingForHuddleRemote) {
             startOutgoingCallerRingbackTone();
         } else {
             stopOutgoingCallerRingbackTone();
@@ -728,7 +728,7 @@ export function MessagingView({
         return () => {
             stopOutgoingCallerRingbackTone();
         };
-    }, [activeCallMode, huddleRemoteStreams]);
+    }, [waitingForHuddleRemote]);
     const huddleActiveMediaCallsRef = useRef<Map<string, any>>(new Map());
     const huddleKnownPeerIdsRef = useRef<Set<string>>(new Set());
     const huddleDialPeerNowRef = useRef<((targetPeerId: string, force?: boolean) => void) | null>(null);

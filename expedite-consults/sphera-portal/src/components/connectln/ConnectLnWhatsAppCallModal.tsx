@@ -2936,9 +2936,11 @@ export function ConnectLnWhatsAppCallModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isIncomingAnswer, callId])
 
-  // Play audible telephone ringtone while dialing until remote peer connects or 45s standby limit
+  // Play standard telephone ringback tone ONLY on the caller's side while dialing until answered or 45s standby limit
   const isWaitingForAnswer =
     open &&
+    !isIncomingAnswer &&
+    callStatus !== "connected" &&
     callStatus !== "ended" &&
     remoteWebRtcPeers.length === 0 &&
     !hasAnyWebRtcStream

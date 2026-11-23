@@ -277,27 +277,32 @@ export function previewConnectLnRingtone(id?: ConnectLnRingtoneId, durationMs = 
   } catch {}
 }
 
+/**
+ * Standard telephone calling/ringback tone (North America / ITU-T cadence):
+ * Dual 440 Hz + 480 Hz sine wave, 2.0s ON followed by 4.0s OFF (6.0s cycle).
+ */
+function synthesizeStandardPhoneRingbackSample(t: number): number {
+  if (t < 0.15 || t > 2.15) return 0
+  const localT = t - 0.15
+  const attack = Math.min(1, localT / 0.025)
+  const release = Math.min(1, (2.0 - localT) / 0.04)
+  const env = Math.max(0, Math.min(attack, release))
+  const wave =
+    0.5 * Math.sin(2 * Math.PI * 440 * localT) +
+    0.5 * Math.sin(2 * Math.PI * 480 * localT)
+  return wave * env
+}
+
 function synthesizeMelodicRingtoneSamples(
   presetId: ConnectLnRingtoneId,
   sampleRate: number
 ): Float32Array {
   if (presetId === "classic-bell") {
-    const durationSec = 4.0
+    const durationSec = 6.0
     const totalSamples = Math.floor(sampleRate * durationSec)
     const out = new Float32Array(totalSamples)
-    // Single smooth 1.75s classic telephone ring followed by 2.25s silence (NOT a double busy beep)
     for (let i = 0; i < totalSamples; i++) {
-      const t = i / sampleRate
-      if (t > 1.75) continue
-      const attack = Math.min(1, t / 0.03)
-      const release = Math.min(1, (1.75 - t) / 0.08)
-      const env = Math.max(0, Math.min(attack, release))
-      const shimmer = 0.85 + 0.15 * Math.sin(2 * Math.PI * 16 * t)
-      const wave =
-        0.52 * Math.sin(2 * Math.PI * 440 * t) +
-        0.34 * Math.sin(2 * Math.PI * 554.37 * t) +
-        0.14 * Math.sin(2 * Math.PI * 659.25 * t)
-      out[i] = wave * shimmer * env * 0.78
+      out[i] = synthesizeStandardPhoneRingbackSample(i / sampleRate) * 0.72
     }
     return out
   }
@@ -399,25 +404,12 @@ let cachedOutgoingRingbackUri: string | null = null
 function getOutgoingRingbackWavUri(): string {
   if (cachedOutgoingRingbackUri) return cachedOutgoingRingbackUri
   const sampleRate = 16000
-  const durationSec = 4.2 // Smooth musical calling chime + warm single telephone ringback (never sounds busy/engaged)
+  const durationSec = 6.0 // Authentic 440 Hz + 480 Hz telephone ringback: 2.0s ON / 4.0s OFF
   const totalSamples = Math.floor(sampleRate * durationSec)
   const samples = new Int16Array(totalSamples)
 
   for (let i = 0; i < totalSamples; i++) {
-    const t = i / sampleRate
-    if (t > 1.75) {
-      samples[i] = 0
-      continue
-    }
-    const attack = Math.min(1, t / 0.06)
-    const release = Math.min(1, (1.75 - t) / 0.14)
-    const env = Math.max(0, Math.min(attack, release))
-    // Gentle soft 440 Hz + 554.37 Hz + 659.25 Hz major triad calling tone
-    const wave =
-      0.46 * Math.sin(2 * Math.PI * 440 * t) +
-      0.32 * Math.sin(2 * Math.PI * 554.37 * t) +
-      0.22 * Math.sin(2 * Math.PI * 659.25 * t)
-    samples[i] = Math.round(wave * env * 14500)
+    samples[i] = Math.round(synthesizeStandardPhoneRingbackSample(i / sampleRate) * 16000)
   }
 
   cachedOutgoingRingbackUri = encodeMonoPcm16WavDataUri(samples, sampleRate)
@@ -448,24 +440,12 @@ function buildAudioBuffers(ctx: AudioContext): void {
 
   if (!outgoingRingbackBuffer) {
     const sr = ctx.sampleRate
-    const durationSec = 4.2
+    const durationSec = 6.0
     const len = Math.floor(sr * durationSec)
     const buf = ctx.createBuffer(1, len, sr)
     const ch = buf.getChannelData(0)
     for (let i = 0; i < len; i++) {
-      const t = i / sr
-      if (t > 1.75) {
-        ch[i] = 0
-        continue
-      }
-      const attack = Math.min(1, t / 0.06)
-      const release = Math.min(1, (1.75 - t) / 0.14)
-      const env = Math.max(0, Math.min(attack, release))
-      const wave =
-        0.46 * Math.sin(2 * Math.PI * 440 * t) +
-        0.32 * Math.sin(2 * Math.PI * 554.37 * t) +
-        0.22 * Math.sin(2 * Math.PI * 659.25 * t)
-      ch[i] = wave * env * 0.45
+      ch[i] = synthesizeStandardPhoneRingbackSample(i / sr) * 0.48
     }
     outgoingRingbackBuffer = buf
   }
@@ -807,6 +787,14 @@ export function startOutgoingCallerRingbackTone(): void {
   isOutgoingRingbackActive = true
   ensureLiveAudioPipelineStarted()
 
+  // Strict single-source playback guard: never layer or restart if already ringing
+  if (
+    activeOutgoingRingbackSource ||
+    (outgoingRingbackAudio && !outgoingRingbackAudio.paused)
+  ) {
+    return
+  }
+
   let startedWebAudio = false
   if (liveAudioCtx && outgoingRingbackBuffer && !activeOutgoingRingbackSource) {
     try {
@@ -814,6 +802,10 @@ export function startOutgoingCallerRingbackTone(): void {
         liveAudioCtx.resume().catch(() => {})
       }
       if (liveAudioCtx.state === "running") {
+        if (outgoingRingbackAudio && !outgoingRingbackAudio.paused) {
+          outgoingRingbackAudio.pause()
+          outgoingRingbackAudio.currentTime = 0
+        }
         const gain = liveAudioCtx.createGain()
         gain.gain.value = 0.5
         const src = liveAudioCtx.createBufferSource()

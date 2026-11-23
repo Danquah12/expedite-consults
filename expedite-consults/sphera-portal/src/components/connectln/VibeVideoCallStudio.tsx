@@ -895,11 +895,11 @@ export function VibeVideoCallStudio({
   const [connectedFriendsCount, setConnectedFriendsCount] = useState<number>(0)
   const [lastJoinedFriendName, setLastJoinedFriendName] = useState<string | null>(null)
 
+  const waitingForPeer =
+    callState !== "ENDED" &&
+    connectedFriendsCount === 0 &&
+    Object.keys(remoteStreams).length === 0
   useEffect(() => {
-    const waitingForPeer =
-      callState !== "ENDED" &&
-      connectedFriendsCount === 0 &&
-      Object.keys(remoteStreams).length === 0
     if (waitingForPeer) {
       startOutgoingCallerRingbackTone()
     } else {
@@ -908,7 +908,7 @@ export function VibeVideoCallStudio({
     return () => {
       stopOutgoingCallerRingbackTone()
     }
-  }, [callState, connectedFriendsCount, remoteStreams])
+  }, [waitingForPeer])
 
   // Media hardware & stream state
   const [callMode, setCallMode] = useState<"audio" | "video" | "screenshare">(initialMode)
