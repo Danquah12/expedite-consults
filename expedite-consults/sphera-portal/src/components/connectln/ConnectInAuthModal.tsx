@@ -234,7 +234,7 @@ export function ConnectInAuthModal({
   const [signInPhone, setSignInPhone] = useState("")
   const [signInPassword, setSignInPassword] = useState("")
   const [signInProfessionId, setSignInProfessionId] = useState<string>("auto_detect")
-  const [signInChannel, setSignInChannel] = useState<'email' | 'sms' | 'call'>('sms')
+  const [signInChannel, setSignInChannel] = useState<'all' | 'email' | 'sms' | 'call'>('all')
   const [signInStep, setSignInStep] = useState<'credentials' | '2fa'>('credentials')
   const [signIn2FACode, setSignIn2FACode] = useState("")
   const [activeTargetDisplay, setActiveTargetDisplay] = useState("")
@@ -248,7 +248,7 @@ export function ConnectInAuthModal({
   const [joinPassword, setJoinPassword] = useState("")
   const [joinRole, setJoinRole] = useState<'personal' | 'enterprise' | 'creator' | 'seller' | 'developer'>('personal')
   const [joinProfessionId, setJoinProfessionId] = useState<string>("carpenter")
-  const [joinChannel, setJoinChannel] = useState<'sms' | 'call'>('sms')
+  const [joinChannel, setJoinChannel] = useState<'all' | 'email' | 'sms' | 'call'>('all')
   const [joinStep, setJoinStep] = useState<'form' | '2fa'>('form')
   const [join2FACode, setJoin2FACode] = useState("")
 
@@ -279,7 +279,7 @@ export function ConnectInAuthModal({
   }
 
   // 1. Sign In Dispatch
-  const handleSignInSubmit = async (e?: React.FormEvent, channelOverride?: 'email' | 'sms' | 'call') => {
+  const handleSignInSubmit = async (e?: React.FormEvent, channelOverride?: 'all' | 'email' | 'sms' | 'call') => {
     if (e) e.preventDefault()
     if (!signInEmail) return
 
@@ -295,14 +295,18 @@ export function ConnectInAuthModal({
       ? buildGlobalE164Phone(signInCountryCode, rawPhone) || rawPhone
       : ""
 
-    if ((effectiveChannel === 'sms' || effectiveChannel === 'call') && effectivePhone && !looksLikeInternationalPhone(effectivePhone)) {
+    if ((effectiveChannel === 'all' || effectiveChannel === 'sms' || effectiveChannel === 'call') && effectivePhone && !looksLikeInternationalPhone(effectivePhone)) {
       setErrorMessage("Please select your country code and enter a valid mobile phone number for 2FA verification.")
       return
     }
 
     setIsLoading(true)
     setErrorMessage(null)
-    setSuccessMessage(`Dispatching 2FA verification code via ${effectiveChannel.toUpperCase()}...`)
+    setSuccessMessage(
+      effectiveChannel === 'all'
+        ? "Dispatching 2FA verification code via Email, SMS & Phone Call..."
+        : `Dispatching 2FA verification code via ${effectiveChannel.toUpperCase()}...`
+    )
 
     try {
       const res = await fetch("/api/connectin/auth/login", {
@@ -389,18 +393,18 @@ export function ConnectInAuthModal({
       if (data.otpChallengeToken) {
         setOtpChallengeToken(data.otpChallengeToken)
       }
-      const resolvedChannel: 'email' | 'sms' | 'call' = data.channel || effectiveChannel
+      if (data.phone) {
+        setSignInPhone(data.phone)
+      }
+      const resolvedChannel: 'all' | 'email' | 'sms' | 'call' = data.channel || effectiveChannel
       setSignInChannel(resolvedChannel)
       setActiveTargetDisplay(data.target || (resolvedChannel === 'email' ? signInEmail : (effectivePhone || signInEmail)))
       setSignInStep('2fa')
 
-      if (resolvedChannel === 'call') {
-        setSuccessMessage(`📞 Automated 2FA voice call placed to ${formatInternationalPhonePretty(data.target || effectivePhone)}. Answer your phone to hear your 6-digit code.`)
-      } else if (resolvedChannel === 'sms') {
-        setSuccessMessage(`💬 2FA text message sent to ${formatInternationalPhonePretty(data.target || effectivePhone)}. Enter the 6-digit code from your phone.`)
-      } else {
-        setSuccessMessage(`✉️ Verification code sent to ${data.target || signInEmail}. Check your inbox and Spam/Junk folder.`)
-      }
+      setSuccessMessage(
+        data.message ||
+          "🔐 Enter the 6-digit 2FA verification code sent to your Email, SMS, or Phone Call."
+      )
     } catch (err: any) {
       setSuccessMessage(null)
       setErrorMessage(err.message || "Failed to dispatch 2FA code")
@@ -553,8 +557,8 @@ export function ConnectInAuthModal({
     }
   }
 
-  // 2. Join Now (Mandatory Mobile Phone -> 2FA Phone Verification -> Direct Login & Locked Calling Number)
-  const handleJoinSubmit = async (e?: React.FormEvent, channelOverride?: 'sms' | 'call') => {
+  // 2. Join Now (Mandatory Mobile Phone -> 2FA Email, SMS & Call Verification -> Direct Login & Locked Calling Number)
+  const handleJoinSubmit = async (e?: React.FormEvent, channelOverride?: 'all' | 'email' | 'sms' | 'call') => {
     if (e) e.preventDefault()
     if (!joinFirstName || !joinEmail) return
 
@@ -564,12 +568,16 @@ export function ConnectInAuthModal({
       return
     }
 
-    const effectiveChannel: 'sms' | 'call' = channelOverride || joinChannel
+    const effectiveChannel: 'all' | 'email' | 'sms' | 'call' = channelOverride || joinChannel
     if (channelOverride) setJoinChannel(channelOverride)
 
     setIsLoading(true)
     setErrorMessage(null)
-    setSuccessMessage(`Dispatching 2FA verification code to ${formatInternationalPhonePretty(normalizedJoinPhone)} via ${effectiveChannel.toUpperCase()}...`)
+    setSuccessMessage(
+      effectiveChannel === 'all'
+        ? "Dispatching 2FA verification code via Email, SMS & Phone Call..."
+        : `Dispatching 2FA verification code to ${formatInternationalPhonePretty(normalizedJoinPhone)} via ${effectiveChannel.toUpperCase()}...`
+    )
 
     try {
       const selectedProf = findProfessionById(joinProfessionId)
@@ -602,11 +610,10 @@ export function ConnectInAuthModal({
       }
       setActiveTargetDisplay(data.target || normalizedJoinPhone)
       setJoinStep('2fa')
-      if (effectiveChannel === 'call') {
-        setSuccessMessage(`📞 Automated 2FA voice call placed to ${formatInternationalPhonePretty(data.target || normalizedJoinPhone)}. Answer your phone to hear your 6-digit code.`)
-      } else {
-        setSuccessMessage(`💬 2FA verification text sent to ${formatInternationalPhonePretty(data.target || normalizedJoinPhone)}. Enter the 6-digit code below.`)
-      }
+      setSuccessMessage(
+        data.message ||
+          "🔐 Enter the 6-digit 2FA verification code sent to your Email, SMS, or Phone Call."
+      )
     } catch (err: any) {
       setSuccessMessage(null)
       setErrorMessage(err.message || "Registration failed.")
@@ -901,7 +908,23 @@ export function ConnectInAuthModal({
                 {/* 2FA Delivery Channel Selector */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("deliver_2fa_via", "Send 2FA Security Code Via")}</label>
-                  <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-xs font-semibold">
+                  <div className="grid grid-cols-4 gap-1 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-[11px] font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSignInChannel('all')
+                        if (!signInPhone && isExactKwesiUser({ name: signInName, email: signInEmail })) {
+                          setSignInPhone('240-260-7898')
+                        }
+                      }}
+                      className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
+                        signInChannel === 'all'
+                          ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                          : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                      }`}
+                    >
+                      <span>{t("send_code_via_all", "🔔 All")}</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -910,7 +933,7 @@ export function ConnectInAuthModal({
                           setSignInPhone('240-260-7898')
                         }
                       }}
-                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
+                      className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
                         signInChannel === 'sms'
                           ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                           : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -926,7 +949,7 @@ export function ConnectInAuthModal({
                           setSignInPhone('240-260-7898')
                         }
                       }}
-                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
+                      className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
                         signInChannel === 'call'
                           ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                           : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -937,7 +960,7 @@ export function ConnectInAuthModal({
                     <button
                       type="button"
                       onClick={() => setSignInChannel('email')}
-                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
+                      className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
                         signInChannel === 'email'
                           ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                           : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -946,6 +969,11 @@ export function ConnectInAuthModal({
                       <span>{t("send_code_via_email", "✉️ Email")}</span>
                     </button>
                   </div>
+                  {signInChannel === 'all' && (
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                      Delivers your 6-digit 2FA token to your Email, SMS, and an automated Phone Call.
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -1053,6 +1081,14 @@ export function ConnectInAuthModal({
                   <div className="text-xs text-zinc-500 space-y-1.5 pt-1">
                     <p className="text-[11px] text-zinc-400">{t("didnt_receive_code", "Didn't receive the code? Resend via:")}</p>
                     <div className="flex items-center justify-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => handleSignInSubmit(undefined, 'all')}
+                        disabled={isLoading}
+                        className="font-semibold text-zinc-800 dark:text-zinc-200 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
+                      >
+                        {t("send_code_via_all", "🔔 All")}
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleSignInSubmit(undefined, 'sms')}
@@ -1248,31 +1284,58 @@ export function ConnectInAuthModal({
                     </p>
 
                     <div className="pt-1">
-                      <label className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">{t("deliver_2fa_via", "Verify Phone Ownership Via 2FA")}</label>
-                      <div className="grid grid-cols-2 gap-1.5 p-1 mt-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-xs font-semibold">
+                      <label className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">{t("deliver_2fa_via", "Deliver 2FA Code Via")}</label>
+                      <div className="grid grid-cols-4 gap-1 p-1 mt-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-[11px] font-semibold">
+                        <button
+                          type="button"
+                          onClick={() => setJoinChannel('all')}
+                          className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
+                            joinChannel === 'all'
+                              ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                          }`}
+                        >
+                          <span>🔔 All</span>
+                        </button>
                         <button
                           type="button"
                           onClick={() => setJoinChannel('sms')}
-                          className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
+                          className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
                             joinChannel === 'sms'
                               ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                           }`}
                         >
-                          <span>💬 SMS Text</span>
+                          <span>💬 SMS</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => setJoinChannel('call')}
-                          className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
+                          className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
                             joinChannel === 'call'
                               ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                           }`}
                         >
-                          <span>📞 Phone Call</span>
+                          <span>📞 Call</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setJoinChannel('email')}
+                          className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
+                            joinChannel === 'email'
+                              ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                          }`}
+                        >
+                          <span>✉️ Email</span>
                         </button>
                       </div>
+                      {joinChannel === 'all' && (
+                        <p className="text-[10px] text-zinc-600 dark:text-zinc-400 mt-1">
+                          Delivers your 6-digit 2FA token to your Email, SMS, and an automated Phone Call.
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1359,8 +1422,24 @@ export function ConnectInAuthModal({
                   />
 
                   <div className="text-xs text-zinc-500 space-y-1.5 pt-1">
-                    <p className="text-[11px] text-zinc-400">{t("didnt_receive_code", "Didn't receive the code? Resend to your phone via:")}</p>
+                    <p className="text-[11px] text-zinc-400">{t("didnt_receive_code", "Didn't receive the code? Resend via:")}</p>
                     <div className="flex items-center justify-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => handleJoinSubmit(undefined, 'all')}
+                        disabled={isLoading}
+                        className="font-semibold text-zinc-800 dark:text-zinc-200 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md touch-manipulation"
+                      >
+                        {t("send_code_via_all", "🔔 All")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleJoinSubmit(undefined, 'email')}
+                        disabled={isLoading}
+                        className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md touch-manipulation"
+                      >
+                        {t("send_code_via_email", "✉️ Email")}
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleJoinSubmit(undefined, 'sms')}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
+import { sendConnectInOTPEmail } from "@/lib/connectin-email"
 import { sendConnectInSMS, formatE164Phone } from "@/lib/connectin-sms"
 import { createDynamicOTP } from "@/lib/connectin-otp"
 import { findProfessionById, findEnclaveById } from "@/lib/connectin-professions"
@@ -7,6 +8,20 @@ import { resolveRequestGeoLocation, upsertCloudUser, recordGlobalUserActivity } 
 import { checkPhoneOwnershipConflict } from "@/lib/connectin-whatsapp-directory"
 import { looksLikeInternationalPhone, formatInternationalPhonePretty } from "@/lib/connectin-international-phones"
 import crypto from "crypto"
+
+const EMAIL_FORMAT_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function isRealDeliverableEmail(raw?: string | null): boolean {
+  const clean = String(raw || "").trim().toLowerCase()
+  return (
+    Boolean(clean) &&
+    EMAIL_FORMAT_RE.test(clean) &&
+    !clean.endsWith(".conectln.com") &&
+    !clean.endsWith("@conectln.com") &&
+    !clean.endsWith("@connectin.app") &&
+    !clean.endsWith("@connectin.phone")
+  )
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,7 +37,7 @@ export async function POST(req: NextRequest) {
       profession: incomingProfession,
       professionCategory: incomingCategory,
       professionEnclave: incomingEnclave,
-      twoFactorChannel = "sms",
+      twoFactorChannel = "all",
       isDemoPersona,
       clientTimezone
     } = body
@@ -74,8 +89,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Force Phone 2FA (`sms` or `call`) during Registration so the registrant proves ownership of this exact mobile number!
-    const effectivePhoneChannel: "sms" | "call" = twoFactorChannel === "call" ? "call" : "sms"
+    // Support Phone + Email 2FA (`all` | `sms` | `call` | `email`) during Registration (never expose OTP on screen)
+    const realRegEmail = isRealDeliverableEmail(cleanEmail) ? cleanEmail : ""
+    const effectiveChannel: "all" | "email" | "sms" | "call" =
+      twoFactorChannel === "call"
+        ? "call"
+        : twoFactorChannel === "sms"
+          ? "sms"
+          : twoFactorChannel === "email" && realRegEmail
+            ? "email"
+            : "all"
 
     // 1. Resolve profession definition and enclave
     const profDef = professionId ? findProfessionById(professionId) : undefined
@@ -202,32 +225,155 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Dispatch 6-Digit 2FA Code to Mandatory Mobile Phone (`sms` or `call`) to verify phone ownership
-    const isCall = effectivePhoneChannel === "call"
-    if (!isDemoPersona && formattedPhone) {
-      await sendConnectInSMS({
-        toPhone: formattedPhone,
-        code: otpCode,
-        fullName,
-        channel: isCall ? "call" : "sms"
-      })
+    // 4. Dispatch 6-Digit 2FA Code strictly via Email, SMS, and/or automated Phone Call (never leak code in response)
+    let smsRes: { success: boolean; error?: string; sid?: string } = { success: false }
+    let callRes: { success: boolean; error?: string; sid?: string } = { success: false }
+    let emailRes: { success: boolean; error?: string; id?: string } = { success: false }
+
+    if (!isDemoPersona) {
+      if (effectiveChannel === "email" && realRegEmail) {
+        emailRes = await sendConnectInOTPEmail({
+          toEmail: realRegEmail,
+          fullName,
+          code: otpCode,
+          action: "registration"
+        }).catch((e: any) => ({ success: false, error: e?.message || "Email dispatch failed" }))
+
+        if (!emailRes.success && formattedPhone) {
+          smsRes = await sendConnectInSMS({
+            toPhone: formattedPhone,
+            code: otpCode,
+            fullName,
+            channel: "sms"
+          })
+          if (!smsRes.success) {
+            callRes = await sendConnectInSMS({
+              toPhone: formattedPhone,
+              code: otpCode,
+              fullName,
+              channel: "call"
+            })
+          }
+        }
+      } else if (effectiveChannel === "all") {
+        ;[smsRes, callRes, emailRes] = await Promise.all([
+          formattedPhone
+            ? sendConnectInSMS({
+                toPhone: formattedPhone,
+                code: otpCode,
+                fullName,
+                channel: "sms"
+              })
+            : Promise.resolve({ success: false, error: "No mobile phone number available" }),
+          formattedPhone
+            ? sendConnectInSMS({
+                toPhone: formattedPhone,
+                code: otpCode,
+                fullName,
+                channel: "call"
+              })
+            : Promise.resolve({ success: false, error: "No mobile phone number available" }),
+          realRegEmail
+            ? sendConnectInOTPEmail({
+                toEmail: realRegEmail,
+                fullName,
+                code: otpCode,
+                action: "registration"
+              }).catch((e: any) => ({ success: false, error: e?.message || "Email dispatch failed" }))
+            : Promise.resolve({ success: false, error: "No deliverable email on file" })
+        ])
+      } else if (effectiveChannel === "call") {
+        ;[callRes, emailRes] = await Promise.all([
+          formattedPhone
+            ? sendConnectInSMS({
+                toPhone: formattedPhone,
+                code: otpCode,
+                fullName,
+                channel: "call"
+              })
+            : Promise.resolve({ success: false, error: "No mobile phone number available" }),
+          realRegEmail
+            ? sendConnectInOTPEmail({
+                toEmail: realRegEmail,
+                fullName,
+                code: otpCode,
+                action: "registration"
+              }).catch((e: any) => ({ success: false, error: e?.message || "Email dispatch failed" }))
+            : Promise.resolve({ success: false, error: "No deliverable email on file" })
+        ])
+      } else {
+        ;[smsRes, emailRes] = await Promise.all([
+          formattedPhone
+            ? sendConnectInSMS({
+                toPhone: formattedPhone,
+                code: otpCode,
+                fullName,
+                channel: "sms"
+              })
+            : Promise.resolve({ success: false, error: "No mobile phone number available" }),
+          realRegEmail
+            ? sendConnectInOTPEmail({
+                toEmail: realRegEmail,
+                fullName,
+                code: otpCode,
+                action: "registration"
+              }).catch((e: any) => ({ success: false, error: e?.message || "Email dispatch failed" }))
+            : Promise.resolve({ success: false, error: "No deliverable email on file" })
+        ])
+        if (!smsRes.success && formattedPhone) {
+          callRes = await sendConnectInSMS({
+            toPhone: formattedPhone,
+            code: otpCode,
+            fullName,
+            channel: "call"
+          })
+        }
+      }
+    }
+
+    const smsDelivered = Boolean(smsRes.success && smsRes.sid)
+    const callDelivered = Boolean(callRes.success && callRes.sid)
+    const emailDelivered = Boolean(emailRes.success)
+
+    if (!isDemoPersona && !smsDelivered && !callDelivered && !emailDelivered) {
+      return NextResponse.json(
+        {
+          error:
+            "Could not deliver your 6-digit registration 2FA code via email, SMS, or phone call. Please verify your mobile number and email address and try again.",
+          smsError: smsRes.error,
+          callError: callRes.error,
+          emailError: emailRes.error
+        },
+        { status: 502 }
+      )
     }
 
     const prettyTarget = formattedPhone ? formatInternationalPhonePretty(formattedPhone) : cleanEmail
-    const message = isCall
-      ? `📞 Placing automated 2FA verification call to ${prettyTarget}. Answer your phone and enter the 6-digit code.`
-      : `💬 Sent 6-digit 2FA verification code via SMS to ${prettyTarget}. Enter it below to verify your phone & complete registration.`
+    const deliveredParts: string[] = []
+    if (smsDelivered) deliveredParts.push(`SMS (${prettyTarget})`)
+    if (callDelivered) deliveredParts.push(`automated phone call (${prettyTarget})`)
+    if (emailDelivered) deliveredParts.push(`email (${realRegEmail})`)
+
+    const message =
+      deliveredParts.length > 0
+        ? `🔐 Sent your 6-digit 2FA verification code via ${deliveredParts.join(", ")}. Check your messages, answer your phone, or check your email inbox.`
+        : `🔐 Enter the 6-digit 2FA verification code for ${prettyTarget}.`
 
     const res = NextResponse.json({
       success: true,
       message,
-      channel: effectivePhoneChannel,
+      channel: effectiveChannel,
       target: formattedPhone || cleanEmail,
       prettyPhone: prettyTarget,
       phone: formattedPhone || "",
       email: cleanEmail,
       otpChallengeToken: challengeToken,
-      emailDispatched: true,
+      smsDispatched: smsDelivered,
+      callDispatched: callDelivered,
+      emailDispatched: emailDelivered,
+      smsError: smsRes.error,
+      callError: callRes.error,
+      emailError: emailRes.error,
       profession: finalProfessionTitle,
       professionId: finalProfessionId,
       professionEnclave: finalEnclaveId

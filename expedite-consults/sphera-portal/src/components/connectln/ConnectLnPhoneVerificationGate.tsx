@@ -38,7 +38,7 @@ export function ConnectLnPhoneVerificationGate({
   const [needsPhone, setNeedsPhone] = useState(false)
   const [countryIso, setCountryIso] = useState("US")
   const [localNum, setLocalNum] = useState("")
-  const [channel, setChannel] = useState<"sms" | "call">("sms")
+  const [channel, setChannel] = useState<"all" | "sms" | "call" | "email">("all")
   const [step, setStep] = useState<"input" | "code">("input")
   const [pendingPhone, setPendingPhone] = useState("")
   const [challenge, setChallenge] = useState("")
@@ -88,6 +88,14 @@ export function ConnectLnPhoneVerificationGate({
 
   if (!needsPhone) return null
 
+  const rawEmail = (viewerEmail || "").trim().toLowerCase()
+  const isRealEmail =
+    Boolean(rawEmail) &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail) &&
+    !rawEmail.endsWith(".conectln.com") &&
+    !rawEmail.endsWith("@conectln.com") &&
+    !rawEmail.endsWith("@connectin.app") &&
+    !rawEmail.endsWith("@connectin.phone")
   const country = GLOBAL_COUNTRY_DIAL_CODES.find((c) => c.iso === countryIso) || GLOBAL_COUNTRY_DIAL_CODES[0]
 
   const sendCode = async () => {
@@ -225,20 +233,38 @@ export function ConnectLnPhoneVerificationGate({
                 className="flex-1 rounded-lg border border-[#D0C4AE] bg-white px-3 py-2 text-sm"
               />
             </div>
-            <div className="flex gap-2 text-[11px] font-bold">
-              {(["sms"] as const).map((ch) => (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-[11px] font-bold">
+              {(
+                [
+                  { id: "all", label: isRealEmail ? "🔔 All 3" : "🔔 SMS + Call" },
+                  { id: "sms", label: "💬 SMS" },
+                  { id: "call", label: "📞 Call" },
+                  ...(isRealEmail ? ([{ id: "email", label: "✉️ Email" }] as const) : []),
+                ] as const
+              ).map((ch) => (
                 <button
-                  key={ch}
+                  key={ch.id}
                   type="button"
-                  onClick={() => setChannel(ch)}
-                  className={`flex-1 rounded-lg px-2 py-1.5 border cursor-pointer ${
-                    channel === ch ? "bg-[#7C4225] text-white border-[#7C4225]" : "bg-white border-[#D0C4AE]"
+                  onClick={() => setChannel(ch.id)}
+                  className={`rounded-lg px-2 py-1.5 border cursor-pointer ${
+                    channel === ch.id ? "bg-[#7C4225] text-white border-[#7C4225]" : "bg-white border-[#D0C4AE]"
                   }`}
                 >
-                  Code will be sent by SMS
+                  {ch.label}
                 </button>
               ))}
             </div>
+            <p className="text-[10.5px] text-[#57534E]">
+              {channel === "all"
+                ? isRealEmail
+                  ? "Sends your 6-digit code via Email, SMS, and an automated Phone Call."
+                  : "Sends your 6-digit code via SMS and an automated Phone Call."
+                : channel === "call"
+                  ? "Places an automated voice call speaking your 6-digit code."
+                  : channel === "email"
+                    ? `Sends your 6-digit code to ${rawEmail}.`
+                    : "Sends your 6-digit code via SMS text message."}
+            </p>
             <button
               type="button"
               disabled={busy}
@@ -270,6 +296,109 @@ export function ConnectLnPhoneVerificationGate({
               <Lock className="h-4 w-4" />
               {busy ? "Verifying..." : "Verify & continue"}
             </button>
+            <div className="flex items-center justify-center gap-2 flex-wrap pt-0.5 text-[11px] font-semibold">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={async () => {
+                  setChannel("call")
+                  setBusy(true)
+                  setError("")
+                  try {
+                    const res = await fetch("/api/connectin/calls/whatsapp", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        action: "send_phone_2fa",
+                        phone: pendingPhone,
+                        name: viewerName,
+                        email: viewerEmail,
+                        channel: "call",
+                      }),
+                    })
+                    const data = await res.json()
+                    if (!res.ok || !data?.ok) throw new Error(data?.error || "Could not place call.")
+                    if (data.otpChallengeToken) setChallenge(data.otpChallengeToken)
+                    setInfo(data.message || "Automated phone call placed.")
+                  } catch (err: any) {
+                    setError(err?.message || "Could not place call.")
+                  } finally {
+                    setBusy(false)
+                  }
+                }}
+                className="rounded-md bg-[#EFE8DA] px-2.5 py-1 text-[#5E3119] cursor-pointer disabled:opacity-50"
+              >
+                📞 Resend via Call
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={async () => {
+                  setChannel("sms")
+                  setBusy(true)
+                  setError("")
+                  try {
+                    const res = await fetch("/api/connectin/calls/whatsapp", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        action: "send_phone_2fa",
+                        phone: pendingPhone,
+                        name: viewerName,
+                        email: viewerEmail,
+                        channel: "sms",
+                      }),
+                    })
+                    const data = await res.json()
+                    if (!res.ok || !data?.ok) throw new Error(data?.error || "Could not send SMS.")
+                    if (data.otpChallengeToken) setChallenge(data.otpChallengeToken)
+                    setInfo(data.message || "SMS sent.")
+                  } catch (err: any) {
+                    setError(err?.message || "Could not send SMS.")
+                  } finally {
+                    setBusy(false)
+                  }
+                }}
+                className="rounded-md bg-[#EFE8DA] px-2.5 py-1 text-[#5E3119] cursor-pointer disabled:opacity-50"
+              >
+                💬 Resend SMS
+              </button>
+              {isRealEmail && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={async () => {
+                    setChannel("email")
+                    setBusy(true)
+                    setError("")
+                    try {
+                      const res = await fetch("/api/connectin/calls/whatsapp", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          action: "send_phone_2fa",
+                          phone: pendingPhone,
+                          name: viewerName,
+                          email: viewerEmail,
+                          channel: "email",
+                        }),
+                      })
+                      const data = await res.json()
+                      if (!res.ok || !data?.ok) throw new Error(data?.error || "Could not send Email.")
+                      if (data.otpChallengeToken) setChallenge(data.otpChallengeToken)
+                      setInfo(data.message || "Email sent.")
+                    } catch (err: any) {
+                      setError(err?.message || "Could not send Email.")
+                    } finally {
+                      setBusy(false)
+                    }
+                  }}
+                  className="rounded-md bg-[#EFE8DA] px-2.5 py-1 text-[#5E3119] cursor-pointer disabled:opacity-50"
+                >
+                  ✉️ Resend Email
+                </button>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => {

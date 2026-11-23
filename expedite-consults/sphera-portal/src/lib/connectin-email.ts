@@ -10,6 +10,23 @@ function getResendClient() {
   return new Resend(apiKey)
 }
 
+function resolveResendFromAddress(senderLabel: string): string {
+  const envFrom = (
+    process.env.RESEND_FROM_EMAIL ||
+    process.env.RESEND_FROM ||
+    process.env.RESEND_FORM_EMAIL ||
+    DEFAULT_FROM_EMAIL
+  ).trim()
+  const cleanAddr = envFrom.includes("<")
+    ? (envFrom.match(/<([^>]+)>/)?.[1] || DEFAULT_FROM_EMAIL).trim()
+    : envFrom
+  const safeAddr =
+    cleanAddr && !cleanAddr.toLowerCase().includes("resend.dev")
+      ? cleanAddr
+      : DEFAULT_FROM_EMAIL
+  return `${senderLabel} <${safeAddr}>`
+}
+
 interface SendOTPEmailParams {
   toEmail: string
   fullName: string
@@ -36,22 +53,13 @@ export async function sendConnectInOTPEmail({
       ? `ConnectLn Security: Your 2FA Verification Code is ${code}`
       : `Welcome to ConnectLn: Verify Your Account (${code})`
 
-    const envFrom = (process.env.RESEND_FROM_EMAIL || process.env.RESEND_FORM_EMAIL || DEFAULT_FROM_EMAIL).trim()
-    const fromAddress = envFrom.includes("<")
-      ? envFrom
-      : `ConnectLn Security <${envFrom}>`
+    const fromAddress = resolveResendFromAddress("ConnectLn Security")
 
-    console.log(`[ConnectLn Email Dispatch] Sending to: ${toEmail} from: ${fromAddress} with code: ${code}`)
+    console.log(`[ConnectLn Email Dispatch] Sending 2FA email to: ${toEmail} from: ${fromAddress}`)
 
     const plainText = `Hello ${fullName},\n\nYour single-use ConnectLn ${isLogin ? "2FA sign-in" : "registration verification"} code is:\n\n${code}\n\nThis code will expire in 15 minutes.\n\n--\nConnectLn Security · Tickets, vouches, and real work\nExpedite Consults LLC · Zero-Trust Identity Infrastructure`
 
-    let { data, error } = await resend.emails.send({
-      from: fromAddress,
-      to: [toEmail.toLowerCase().trim()],
-      replyTo: "auth@expediteconsults.com",
-      subject,
-      text: plainText,
-      html: `
+    const htmlBody = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -73,7 +81,7 @@ export async function sendConnectInOTPEmail({
           <div class="container">
             <div class="header">
               <div style="margin: 0 auto 12px auto; width: 64px; height: 64px; border-radius: 16px; overflow: hidden; display: inline-block; box-shadow: 0 4px 16px rgba(0,0,0,0.5);">
-                <img src="https://connectln.vercel.app/brand/connectln-icon.png" width="64" height="64" alt="ConnectLn" style="display: block; border-radius: 16px;" />
+                <img src="https://conectln.com/brand/connectln-icon.png" width="64" height="64" alt="ConnectLn" style="display: block; border-radius: 16px;" />
               </div>
               <div style="font-size: 28px; font-weight: 900; color: #f2ede4; letter-spacing: -0.5px; line-height: 1.1;">
                 Connect<span style="color:#f2ede4;">L</span>n
@@ -104,7 +112,29 @@ export async function sendConnectInOTPEmail({
         </body>
         </html>
       `
+
+    let { data, error } = await resend.emails.send({
+      from: fromAddress,
+      to: [toEmail.toLowerCase().trim()],
+      replyTo: DEFAULT_FROM_EMAIL,
+      subject,
+      text: plainText,
+      html: htmlBody
     })
+
+    if (error && !fromAddress.toLowerCase().includes(DEFAULT_FROM_EMAIL)) {
+      console.warn(`[ConnectLn Email Retry] Custom from (${fromAddress}) failed (${error.message}); retrying with ${DEFAULT_FROM_EMAIL}`)
+      const retryRes = await resend.emails.send({
+        from: `ConnectLn Security <${DEFAULT_FROM_EMAIL}>`,
+        to: [toEmail.toLowerCase().trim()],
+        replyTo: DEFAULT_FROM_EMAIL,
+        subject,
+        text: plainText,
+        html: htmlBody
+      })
+      data = retryRes.data
+      error = retryRes.error
+    }
 
     if (error) {
       console.error("[ConnectLn Email Resend Error]", error)
@@ -143,10 +173,7 @@ export async function sendConnectInInviteEmail({
       return { success: false, error: err }
     }
 
-    const envFrom = (process.env.RESEND_FROM_EMAIL || process.env.RESEND_FORM_EMAIL || DEFAULT_FROM_EMAIL).trim()
-    const fromAddress = envFrom.includes("<")
-      ? envFrom
-      : `ConnectLn Network <${envFrom}>`
+    const fromAddress = resolveResendFromAddress("ConnectLn Network")
 
     const cleanRecipientName = (recipientName || "").trim()
     const subject = cleanRecipientName
@@ -245,22 +272,6 @@ function escapeEmailHtml(val: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-}
-
-function resolveResendFromAddress(senderLabel: string): string {
-  const envFrom = (
-    process.env.RESEND_FROM_EMAIL ||
-    process.env.RESEND_FORM_EMAIL ||
-    process.env.RESEND_FROM ||
-    DEFAULT_FROM_EMAIL
-  ).trim()
-  const cleanAddr = envFrom.includes("<")
-    ? (envFrom.match(/<([^>]+)>/)?.[1] || DEFAULT_FROM_EMAIL).trim()
-    : envFrom
-  const safeAddr = cleanAddr && !cleanAddr.toLowerCase().includes("resend.dev")
-    ? cleanAddr
-    : DEFAULT_FROM_EMAIL
-  return `${senderLabel} <${safeAddr}>`
 }
 
 function buildRecipientList(extraEmails: Array<string | undefined>): string[] {

@@ -414,7 +414,7 @@ export function ConnectLnMyPhoneNumberCard({
   }
 
   // Send 6-digit 2FA OTP to verify ownership of a phone number (anti-impersonation)
-  const handleSendPhone2FA = async (channel: "sms" | "call") => {
+  const handleSendPhone2FA = async (channel: "all" | "sms" | "call" | "email") => {
     const fullE164 = buildInternationalPhone(countryCode, localNum)
     if (!looksLikeClientPhone(fullE164)) {
       setErrorMsg("Select your country and enter a valid mobile number.")
@@ -422,7 +422,13 @@ export function ConnectLnMyPhoneNumberCard({
     }
     setIsSaving(true)
     setErrorMsg("")
-    setStatusMsg(`Sending 6-digit 2FA verification code via ${channel === "call" ? "Phone Call" : "SMS"}...`)
+    setStatusMsg(
+      channel === "all"
+        ? "Sending 6-digit 2FA code via Email, SMS & Phone Call..."
+        : `Sending 6-digit 2FA verification code via ${
+            channel === "call" ? "Phone Call" : channel === "email" ? "Email" : "SMS"
+          }...`
+    )
     try {
       const res = await fetch("/api/connectin/calls/whatsapp", {
         method: "POST",
@@ -652,11 +658,19 @@ export function ConnectLnMyPhoneNumberCard({
               <button
                 type="button"
                 disabled={isSaving}
-                onClick={() => handleSendPhone2FA("sms")}
+                onClick={() => handleSendPhone2FA("all")}
                 style={{ color: "#FFFFFF" }}
                 className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] px-3 py-1.5 text-xs font-bold cursor-pointer disabled:opacity-50"
               >
-                {isSaving ? "Sending..." : "💬 Send 2FA SMS"}
+                {isSaving ? "Sending..." : "🔐 Send 2FA (SMS, Call & Email)"}
+              </button>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => handleSendPhone2FA("sms")}
+                className="rounded-lg bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] px-2.5 py-1.5 text-xs font-bold text-[#5E3119] cursor-pointer disabled:opacity-50"
+              >
+                💬 SMS
               </button>
               <button
                 type="button"
@@ -666,11 +680,25 @@ export function ConnectLnMyPhoneNumberCard({
               >
                 📞 Call Me
               </button>
+              {userEmail &&
+                !userEmail.endsWith("@connectin.app") &&
+                !userEmail.endsWith("@connectin.phone") &&
+                !userEmail.endsWith("@conectln.com") &&
+                !userEmail.endsWith(".conectln.com") && (
+                  <button
+                    type="button"
+                    disabled={isSaving}
+                    onClick={() => handleSendPhone2FA("email")}
+                    className="rounded-lg bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] px-2.5 py-1.5 text-xs font-bold text-[#5E3119] cursor-pointer disabled:opacity-50"
+                  >
+                    ✉️ Email
+                  </button>
+                )}
             </div>
           ) : (
             <form onSubmit={handleVerifyPhone2FACode} className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-bold text-[#5E3119]">
-                6-digit code sent to {prettyClientPhone(pendingPhone)}:
+                Enter 6-digit code ({prettyClientPhone(pendingPhone)}):
               </span>
               <input
                 type="text"
@@ -698,6 +726,28 @@ export function ConnectLnMyPhoneNumberCard({
               >
                 📞 Resend via Call
               </button>
+              <button
+                type="button"
+                onClick={() => handleSendPhone2FA("sms")}
+                disabled={isSaving}
+                className="rounded-lg bg-[#EFE8DA] px-2.5 py-1.5 text-[11px] font-bold text-[#5E3119] cursor-pointer"
+              >
+                💬 Resend SMS
+              </button>
+              {userEmail &&
+                !userEmail.endsWith("@connectin.app") &&
+                !userEmail.endsWith("@connectin.phone") &&
+                !userEmail.endsWith("@conectln.com") &&
+                !userEmail.endsWith(".conectln.com") && (
+                  <button
+                    type="button"
+                    onClick={() => handleSendPhone2FA("email")}
+                    disabled={isSaving}
+                    className="rounded-lg bg-[#EFE8DA] px-2.5 py-1.5 text-[11px] font-bold text-[#5E3119] cursor-pointer"
+                  >
+                    ✉️ Resend Email
+                  </button>
+                )}
             </form>
           )}
         </div>

@@ -197,8 +197,22 @@ export async function POST(req: NextRequest) {
     if (action === "send_phone_2fa") {
       const rawPhone = String(body?.phone || "").trim()
       const name = String(body?.name || "ConnectLn Member").trim()
-      const email = String(body?.email || "").trim().toLowerCase()
-      const channel: "sms" | "call" = body?.channel === "call" ? "call" : "sms"
+      const rawEmail = String(body?.email || "").trim().toLowerCase()
+      const isDeliverableEmail =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail) &&
+        !rawEmail.endsWith(".conectln.com") &&
+        !rawEmail.endsWith("@conectln.com") &&
+        !rawEmail.endsWith("@connectin.app") &&
+        !rawEmail.endsWith("@connectin.phone")
+      const realEmail = isDeliverableEmail ? rawEmail : ""
+      const channel: "all" | "sms" | "call" | "email" =
+        body?.channel === "call"
+          ? "call"
+          : body?.channel === "email" && realEmail
+            ? "email"
+            : body?.channel === "sms"
+              ? "sms"
+              : "all"
 
       if (!looksLikePhoneNumber(rawPhone)) {
         return NextResponse.json(
@@ -208,44 +222,142 @@ export async function POST(req: NextRequest) {
       }
 
       const normPhone = normalizeDialablePhone(rawPhone)
-      // Do NOT block sending a 6-digit SMS code to the phone number: the SMS is delivered
-      // strictly to the physical SIM owner, allowing an existing member to verify their own number on a new device.
+      // Do NOT block sending a 6-digit 2FA code: delivered strictly via SMS, Voice Call, and Email (never on screen).
       const { code: otpCode, challengeToken } = createDynamicOTP(normPhone, 15)
       connectinDb.setOTP(normPhone, otpCode, 15)
-      const [smsRes] = await Promise.all([
-        sendConnectInSMS({
-          toPhone: normPhone,
-          code: otpCode,
-          fullName: name,
-          channel,
-        }),
-        email && !email.endsWith("@connectin.app") && !email.endsWith("@connectin.phone")
-          ? sendConnectInOTPEmail({
-              toEmail: email,
-              fullName: name,
-              code: otpCode,
-              action: "login_2fa",
-            }).catch(() => ({ success: false }))
-          : Promise.resolve({ success: false }),
-      ])
 
-      const isWifiFallback =
-        !smsRes?.sid ||
-        smsRes.sid === "simulated_sms" ||
-        smsRes.sid === "gateway_simulated" ||
-        smsRes.sid === "gateway_fallback"
+      let smsRes: { success: boolean; error?: string; sid?: string } = { success: false }
+      let callRes: { success: boolean; error?: string; sid?: string } = { success: false }
+      let emailRes: { success: boolean; error?: string; id?: string } = { success: false }
+
+      if (channel === "email" && realEmail) {
+        emailRes = await sendConnectInOTPEmail({
+          toEmail: realEmail,
+          fullName: name,
+          code: otpCode,
+          action: "login_2fa",
+        }).catch((e: any) => ({ success: false, error: e?.message || "Email dispatch failed" }))
+
+        if (!emailRes.success) {
+          smsRes = await sendConnectInSMS({
+            toPhone: normPhone,
+            code: otpCode,
+            fullName: name,
+            channel: "sms",
+          })
+          if (!smsRes.success) {
+            callRes = await sendConnectInSMS({
+              toPhone: normPhone,
+              code: otpCode,
+              fullName: name,
+              channel: "call",
+            })
+          }
+        }
+      } else if (channel === "all") {
+        ;[smsRes, callRes, emailRes] = await Promise.all([
+          sendConnectInSMS({
+            toPhone: normPhone,
+            code: otpCode,
+            fullName: name,
+            channel: "sms",
+          }),
+          sendConnectInSMS({
+            toPhone: normPhone,
+            code: otpCode,
+            fullName: name,
+            channel: "call",
+          }),
+          realEmail
+            ? sendConnectInOTPEmail({
+                toEmail: realEmail,
+                fullName: name,
+                code: otpCode,
+                action: "login_2fa",
+              }).catch((e: any) => ({ success: false, error: e?.message || "Email dispatch failed" }))
+            : Promise.resolve({ success: false, error: "No deliverable email on file" }),
+        ])
+      } else if (channel === "call") {
+        ;[callRes, emailRes] = await Promise.all([
+          sendConnectInSMS({
+            toPhone: normPhone,
+            code: otpCode,
+            fullName: name,
+            channel: "call",
+          }),
+          realEmail
+            ? sendConnectInOTPEmail({
+                toEmail: realEmail,
+                fullName: name,
+                code: otpCode,
+                action: "login_2fa",
+              }).catch((e: any) => ({ success: false, error: e?.message || "Email dispatch failed" }))
+            : Promise.resolve({ success: false, error: "No deliverable email on file" }),
+        ])
+      } else {
+        ;[smsRes, emailRes] = await Promise.all([
+          sendConnectInSMS({
+            toPhone: normPhone,
+            code: otpCode,
+            fullName: name,
+            channel: "sms",
+          }),
+          realEmail
+            ? sendConnectInOTPEmail({
+                toEmail: realEmail,
+                fullName: name,
+                code: otpCode,
+                action: "login_2fa",
+              }).catch((e: any) => ({ success: false, error: e?.message || "Email dispatch failed" }))
+            : Promise.resolve({ success: false, error: "No deliverable email on file" }),
+        ])
+        if (!smsRes.success) {
+          callRes = await sendConnectInSMS({
+            toPhone: normPhone,
+            code: otpCode,
+            fullName: name,
+            channel: "call",
+          })
+        }
+      }
+
+      const smsDelivered = Boolean(smsRes.success && smsRes.sid)
+      const callDelivered = Boolean(callRes.success && callRes.sid)
+      const emailDelivered = Boolean(emailRes.success)
+
+      if (!smsDelivered && !callDelivered && !emailDelivered) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error:
+              "Could not deliver your 6-digit verification code via email, SMS, or phone call. Please verify your mobile number or email and try again.",
+            smsError: smsRes.error,
+            callError: callRes.error,
+            emailError: emailRes.error,
+          },
+          { status: 502 }
+        )
+      }
+
+      const prettyPhone = formatPrettyPhoneDisplay(normPhone)
+      const deliveredParts: string[] = []
+      if (smsDelivered) deliveredParts.push(`SMS (${prettyPhone})`)
+      if (callDelivered) deliveredParts.push(`automated phone call (${prettyPhone})`)
+      if (emailDelivered) deliveredParts.push(`email (${realEmail})`)
 
       return NextResponse.json({
         ok: true,
         phone: normPhone,
-        prettyPhone: formatPrettyPhoneDisplay(normPhone),
+        prettyPhone,
         channel,
+        smsDispatched: smsDelivered,
+        callDispatched: callDelivered,
+        emailDispatched: emailDelivered,
+        smsError: smsRes.error,
+        callError: callRes.error,
+        emailError: emailRes.error,
         otpChallengeToken: challengeToken,
-        message: isWifiFallback
-          ? `💬 Sent 6-digit verification code for ${formatPrettyPhoneDisplay(normPhone)}${email && !email.endsWith("@connectin.app") && !email.endsWith("@connectin.phone") ? ` & ${email}` : ""} (Wi-Fi / No-SIM instant code: ${otpCode}).`
-          : channel === "call"
-            ? `📞 Placing automated verification call to ${formatPrettyPhoneDisplay(normPhone)}. Enter the 6-digit code spoken on your phone.`
-            : `💬 Sent 6-digit 2FA verification code via SMS to ${formatPrettyPhoneDisplay(normPhone)}.`,
+        message: `🔐 Sent your 6-digit verification code via ${deliveredParts.join(", ")}. Check your messages, answer your phone, or check your email inbox.`,
       })
     }
 

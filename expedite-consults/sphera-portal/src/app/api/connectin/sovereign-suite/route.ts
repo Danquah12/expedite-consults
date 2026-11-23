@@ -443,7 +443,7 @@ const DEFAULT_STATE: SovereignSuiteCloudState = {
           heading: "1. 2FA Identity Binding & Anti-Impersonation Gate",
           metricBadge: "100% 2FA Verified",
           body: "Every account—including Google & Microsoft Entra ID SSO—binds a cryptographically verified E.164 phone number stored in Firebase Cloud KV.",
-          keySpec: "Zero SIM spoofing · Multi-device token fan-out · Wi-Fi No-SIM instant code fallback",
+          keySpec: "Zero SIM spoofing · Multi-device token fan-out · Email, SMS & Voice Call 2FA delivery",
         },
         {
           slideNumber: 2,

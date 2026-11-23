@@ -21,10 +21,24 @@ import {
   formatInternationalPhonePretty,
 } from "@/lib/connectin-international-phones"
 
+const EMAIL_FORMAT_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function isRealDeliverableEmail(raw?: string | null): boolean {
+  const clean = String(raw || "").trim().toLowerCase()
+  return (
+    Boolean(clean) &&
+    EMAIL_FORMAT_RE.test(clean) &&
+    !clean.endsWith(".conectln.com") &&
+    !clean.endsWith("@conectln.com") &&
+    !clean.endsWith("@connectin.app") &&
+    !clean.endsWith("@connectin.phone")
+  )
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { email, password, channel = "sms", clientTimezone } = body
+    const { email, password, channel = "all", clientTimezone } = body
 
     if (!email && !body.phone) {
       return NextResponse.json({ error: "Email and mobile phone number are required." }, { status: 400 })
@@ -34,8 +48,14 @@ export async function POST(req: NextRequest) {
     const geo = resolveRequestGeoLocation(req, clientTimezone, body.location)
     const cleanTarget = (email || body.phone || "").toLowerCase().trim()
     const isPhoneInput = !cleanTarget.includes("@") && /^[+\d\s().-]+$/.test(cleanTarget)
-    const requestedChannel: "email" | "sms" | "call" =
-      channel === "call" ? "call" : channel === "email" && !isPhoneInput ? "email" : "sms"
+    const requestedChannel: "all" | "email" | "sms" | "call" =
+      channel === "call"
+        ? "call"
+        : channel === "email" && !isPhoneInput
+          ? "email"
+          : channel === "sms"
+            ? "sms"
+            : "all"
     const incomingName = typeof body.name === "string" ? body.name.trim() : ""
     const profDef = body.professionId && body.professionId !== "auto_detect" ? findProfessionById(body.professionId) : undefined
 
@@ -267,9 +287,20 @@ export async function POST(req: NextRequest) {
       return directRes
     }
 
-    // First-time phone verification path: dispatch OTP to prove physical phone ownership once
-    const effectiveChannel: "email" | "sms" | "call" =
-      requestedChannel === "call" ? "call" : "sms"
+    // First-time phone verification path: deliver 2FA code strictly via Email, SMS & Voice Call (never display on screen)
+    const realUserEmail = isRealDeliverableEmail(user.email)
+      ? user.email.trim().toLowerCase()
+      : isRealDeliverableEmail(cleanTarget)
+        ? cleanTarget
+        : ""
+    const effectiveChannel: "all" | "email" | "sms" | "call" =
+      requestedChannel === "call"
+        ? "call"
+        : requestedChannel === "sms"
+          ? "sms"
+          : requestedChannel === "email" && realUserEmail
+            ? "email"
+            : "all"
 
     if (activeProfile) {
       connectinDb.touchUserLogin(user.id, `${effectiveChannel.toUpperCase()} 2FA`)
@@ -343,9 +374,10 @@ export async function POST(req: NextRequest) {
     const fullName = profile?.name || (isPhoneInput ? "Member" : cleanTarget.split("@")[0])
 
     // Generate brand new, dynamic random OTP & HMAC signed challenge
-    const otpTarget = (effectiveChannel === "sms" || effectiveChannel === "call") && dispatchPhone
-      ? dispatchPhone
-      : (user.email || cleanTarget)
+    const otpTarget =
+      (effectiveChannel === "all" || effectiveChannel === "sms" || effectiveChannel === "call") && dispatchPhone
+        ? dispatchPhone
+        : (user.email || cleanTarget)
 
     const { code: otpCode, challengeToken } = createDynamicOTP(otpTarget, 15)
 
@@ -363,78 +395,164 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Send 2FA code via selected channel
-    const isVoiceCall = effectiveChannel === "call"
-    const isSms = effectiveChannel === "sms"
+    // Send 2FA code strictly to the user's Email, SMS, and/or Voice Call (never render on the phone/browser UI)
+    let smsResult: { success: boolean; error?: string; sid?: string } = { success: false }
+    let callResult: { success: boolean; error?: string; sid?: string } = { success: false }
+    let emailResult: { success: boolean; error?: string; id?: string } = { success: false }
 
-    let emailDispatchResult: { success: boolean; error?: string; id?: string } = { success: true }
-    let isWifiSmsFallback = false
+    if (effectiveChannel === "email" && realUserEmail) {
+      emailResult = await sendConnectInOTPEmail({
+        toEmail: realUserEmail,
+        fullName,
+        code: otpCode,
+        action: "login_2fa"
+      }).catch((e: any) => ({ success: false, error: e?.message || "Email dispatch failed" }))
 
-    if ((isSms || isVoiceCall) && dispatchPhone) {
-      const realUserEmail =
-        user.email && !user.email.endsWith("@connectin.app") && !user.email.endsWith("@connectin.phone")
-          ? user.email
-          : ""
-      const [smsRes] = await Promise.all([
-        sendConnectInSMS({
+      if (!emailResult.success && dispatchPhone) {
+        console.warn("[/api/connectin/auth/login] Email dispatch notice:", emailResult.error)
+        smsResult = await sendConnectInSMS({
           toPhone: dispatchPhone,
           code: otpCode,
           fullName,
-          channel: isVoiceCall ? "call" : "sms"
-        }),
+          channel: "sms"
+        })
+        if (!smsResult.success) {
+          callResult = await sendConnectInSMS({
+            toPhone: dispatchPhone,
+            code: otpCode,
+            fullName,
+            channel: "call"
+          })
+        }
+      }
+    } else if (effectiveChannel === "all") {
+      ;[smsResult, callResult, emailResult] = await Promise.all([
+        dispatchPhone
+          ? sendConnectInSMS({
+              toPhone: dispatchPhone,
+              code: otpCode,
+              fullName,
+              channel: "sms"
+            })
+          : Promise.resolve({ success: false, error: "No mobile phone number available" }),
+        dispatchPhone
+          ? sendConnectInSMS({
+              toPhone: dispatchPhone,
+              code: otpCode,
+              fullName,
+              channel: "call"
+            })
+          : Promise.resolve({ success: false, error: "No mobile phone number available" }),
         realUserEmail
           ? sendConnectInOTPEmail({
               toEmail: realUserEmail,
               fullName,
               code: otpCode,
               action: "login_2fa"
-            }).catch(() => ({ success: false }))
-          : Promise.resolve({ success: false })
+            }).catch((e: any) => ({ success: false, error: e?.message || "Email dispatch failed" }))
+          : Promise.resolve({ success: false, error: "No deliverable email on file" })
       ])
-      if (!smsRes.success) {
-        console.warn(`[/api/connectin/auth/login] ${isVoiceCall ? "Voice Call" : "SMS"} dispatch notice:`, smsRes.error)
-      }
-      isWifiSmsFallback =
-        !smsRes?.sid ||
-        smsRes.sid === "simulated_sms" ||
-        smsRes.sid === "gateway_simulated" ||
-        smsRes.sid === "gateway_fallback"
+    } else if (effectiveChannel === "call") {
+      ;[callResult, emailResult] = await Promise.all([
+        dispatchPhone
+          ? sendConnectInSMS({
+              toPhone: dispatchPhone,
+              code: otpCode,
+              fullName,
+              channel: "call"
+            })
+          : Promise.resolve({ success: false, error: "No mobile phone number available" }),
+        realUserEmail
+          ? sendConnectInOTPEmail({
+              toEmail: realUserEmail,
+              fullName,
+              code: otpCode,
+              action: "login_2fa"
+            }).catch((e: any) => ({ success: false, error: e?.message || "Email dispatch failed" }))
+          : Promise.resolve({ success: false, error: "No deliverable email on file" })
+      ])
     } else {
-      emailDispatchResult = await sendConnectInOTPEmail({
-        toEmail: user.email || cleanTarget,
-        fullName,
-        code: otpCode,
-        action: "login_2fa"
-      })
-      if (!emailDispatchResult.success) {
-        console.warn("[/api/connectin/auth/login] Email dispatch notice:", emailDispatchResult.error)
+      ;[smsResult, emailResult] = await Promise.all([
+        dispatchPhone
+          ? sendConnectInSMS({
+              toPhone: dispatchPhone,
+              code: otpCode,
+              fullName,
+              channel: "sms"
+            })
+          : Promise.resolve({ success: false, error: "No mobile phone number available" }),
+        realUserEmail
+          ? sendConnectInOTPEmail({
+              toEmail: realUserEmail,
+              fullName,
+              code: otpCode,
+              action: "login_2fa"
+            }).catch((e: any) => ({ success: false, error: e?.message || "Email dispatch failed" }))
+          : Promise.resolve({ success: false, error: "No deliverable email on file" })
+      ])
+      if (!smsResult.success && dispatchPhone) {
+        callResult = await sendConnectInSMS({
+          toPhone: dispatchPhone,
+          code: otpCode,
+          fullName,
+          channel: "call"
+        })
       }
     }
 
-    const emailSent = isSms || isVoiceCall ? true : emailDispatchResult.success
-    const prettyPhone = formatInternationalPhonePretty(dispatchPhone)
+    if (dispatchPhone && !smsResult.success && smsResult.error) {
+      console.warn("[/api/connectin/auth/login] SMS dispatch notice:", smsResult.error)
+    }
+    if (dispatchPhone && !callResult.success && callResult.error) {
+      console.warn("[/api/connectin/auth/login] Voice Call dispatch notice:", callResult.error)
+    }
+    if (realUserEmail && !emailResult.success && emailResult.error) {
+      console.warn("[/api/connectin/auth/login] Email dispatch notice:", emailResult.error)
+    }
 
-    const message = isWifiSmsFallback
-      ? `💬 Sent 6-digit 2FA security code for ${prettyPhone} (Wi-Fi / No-SIM instant code: ${otpCode}). Enter it below to sign in.`
-      : isVoiceCall
-      ? `📞 Placing automated 2FA voice call to ${prettyPhone}. Answer your phone to hear your 6-digit code.`
-      : isSms
-      ? `💬 Sent 6-digit 2FA security code via SMS to ${prettyPhone}. Enter it below to sign in.`
-      : emailDispatchResult.success
-        ? `✉️ Sent 6-digit 2FA security code to ${user.email || cleanTarget} (verified calling number: ${prettyPhone}).`
-        : `Email delivery notice: ${emailDispatchResult.error || "Unable to send 2FA email"} (Wi-Fi / No-SIM instant code: ${otpCode}).`
+    const smsDelivered = Boolean(smsResult.success && smsResult.sid)
+    const callDelivered = Boolean(callResult.success && callResult.sid)
+    const emailDelivered = Boolean(emailResult.success)
+
+    if (!smsDelivered && !callDelivered && !emailDelivered) {
+      return NextResponse.json(
+        {
+          error:
+            "Could not deliver your 6-digit 2FA verification code via email, SMS, or phone call. Please verify your mobile number and email address and try again.",
+          smsError: smsResult.error,
+          callError: callResult.error,
+          emailError: emailResult.error
+        },
+        { status: 502 }
+      )
+    }
+
+    const prettyPhone = formatInternationalPhonePretty(dispatchPhone)
+    const deliveredParts: string[] = []
+    if (smsDelivered) deliveredParts.push(`SMS (${prettyPhone})`)
+    if (callDelivered) deliveredParts.push(`automated phone call (${prettyPhone})`)
+    if (emailDelivered) deliveredParts.push(`email (${realUserEmail})`)
+
+    const message = `🔐 Sent your 6-digit 2FA security code via ${deliveredParts.join(", ")}. Check your messages, answer your phone, or check your email inbox.`
 
     const res = NextResponse.json({
       success: true,
       requires2FA: true,
       channel: effectiveChannel,
-      target: (isSms || isVoiceCall) && dispatchPhone ? dispatchPhone : (user.email || cleanTarget),
+      target:
+        (smsDelivered || callDelivered) && dispatchPhone
+          ? dispatchPhone
+          : realUserEmail || dispatchPhone || cleanTarget,
       prettyPhone,
       phone: dispatchPhone,
-      email: user.email || cleanTarget,
+      email: realUserEmail || user.email || cleanTarget,
       otpChallengeToken: challengeToken,
-      emailDispatched: emailSent,
-      emailError: emailDispatchResult.error,
+      smsDispatched: smsDelivered,
+      callDispatched: callDelivered,
+      emailDispatched: emailDelivered,
+      smsError: smsResult.error,
+      callError: callResult.error,
+      emailError: emailResult.error,
       message
     })
 
