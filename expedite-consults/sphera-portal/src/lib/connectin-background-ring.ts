@@ -124,66 +124,300 @@ function getSubSonicKeepAliveWavUri(): string {
   return cachedSubSonicWavUri
 }
 
-let cachedRingtoneUri: string | null = null
-function getPhoneRingtoneWavUri(): string {
-  if (cachedRingtoneUri) return cachedRingtoneUri
-  const sampleRate = 16000
-  const durationSec = 2.4
-  const totalSamples = Math.floor(sampleRate * durationSec)
-  const samples = new Int16Array(totalSamples)
+export type ConnectLnRingtoneId =
+  | "connectln-marimba"
+  | "crystal-chime"
+  | "executive-piano"
+  | "gentle-kalimba"
+  | "classic-bell"
+  | "studio-acoustic"
+  | "device-custom"
 
-  for (let i = 0; i < totalSamples; i++) {
-    const t = i / sampleRate
-    const inBurst1 = t >= 0.0 && t <= 0.55
-    const inBurst2 = t >= 0.72 && t <= 1.32
-    if (!inBurst1 && !inBurst2) {
-      samples[i] = 0
-      continue
+export interface ConnectLnRingtoneOption {
+  id: ConnectLnRingtoneId
+  label: string
+  description: string
+  badge: string
+}
+
+export const CONNECTLN_RINGTONE_PRESETS: ConnectLnRingtoneOption[] = [
+  {
+    id: "connectln-marimba",
+    label: "ConnectLn Marimba Melody",
+    description: "Warm ascending marimba chime (clear & upbeat)",
+    badge: "Default",
+  },
+  {
+    id: "crystal-chime",
+    label: "Crystal Harp Chime",
+    description: "Soothing crystal bell & harp arpeggio",
+    badge: "Harp",
+  },
+  {
+    id: "executive-piano",
+    label: "Executive Warm Piano",
+    description: "Studio electric piano melody",
+    badge: "Piano",
+  },
+  {
+    id: "gentle-kalimba",
+    label: "Gentle Sunrise Kalimba",
+    description: "Soft rhythmic thumb-piano notes",
+    badge: "Kalimba",
+  },
+  {
+    id: "classic-bell",
+    label: "Classic Single Telephone Ring",
+    description: "Single long ring cadence (never sounds busy)",
+    badge: "Classic",
+  },
+  {
+    id: "studio-acoustic",
+    label: "Studio Acoustic Guitar",
+    description: "Real acoustic track (/status-videos/hot-swing.mp3)",
+    badge: "Music",
+  },
+  {
+    id: "device-custom",
+    label: "My Device Ringtone (Custom File)",
+    description: "Use an audio / ringtone file from your phone or PC",
+    badge: "Device",
+  },
+]
+
+const RINGTONE_CHOICE_STORAGE_KEY = "connectln_selected_ringtone_id_v1"
+const CUSTOM_RINGTONE_DATA_KEY = "connectln_custom_device_ringtone_data_v1"
+const CUSTOM_RINGTONE_NAME_KEY = "connectln_custom_device_ringtone_name_v1"
+
+export function getSelectedConnectLnRingtoneId(): ConnectLnRingtoneId {
+  if (typeof window === "undefined") return "connectln-marimba"
+  try {
+    const raw = window.localStorage.getItem(RINGTONE_CHOICE_STORAGE_KEY) as ConnectLnRingtoneId | null
+    if (raw && CONNECTLN_RINGTONE_PRESETS.some((p) => p.id === raw)) {
+      return raw
     }
-    const localT = inBurst1 ? t : t - 0.72
-    const burstLen = inBurst1 ? 0.55 : 0.6
-    const attack = Math.min(1, localT / 0.02)
-    const release = Math.min(1, (burstLen - localT) / 0.04)
-    const env = Math.max(0, Math.min(attack, release))
-    const warble = 0.8 + 0.2 * Math.sin(2 * Math.PI * 20 * localT)
-    const wave =
-      0.45 * Math.sin(2 * Math.PI * 523.25 * t) +
-      0.35 * Math.sin(2 * Math.PI * 659.25 * t) +
-      0.2 * Math.sin(2 * Math.PI * 783.99 * t)
-    samples[i] = Math.round(wave * warble * env * 24000)
+  } catch {}
+  return "connectln-marimba"
+}
+
+export function getCustomDeviceRingtoneName(): string {
+  if (typeof window === "undefined") return ""
+  try {
+    return window.localStorage.getItem(CUSTOM_RINGTONE_NAME_KEY) || ""
+  } catch {
+    return ""
+  }
+}
+
+export function getCustomDeviceRingtoneDataUrl(): string {
+  if (typeof window === "undefined") return ""
+  try {
+    return window.localStorage.getItem(CUSTOM_RINGTONE_DATA_KEY) || ""
+  } catch {
+    return ""
+  }
+}
+
+export function setSelectedConnectLnRingtoneId(id: ConnectLnRingtoneId): void {
+  if (typeof window === "undefined") return
+  try {
+    window.localStorage.setItem(RINGTONE_CHOICE_STORAGE_KEY, id)
+    window.dispatchEvent(new CustomEvent("connectln_ringtone_changed", { detail: id }))
+  } catch {}
+  // Invalidate cached synthesized buffer so next ring uses the newly picked tone
+  ringtoneBuffer = null
+  cachedRingtoneUriMap.clear()
+  if (fallbackWavRingAudio) {
+    try {
+      fallbackWavRingAudio.src = getRingtoneAudioSourceUri(id)
+    } catch {}
+  }
+}
+
+export function saveCustomDeviceRingtoneDataUrl(dataUrl: string, fileName: string): void {
+  if (typeof window === "undefined" || !dataUrl) return
+  try {
+    window.localStorage.setItem(CUSTOM_RINGTONE_DATA_KEY, dataUrl)
+    window.localStorage.setItem(CUSTOM_RINGTONE_NAME_KEY, fileName || "Device Ringtone")
+  } catch {}
+  setSelectedConnectLnRingtoneId("device-custom")
+}
+
+let activePreviewAudio: HTMLAudioElement | null = null
+let activePreviewTimer: ReturnType<typeof setTimeout> | null = null
+
+export function stopPreviewConnectLnRingtone(): void {
+  if (activePreviewTimer) {
+    clearTimeout(activePreviewTimer)
+    activePreviewTimer = null
+  }
+  if (activePreviewAudio) {
+    try {
+      activePreviewAudio.pause()
+      activePreviewAudio.currentTime = 0
+    } catch {}
+    activePreviewAudio = null
+  }
+}
+
+export function previewConnectLnRingtone(id?: ConnectLnRingtoneId, durationMs = 4500): void {
+  if (typeof window === "undefined") return
+  stopPreviewConnectLnRingtone()
+  const targetId = id || getSelectedConnectLnRingtoneId()
+  try {
+    const a = new Audio(getRingtoneAudioSourceUri(targetId))
+    a.dataset.connectlnCallAudio = "true"
+    a.volume = 0.85
+    a.setAttribute("playsinline", "true")
+    a.play().catch(() => {})
+    activePreviewAudio = a
+    activePreviewTimer = setTimeout(() => {
+      stopPreviewConnectLnRingtone()
+    }, durationMs)
+  } catch {}
+}
+
+function synthesizeMelodicRingtoneSamples(
+  presetId: ConnectLnRingtoneId,
+  sampleRate: number
+): Float32Array {
+  if (presetId === "classic-bell") {
+    const durationSec = 4.0
+    const totalSamples = Math.floor(sampleRate * durationSec)
+    const out = new Float32Array(totalSamples)
+    // Single smooth 1.75s classic telephone ring followed by 2.25s silence (NOT a double busy beep)
+    for (let i = 0; i < totalSamples; i++) {
+      const t = i / sampleRate
+      if (t > 1.75) continue
+      const attack = Math.min(1, t / 0.03)
+      const release = Math.min(1, (1.75 - t) / 0.08)
+      const env = Math.max(0, Math.min(attack, release))
+      const shimmer = 0.85 + 0.15 * Math.sin(2 * Math.PI * 16 * t)
+      const wave =
+        0.52 * Math.sin(2 * Math.PI * 440 * t) +
+        0.34 * Math.sin(2 * Math.PI * 554.37 * t) +
+        0.14 * Math.sin(2 * Math.PI * 659.25 * t)
+      out[i] = wave * shimmer * env * 0.78
+    }
+    return out
   }
 
-  cachedRingtoneUri = encodeMonoPcm16WavDataUri(samples, sampleRate)
-  return cachedRingtoneUri
+  const noteMaps: Record<string, Array<{ freq: number; start: number; len: number }>> = {
+    "crystal-chime": [
+      { freq: 587.33, start: 0.0, len: 0.42 },  // D5
+      { freq: 739.99, start: 0.2, len: 0.42 },  // F#5
+      { freq: 880.0, start: 0.4, len: 0.45 },   // A5
+      { freq: 1174.66, start: 0.62, len: 0.65 }, // D6
+      { freq: 880.0, start: 0.96, len: 0.48 },  // A5
+      { freq: 1174.66, start: 1.24, len: 0.8 }, // D6
+    ],
+    "executive-piano": [
+      { freq: 329.63, start: 0.0, len: 0.55 },  // E4
+      { freq: 415.3, start: 0.18, len: 0.55 },  // G#4
+      { freq: 493.88, start: 0.36, len: 0.55 }, // B4
+      { freq: 659.25, start: 0.54, len: 0.75 }, // E5
+      { freq: 587.33, start: 0.92, len: 0.45 }, // D5
+      { freq: 659.25, start: 1.18, len: 0.85 }, // E5
+    ],
+    "gentle-kalimba": [
+      { freq: 392.0, start: 0.0, len: 0.4 },   // G4
+      { freq: 493.88, start: 0.22, len: 0.4 }, // B4
+      { freq: 587.33, start: 0.44, len: 0.4 }, // D5
+      { freq: 783.99, start: 0.66, len: 0.6 }, // G5
+      { freq: 659.25, start: 1.0, len: 0.5 },  // E5
+      { freq: 783.99, start: 1.3, len: 0.7 },  // G5
+    ],
+    "connectln-marimba": [
+      { freq: 523.25, start: 0.0, len: 0.34 },  // C5
+      { freq: 659.25, start: 0.18, len: 0.34 }, // E5
+      { freq: 783.99, start: 0.36, len: 0.34 }, // G5
+      { freq: 987.77, start: 0.54, len: 0.42 }, // B5
+      { freq: 1046.5, start: 0.74, len: 0.65 }, // C6
+      { freq: 783.99, start: 1.08, len: 0.36 }, // G5
+      { freq: 659.25, start: 1.28, len: 0.36 }, // E5
+      { freq: 1046.5, start: 1.48, len: 0.78 }, // C6
+    ],
+  }
+
+  const notes = noteMaps[presetId] || noteMaps["connectln-marimba"]
+  const durationSec = 3.1
+  const totalSamples = Math.floor(sampleRate * durationSec)
+  const out = new Float32Array(totalSamples)
+
+  for (const n of notes) {
+    const startIdx = Math.floor(n.start * sampleRate)
+    const endIdx = Math.min(totalSamples, Math.floor((n.start + n.len) * sampleRate))
+    for (let i = startIdx; i < endIdx; i++) {
+      const localT = (i - startIdx) / sampleRate
+      const attack = Math.min(1, localT / 0.012)
+      const decay = Math.exp(-3.4 * (localT / n.len))
+      const tailFade = Math.min(1, ((endIdx - i) / sampleRate) / 0.04)
+      const env = attack * decay * tailFade
+      const tone =
+        0.65 * Math.sin(2 * Math.PI * n.freq * localT) +
+        0.24 * Math.sin(2 * Math.PI * n.freq * 2 * localT) * Math.exp(-5 * localT) +
+        0.11 * Math.sin(2 * Math.PI * n.freq * 3 * localT) * Math.exp(-7 * localT)
+      out[i] += tone * env * 0.55
+    }
+  }
+
+  for (let i = 0; i < totalSamples; i++) {
+    out[i] = Math.tanh(out[i]) * 0.86
+  }
+  return out
+}
+
+const cachedRingtoneUriMap = new Map<string, string>()
+
+function getRingtoneAudioSourceUri(presetOverride?: ConnectLnRingtoneId): string {
+  const preset = presetOverride || getSelectedConnectLnRingtoneId()
+  if (preset === "device-custom") {
+    const customUrl = getCustomDeviceRingtoneDataUrl()
+    if (customUrl) return customUrl
+  }
+  if (preset === "studio-acoustic") {
+    return "/status-videos/hot-swing.mp3"
+  }
+  const existing = cachedRingtoneUriMap.get(preset)
+  if (existing) return existing
+  const sampleRate = 16000
+  const floats = synthesizeMelodicRingtoneSamples(preset, sampleRate)
+  const samples = new Int16Array(floats.length)
+  for (let i = 0; i < floats.length; i++) {
+    samples[i] = Math.round(Math.max(-1, Math.min(1, floats[i])) * 26000)
+  }
+  const uri = encodeMonoPcm16WavDataUri(samples, sampleRate)
+  cachedRingtoneUriMap.set(preset, uri)
+  return uri
+}
+
+function getPhoneRingtoneWavUri(): string {
+  return getRingtoneAudioSourceUri()
 }
 
 let cachedOutgoingRingbackUri: string | null = null
 function getOutgoingRingbackWavUri(): string {
   if (cachedOutgoingRingbackUri) return cachedOutgoingRingbackUri
   const sampleRate = 16000
-  const durationSec = 4.0 // Classic telephone ringback cadence: two dual-tone rings (0-0.65s, 0.85-1.5s) + 2.5s pause
+  const durationSec = 4.2 // Smooth musical calling chime + warm single telephone ringback (never sounds busy/engaged)
   const totalSamples = Math.floor(sampleRate * durationSec)
   const samples = new Int16Array(totalSamples)
 
   for (let i = 0; i < totalSamples; i++) {
     const t = i / sampleRate
-    const inPulse1 = t >= 0.0 && t <= 0.65
-    const inPulse2 = t >= 0.85 && t <= 1.5
-    if (!inPulse1 && !inPulse2) {
+    if (t > 1.75) {
       samples[i] = 0
       continue
     }
-    const localT = inPulse1 ? t : t - 0.85
-    const pulseLen = 0.65
-    const attack = Math.min(1, localT / 0.025)
-    const release = Math.min(1, (pulseLen - localT) / 0.04)
+    const attack = Math.min(1, t / 0.06)
+    const release = Math.min(1, (1.75 - t) / 0.14)
     const env = Math.max(0, Math.min(attack, release))
-    // Standard 440 Hz + 480 Hz North American / International ringback chord with warm harmonic overtone
+    // Gentle soft 440 Hz + 554.37 Hz + 659.25 Hz major triad calling tone
     const wave =
       0.46 * Math.sin(2 * Math.PI * 440 * t) +
-      0.46 * Math.sin(2 * Math.PI * 480 * t) +
-      0.08 * Math.sin(2 * Math.PI * 880 * t)
-    samples[i] = Math.round(wave * env * 19000)
+      0.32 * Math.sin(2 * Math.PI * 554.37 * t) +
+      0.22 * Math.sin(2 * Math.PI * 659.25 * t)
+    samples[i] = Math.round(wave * env * 14500)
   }
 
   cachedOutgoingRingbackUri = encodeMonoPcm16WavDataUri(samples, sampleRate)
@@ -204,57 +438,34 @@ function buildAudioBuffers(ctx: AudioContext): void {
 
   if (!ringtoneBuffer) {
     const sr = ctx.sampleRate
-    const durationSec = 2.4
-    const len = Math.floor(sr * durationSec)
-    const buf = ctx.createBuffer(1, len, sr)
+    const preset = getSelectedConnectLnRingtoneId()
+    const floats = synthesizeMelodicRingtoneSamples(preset, sr)
+    const buf = ctx.createBuffer(1, floats.length, sr)
     const ch = buf.getChannelData(0)
-    for (let i = 0; i < len; i++) {
-      const t = i / sr
-      const inBurst1 = t >= 0.0 && t <= 0.55
-      const inBurst2 = t >= 0.72 && t <= 1.32
-      if (!inBurst1 && !inBurst2) {
-        ch[i] = 0
-        continue
-      }
-      const localT = inBurst1 ? t : t - 0.72
-      const burstLen = inBurst1 ? 0.55 : 0.6
-      const attack = Math.min(1, localT / 0.02)
-      const release = Math.min(1, (burstLen - localT) / 0.04)
-      const env = Math.max(0, Math.min(attack, release))
-      const warble = 0.8 + 0.2 * Math.sin(2 * Math.PI * 20 * localT)
-      const wave =
-        0.45 * Math.sin(2 * Math.PI * 523.25 * t) +
-        0.35 * Math.sin(2 * Math.PI * 659.25 * t) +
-        0.2 * Math.sin(2 * Math.PI * 783.99 * t)
-      ch[i] = wave * warble * env * 0.82
-    }
+    ch.set(floats)
     ringtoneBuffer = buf
   }
 
   if (!outgoingRingbackBuffer) {
     const sr = ctx.sampleRate
-    const durationSec = 4.0
+    const durationSec = 4.2
     const len = Math.floor(sr * durationSec)
     const buf = ctx.createBuffer(1, len, sr)
     const ch = buf.getChannelData(0)
     for (let i = 0; i < len; i++) {
       const t = i / sr
-      const inPulse1 = t >= 0.0 && t <= 0.65
-      const inPulse2 = t >= 0.85 && t <= 1.5
-      if (!inPulse1 && !inPulse2) {
+      if (t > 1.75) {
         ch[i] = 0
         continue
       }
-      const localT = inPulse1 ? t : t - 0.85
-      const pulseLen = 0.65
-      const attack = Math.min(1, localT / 0.025)
-      const release = Math.min(1, (pulseLen - localT) / 0.04)
+      const attack = Math.min(1, t / 0.06)
+      const release = Math.min(1, (1.75 - t) / 0.14)
       const env = Math.max(0, Math.min(attack, release))
       const wave =
         0.46 * Math.sin(2 * Math.PI * 440 * t) +
-        0.46 * Math.sin(2 * Math.PI * 480 * t) +
-        0.08 * Math.sin(2 * Math.PI * 880 * t)
-      ch[i] = wave * env * 0.55
+        0.32 * Math.sin(2 * Math.PI * 554.37 * t) +
+        0.22 * Math.sin(2 * Math.PI * 659.25 * t)
+      ch[i] = wave * env * 0.45
     }
     outgoingRingbackBuffer = buf
   }
@@ -485,14 +696,19 @@ export function startLoudPhoneRingtone(): void {
   setCallMediaSilenceActive(true, "incoming-call-ringtone")
   ensureLiveAudioPipelineStarted()
 
-  // 1. Hardware-thread C++ looping `AudioBufferSourceNode` (`loop = true`) — ZERO JS `setInterval` dependency!
-  if (liveAudioCtx && ringtoneBuffer && !activeRingSource) {
+  const selectedId = getSelectedConnectLnRingtoneId()
+  const useExternalAudioFile =
+    selectedId === "studio-acoustic" ||
+    (selectedId === "device-custom" && Boolean(getCustomDeviceRingtoneDataUrl()))
+
+  // 1. Hardware-thread C++ looping `AudioBufferSourceNode` for synthesized musical ringtones
+  if (!useExternalAudioFile && liveAudioCtx && ringtoneBuffer && !activeRingSource) {
     try {
       if (liveAudioCtx.state === "suspended") {
         liveAudioCtx.resume().catch(() => {})
       }
       const gain = liveAudioCtx.createGain()
-      gain.gain.value = 1.0
+      gain.gain.value = 0.9
       const src = liveAudioCtx.createBufferSource()
       src.buffer = ringtoneBuffer
       src.loop = true
@@ -504,12 +720,20 @@ export function startLoudPhoneRingtone(): void {
     } catch {}
   }
 
-  // 2. Redundant HTML5 `<audio loop>` element for iOS Safari / Android Chrome / Desktop
+  // 2. HTML5 `<audio loop>` element (required for custom uploaded device ringtone / real music track / mobile fallback)
   if (fallbackWavRingAudio) {
-    fallbackWavRingAudio.muted = false
-    fallbackWavRingAudio.volume = 1.0
-    if (fallbackWavRingAudio.paused) {
-      fallbackWavRingAudio.play().catch(() => {})
+    const desiredSrc = getRingtoneAudioSourceUri(selectedId)
+    if (fallbackWavRingAudio.src !== desiredSrc) {
+      fallbackWavRingAudio.src = desiredSrc
+    }
+    const shouldPlayHtmlAudio =
+      useExternalAudioFile || !liveAudioCtx || liveAudioCtx.state !== "running"
+    if (shouldPlayHtmlAudio) {
+      fallbackWavRingAudio.muted = false
+      fallbackWavRingAudio.volume = 0.95
+      if (fallbackWavRingAudio.paused) {
+        fallbackWavRingAudio.play().catch(() => {})
+      }
     }
   }
 
@@ -583,27 +807,31 @@ export function startOutgoingCallerRingbackTone(): void {
   isOutgoingRingbackActive = true
   ensureLiveAudioPipelineStarted()
 
+  let startedWebAudio = false
   if (liveAudioCtx && outgoingRingbackBuffer && !activeOutgoingRingbackSource) {
     try {
       if (liveAudioCtx.state === "suspended") {
         liveAudioCtx.resume().catch(() => {})
       }
-      const gain = liveAudioCtx.createGain()
-      gain.gain.value = 0.55
-      const src = liveAudioCtx.createBufferSource()
-      src.buffer = outgoingRingbackBuffer
-      src.loop = true
-      src.connect(gain)
-      gain.connect(liveAudioCtx.destination)
-      src.start(0)
-      activeOutgoingRingbackSource = src
-      activeOutgoingRingbackGain = gain
+      if (liveAudioCtx.state === "running") {
+        const gain = liveAudioCtx.createGain()
+        gain.gain.value = 0.5
+        const src = liveAudioCtx.createBufferSource()
+        src.buffer = outgoingRingbackBuffer
+        src.loop = true
+        src.connect(gain)
+        gain.connect(liveAudioCtx.destination)
+        src.start(0)
+        activeOutgoingRingbackSource = src
+        activeOutgoingRingbackGain = gain
+        startedWebAudio = true
+      }
     } catch {}
   }
 
-  if (outgoingRingbackAudio) {
+  if (!startedWebAudio && outgoingRingbackAudio) {
     outgoingRingbackAudio.muted = false
-    outgoingRingbackAudio.volume = 0.65
+    outgoingRingbackAudio.volume = 0.58
     if (outgoingRingbackAudio.paused) {
       outgoingRingbackAudio.play().catch(() => {})
     }

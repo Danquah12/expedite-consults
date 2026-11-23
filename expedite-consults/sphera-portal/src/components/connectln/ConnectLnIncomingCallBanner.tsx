@@ -87,6 +87,7 @@ export function ConnectLnIncomingCallBanner({
   const [isEnablingPush, setIsEnablingPush] = useState<boolean>(false)
 
   const declinedIdsRef = useRef<Set<string>>(new Set())
+  const seenInServerPollRef = useRef<Set<string>>(new Set())
   const realtimeRingRef = useRef<{ call: IncomingCallSummary; untilMs: number } | null>(null)
   const vapidKeyRef = useRef<string>("")
   const myPhoneRef = useRef<string>("")
@@ -434,18 +435,43 @@ export function ConnectLnIncomingCallBanner({
         if (!res.ok) return
         const data = await res.json()
         if (cancelled || isLocalTabHostingOpenCall()) return
+        const endedIds: string[] = Array.isArray(data?.ended_call_ids)
+          ? data.ended_call_ids
+          : []
+        for (const eid of endedIds) {
+          if (eid) {
+            declinedIdsRef.current.add(eid)
+            if (realtimeRingRef.current?.call.id === eid) {
+              realtimeRingRef.current = null
+            }
+          }
+        }
         const list: IncomingCallSummary[] = Array.isArray(data?.incoming_calls)
           ? data.incoming_calls
           : []
+        for (const item of list) {
+          if (item?.id) seenInServerPollRef.current.add(item.id)
+        }
         let active = list.find((c) => c?.id && !declinedIdsRef.current.has(c.id)) || null
-        // A real-time ring may arrive before this server instance sees the call: keep ringing for it.
+        // A real-time pre-ring may briefly arrive before this server instance sees the call (up to 4.5s).
+        // Once seen in server poll OR ended, never keep ringing from stale realtime state!
         const rt = realtimeRingRef.current
-        if (!active && rt && rt.untilMs > Date.now() && !declinedIdsRef.current.has(rt.call.id)) {
-          active = rt.call
+        if (!active && rt) {
+          const rtId = rt.call.id
+          if (
+            declinedIdsRef.current.has(rtId) ||
+            seenInServerPollRef.current.has(rtId) ||
+            rt.untilMs <= Date.now()
+          ) {
+            realtimeRingRef.current = null
+          } else {
+            active = rt.call
+          }
         }
         setIncomingCall(active)
 
         if (!active) {
+          setCallMediaSilenceActive(false, "incoming-call-banner")
           stopLoudPhoneRingtone()
           stopTitleCallFlash()
           dismissFloatingCallPopups()
@@ -478,13 +504,18 @@ export function ConnectLnIncomingCallBanner({
               initiator_name: d.callerName || "ConnectLn Caller",
               initiator_phone: d.callerPhone || "",
             }
-            realtimeRingRef.current = { call, untilMs: Date.now() + 60000 }
+            realtimeRingRef.current = { call, untilMs: Date.now() + 4500 }
             setIncomingCall((prev) => prev || call)
             void checkIncoming()
           })
           ch.bind("call-ended", (d: any) => {
+            if (d?.callId) declinedIdsRef.current.add(String(d.callId))
             if (realtimeRingRef.current?.call.id === d?.callId) realtimeRingRef.current = null
             setIncomingCall((prev) => (prev && prev.id === d?.callId ? null : prev))
+            setCallMediaSilenceActive(false, "incoming-call-banner")
+            stopLoudPhoneRingtone()
+            stopTitleCallFlash()
+            dismissFloatingCallPopups()
             void checkIncoming()
           })
         } catch {}

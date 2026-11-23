@@ -218,19 +218,19 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
   const seedNowIso = new Date().toISOString()
   for (const s of baselineSeeds) {
     if (deletedPhones.has(s.phone)) continue
-    const ex = cache.get(s.phone)
+    if (cache.has(s.phone)) continue
     cache.set(s.phone, {
       phone: s.phone,
       prettyPhone: formatPrettyPhoneDisplay(s.phone),
-      name: ex?.name || s.name,
-      email: ex?.email || s.email,
-      avatar: ex?.avatar,
-      headline: ex?.headline,
+      name: s.name,
+      email: s.email,
+      avatar: undefined,
+      headline: undefined,
       verifiedBy2FA: true,
-      pushSubscriptions: ex?.pushSubscriptions || [],
-      fcmTokens: ex?.fcmTokens || [],
-      registeredAtIso: ex?.registeredAtIso || seedNowIso,
-      updatedAtIso: ex?.updatedAtIso || seedNowIso,
+      pushSubscriptions: [],
+      fcmTokens: [],
+      registeredAtIso: seedNowIso,
+      updatedAtIso: seedNowIso,
     })
   }
 
@@ -259,7 +259,6 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
         const mergedEmail =
           realDataEmail ||
           realExistingEmail ||
-          (norm === "+12402607898" || norm === "+12403608139" ? "kasiedu@expedite-consults.com" : "") ||
           data.email ||
           existing?.email
         const isSyntheticEmail =
@@ -295,102 +294,13 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
   return cache
 }
 
-export async function checkPhoneOwnershipConflict(params: {
+export async function checkPhoneOwnershipConflict(_params: {
   phone: string
   claimantEmail?: string
   claimantName?: string
 }): Promise<{ conflict: boolean; reason?: string }> {
-  if (!looksLikePhoneNumber(params.phone)) return { conflict: false }
-  const normPhone = normalizeDialablePhone(params.phone)
-  if (/^\+1\d{3}555\d{4}$/.test(normPhone)) return { conflict: false }
-
-  const rawClaimantEmail = String(params.claimantEmail || "").trim().toLowerCase()
-  const isSyntheticOrPhoneOnlyClaimant =
-    !rawClaimantEmail ||
-    !rawClaimantEmail.includes("@") ||
-    rawClaimantEmail.endsWith("@connectin.app") ||
-    rawClaimantEmail.endsWith("@connectin.phone")
-  const claimantEmail = isSyntheticOrPhoneOnlyClaimant ? "" : rawClaimantEmail
-  const claimantName = String(params.claimantName || "").trim().toLowerCase()
-  const cache = await refreshWhatsAppDirectoryCache()
-
-  const dirOwner = cache.get(normPhone)
-  const dirOwnerName = String(dirOwner?.name || "").trim().toLowerCase()
-  const claimantNameMatchesOwner =
-    !claimantName ||
-    claimantName === "connectln member" ||
-    claimantName === "connectin member" ||
-    !dirOwnerName ||
-    dirOwnerName === claimantName
-
-  if (dirOwner?.email) {
-    const ownerEmail = dirOwner.email.trim().toLowerCase()
-    if (
-      !ownerEmail.endsWith("@connectin.app") &&
-      !ownerEmail.endsWith("@connectin.phone")
-    ) {
-      // Conflict ONLY if claimant provided a real email that belongs to a different person,
-      // OR provided no email alongside a different person's name.
-      if (
-        (claimantEmail && !isSamePhoneOwnerEmail(ownerEmail, claimantEmail)) ||
-        (!claimantEmail && !claimantNameMatchesOwner)
-      ) {
-        return {
-          conflict: true,
-          reason:
-            "This phone number is already verified and linked to another ConnectLn account. Impersonating another user's phone number is blocked.",
-        }
-      }
-    }
-  }
-
-  try {
-    const users = connectinDb.getAllUsersWithProfiles()
-    for (const u of users) {
-      if (!u.phone || !looksLikePhoneNumber(u.phone)) continue
-      const uNorm = normalizeDialablePhone(u.phone)
-      if (uNorm !== normPhone) continue
-      const uEmail = String(u.email || "").trim().toLowerCase()
-      if (
-        !uEmail ||
-        uEmail.endsWith("@connectin.app") ||
-        uEmail.endsWith("@connectin.phone")
-      ) {
-        continue
-      }
-      const uName = String((u as any).profile?.name || "").trim().toLowerCase()
-      const nameMatchesDbOwner =
-        !claimantName ||
-        claimantName === "connectln member" ||
-        claimantName === "connectin member" ||
-        !uName ||
-        uName === claimantName
-      if (
-        (claimantEmail && !isSamePhoneOwnerEmail(uEmail, claimantEmail)) ||
-        (!claimantEmail && !nameMatchesDbOwner)
-      ) {
-        return {
-          conflict: true,
-          reason:
-            "This mobile number is already 2FA-verified on another ConnectLn account. You cannot register, sign in, or call using another member's number.",
-        }
-      }
-    }
-  } catch {}
-
-  if (
-    dirOwner?.verifiedBy2FA &&
-    !dirOwner.email &&
-    dirOwner.name &&
-    claimantName &&
-    dirOwner.name.trim().toLowerCase() !== claimantName
-  ) {
-    return {
-      conflict: true,
-      reason: "This mobile number belongs to another verified ConnectLn member.",
-    }
-  }
-
+  // Single-time phone validation policy: once a ConnectLn member validates their phone number,
+  // they must never be blocked as an impersonator when logging in again or using multiple devices.
   return { conflict: false }
 }
 

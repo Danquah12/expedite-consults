@@ -13,6 +13,7 @@ import { findProfessionById } from "@/lib/connectin-professions"
 import {
   checkPhoneOwnershipConflict,
   refreshWhatsAppDirectoryCache,
+  registerWhatsAppMemberNumber,
   isSamePhoneOwnerEmail,
 } from "@/lib/connectin-whatsapp-directory"
 import {
@@ -38,27 +39,37 @@ export async function POST(req: NextRequest) {
     const incomingName = typeof body.name === "string" ? body.name.trim() : ""
     const profDef = body.professionId && body.professionId !== "auto_detect" ? findProfessionById(body.professionId) : undefined
 
-    const normInputPhone = isPhoneInput ? formatE164Phone(cleanTarget) : ""
-    const candidateUsers = isPhoneInput
-      ? connectinDb
-          .getUsers()
-          .filter(
-            (u) =>
-              (u.phone && formatE164Phone(u.phone) === normInputPhone) ||
-              u.email.toLowerCase().trim() === cleanTarget
-          )
-      : connectinDb.getUsers().filter((u) => u.email.toLowerCase().trim() === cleanTarget)
-
-    let user = candidateUsers.find(u => {
-      const p = connectinDb.findProfileByUserId(u.id)
-      if (!p) return false
-      if (incomingName) {
-        return p.name.toLowerCase().trim() === incomingName.toLowerCase()
+    const submittedRawPhone = body.phone ? String(body.phone).trim() : isPhoneInput ? cleanTarget : ""
+    const normSubmittedPhone =
+      submittedRawPhone && looksLikeInternationalPhone(submittedRawPhone)
+        ? formatE164Phone(submittedRawPhone)
+        : ""
+    const candidateUsers = connectinDb.getUsers().filter((u) => {
+      if (isPhoneInput) {
+        return (
+          (u.phone && formatE164Phone(u.phone) === normSubmittedPhone) ||
+          u.email.toLowerCase().trim() === cleanTarget
+        )
       }
-      return true
+      return (
+        u.email.toLowerCase().trim() === cleanTarget ||
+        (normSubmittedPhone && u.phone && formatE164Phone(u.phone) === normSubmittedPhone)
+      )
     })
 
-    const dirCache = await refreshWhatsAppDirectoryCache().catch(() => new Map())
+    let user =
+      candidateUsers.find((u) => u.email.toLowerCase().trim() === cleanTarget) ||
+      candidateUsers.find((u) => {
+        const p = connectinDb.findProfileByUserId(u.id)
+        if (!p) return false
+        if (incomingName) {
+          return p.name.toLowerCase().trim() === incomingName.toLowerCase()
+        }
+        return true
+      }) ||
+      candidateUsers[0]
+
+    const dirCache = await refreshWhatsAppDirectoryCache(true).catch(() => new Map())
     let existingAccountPhone =
       user?.phone && looksLikeInternationalPhone(user.phone) ? formatE164Phone(user.phone) : ""
     const candidateEmail = user?.email || (!isPhoneInput ? cleanTarget : "")
@@ -70,15 +81,8 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-    if (
-      !existingAccountPhone &&
-      isSamePhoneOwnerEmail(candidateEmail, "kasiedu@expedite-consults.com")
-    ) {
-      existingAccountPhone = "+12402607898"
-    }
 
-    const submittedRawPhone = body.phone ? String(body.phone).trim() : isPhoneInput ? cleanTarget : ""
-    let dispatchPhone = existingAccountPhone || (submittedRawPhone ? formatE164Phone(submittedRawPhone) : "")
+    let dispatchPhone = normSubmittedPhone || existingAccountPhone || ""
     if (dispatchPhone === "+12402623543") {
       dispatchPhone = "+12402607898"
     }
@@ -94,7 +98,8 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Anti-Impersonation Check BEFORE creating any account stub: Ensure no other verified user owns this phone number!
+    // Single-time phone validation policy: check if this phone was already validated on any device!
+    const dirMember = dirCache.get(dispatchPhone)
     const ownership = await checkPhoneOwnershipConflict({
       phone: dispatchPhone,
       claimantEmail: candidateEmail,
@@ -112,14 +117,17 @@ export async function POST(req: NextRequest) {
     }
 
     if (!user) {
-      const defaultName = incomingName || (isPhoneInput
-        ? "ConnectIn Member"
-        : (cleanTarget.split("@")[0] || "Member").replace(/[._-]/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase()))
+      const defaultName =
+        incomingName ||
+        dirMember?.name ||
+        (isPhoneInput
+          ? "ConnectIn Member"
+          : (cleanTarget.split("@")[0] || "Member").replace(/[._-]/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase()))
 
       const created = connectinDb.createUser(
         {
           email: isPhoneInput ? `${cleanTarget.replace(/[^\d]/g, "")}@connectin.phone` : cleanTarget,
-          phone: "",
+          phone: dispatchPhone,
           role: "personal",
           status: "Active",
           mfaEnabled: true,
@@ -127,8 +135,10 @@ export async function POST(req: NextRequest) {
         },
         {
           name: defaultName,
-          headline: profDef?.defaultHeadline || "Verified Professional · ConnectIn Member",
-          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(defaultName + "-" + cleanTarget)}&backgroundColor=0a66c2`,
+          headline: dirMember?.headline || profDef?.defaultHeadline || "Verified Professional · ConnectIn Member",
+          avatar:
+            dirMember?.avatar ||
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(defaultName + "-" + cleanTarget)}&backgroundColor=0a66c2`,
           coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
           location: geo.locationLabel,
           about: "Verified member on ConnectIn Zero-Trust Network.",
@@ -148,21 +158,119 @@ export async function POST(req: NextRequest) {
         }
       )
       user = created.user
+    } else if (!user.phone) {
+      user.phone = dispatchPhone
     }
 
     if (user.status === "Suspended" || user.status === "Banned") {
       return NextResponse.json({ error: "This account is suspended. Contact security administrator." }, { status: 403 })
     }
 
-    // If the phone is not yet verified on this account, force Phone 2FA (`sms` or `call`) to verify phone ownership!
-    const phoneAlreadyVerifiedOnAccount = Boolean(existingAccountPhone && existingAccountPhone === dispatchPhone)
-    const effectiveChannel: "email" | "sms" | "call" = !phoneAlreadyVerifiedOnAccount
-      ? requestedChannel === "call"
-        ? "call"
-        : "sms"
-      : requestedChannel
+    const isPhoneAlreadyValidated = Boolean(
+      dirMember?.verifiedBy2FA ||
+        (user as any).phoneVerified ||
+        (existingAccountPhone && existingAccountPhone === dispatchPhone && user.phone)
+    )
 
+    // If the phone was ALREADY validated once (during registration or previous verification),
+    // log the user straight in on this or any other device without blocking or re-validating!
     const activeProfile = connectinDb.findProfileByUserId(user.id)
+    if (isPhoneAlreadyValidated && activeProfile) {
+      user.phone = dispatchPhone
+      ;(user as any).phoneVerified = true
+      if (typeof connectinDb.updateUser === "function") {
+        connectinDb.updateUser(user.id, { phone: dispatchPhone })
+      }
+      if (incomingName && incomingName.trim()) {
+        activeProfile.name = incomingName.trim()
+      }
+      connectinDb.touchUserLogin(user.id, "Verified Phone Session")
+      const session = connectinDb.createSession(user.id, {
+        ipAddress: geo.ipAddress,
+        userAgent: geo.userAgent,
+        location: geo.locationLabel,
+      })
+      const nowIso = new Date().toISOString()
+      const timeStr = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+
+      await Promise.all([
+        registerWhatsAppMemberNumber({
+          phone: dispatchPhone,
+          name: activeProfile.name,
+          email: user.email,
+          avatar: activeProfile.avatar,
+          headline: activeProfile.headline,
+          verifiedBy2FA: true,
+        }).catch(() => null),
+        upsertCloudUser({
+          id: user.id,
+          email: user.email,
+          phone: dispatchPhone,
+          name: activeProfile.name,
+          role: user.role,
+          status: user.status,
+          headline: activeProfile.headline,
+          avatar: activeProfile.avatar,
+          coverImage: activeProfile.coverImage,
+          location: activeProfile.location || geo.locationLabel,
+          countryName: geo.countryName,
+          countryCode: geo.countryCode,
+          isOutsideUS: geo.isOutsideUS,
+          ipAddress: geo.ipAddress,
+          profession: activeProfile.profession,
+          professionId: activeProfile.professionId,
+          professionCategory: activeProfile.professionCategory,
+          professionEnclave: activeProfile.professionEnclave,
+          authProvider: "Verified Phone Login",
+          lastLoginAt: nowIso,
+          createdAt: user.createdAt,
+          updatedAt: nowIso,
+        }).catch(() => {}),
+        appendCloudTelemetry({
+          activityLog: {
+            id: `act_signin_${user.id}_${Date.now().toString().slice(-5)}`,
+            userId: user.id,
+            userName: activeProfile.name,
+            userEmail: user.email,
+            userAvatar: activeProfile.avatar,
+            userHeadline: activeProfile.headline,
+            actionType: "USER_LOGIN",
+            actionLabel: `Signed In (Verified Number · ${geo.locationLabel})`,
+            category: "auth",
+            targetTitle: `Verified Phone · ${geo.locationLabel}`,
+            details: `Direct sign-in using previously verified phone ${dispatchPhone}`,
+            timestamp: `${timeStr} · ${geo.countryName}`,
+            createdAtIso: nowIso,
+          },
+        }).catch(() => {}),
+      ])
+
+      const prettyPhone = formatInternationalPhonePretty(dispatchPhone)
+      const directRes = NextResponse.json({
+        success: true,
+        requires2FA: false,
+        alreadyVerified: true,
+        phone: dispatchPhone,
+        prettyPhone,
+        email: user.email,
+        user: { ...user, phone: dispatchPhone, phoneVerified: true },
+        profile: { ...activeProfile, phone: dispatchPhone, phoneVerified: true },
+        message: `✓ Phone ${prettyPhone} already verified — signed in directly!`,
+      })
+      directRes.cookies.set("connectin_session", session.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 30 * 24 * 60 * 60,
+      })
+      return directRes
+    }
+
+    // First-time phone verification path: dispatch OTP to prove physical phone ownership once
+    const effectiveChannel: "email" | "sms" | "call" =
+      requestedChannel === "call" ? "call" : "sms"
+
     if (activeProfile) {
       connectinDb.touchUserLogin(user.id, `${effectiveChannel.toUpperCase()} 2FA`)
       const nowIso = new Date().toISOString()

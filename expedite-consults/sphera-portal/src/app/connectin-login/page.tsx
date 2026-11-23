@@ -415,6 +415,83 @@ export default function ConnectInLoginPage() {
         throw new Error(data.error || "Sign in failed. Please check your credentials.")
       }
 
+      // Single-time phone validation: if this phone number was already validated once, log straight in!
+      if (data.alreadyVerified || data.requires2FA === false) {
+        const resolvedName = resolveDisplayName(signInName, signInEmail)
+        const vaultProfile = getVaultProfileForUser({
+          email: signInEmail,
+          name: signInName.trim() || resolvedName,
+        })
+        const finalName = signInName.trim() || data.profile?.name || vaultProfile?.name || resolvedName
+        const baseProfile =
+          data.profile ||
+          createUniqueUserProfile({
+            name: finalName,
+            email: signInEmail,
+            role: "personal",
+          })
+        const verifiedSignInPhone =
+          data.phone || data.user?.phone || data.profile?.phone || effectivePhone || ""
+        const candidateAvatar = vaultProfile?.avatar || data.profile?.avatar || baseProfile.avatar
+        const safeAvatar =
+          candidateAvatar && !isForeignPersonaAvatar(candidateAvatar, { name: finalName, email: signInEmail })
+            ? candidateAvatar
+            : getDefaultPortraitForUser({
+                name: finalName,
+                email: signInEmail,
+                professionEnclave: baseProfile.professionEnclave,
+              } as any)
+        const isAdminUser = !inviteContext && isSuperAdminUser({ name: finalName, email: signInEmail })
+        const shouldOpenAdminPortal =
+          !inviteContext &&
+          isDedicatedAdminAccount({
+            name: finalName,
+            email: signInEmail,
+            professionId: signInProfessionId,
+          })
+
+        const profileToSave = {
+          ...baseProfile,
+          ...(vaultProfile || {}),
+          name: finalName,
+          email: data.email || signInEmail,
+          phone: verifiedSignInPhone || undefined,
+          phoneVerified: Boolean(verifiedSignInPhone),
+          avatar: safeAvatar,
+          role: isAdminUser ? ("admin" as const) : ("personal" as const),
+          roles: isAdminUser ? ["SUPER_ADMIN"] : ["NORMAL_USER"],
+          id: data.profile?.userId || data.user?.id || baseProfile.id,
+        }
+        if (inviteContext?.inviterName) {
+          await connectWithInviterInStorage(
+            inviteContext.inviterName,
+            inviteContext.inviterHeadline,
+            profileToSave
+          )
+        }
+        const targetTab = shouldOpenAdminPortal ? "adminiam" : "home"
+        const targetUrl = shouldOpenAdminPortal ? "/connectin-admin" : "/connectin"
+        saveStoredUser(profileToSave)
+        saveStoredSessionRoute(targetTab, "personal")
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("connectin_posts_v1")
+          localStorage.removeItem("connectin_is_signed_out")
+          localStorage.setItem("connectin_verified", "true")
+          sessionStorage.setItem("connectin_authenticated", "true")
+          if (verifiedSignInPhone) {
+            localStorage.setItem(MY_LINKED_PHONE_STORAGE_KEY, verifiedSignInPhone)
+            window.dispatchEvent(new Event("connectln_phone_linked"))
+          }
+        }
+        setSuccessMessage(
+          `✓ Phone already verified! Welcome back, ${profileToSave.name} — signing in...`
+        )
+        setTimeout(() => {
+          window.location.href = targetUrl
+        }, 120)
+        return
+      }
+
       if (data.otpChallengeToken) {
         setOtpChallengeToken(data.otpChallengeToken)
       }

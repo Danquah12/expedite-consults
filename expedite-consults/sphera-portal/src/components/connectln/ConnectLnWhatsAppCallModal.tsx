@@ -20,6 +20,16 @@ import {
   Users,
   Search,
   X,
+  MessageSquare,
+  FolderUp,
+  Palette,
+  Crown,
+  Send,
+  MonitorUp,
+  VolumeX,
+  Volume2,
+  FileText,
+  Music,
 } from "lucide-react"
 import {
   normalizeClientPhone,
@@ -34,6 +44,14 @@ import {
   setCallMediaSilenceActive,
   startOutgoingCallerRingbackTone,
   stopOutgoingCallerRingbackTone,
+  CONNECTLN_RINGTONE_PRESETS,
+  ConnectLnRingtoneId,
+  getSelectedConnectLnRingtoneId,
+  setSelectedConnectLnRingtoneId,
+  saveCustomDeviceRingtoneDataUrl,
+  getCustomDeviceRingtoneName,
+  previewConnectLnRingtone,
+  stopPreviewConnectLnRingtone,
 } from "@/lib/connectin-background-ring"
 import {
   GLOBAL_COUNTRY_DIAL_CODES,
@@ -665,8 +683,13 @@ interface RemoteWebRtcParticipant {
   peerId?: string
   name: string
   phone?: string
+  email?: string
   isVideoOn: boolean
   isMuted: boolean
+  isCoHost?: boolean
+  hostMuted?: boolean
+  virtualBgId?: string
+  virtualBgBadge?: string
   liveFrame?: string | null
 }
 
@@ -677,9 +700,137 @@ interface ConferenceCellLeg {
   phone: string
   email?: string
   avatar?: string
+  isCoHost?: boolean
+  hostMuted?: boolean
   status: "dialing" | "ringing" | "in-progress" | "invited" | "unanswered"
   // false = not a ConnectLn member / no registered device: nothing can ring, user must send link or use own SIM
   reachable?: boolean
+}
+
+export interface InCallChatMessageItem {
+  id: string
+  sender_id: string
+  sender_name: string
+  text: string
+  attachment_name?: string
+  attachment_mime?: string
+  attachment_data_url?: string
+  recipient_scope?: "everyone" | "individual" | "selected"
+  recipient_ids?: string[]
+  recipient_names?: string[]
+  sent_at: string
+}
+
+export interface InCallSharedStageItem {
+  active: boolean
+  sharer_user_id: string
+  sharer_name: string
+  mode: "screen" | "file" | "snapshot" | "presentation"
+  title: string
+  mime_type?: string
+  file_name?: string
+  file_size_label?: string
+  recipient_scope?: "everyone" | "individual" | "selected"
+  recipient_ids?: string[]
+  recipient_names?: string[]
+  use_webrtc_stream?: boolean
+  frame_or_data_url: string | null
+  updated_at_ms: number
+}
+
+interface CallTargetMemberOption {
+  key: string
+  userId?: string
+  name: string
+  phone?: string
+  email?: string
+  isCoHost?: boolean
+  isMuted?: boolean
+}
+
+const CALL_BACKGROUND_THEMES: Array<{
+  id: string
+  label: string
+  badge: string
+  stageClass: string
+  previewGradient: string
+}> = [
+  {
+    id: "none",
+    label: "Classic Emerald Studio",
+    badge: "Default",
+    stageClass: "bg-gradient-to-b from-[#071E1A] via-[#0B141A] to-[#060B0E]",
+    previewGradient: "linear-gradient(135deg, #071E1A 0%, #0B141A 60%, #059669 100%)",
+  },
+  {
+    id: "espresso",
+    label: "Warm Desk Note Espresso",
+    badge: "Desk Note",
+    stageClass: "bg-gradient-to-br from-[#2B1810] via-[#1C120E] to-[#4A2717]",
+    previewGradient: "linear-gradient(135deg, #2B1810 0%, #5E3119 55%, #8D5535 100%)",
+  },
+  {
+    id: "executive-boardroom",
+    label: "Executive Conference Suite",
+    badge: "Executive",
+    stageClass: "bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#312E81]",
+    previewGradient: "linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #4338CA 100%)",
+  },
+  {
+    id: "cyber-soc",
+    label: "Zero-Trust Cyber SOC",
+    badge: "Security",
+    stageClass: "bg-gradient-to-br from-[#020617] via-[#06283D] to-[#0E7490]",
+    previewGradient: "linear-gradient(135deg, #020617 0%, #0F4C75 65%, #06B6D4 100%)",
+  },
+  {
+    id: "blueprint",
+    label: "Engineering Blueprint",
+    badge: "Studio",
+    stageClass: "bg-gradient-to-br from-[#0B192C] via-[#1E3E62] to-[#0C2D57]",
+    previewGradient: "linear-gradient(135deg, #0B192C 0%, #1D4ED8 100%)",
+  },
+  {
+    id: "clinical-hub",
+    label: "Clinical Command Hub",
+    badge: "Healthcare",
+    stageClass: "bg-gradient-to-br from-[#042F2E] via-[#0F4C4A] to-[#065F46]",
+    previewGradient: "linear-gradient(135deg, #042F2E 0%, #0D9488 100%)",
+  },
+  {
+    id: "bokeh-blur",
+    label: "Soft Amber Bokeh Studio",
+    badge: "Blur",
+    stageClass: "bg-gradient-to-br from-[#1F122B] via-[#3B185F] to-[#7C4225]",
+    previewGradient: "linear-gradient(135deg, #240B36 0%, #C31432 100%)",
+  },
+]
+
+function buildMemberIdentityTokens(entry: {
+  userId?: string
+  phone?: string
+  email?: string
+  name?: string
+}): string[] {
+  const tokens: string[] = []
+  const uid = String(entry.userId || "").trim()
+  if (uid) tokens.push(`uid:${uid}`)
+  const digits = String(entry.phone || "").replace(/[^\d]/g, "")
+  if (digits.length >= 7) tokens.push(`tel:${digits.slice(-10)}`)
+  const em = String(entry.email || "").trim().toLowerCase()
+  if (em) tokens.push(`em:${em}`)
+  const nm = String(entry.name || "").trim().toLowerCase()
+  if (nm && nm !== "connectln call" && nm !== "participant") tokens.push(`nm:${nm}`)
+  return tokens
+}
+
+function doesIdentityMatchAnyKey(
+  entry: { userId?: string; phone?: string; email?: string; name?: string },
+  keys: string[]
+): boolean {
+  if (!Array.isArray(keys) || keys.length === 0) return false
+  const keySet = new Set(keys)
+  return buildMemberIdentityTokens(entry).some((t) => keySet.has(t))
 }
 
 function makeClientInviteeKey(entry: { id?: string; phone?: string; email?: string; name?: string }): string {
@@ -723,8 +874,9 @@ export interface ConnectLnWhatsAppCallModalProps {
 /**
  * Full-Screen Multi-Person WhatsApp-Style Direct & Group Voice/Video Call Experience:
  * - Supports 1-on-1 AND Multi-Person Group Calls (`➕ Add Person` mid-call!)
- * - Bridges unlimited WebRTC video/voice peers AND multiple physical cell phones via Twilio `<Conference>`
- * - Seamless handoff: if a cell participant taps their Camera Link, their duplicate SIM leg drops & upgrades to HD Video!
+ * - Bridges unlimited WebRTC video/voice peers AND multiple physical cell phones
+ * - Supports Studio Backgrounds & Custom Device Backgrounds, Selectable Ringtones,
+ *   Team/Individual/Selected-Member In-Call Chat, Device Material Sharing, Host Member Mute & Co-Host Permissions.
  */
 export function ConnectLnWhatsAppCallModal({
   open,
@@ -767,6 +919,47 @@ export function ConnectLnWhatsAppCallModal({
   const [isAddingPerson, setIsAddingPerson] = useState<boolean>(false)
   const [addFeedbackMsg, setAddFeedbackMsg] = useState<string>("")
 
+  // Studio Background & Ringtone Drawer state
+  const [showBackgroundDrawer, setShowBackgroundDrawer] = useState<boolean>(false)
+  const [selectedBgId, setSelectedBgId] = useState<string>("none")
+  const [customBgDataUrl, setCustomBgDataUrl] = useState<string>("")
+  const [selectedRingtoneId, setSelectedRingtoneId] = useState<ConnectLnRingtoneId>(() =>
+    getSelectedConnectLnRingtoneId()
+  )
+  const [customRingtoneName, setCustomRingtoneName] = useState<string>(() =>
+    getCustomDeviceRingtoneName()
+  )
+
+  // In-Call Chat (Everyone, Individual, or Selected Members)
+  const [showChatDrawer, setShowChatDrawer] = useState<boolean>(false)
+  const [chatMessages, setChatMessages] = useState<InCallChatMessageItem[]>([])
+  const [unreadChatCount, setUnreadChatCount] = useState<number>(0)
+  const [chatInput, setChatInput] = useState<string>("")
+  const [chatRecipientScope, setChatRecipientScope] = useState<"everyone" | "individual" | "selected">("everyone")
+  const [selectedChatRecipientKeys, setSelectedChatRecipientKeys] = useState<string[]>([])
+  const [chatAttachment, setChatAttachment] = useState<{
+    name: string
+    mime: string
+    dataUrl: string
+  } | null>(null)
+  const [isSendingChat, setIsSendingChat] = useState<boolean>(false)
+
+  // Device Material Sharing & Live Stage
+  const [showMaterialDrawer, setShowMaterialDrawer] = useState<boolean>(false)
+  const [activeSharedStage, setActiveSharedStage] = useState<InCallSharedStageItem | null>(null)
+  const [isStageMinimized, setIsStageMinimized] = useState<boolean>(false)
+  const [materialRecipientScope, setMaterialRecipientScope] = useState<"everyone" | "selected">("everyone")
+  const [selectedMaterialRecipientKeys, setSelectedMaterialRecipientKeys] = useState<string[]>([])
+  const [isLocalScreenSharing, setIsLocalScreenSharing] = useState<boolean>(false)
+  const [materialStatusNote, setMaterialStatusNote] = useState<string>("")
+
+  // Host Mute & Co-Host Permissions Drawer
+  const [showHostMembersDrawer, setShowHostMembersDrawer] = useState<boolean>(false)
+  const [cohostKeys, setCohostKeys] = useState<string[]>([])
+  const [hostMutedKeys, setHostMutedKeys] = useState<string[]>([])
+  const [wasMutedByHostBanner, setWasMutedByHostBanner] = useState<boolean>(false)
+  const [isModerating, setIsModerating] = useState<boolean>(false)
+
   const [showShareSheet, setShowShareSheet] = useState<boolean>(false)
   const [joinLinkUrl, setJoinLinkUrl] = useState<string>("")
   const [whatsappShareUrl, setWhatsappShareUrl] = useState<string>("")
@@ -802,6 +995,15 @@ export function ConnectLnWhatsAppCallModal({
   const latestAudioChunkRef = useRef<EncodedVoiceChunk | undefined>(undefined)
   const recentAudioChunksRef = useRef<EncodedVoiceChunk[]>([])
   const voicePlayerRef = useRef<GaplessRemoteVoicePlayer | null>(null)
+  const screenStreamRef = useRef<MediaStream | null>(null)
+  const materialFileInputRef = useRef<HTMLInputElement | null>(null)
+  const chatFileInputRef = useRef<HTMLInputElement | null>(null)
+  const bgFileInputRef = useRef<HTMLInputElement | null>(null)
+  const ringtoneFileInputRef = useRef<HTMLInputElement | null>(null)
+  const clearHostMuteFlagRef = useRef<boolean>(false)
+  const showChatDrawerRef = useRef<boolean>(false)
+  const lastSeenChatMsgIdsRef = useRef<Set<string>>(new Set())
+  const selectedBgIdRef = useRef<string>("none")
 
   // Twilio Browser Conference Host Connection (`ConferenceRoom = conf_<callId>`)
   const pstnDeviceRef = useRef<any>(null)
@@ -818,6 +1020,15 @@ export function ConnectLnWhatsAppCallModal({
   useEffect(() => {
     remoteWebRtcPeersRef.current = remoteWebRtcPeers
   }, [remoteWebRtcPeers])
+
+  useEffect(() => {
+    showChatDrawerRef.current = showChatDrawer
+    if (showChatDrawer) setUnreadChatCount(0)
+  }, [showChatDrawer])
+
+  useEffect(() => {
+    selectedBgIdRef.current = selectedBgId
+  }, [selectedBgId])
 
   // Register open call modal on `window` so `<ConnectLnIncomingCallBanner />` never overlaps an active call on this tab,
   // and pause/mute all background page media (videos, YouTube embeds, Noctis TTS, music) until the call is completed!
@@ -856,6 +1067,12 @@ export function ConnectLnWhatsAppCallModal({
   }, [initialMode, open])
 
   const stopAllMedia = useCallback(() => {
+    stopPreviewConnectLnRingtone()
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((t) => t.stop())
+      screenStreamRef.current = null
+      setIsLocalScreenSharing(false)
+    }
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((t) => t.stop())
       localStreamRef.current = null
@@ -1159,10 +1376,22 @@ export function ConnectLnWhatsAppCallModal({
       setRemoteWebRtcPeers([])
       setCellLegs([])
       setShowAddPeopleDrawer(false)
+      setShowBackgroundDrawer(false)
+      setShowChatDrawer(false)
+      setShowMaterialDrawer(false)
+      setShowHostMembersDrawer(false)
+      setChatMessages([])
+      setUnreadChatCount(0)
+      setActiveSharedStage(null)
+      setCohostKeys([])
+      setHostMutedKeys([])
+      setWasMutedByHostBanner(false)
+      lastSeenChatMsgIdsRef.current.clear()
       setElapsedSec(0)
       setCallStatus("calling")
       setPushBannerNote("")
       setAddFeedbackMsg("")
+      setMaterialStatusNote("")
       return
     }
 
@@ -1489,6 +1718,8 @@ export function ConnectLnWhatsAppCallModal({
       isFirst = false
       try {
         const myLinkedPhone = getMyLinkedConnectLnPhone()
+        const shouldClearHostMute = clearHostMuteFlagRef.current
+        clearHostMuteFlagRef.current = false
         const res = await fetch("/api/v1/calls", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1507,7 +1738,10 @@ export function ConnectLnWhatsAppCallModal({
             participant_phone: myLinkedPhone || undefined,
             display_name: callerName,
             is_muted: isMicMuted,
+            clear_host_mute: shouldClearHostMute || undefined,
             is_video_on: isVideoOn && hasLocalVideoTrack,
+            is_screen_sharing: isLocalScreenSharing,
+            virtual_bg_id: selectedBgIdRef.current,
             webrtc_connected: webrtcActiveNow,
             live_frame:
               !webrtcActiveNow && isVideoOn && hasLocalVideoTrack
@@ -1525,6 +1759,82 @@ export function ConnectLnWhatsAppCallModal({
           stopAllMedia()
           setTimeout(() => onClose(), 500)
           return
+        }
+
+        // Sync Host/Co-Host moderation keys & enforce host_muted on local mic
+        const srvCohostKeys: string[] = Array.isArray(data?.call?.cohost_keys)
+          ? data.call.cohost_keys
+          : []
+        const srvMutedKeys: string[] = Array.isArray(data?.call?.muted_keys)
+          ? data.call.muted_keys
+          : []
+        setCohostKeys(srvCohostKeys)
+        setHostMutedKeys(srvMutedKeys)
+
+        const meSrv = (data?.call?.participants || []).find(
+          (p: any) => p?.user_id === localPeerUid
+        )
+        const mySelfEntry = {
+          userId: localPeerUid,
+          phone: myLinkedPhone,
+          email: callerEmail,
+          name: callerName,
+        }
+        const localIsHostMuted =
+          !shouldClearHostMute &&
+          (Boolean(meSrv?.host_muted) || doesIdentityMatchAnyKey(mySelfEntry, srvMutedKeys))
+        if (localIsHostMuted && !isMicMuted) {
+          setIsMicMuted(true)
+          setWasMutedByHostBanner(true)
+          localStreamRef.current?.getAudioTracks().forEach((t) => {
+            t.enabled = false
+          })
+        }
+
+        // Sync Shared Stage / Device Material (filtered by recipient_scope if targeted)
+        const srvStage: InCallSharedStageItem | null = data?.call?.shared_stage || null
+        if (srvStage && srvStage.active) {
+          const isStageVisibleToSelf =
+            !srvStage.recipient_scope ||
+            srvStage.recipient_scope === "everyone" ||
+            srvStage.sharer_user_id === localPeerUid ||
+            (Array.isArray(srvStage.recipient_ids) &&
+              doesIdentityMatchAnyKey(mySelfEntry, srvStage.recipient_ids)) ||
+            (Array.isArray(srvStage.recipient_ids) &&
+              srvStage.recipient_ids.includes(localPeerUid))
+          if (isStageVisibleToSelf) {
+            setActiveSharedStage((prev) =>
+              prev && prev.updated_at_ms === srvStage.updated_at_ms ? prev : srvStage
+            )
+          }
+        } else if (srvStage && srvStage.active === false) {
+          setActiveSharedStage((prev) =>
+            prev && srvStage.updated_at_ms >= prev.updated_at_ms ? null : prev
+          )
+        }
+
+        // Sync In-Call Chat Messages (Team / Individual / Selected Members)
+        if (Array.isArray(data?.call?.shared_messages)) {
+          const msgs: InCallChatMessageItem[] = data.call.shared_messages
+          setChatMessages(msgs)
+          let newlyUnread = 0
+          for (const m of msgs) {
+            if (!m?.id || lastSeenChatMsgIdsRef.current.has(m.id)) continue
+            lastSeenChatMsgIdsRef.current.add(m.id)
+            if (m.sender_id === localPeerUid) continue
+            const isVisibleToSelf =
+              !m.recipient_scope ||
+              m.recipient_scope === "everyone" ||
+              (Array.isArray(m.recipient_ids) &&
+                (m.recipient_ids.includes(localPeerUid) ||
+                  doesIdentityMatchAnyKey(mySelfEntry, m.recipient_ids)))
+            if (isVisibleToSelf && !showChatDrawerRef.current) {
+              newlyUnread += 1
+            }
+          }
+          if (newlyUnread > 0) {
+            setUnreadChatCount((c) => c + newlyUnread)
+          }
         }
 
         const myPhoneDigits = myLinkedPhone.replace(/[^\d]/g, "")
@@ -1566,13 +1876,26 @@ export function ConnectLnWhatsAppCallModal({
         // Deduplicate multiple tabs/reconnects of the same remote person so one person = one box!
         const dedupedPeersMap = new Map<string, { raw: any; mapped: RemoteWebRtcParticipant }>()
         for (const rp of rawRemotes) {
+          const peerEntryForMod = {
+            userId: rp.user_id,
+            phone: rp.phone,
+            name: rp.display_name,
+          }
+          const isPeerCohost =
+            Boolean(rp.is_cohost) || doesIdentityMatchAnyKey(peerEntryForMod, srvCohostKeys)
+          const isPeerHostMuted =
+            Boolean(rp.host_muted) || doesIdentityMatchAnyKey(peerEntryForMod, srvMutedKeys)
           const mapped: RemoteWebRtcParticipant = {
             userId: rp.user_id,
             peerId: rp.peer_id,
             name: rp.display_name || "Connected Participant",
             phone: rp.phone || undefined,
             isVideoOn: Boolean(rp.is_video_on),
-            isMuted: Boolean(rp.is_muted),
+            isMuted: Boolean(rp.is_muted || isPeerHostMuted),
+            isCoHost: isPeerCohost,
+            hostMuted: isPeerHostMuted,
+            virtualBgId: rp.virtual_bg_id,
+            virtualBgBadge: rp.virtual_bg_badge,
             liveFrame:
               typeof rp.live_frame === "string" && rp.live_frame.length > 800
                 ? rp.live_frame
@@ -1704,6 +2027,18 @@ export function ConnectLnWhatsAppCallModal({
                 phone: inv.phone || localExisting?.phone || "",
                 email: inv.email || localExisting?.email || "",
                 avatar: inv.avatar || localExisting?.avatar || "",
+                isCoHost:
+                  Boolean(inv.is_cohost) ||
+                  doesIdentityMatchAnyKey(
+                    { phone: inv.phone, email: inv.email, name: inv.name },
+                    srvCohostKeys
+                  ),
+                hostMuted:
+                  Boolean(inv.host_muted) ||
+                  doesIdentityMatchAnyKey(
+                    { phone: inv.phone, email: inv.email, name: inv.name },
+                    srvMutedKeys
+                  ),
                 status: resolvedStatus,
               })
             }
@@ -1742,7 +2077,14 @@ export function ConnectLnWhatsAppCallModal({
               dialPeerNowRef.current?.(rp.peer_id, false)
             }
             const peerStream = rp.peer_id ? remoteStreamsMap[rp.peer_id] : undefined
-            if (!peerStream && (rp.recent_audio_chunks?.length || rp.live_audio_chunk)) {
+            const peerSilencedByHost = Boolean(
+              rp.host_muted ||
+                doesIdentityMatchAnyKey(
+                  { userId: rp.user_id, phone: rp.phone, name: rp.display_name },
+                  srvMutedKeys
+                )
+            )
+            if (!peerStream && !peerSilencedByHost && (rp.recent_audio_chunks?.length || rp.live_audio_chunk)) {
               if (!voicePlayerRef.current) {
                 voicePlayerRef.current = new GaplessRemoteVoicePlayer()
               }
@@ -1826,6 +2168,10 @@ export function ConnectLnWhatsAppCallModal({
   const handleToggleMute = () => {
     setIsMicMuted((prev) => {
       const next = !prev
+      if (!next) {
+        clearHostMuteFlagRef.current = true
+        setWasMutedByHostBanner(false)
+      }
       localStreamRef.current?.getAudioTracks().forEach((t) => {
         t.enabled = !next
       })
@@ -1845,7 +2191,13 @@ export function ConnectLnWhatsAppCallModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         keepalive: true,
-        body: JSON.stringify({ action: "end", call_id: callId, user_id: localPeerUid }),
+        body: JSON.stringify({
+          action: "end",
+          call_id: callId,
+          user_id: localPeerUid,
+          target_recipient_phone: recipientPhone || undefined,
+          invited_phones: cellLegsRef.current.map((l) => l.phone).filter(Boolean),
+        }),
       }).catch(() => {})
       setCallStatus("ended")
       setPushBannerNote("No answer. Call ended after 60 seconds.")
@@ -1884,11 +2236,453 @@ export function ConnectLnWhatsAppCallModal({
         action: "end",
         call_id: callId,
         user_id: localPeerUid,
+        display_name: callerName,
+        target_recipient_phone: recipientPhone || undefined,
+        invited_phones: cellLegs.map((l) => l.phone).filter(Boolean),
       }),
     }).catch(() => {})
     stopAllMedia()
     onClose()
   }
+
+  const closeAllCallDrawers = () => {
+    setShowAddPeopleDrawer(false)
+    setShowBackgroundDrawer(false)
+    setShowChatDrawer(false)
+    setShowMaterialDrawer(false)
+    setShowHostMembersDrawer(false)
+    setShowShareSheet(false)
+  }
+
+  const mySelfTokens = buildMemberIdentityTokens({
+    userId: localPeerUid,
+    phone: getMyLinkedConnectLnPhone(),
+    email: callerEmail,
+    name: callerName,
+  })
+  const isLocalHost = !isIncomingAnswer
+  const isLocalCoHost = doesIdentityMatchAnyKey(
+    {
+      userId: localPeerUid,
+      phone: getMyLinkedConnectLnPhone(),
+      email: callerEmail,
+      name: callerName,
+    },
+    cohostKeys
+  )
+  const canModerateCall = isLocalHost || isLocalCoHost
+
+  const allCallTargetMembers: CallTargetMemberOption[] = (() => {
+    const out: CallTargetMemberOption[] = []
+    const seen = new Set<string>()
+    for (const rp of remoteWebRtcPeers) {
+      const k = rp.userId || `nm:${rp.name.toLowerCase()}`
+      if (seen.has(k)) continue
+      seen.add(k)
+      out.push({
+        key: k,
+        userId: rp.userId,
+        name: rp.name,
+        phone: rp.phone,
+        email: rp.email,
+        isCoHost: rp.isCoHost,
+        isMuted: rp.isMuted || rp.hostMuted,
+      })
+    }
+    for (const leg of cellLegs) {
+      const tokens = buildMemberIdentityTokens({
+        phone: leg.phone,
+        email: leg.email,
+        name: leg.name,
+      })
+      const alreadyLive = out.some(
+        (m) =>
+          (m.phone && leg.phone && m.phone.replace(/\D/g, "").slice(-10) === leg.phone.replace(/\D/g, "").slice(-10)) ||
+          m.name.toLowerCase() === leg.name.toLowerCase()
+      )
+      if (alreadyLive) continue
+      const k = tokens[0] || leg.id
+      if (seen.has(k)) continue
+      seen.add(k)
+      out.push({
+        key: k,
+        userId: leg.id,
+        name: leg.name,
+        phone: leg.phone,
+        email: leg.email,
+        isCoHost: leg.isCoHost,
+        isMuted: leg.hostMuted,
+      })
+    }
+    if (out.length === 0 && (recipientName || recipientPhone)) {
+      const k =
+        buildMemberIdentityTokens({ phone: recipientPhone, email: targetEmail, name: recipientName })[0] ||
+        `nm:${recipientName.toLowerCase()}`
+      out.push({
+        key: k,
+        name: recipientName,
+        phone: recipientPhone || undefined,
+        email: targetEmail || undefined,
+        isCoHost: doesIdentityMatchAnyKey(
+          { phone: recipientPhone, email: targetEmail, name: recipientName },
+          cohostKeys
+        ),
+        isMuted: doesIdentityMatchAnyKey(
+          { phone: recipientPhone, email: targetEmail, name: recipientName },
+          hostMutedKeys
+        ),
+      })
+    }
+    return out
+  })()
+
+  const buildTokensForTargetOption = (m: CallTargetMemberOption): string[] =>
+    buildMemberIdentityTokens({
+      userId: m.userId,
+      phone: m.phone,
+      email: m.email,
+      name: m.name,
+    })
+
+  const visibleChatMessages = chatMessages.filter((m) => {
+    if (!m.recipient_scope || m.recipient_scope === "everyone") return true
+    if (m.sender_id === localPeerUid) return true
+    const ids = Array.isArray(m.recipient_ids) ? m.recipient_ids : []
+    return ids.includes(localPeerUid) || mySelfTokens.some((t) => ids.includes(t))
+  })
+
+  const handleModerateMember = async (params: {
+    targetUserId?: string
+    targetName?: string
+    targetPhone?: string
+    targetEmail?: string
+    subAction: "mute_member" | "unmute_member" | "mute_all" | "toggle_cohost"
+    isCohost?: boolean
+  }) => {
+    setIsModerating(true)
+    try {
+      const res = await fetch("/api/v1/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "moderate_participant",
+          sub_action: params.subAction,
+          call_id: callId,
+          user_id: localPeerUid,
+          actor_user_id: localPeerUid,
+          display_name: callerName,
+          target_user_id: params.targetUserId,
+          target_name: params.targetName,
+          target_phone: params.targetPhone,
+          target_email: params.targetEmail,
+          is_cohost: params.isCohost,
+        }),
+      })
+      const data = await res.json().catch(() => null)
+      if (data?.call) {
+        if (Array.isArray(data.call.cohost_keys)) setCohostKeys(data.call.cohost_keys)
+        if (Array.isArray(data.call.muted_keys)) setHostMutedKeys(data.call.muted_keys)
+      }
+      if (params.subAction === "mute_all") {
+        setPushBannerNote("🔇 Host muted all call members.")
+      } else if (params.subAction === "mute_member") {
+        setPushBannerNote(`🔇 Muted ${params.targetName || "member"}.`)
+      } else if (params.subAction === "unmute_member") {
+        setPushBannerNote(`🎙️ Unmuted ${params.targetName || "member"}.`)
+      } else if (params.subAction === "toggle_cohost") {
+        setPushBannerNote(
+          params.isCohost !== false
+            ? `👑 Granted Co-Host permission to ${params.targetName || "member"}!`
+            : `Removed Co-Host permission from ${params.targetName || "member"}.`
+        )
+      }
+    } catch {}
+    setIsModerating(false)
+  }
+
+  const handleSendChatMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (!chatInput.trim() && !chatAttachment) return
+
+    let recipientIds: string[] | undefined
+    let recipientNames: string[] | undefined
+    if (chatRecipientScope !== "everyone") {
+      const chosen = allCallTargetMembers.filter((m) =>
+        selectedChatRecipientKeys.includes(m.key)
+      )
+      if (chosen.length === 0) {
+        setPushBannerNote("Select at least one member to send this targeted chat.")
+        return
+      }
+      const tokenSet = new Set<string>()
+      chosen.forEach((m) => {
+        if (m.userId) tokenSet.add(m.userId)
+        buildTokensForTargetOption(m).forEach((t) => tokenSet.add(t))
+      })
+      recipientIds = Array.from(tokenSet)
+      recipientNames = chosen.map((m) => m.name)
+    }
+
+    setIsSendingChat(true)
+    const msgId = `msg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 5)}`
+    const localMsg: InCallChatMessageItem = {
+      id: msgId,
+      sender_id: localPeerUid,
+      sender_name: callerName,
+      text: chatInput.trim(),
+      attachment_name: chatAttachment?.name,
+      attachment_mime: chatAttachment?.mime,
+      attachment_data_url: chatAttachment?.dataUrl,
+      recipient_scope: chatRecipientScope,
+      recipient_ids: recipientIds,
+      recipient_names: recipientNames,
+      sent_at: new Date().toISOString(),
+    }
+    lastSeenChatMsgIdsRef.current.add(msgId)
+    setChatMessages((prev) => [...prev, localMsg])
+    setChatInput("")
+    setChatAttachment(null)
+
+    try {
+      await fetch("/api/v1/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "chat_message",
+          call_id: callId,
+          user_id: localPeerUid,
+          display_name: callerName,
+          participant_phone: getMyLinkedConnectLnPhone() || undefined,
+          chat_message: localMsg,
+        }),
+      })
+    } catch {}
+    setIsSendingChat(false)
+  }
+
+  const handleShareMaterialFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ""
+    if (file.size > 4.5 * 1024 * 1024) {
+      setMaterialStatusNote("Please choose a device file under 4.5 MB so it syncs instantly to members.")
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const dataUrl = String(reader.result || "")
+      if (!dataUrl) return
+
+      let recipientIds: string[] | undefined
+      let recipientNames: string[] | undefined
+      if (materialRecipientScope === "selected") {
+        const chosen = allCallTargetMembers.filter((m) =>
+          selectedMaterialRecipientKeys.includes(m.key)
+        )
+        if (chosen.length === 0) {
+          setMaterialStatusNote("Select at least one member, or switch target to Everyone.")
+          return
+        }
+        const tokenSet = new Set<string>()
+        chosen.forEach((m) => {
+          if (m.userId) tokenSet.add(m.userId)
+          buildTokensForTargetOption(m).forEach((t) => tokenSet.add(t))
+        })
+        recipientIds = Array.from(tokenSet)
+        recipientNames = chosen.map((m) => m.name)
+      }
+
+      const sizeKb =
+        file.size < 1024 * 1024
+          ? `${Math.max(1, Math.round(file.size / 1024))} KB`
+          : `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+      const stagePayload: InCallSharedStageItem = {
+        active: true,
+        sharer_user_id: localPeerUid,
+        sharer_name: callerName,
+        mode: "file",
+        title: file.name,
+        mime_type: file.type || "application/octet-stream",
+        file_name: file.name,
+        file_size_label: sizeKb,
+        recipient_scope: materialRecipientScope,
+        recipient_ids: recipientIds,
+        recipient_names: recipientNames,
+        frame_or_data_url: dataUrl,
+        updated_at_ms: Date.now(),
+      }
+      setActiveSharedStage(stagePayload)
+      setIsStageMinimized(false)
+      setMaterialStatusNote(
+        `✓ Shared "${file.name}" (${sizeKb}) with ${
+          materialRecipientScope === "everyone"
+            ? "Everyone in call"
+            : recipientNames?.join(", ") || "Selected Members"
+        }!`
+      )
+      await fetch("/api/v1/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "share_stage",
+          call_id: callId,
+          user_id: localPeerUid,
+          display_name: callerName,
+          shared_stage: stagePayload,
+        }),
+      }).catch(() => {})
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleToggleDeviceScreenShare = async () => {
+    if (isLocalScreenSharing && screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((t) => t.stop())
+      screenStreamRef.current = null
+      setIsLocalScreenSharing(false)
+      const vidTrack = localStreamRef.current?.getVideoTracks()[0]
+      if (vidTrack) {
+        activeMediaCallsRef.current.forEach((mc) => {
+          const vs = mc?.peerConnection?.getSenders?.()?.find((s: any) => s.track?.kind === "video")
+          if (vs) vs.replaceTrack(vidTrack).catch(() => {})
+        })
+      }
+      await fetch("/api/v1/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "share_stage",
+          call_id: callId,
+          user_id: localPeerUid,
+          display_name: callerName,
+          shared_stage: { active: false },
+        }),
+      }).catch(() => {})
+      setActiveSharedStage(null)
+      return
+    }
+    try {
+      const scr = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: { ideal: 20, max: 30 } },
+        audio: false,
+      })
+      const scrTrack = scr.getVideoTracks()[0]
+      if (!scrTrack) return
+      screenStreamRef.current = scr
+      setIsLocalScreenSharing(true)
+      activeMediaCallsRef.current.forEach((mc) => {
+        const vs = mc?.peerConnection?.getSenders?.()?.find((s: any) => s.track?.kind === "video")
+        if (vs) vs.replaceTrack(scrTrack).catch(() => {})
+      })
+      scrTrack.onended = () => {
+        screenStreamRef.current = null
+        setIsLocalScreenSharing(false)
+        const camTrack = localStreamRef.current?.getVideoTracks()[0]
+        if (camTrack) {
+          activeMediaCallsRef.current.forEach((mc) => {
+            const vs = mc?.peerConnection?.getSenders?.()?.find((s: any) => s.track?.kind === "video")
+            if (vs) vs.replaceTrack(camTrack).catch(() => {})
+          })
+        }
+        setActiveSharedStage(null)
+        fetch("/api/v1/calls", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "share_stage",
+            call_id: callId,
+            user_id: localPeerUid,
+            display_name: callerName,
+            shared_stage: { active: false },
+          }),
+        }).catch(() => {})
+      }
+      const stagePayload: InCallSharedStageItem = {
+        active: true,
+        sharer_user_id: localPeerUid,
+        sharer_name: callerName,
+        mode: "screen",
+        title: `${callerName}'s Live Device Screen`,
+        use_webrtc_stream: true,
+        frame_or_data_url: null,
+        updated_at_ms: Date.now(),
+      }
+      setActiveSharedStage(stagePayload)
+      setIsStageMinimized(false)
+      setMaterialStatusNote("✓ Sharing your live screen with everyone in call!")
+      await fetch("/api/v1/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "share_stage",
+          call_id: callId,
+          user_id: localPeerUid,
+          display_name: callerName,
+          shared_stage: stagePayload,
+        }),
+      }).catch(() => {})
+    } catch {
+      setMaterialStatusNote("Screen share was cancelled or is unavailable on this browser.")
+    }
+  }
+
+  const handleStopSharedStage = async () => {
+    if (isLocalScreenSharing && screenStreamRef.current) {
+      await handleToggleDeviceScreenShare()
+      return
+    }
+    setActiveSharedStage(null)
+    await fetch("/api/v1/calls", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "share_stage",
+        call_id: callId,
+        user_id: localPeerUid,
+        display_name: callerName,
+        shared_stage: { active: false },
+      }),
+    }).catch(() => {})
+  }
+
+  const handleCustomBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ""
+    const reader = new FileReader()
+    reader.onload = () => {
+      const url = String(reader.result || "")
+      if (url.startsWith("data:image/")) {
+        setCustomBgDataUrl(url)
+        setSelectedBgId("custom-image")
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleDeviceRingtoneUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ""
+    if (file.size > 3 * 1024 * 1024) {
+      setPushBannerNote("Please pick a device ringtone file under 3 MB.")
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const url = String(reader.result || "")
+      if (url) {
+        saveCustomDeviceRingtoneDataUrl(url, file.name)
+        setSelectedRingtoneId("device-custom")
+        setCustomRingtoneName(file.name)
+        previewConnectLnRingtone("device-custom", 4000)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const activeBgTheme =
+    CALL_BACKGROUND_THEMES.find((b) => b.id === selectedBgId) || CALL_BACKGROUND_THEMES[0]
 
   if (!open) return null
 
@@ -1916,12 +2710,93 @@ export function ConnectLnWhatsAppCallModal({
     )
   })
 
+  const activeBgBackgroundStyle: React.CSSProperties =
+    selectedBgId === "custom-image" && customBgDataUrl
+      ? {
+          backgroundImage: `linear-gradient(rgba(6, 11, 14, 0.35), rgba(6, 11, 14, 0.45)), url(${customBgDataUrl})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }
+      : {}
+
   return (
-    <div className="fixed inset-0 z-[90] bg-[#0B141A] text-white flex flex-col justify-between overflow-hidden select-none">
+    <div
+      className={`fixed inset-0 z-[90] text-white flex flex-col justify-between overflow-hidden select-none ${
+        selectedBgId === "custom-image" ? "bg-[#0B141A]" : activeBgTheme.stageClass
+      }`}
+      style={activeBgBackgroundStyle}
+    >
+      {/* Hidden device pickers for Background, Ringtone, Device Materials & Chat Attachments */}
+      <input
+        ref={bgFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleCustomBgUpload}
+      />
+      <input
+        ref={ringtoneFileInputRef}
+        type="file"
+        accept="audio/*,.mp3,.wav,.m4a,.ogg,.aac"
+        className="hidden"
+        onChange={handleDeviceRingtoneUpload}
+      />
+      <input
+        ref={materialFileInputRef}
+        type="file"
+        accept="*/*"
+        className="hidden"
+        onChange={handleShareMaterialFile}
+      />
+      <input
+        ref={chatFileInputRef}
+        type="file"
+        accept="*/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (!file) return
+          e.target.value = ""
+          if (file.size > 3.5 * 1024 * 1024) {
+            setPushBannerNote("Please attach files under 3.5 MB in call chat.")
+            return
+          }
+          const r = new FileReader()
+          r.onload = () => {
+            setChatAttachment({
+              name: file.name,
+              mime: file.type || "application/octet-stream",
+              dataUrl: String(r.result || ""),
+            })
+          }
+          r.readAsDataURL(file)
+        }}
+      />
+
       {/* Global Opus WebRTC Audio Output for ALL Connected Peers */}
       {Object.entries(remoteStreamsMap).map(([pid, st]) => (
         <RemoteStreamAudioPlayer key={pid} stream={st} />
       ))}
+
+      {/* HOST MUTED YOUR MIC BANNER */}
+      {wasMutedByHostBanner && (
+        <div
+          className="fixed top-16 left-1/2 -translate-x-1/2 px-4 w-full max-w-md flex justify-center"
+          style={{ zIndex: 46 }}
+        >
+          <div className="rounded-2xl bg-amber-950/95 border border-amber-400/60 px-4 py-2 text-xs font-bold text-amber-200 shadow-2xl flex items-center gap-2">
+            <VolumeX className="h-4 w-4 text-amber-300 shrink-0" />
+            <span>Host muted your microphone. Tap the Mic button to unmute when ready.</span>
+            <button
+              type="button"
+              onClick={() => setWasMutedByHostBanner(false)}
+              className="ml-1 text-white/75 hover:text-white cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* GUARANTEED MOBILE RECIPIENT CAMERA ACTIVATION PILL (If mobile Safari/Chrome deferred camera until user tap!) */}
       {isVideoOn && !hasLocalVideoTrack && (
@@ -1944,6 +2819,115 @@ export function ConnectLnWhatsAppCallModal({
         </div>
       )}
 
+      {/* SHARED DEVICE MATERIAL LIVE STAGE OVERLAY */}
+      {activeSharedStage?.active && !isStageMinimized && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-30 w-[94vw] max-w-2xl rounded-2xl bg-[#0D171D]/95 border-2 border-emerald-400/60 shadow-2xl overflow-hidden">
+          <div className="px-3.5 py-2 bg-[#13222A] border-b border-white/10 flex items-center justify-between gap-2">
+            <div className="min-w-0 flex items-center gap-2">
+              <FileText className="h-4 w-4 text-emerald-400 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs font-extrabold text-white truncate">
+                  {activeSharedStage.file_name || activeSharedStage.title}
+                </p>
+                <p className="text-[10px] text-emerald-300 truncate">
+                  Shared by {activeSharedStage.sharer_name}
+                  {activeSharedStage.file_size_label ? ` · ${activeSharedStage.file_size_label}` : ""}
+                  {activeSharedStage.recipient_scope === "selected" &&
+                  activeSharedStage.recipient_names?.length
+                    ? ` · To: ${activeSharedStage.recipient_names.join(", ")}`
+                    : " · Shared with Everyone"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {activeSharedStage.frame_or_data_url && (
+                <a
+                  href={activeSharedStage.frame_or_data_url}
+                  download={activeSharedStage.file_name || activeSharedStage.title || "material"}
+                  className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 text-[11px] font-extrabold text-white no-underline flex items-center gap-1"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Download</span>
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsStageMinimized(true)}
+                className="rounded-lg bg-white/10 hover:bg-white/20 px-2 py-1 text-[11px] font-bold text-white cursor-pointer"
+              >
+                Hide
+              </button>
+              {(activeSharedStage.sharer_user_id === localPeerUid || canModerateCall) && (
+                <button
+                  type="button"
+                  onClick={handleStopSharedStage}
+                  className="rounded-lg bg-rose-600/80 hover:bg-rose-600 px-2 py-1 text-[11px] font-bold text-white cursor-pointer"
+                >
+                  Stop
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="p-3 max-h-[38vh] overflow-auto flex items-center justify-center bg-black/40">
+            {activeSharedStage.mode === "screen" ? (
+              <p className="text-xs text-emerald-200 py-4 font-semibold">
+                🖥️ Live screen share active from {activeSharedStage.sharer_name}
+              </p>
+            ) : activeSharedStage.frame_or_data_url &&
+              activeSharedStage.mime_type?.startsWith("image/") ? (
+              <img
+                src={activeSharedStage.frame_or_data_url}
+                alt={activeSharedStage.file_name || "Shared material"}
+                className="max-h-[34vh] rounded-xl object-contain"
+              />
+            ) : activeSharedStage.frame_or_data_url &&
+              activeSharedStage.mime_type?.startsWith("video/") ? (
+              <video
+                src={activeSharedStage.frame_or_data_url}
+                controls
+                className="max-h-[34vh] rounded-xl"
+              />
+            ) : activeSharedStage.frame_or_data_url &&
+              activeSharedStage.mime_type?.startsWith("audio/") ? (
+              <audio
+                src={activeSharedStage.frame_or_data_url}
+                controls
+                data-connectln-call-audio="true"
+                className="w-full max-w-md"
+              />
+            ) : activeSharedStage.frame_or_data_url &&
+              activeSharedStage.mime_type?.includes("pdf") ? (
+              <iframe
+                src={activeSharedStage.frame_or_data_url}
+                title={activeSharedStage.file_name || "PDF Preview"}
+                className="w-full h-[32vh] rounded-xl bg-white"
+              />
+            ) : (
+              <div className="py-4 px-6 text-center space-y-2">
+                <FileText className="h-10 w-10 text-emerald-400 mx-auto" />
+                <p className="text-xs font-bold text-white">
+                  {activeSharedStage.file_name || activeSharedStage.title}
+                </p>
+                <p className="text-[11px] text-slate-300">
+                  Ready on device stage — click Download above to open or save this material.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeSharedStage?.active && isStageMinimized && (
+        <button
+          type="button"
+          onClick={() => setIsStageMinimized(false)}
+          className="fixed top-16 left-4 z-30 rounded-full bg-emerald-700/90 hover:bg-emerald-600 border border-emerald-400/50 px-3 py-1.5 text-[11px] font-extrabold text-white shadow-lg flex items-center gap-1.5 cursor-pointer"
+        >
+          <FileText className="h-3.5 w-3.5" />
+          <span>Show Shared Material</span>
+        </button>
+      )}
+
       {/* STAGE A: MULTI-PERSON WHATSAPP GROUP CALL SPLIT GRID (2+ Remote Participants) */}
       {isGroupGridMode ? (
         <div className="flex-1 pt-16 pb-24 px-3 sm:px-5 overflow-y-auto">
@@ -1955,7 +2939,20 @@ export function ConnectLnWhatsAppCallModal({
             }`}
           >
             {/* Local Self Tile */}
-            <div className="relative rounded-2xl overflow-hidden bg-[#111B21] border border-emerald-500/40 min-h-[200px] flex items-center justify-center">
+            <div
+              className={`relative rounded-2xl overflow-hidden border border-emerald-500/40 min-h-[200px] flex items-center justify-center ${
+                selectedBgId === "custom-image" ? "bg-[#111B21]/60" : activeBgTheme.stageClass
+              }`}
+              style={
+                selectedBgId === "custom-image" && customBgDataUrl
+                  ? {
+                      backgroundImage: `url(${customBgDataUrl})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                  : undefined
+              }
+            >
               {isVideoOn && hasLocalVideoTrack ? (
                 <video
                   ref={gridLocalVideoRef}
@@ -1967,7 +2964,7 @@ export function ConnectLnWhatsAppCallModal({
                 />
               ) : (
                 <div className="flex flex-col items-center gap-2.5 p-3 text-center">
-                  <div className="w-16 h-16 rounded-full bg-emerald-700 flex items-center justify-center text-xl font-extrabold">
+                  <div className="w-16 h-16 rounded-full bg-emerald-700 flex items-center justify-center text-xl font-extrabold shadow-lg border-2 border-emerald-400/50">
                     {callerName.slice(0, 2).toUpperCase()}
                   </div>
                   {isVideoOn && !hasLocalVideoTrack && (
@@ -1983,6 +2980,23 @@ export function ConnectLnWhatsAppCallModal({
                   )}
                 </div>
               )}
+              <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5">
+                {isLocalHost && (
+                  <span className="rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-extrabold text-slate-950">
+                    👑 Host
+                  </span>
+                )}
+                {!isLocalHost && isLocalCoHost && (
+                  <span className="rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-extrabold text-slate-950">
+                    🛡️ Co-Host
+                  </span>
+                )}
+                {selectedBgId !== "none" && (
+                  <span className="rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-emerald-200 border border-white/15">
+                    🎨 {selectedBgId === "custom-image" ? "Custom BG" : activeBgTheme.badge}
+                  </span>
+                )}
+              </div>
               <div className="absolute bottom-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between bg-black/65 px-2.5 py-1 rounded-lg">
                 <span className="text-xs font-bold truncate">You ({callerName})</span>
                 <span className="text-[11px]">{isMicMuted ? "🔇" : "🎙️"}</span>
@@ -1994,10 +3008,13 @@ export function ConnectLnWhatsAppCallModal({
               const st =
                 (rp.peerId ? remoteStreamsMap[rp.peerId] : undefined) ||
                 (idx === 0 ? Object.values(remoteStreamsMap)[0] : undefined)
+              const peerBg = CALL_BACKGROUND_THEMES.find((b) => b.id === rp.virtualBgId)
               return (
                 <div
                   key={rp.userId}
-                  className="relative rounded-2xl overflow-hidden bg-[#111B21] border border-emerald-500/50 min-h-[200px] flex items-center justify-center"
+                  className={`relative rounded-2xl overflow-hidden border border-emerald-500/50 min-h-[200px] flex items-center justify-center ${
+                    peerBg ? peerBg.stageClass : "bg-[#111B21]"
+                  }`}
                 >
                   {!st && rp.isVideoOn && rp.liveFrame && (
                     <img
@@ -2020,6 +3037,85 @@ export function ConnectLnWhatsAppCallModal({
                       <p className="text-sm font-bold text-white">{rp.name}</p>
                     </div>
                   )}
+
+                  {/* Co-Host / Host Controls & Direct Chat on Each Tile */}
+                  <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-1">
+                    <div className="flex items-center gap-1">
+                      {rp.isCoHost && (
+                        <span className="rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-extrabold text-slate-950">
+                          🛡️ Co-Host
+                        </span>
+                      )}
+                      {rp.hostMuted && (
+                        <span className="rounded-full bg-rose-600/90 px-2 py-0.5 text-[10px] font-extrabold text-white">
+                          🔇 Host Muted
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeAllCallDrawers()
+                          setChatRecipientScope("individual")
+                          setSelectedChatRecipientKeys([rp.userId])
+                          setShowChatDrawer(true)
+                        }}
+                        className="h-7 px-2 rounded-full bg-black/65 hover:bg-emerald-600 text-[10px] font-bold text-white cursor-pointer border border-white/15"
+                        title={`Chat privately with ${rp.name}`}
+                      >
+                        💬
+                      </button>
+                      {canModerateCall && (
+                        <button
+                          type="button"
+                          disabled={isModerating}
+                          onClick={() =>
+                            handleModerateMember({
+                              targetUserId: rp.userId,
+                              targetName: rp.name,
+                              targetPhone: rp.phone,
+                              targetEmail: rp.email,
+                              subAction: rp.isMuted ? "unmute_member" : "mute_member",
+                            })
+                          }
+                          className={`h-7 px-2 rounded-full text-[10px] font-bold cursor-pointer border border-white/15 ${
+                            rp.isMuted
+                              ? "bg-rose-600 hover:bg-emerald-600 text-white"
+                              : "bg-black/65 hover:bg-rose-600 text-white"
+                          }`}
+                          title={rp.isMuted ? `Unmute ${rp.name}` : `Mute ${rp.name}`}
+                        >
+                          {rp.isMuted ? "🎙️ Unmute" : "🔇 Mute"}
+                        </button>
+                      )}
+                      {isLocalHost && (
+                        <button
+                          type="button"
+                          disabled={isModerating}
+                          onClick={() =>
+                            handleModerateMember({
+                              targetUserId: rp.userId,
+                              targetName: rp.name,
+                              targetPhone: rp.phone,
+                              targetEmail: rp.email,
+                              subAction: "toggle_cohost",
+                              isCohost: !rp.isCoHost,
+                            })
+                          }
+                          className={`h-7 px-2 rounded-full text-[10px] font-bold cursor-pointer border border-white/15 ${
+                            rp.isCoHost
+                              ? "bg-amber-500 text-slate-950"
+                              : "bg-black/65 hover:bg-amber-500 hover:text-slate-950 text-white"
+                          }`}
+                          title={rp.isCoHost ? "Remove Co-Host" : "Make Co-Host"}
+                        >
+                          👑
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="absolute bottom-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between bg-black/65 px-2.5 py-1 rounded-lg">
                     <span className="text-xs font-bold truncate">{rp.name}</span>
                     <span className="text-[11px] text-emerald-300">
@@ -2159,7 +3255,12 @@ export function ConnectLnWhatsAppCallModal({
         </div>
       ) : (
         /* STAGE B: CLASSIC 1-ON-1 FULL-SCREEN WHATSAPP INTERNET CALL VIEW */
-        <div className="absolute inset-0 bg-gradient-to-b from-[#071E1A] via-[#0B141A] to-[#060B0E]">
+        <div
+          className={`absolute inset-0 ${
+            selectedBgId === "custom-image" ? "" : activeBgTheme.stageClass
+          }`}
+          style={activeBgBackgroundStyle}
+        >
           {!primaryStream && callStatus === "connected" && primaryPeer?.isVideoOn && primaryPeer.liveFrame && (
             <img
               src={primaryPeer.liveFrame}
@@ -2187,8 +3288,13 @@ export function ConnectLnWhatsAppCallModal({
                   className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-emerald-500/70 shadow-2xl"
                 />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                {primaryName}
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center justify-center gap-2">
+                <span>{primaryName}</span>
+                {primaryPeer?.isCoHost && (
+                  <span className="rounded-full bg-emerald-500/90 px-2.5 py-0.5 text-xs font-extrabold text-slate-950">
+                    🛡️ Co-Host
+                  </span>
+                )}
               </h2>
               {recipientPhone && (
                 <p className="mt-1 text-sm font-mono text-emerald-300 font-semibold">
@@ -2242,15 +3348,6 @@ export function ConnectLnWhatsAppCallModal({
                       <span>Copy Call Link</span>
                     </button>
                   )}
-                  {false && (nativeTelHref || recipientPhone) && (
-                    <a
-                      href={nativeTelHref || `tel:${normalizeClientPhone(recipientPhone)}`}
-                      className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-3.5 py-2 text-xs font-extrabold text-white no-underline shadow-md"
-                      title="Dials directly using your own mobile carrier SIM plan ($0 ConnectLn charge)"
-                    >
-                      📞 Dial Using My Own SIM
-                    </a>
-                  )}
                 </div>
               )}
             </div>
@@ -2258,7 +3355,7 @@ export function ConnectLnWhatsAppCallModal({
         </div>
       )}
 
-      {/* TOP WHATSAPP E2EE HEADER WITH `➕ ADD PERSON` BUTTON */}
+      {/* TOP WHATSAPP E2EE HEADER WITH `👑 HOST / MEMBERS` & `➕ ADD PERSON` BUTTONS */}
       <div className="fixed top-0 left-0 right-0 z-30 pt-3.5 px-4 sm:px-6 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent pb-5">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 text-[11px] text-emerald-300 font-semibold">
@@ -2266,6 +3363,16 @@ export function ConnectLnWhatsAppCallModal({
             <span className="truncate">
               End-to-end encrypted · {totalRemoteCount + 1} in call
             </span>
+            {isLocalHost && (
+              <span className="ml-1 rounded-full bg-amber-500/90 px-2 py-0.5 text-[9.5px] font-extrabold text-slate-950">
+                👑 Host
+              </span>
+            )}
+            {!isLocalHost && isLocalCoHost && (
+              <span className="ml-1 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[9.5px] font-extrabold text-slate-950">
+                🛡️ Co-Host
+              </span>
+            )}
           </div>
           {callStatus === "connected" && (
             <p className="text-xs font-mono text-white/90 mt-0.5">
@@ -2278,8 +3385,24 @@ export function ConnectLnWhatsAppCallModal({
           <button
             type="button"
             onClick={() => {
-              setShowAddPeopleDrawer((v) => !v)
-              setShowShareSheet(false)
+              const next = !showHostMembersDrawer
+              closeAllCallDrawers()
+              setShowHostMembersDrawer(next)
+            }}
+            style={{ color: "#FFFFFF" }}
+            className="rounded-full bg-white/15 hover:bg-white/25 border border-white/20 px-3 py-2 text-xs font-extrabold flex items-center gap-1.5 shadow-lg cursor-pointer"
+            title="Host Controls: Mute members & grant Co-Host"
+          >
+            <Crown className="h-3.5 w-3.5 text-amber-300" />
+            <span className="hidden sm:inline">Host &amp; Members</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const next = !showAddPeopleDrawer
+              closeAllCallDrawers()
+              setShowAddPeopleDrawer(next)
             }}
             style={{ color: "#FFFFFF" }}
             className="rounded-full bg-emerald-600 hover:bg-emerald-500 px-3.5 py-2 text-xs font-extrabold flex items-center gap-1.5 shadow-lg cursor-pointer"
@@ -2322,6 +3445,628 @@ export function ConnectLnWhatsAppCallModal({
           >
             <RefreshCw className="h-3.5 w-3.5" />
           </button>
+        </div>
+      )}
+
+      {/* SLIDE-OVER `🎨 BACKGROUND & RINGTONE` DRAWER */}
+      {showBackgroundDrawer && (
+        <div className="fixed inset-x-0 bottom-22 z-40 mx-auto w-[95vw] max-w-lg rounded-3xl bg-[#111B21]/98 border-2 border-emerald-500/50 p-4 shadow-2xl max-h-[70vh] overflow-y-auto space-y-4">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+            <div className="flex items-center gap-2">
+              <Palette className="h-4 w-4 text-emerald-400" />
+              <h3 className="text-sm font-extrabold text-white">
+                Call Background &amp; Ringtone Studio
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                stopPreviewConnectLnRingtone()
+                setShowBackgroundDrawer(false)
+              }}
+              className="h-7 w-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs text-white cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-extrabold text-emerald-300">
+                1. Choose Call Background
+              </p>
+              <button
+                type="button"
+                onClick={() => bgFileInputRef.current?.click()}
+                className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 text-[11px] font-extrabold text-white cursor-pointer"
+              >
+                🖼️ Upload Photo From Device
+              </button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {CALL_BACKGROUND_THEMES.map((bg) => {
+                const active = selectedBgId === bg.id
+                return (
+                  <button
+                    key={bg.id}
+                    type="button"
+                    onClick={() => setSelectedBgId(bg.id)}
+                    className={`rounded-xl p-2 text-left border transition-all cursor-pointer ${
+                      active
+                        ? "border-emerald-400 ring-2 ring-emerald-400/50 bg-white/10"
+                        : "border-white/15 bg-black/30 hover:bg-white/10"
+                    }`}
+                  >
+                    <div
+                      className="h-10 w-full rounded-lg mb-1.5 border border-white/15"
+                      style={{ background: bg.previewGradient }}
+                    />
+                    <p className="text-[11px] font-bold text-white truncate">{bg.label}</p>
+                  </button>
+                )
+              })}
+              {customBgDataUrl && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedBgId("custom-image")}
+                  className={`rounded-xl p-2 text-left border transition-all cursor-pointer ${
+                    selectedBgId === "custom-image"
+                      ? "border-emerald-400 ring-2 ring-emerald-400/50 bg-white/10"
+                      : "border-white/15 bg-black/30 hover:bg-white/10"
+                  }`}
+                >
+                  <img
+                    src={customBgDataUrl}
+                    alt="Custom background"
+                    className="h-10 w-full rounded-lg mb-1.5 object-cover"
+                  />
+                  <p className="text-[11px] font-bold text-emerald-300 truncate">My Device Photo</p>
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-2 border-t border-white/10">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-extrabold text-emerald-300 flex items-center gap-1.5">
+                <Music className="h-3.5 w-3.5" />
+                <span>2. Select Call Ringtone</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => ringtoneFileInputRef.current?.click()}
+                className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] px-2.5 py-1 text-[11px] font-extrabold text-white cursor-pointer"
+              >
+                🎵 Use Audio From Device
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {CONNECTLN_RINGTONE_PRESETS.map((tone) => {
+                const isSelected = selectedRingtoneId === tone.id
+                return (
+                  <div
+                    key={tone.id}
+                    className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2 border ${
+                      isSelected
+                        ? "bg-emerald-950/60 border-emerald-400"
+                        : "bg-[#1F2C34]/70 border-white/10"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (tone.id === "device-custom" && !customRingtoneName) {
+                          ringtoneFileInputRef.current?.click()
+                          return
+                        }
+                        setSelectedConnectLnRingtoneId(tone.id)
+                        setSelectedRingtoneId(tone.id)
+                        previewConnectLnRingtone(tone.id, 3800)
+                      }}
+                      className="flex-1 text-left cursor-pointer min-w-0"
+                    >
+                      <p className="text-xs font-bold text-white truncate">
+                        {isSelected ? "✓ " : ""}
+                        {tone.label}
+                        {tone.id === "device-custom" && customRingtoneName
+                          ? ` (${customRingtoneName})`
+                          : ""}
+                      </p>
+                      <p className="text-[10.5px] text-slate-300 truncate">{tone.description}</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => previewConnectLnRingtone(tone.id, 3800)}
+                      className="rounded-lg bg-white/15 hover:bg-white/25 px-2.5 py-1 text-[11px] font-bold text-white shrink-0 cursor-pointer"
+                    >
+                      ▶️ Play
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SLIDE-OVER `💬 IN-CALL CHAT` DRAWER (EVERYONE, INDIVIDUAL, OR SELECTED MEMBERS) */}
+      {showChatDrawer && (
+        <div className="fixed inset-x-0 bottom-22 z-40 mx-auto w-[95vw] max-w-lg rounded-3xl bg-[#111B21]/98 border-2 border-emerald-500/50 p-4 shadow-2xl max-h-[72vh] flex flex-col gap-3">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-emerald-400" />
+              <h3 className="text-sm font-extrabold text-white">
+                In-Call Chat (Team &amp; Direct)
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowChatDrawer(false)}
+              className="h-7 w-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs text-white cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Recipient Targeting Selector */}
+          <div className="rounded-2xl bg-[#0B141A] border border-white/15 p-2.5 space-y-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-300 mr-1">Send To:</span>
+              {(
+                [
+                  { id: "everyone", label: "🌐 Everyone (Whole Team)" },
+                  { id: "individual", label: "👤 Individual Member" },
+                  { id: "selected", label: "🎯 Selected Members" },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => {
+                    setChatRecipientScope(opt.id)
+                    if (
+                      opt.id === "individual" &&
+                      selectedChatRecipientKeys.length !== 1 &&
+                      allCallTargetMembers[0]
+                    ) {
+                      setSelectedChatRecipientKeys([allCallTargetMembers[0].key])
+                    }
+                  }}
+                  className={`rounded-full px-2.5 py-1 text-[10.5px] font-extrabold cursor-pointer ${
+                    chatRecipientScope === opt.id
+                      ? "bg-emerald-600 text-white"
+                      : "bg-[#1F2C34] text-slate-300 hover:text-white"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {chatRecipientScope !== "everyone" && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {allCallTargetMembers.length === 0 ? (
+                  <span className="text-[11px] text-amber-300">
+                    Waiting for members to join this call to target directly.
+                  </span>
+                ) : (
+                  allCallTargetMembers.map((m) => {
+                    const isChecked = selectedChatRecipientKeys.includes(m.key)
+                    return (
+                      <button
+                        key={m.key}
+                        type="button"
+                        onClick={() => {
+                          if (chatRecipientScope === "individual") {
+                            setSelectedChatRecipientKeys([m.key])
+                          } else {
+                            setSelectedChatRecipientKeys((prev) =>
+                              prev.includes(m.key)
+                                ? prev.filter((k) => k !== m.key)
+                                : [...prev, m.key]
+                            )
+                          }
+                        }}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer flex items-center gap-1 ${
+                          isChecked
+                            ? "bg-emerald-700 border-emerald-400 text-white"
+                            : "bg-[#1F2C34] border-white/10 text-slate-300"
+                        }`}
+                      >
+                        <span>{isChecked ? "☑️" : "⬜"}</span>
+                        <span>{m.name}</span>
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Messages List */}
+          <div className="flex-1 min-h-[160px] max-h-60 overflow-y-auto space-y-2 pr-1">
+            {visibleChatMessages.length === 0 ? (
+              <p className="text-center text-xs text-slate-400 py-8">
+                Send a message or file to Everyone, one person, or selected members.
+              </p>
+            ) : (
+              visibleChatMessages.map((m) => {
+                const isMine = m.sender_id === localPeerUid
+                return (
+                  <div
+                    key={m.id}
+                    className={`rounded-2xl px-3 py-2 max-w-[88%] ${
+                      isMine
+                        ? "ml-auto bg-emerald-800/80 border border-emerald-500/40"
+                        : "bg-[#1F2C34] border border-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                      <span className="text-[11px] font-extrabold text-emerald-300">
+                        {isMine ? "You" : m.sender_name}
+                      </span>
+                      <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-black/35 text-slate-200">
+                        {!m.recipient_scope || m.recipient_scope === "everyone"
+                          ? "🌐 Everyone"
+                          : m.recipient_names?.length
+                          ? `🔒 To ${m.recipient_names.join(", ")}`
+                          : "🔒 Private"}
+                      </span>
+                    </div>
+                    {m.text && <p className="text-xs text-white whitespace-pre-wrap">{m.text}</p>}
+                    {m.attachment_name && m.attachment_data_url && (
+                      <a
+                        href={m.attachment_data_url}
+                        download={m.attachment_name}
+                        className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-black/40 hover:bg-black/60 px-2.5 py-1 text-[11px] font-bold text-emerald-200 no-underline"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span>{m.attachment_name}</span>
+                      </a>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          {chatAttachment && (
+            <div className="flex items-center justify-between rounded-xl bg-emerald-950/70 border border-emerald-500/40 px-3 py-1.5 text-xs">
+              <span className="truncate text-emerald-200 font-semibold">
+                📎 {chatAttachment.name}
+              </span>
+              <button
+                type="button"
+                onClick={() => setChatAttachment(null)}
+                className="text-white/75 hover:text-white cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          <form onSubmit={handleSendChatMessage} className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => chatFileInputRef.current?.click()}
+              className="h-9 w-9 rounded-xl bg-[#1F2C34] hover:bg-[#2A3942] border border-white/15 flex items-center justify-center text-emerald-300 cursor-pointer shrink-0"
+              title="Attach material from device"
+            >
+              <FolderUp className="h-4 w-4" />
+            </button>
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder={
+                chatRecipientScope === "everyone"
+                  ? "Message everyone in this call..."
+                  : "Message selected recipient(s) privately..."
+              }
+              className="flex-1 rounded-xl bg-[#1F2C34] border border-white/15 px-3 py-2 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-400"
+            />
+            <button
+              type="submit"
+              disabled={isSendingChat}
+              style={{ color: "#FFFFFF" }}
+              className="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-extrabold flex items-center gap-1 cursor-pointer shrink-0 disabled:opacity-50"
+            >
+              <Send className="h-3.5 w-3.5" />
+              <span>Send</span>
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* SLIDE-OVER `📁 SHARE MATERIAL FROM DEVICE` DRAWER */}
+      {showMaterialDrawer && (
+        <div className="fixed inset-x-0 bottom-22 z-40 mx-auto w-[95vw] max-w-lg rounded-3xl bg-[#111B21]/98 border-2 border-emerald-500/50 p-4 shadow-2xl max-h-[70vh] overflow-y-auto space-y-3">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+            <div className="flex items-center gap-2">
+              <FolderUp className="h-4 w-4 text-emerald-400" />
+              <h3 className="text-sm font-extrabold text-white">
+                Share Material From Your Device
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowMaterialDrawer(false)}
+              className="h-7 w-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs text-white cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="rounded-2xl bg-[#0B141A] border border-white/15 p-3 space-y-2">
+            <p className="text-[11px] font-bold text-slate-300">Who should receive this material?</p>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setMaterialRecipientScope("everyone")}
+                className={`rounded-full px-3 py-1 text-[11px] font-extrabold cursor-pointer ${
+                  materialRecipientScope === "everyone"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-[#1F2C34] text-slate-300"
+                }`}
+              >
+                🌐 Everyone in Call (Live Stage)
+              </button>
+              <button
+                type="button"
+                onClick={() => setMaterialRecipientScope("selected")}
+                className={`rounded-full px-3 py-1 text-[11px] font-extrabold cursor-pointer ${
+                  materialRecipientScope === "selected"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-[#1F2C34] text-slate-300"
+                }`}
+              >
+                🎯 Selected Members Only
+              </button>
+            </div>
+            {materialRecipientScope === "selected" && allCallTargetMembers.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {allCallTargetMembers.map((m) => {
+                  const isChecked = selectedMaterialRecipientKeys.includes(m.key)
+                  return (
+                    <button
+                      key={m.key}
+                      type="button"
+                      onClick={() =>
+                        setSelectedMaterialRecipientKeys((prev) =>
+                          prev.includes(m.key)
+                            ? prev.filter((k) => k !== m.key)
+                            : [...prev, m.key]
+                        )
+                      }
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
+                        isChecked
+                          ? "bg-emerald-700 border-emerald-400 text-white"
+                          : "bg-[#1F2C34] border-white/10 text-slate-300"
+                      }`}
+                    >
+                      {isChecked ? "☑️ " : "⬜ "}
+                      {m.name}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={() => materialFileInputRef.current?.click()}
+              style={{ color: "#FFFFFF" }}
+              className="rounded-2xl bg-emerald-600 hover:bg-emerald-500 p-3.5 text-left shadow-lg cursor-pointer space-y-1"
+            >
+              <div className="flex items-center gap-2 font-extrabold text-xs">
+                <FolderUp className="h-4 w-4 shrink-0" />
+                <span>Choose File From Device</span>
+              </div>
+              <p className="text-[10.5px] text-emerald-100">
+                PDFs, Word/Excel docs, photos, diagrams, audio or video clips
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleToggleDeviceScreenShare}
+              style={{ color: "#FFFFFF" }}
+              className={`rounded-2xl p-3.5 text-left shadow-lg cursor-pointer space-y-1 border ${
+                isLocalScreenSharing
+                  ? "bg-rose-600 hover:bg-rose-500 border-rose-300"
+                  : "bg-[#1F2C34] hover:bg-[#2A3942] border-white/20"
+              }`}
+            >
+              <div className="flex items-center gap-2 font-extrabold text-xs">
+                <MonitorUp className="h-4 w-4 shrink-0" />
+                <span>
+                  {isLocalScreenSharing ? "Stop Live Screen Share" : "Share Live Screen"}
+                </span>
+              </div>
+              <p className="text-[10.5px] text-slate-300">
+                Present slides, browser window, or live desktop application
+              </p>
+            </button>
+          </div>
+
+          {materialStatusNote && (
+            <p className="text-xs font-semibold text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 rounded-xl px-3 py-2">
+              {materialStatusNote}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* SLIDE-OVER `👑 HOST & MEMBERS (MUTE & CO-HOST PERMISSIONS)` DRAWER */}
+      {showHostMembersDrawer && (
+        <div className="fixed inset-x-0 bottom-22 z-40 mx-auto w-[95vw] max-w-lg rounded-3xl bg-[#111B21]/98 border-2 border-amber-400/50 p-4 shadow-2xl max-h-[70vh] flex flex-col gap-3">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+            <div className="flex items-center gap-2">
+              <Crown className="h-4 w-4 text-amber-400" />
+              <h3 className="text-sm font-extrabold text-white">
+                Call Members, Mute &amp; Co-Host Permissions
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowHostMembersDrawer(false)}
+              className="h-7 w-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs text-white cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-[#0B141A] border border-white/10 px-3 py-2">
+            <div className="text-xs">
+              <p className="font-extrabold text-white">
+                {isLocalHost
+                  ? "👑 You are the Host"
+                  : isLocalCoHost
+                  ? "🛡️ You are a Co-Host"
+                  : "Participant View"}
+              </p>
+              <p className="text-[10.5px] text-slate-300">
+                {isLocalHost
+                  ? "Mute any member, Mute All, or promote members to Co-Host."
+                  : isLocalCoHost
+                  ? "Host granted you Co-Host permission to mute & manage members."
+                  : "Ask the Host to grant you Co-Host permission for moderation."}
+              </p>
+            </div>
+            {canModerateCall && (
+              <button
+                type="button"
+                disabled={isModerating}
+                onClick={() => handleModerateMember({ subAction: "mute_all" })}
+                style={{ color: "#FFFFFF" }}
+                className="rounded-xl bg-rose-600 hover:bg-rose-500 px-3 py-1.5 text-xs font-extrabold cursor-pointer shrink-0 flex items-center gap-1 disabled:opacity-50"
+              >
+                <VolumeX className="h-3.5 w-3.5" />
+                <span>Mute All Members</span>
+              </button>
+            )}
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-2 max-h-60 pr-1">
+            {/* Local Self Row */}
+            <div className="flex items-center justify-between gap-2 rounded-xl bg-[#1F2C34] px-3 py-2 border border-white/10">
+              <div className="min-w-0">
+                <p className="text-xs font-extrabold text-white truncate">
+                  {callerName} (You)
+                </p>
+                <p className="text-[10.5px] text-emerald-300">
+                  {isLocalHost ? "👑 Host" : isLocalCoHost ? "🛡️ Co-Host" : "Member"} ·{" "}
+                  {isMicMuted ? "🔇 Muted" : "🎙️ Unmuted"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleToggleMute}
+                className="rounded-lg bg-white/15 hover:bg-white/25 px-2.5 py-1 text-[11px] font-bold text-white cursor-pointer"
+              >
+                {isMicMuted ? "Unmute Self" : "Mute Self"}
+              </button>
+            </div>
+
+            {allCallTargetMembers.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-4">
+                No other members connected yet. Use Add Person to bring team members in.
+              </p>
+            ) : (
+              allCallTargetMembers.map((m) => (
+                <div
+                  key={m.key}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#1F2C34]/80 px-3 py-2 border border-white/10"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-extrabold text-white truncate flex items-center gap-1.5">
+                      <span>{m.name}</span>
+                      {m.isCoHost && (
+                        <span className="rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9.5px] font-extrabold text-slate-950">
+                          Co-Host
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-[10.5px] text-slate-300">
+                      {m.phone ? prettyClientPhone(m.phone) : "In Call"} ·{" "}
+                      {m.isMuted ? "🔇 Muted" : "🎙️ Live"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeAllCallDrawers()
+                        setChatRecipientScope("individual")
+                        setSelectedChatRecipientKeys([m.key])
+                        setShowChatDrawer(true)
+                      }}
+                      className="rounded-lg bg-sky-700 hover:bg-sky-600 px-2.5 py-1 text-[11px] font-bold text-white cursor-pointer"
+                    >
+                      💬 Chat
+                    </button>
+                    {canModerateCall && (
+                      <button
+                        type="button"
+                        disabled={isModerating}
+                        onClick={() =>
+                          handleModerateMember({
+                            targetUserId: m.userId,
+                            targetName: m.name,
+                            targetPhone: m.phone,
+                            targetEmail: m.email,
+                            subAction: m.isMuted ? "unmute_member" : "mute_member",
+                          })
+                        }
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-extrabold cursor-pointer flex items-center gap-1 ${
+                          m.isMuted
+                            ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                            : "bg-rose-600 hover:bg-rose-500 text-white"
+                        }`}
+                      >
+                        {m.isMuted ? (
+                          <>
+                            <Volume2 className="h-3 w-3" />
+                            <span>Unmute</span>
+                          </>
+                        ) : (
+                          <>
+                            <VolumeX className="h-3 w-3" />
+                            <span>Mute</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                    {isLocalHost && (
+                      <button
+                        type="button"
+                        disabled={isModerating}
+                        onClick={() =>
+                          handleModerateMember({
+                            targetUserId: m.userId,
+                            targetName: m.name,
+                            targetPhone: m.phone,
+                            targetEmail: m.email,
+                            subAction: "toggle_cohost",
+                            isCohost: !m.isCoHost,
+                          })
+                        }
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-extrabold cursor-pointer ${
+                          m.isCoHost
+                            ? "bg-amber-500 text-slate-950"
+                            : "bg-white/15 hover:bg-amber-500 hover:text-slate-950 text-white"
+                        }`}
+                      >
+                        {m.isCoHost ? "✓ Co-Host" : "👑 Make Co-Host"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
 
@@ -2530,92 +4275,157 @@ export function ConnectLnWhatsAppCallModal({
                 <span>Copy Link</span>
               </button>
             )}
-            {false && (nativeTelHref || recipientPhone) && (
-              <a
-                href={nativeTelHref || `tel:${normalizeClientPhone(recipientPhone)}`}
-                className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-3 py-2 text-xs font-bold text-white flex items-center gap-1 no-underline"
-                title="Uses your own mobile carrier SIM plan ($0 ConnectLn charge)"
-              >
-                <Phone className="h-3.5 w-3.5" />
-                <span>Dial via My SIM</span>
-              </a>
-            )}
           </div>
         </div>
       )}
 
       {/* BOTTOM WHATSAPP FLOATING CALL CONTROLS PILL */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 pb-6 pt-4 px-4 bg-gradient-to-t from-black/85 to-transparent flex items-center justify-center">
-        <div className="rounded-full bg-[#1F2C34]/95 border border-white/15 px-4 sm:px-5 py-2.5 shadow-2xl flex items-center gap-2.5 sm:gap-4">
+      <div className="fixed bottom-0 left-0 right-0 z-30 pb-5 pt-4 px-2 sm:px-4 bg-gradient-to-t from-black/85 to-transparent flex items-center justify-center">
+        <div className="rounded-full bg-[#1F2C34]/95 border border-white/15 px-3 sm:px-4 py-2 shadow-2xl flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto max-w-[96vw]">
           <button
             type="button"
             onClick={() => {
-              setShowAddPeopleDrawer((v) => !v)
-              setShowShareSheet(false)
+              const next = !showAddPeopleDrawer
+              closeAllCallDrawers()
+              setShowAddPeopleDrawer(next)
             }}
-            className={`h-11 w-11 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+            className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
               showAddPeopleDrawer
                 ? "bg-emerald-600 text-white"
                 : "bg-emerald-600/25 hover:bg-emerald-600/45 text-emerald-300 border border-emerald-400/40"
             }`}
             title="Add Person to Call"
           >
-            <UserPlus className="h-5 w-5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={handleFlipCamera}
-            className="h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer transition-colors"
-            title="Flip Front / Rear Camera"
-          >
-            <RefreshCw className="h-5 w-5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={handleToggleVideo}
-            className={`h-11 w-11 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
-              isVideoOn ? "bg-white/15 hover:bg-white/25 text-white" : "bg-white text-slate-950"
-            }`}
-            title={isVideoOn ? "Turn Off Camera" : "Turn On Camera"}
-          >
-            {isVideoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleToggleMute}
-            className={`h-11 w-11 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
-              isMicMuted ? "bg-white text-slate-950" : "bg-white/15 hover:bg-white/25 text-white"
-            }`}
-            title={isMicMuted ? "Unmute Microphone" : "Mute Microphone"}
-          >
-            {isMicMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+            <UserPlus className="h-4 w-4" />
           </button>
 
           <button
             type="button"
             onClick={() => {
-              setShowShareSheet((v) => !v)
-              setShowAddPeopleDrawer(false)
+              const next = !showBackgroundDrawer
+              closeAllCallDrawers()
+              setShowBackgroundDrawer(next)
             }}
-            className={`h-11 w-11 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+            className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+              showBackgroundDrawer
+                ? "bg-emerald-600 text-white"
+                : "bg-white/10 hover:bg-white/20 text-white"
+            }`}
+            title="Change Call Background & Ringtone"
+          >
+            <Palette className="h-4 w-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const next = !showChatDrawer
+              closeAllCallDrawers()
+              setShowChatDrawer(next)
+            }}
+            className={`relative h-10 w-10 shrink-0 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+              showChatDrawer
+                ? "bg-emerald-600 text-white"
+                : "bg-white/10 hover:bg-white/20 text-white"
+            }`}
+            title="In-Call Chat (Everyone, Individual, or Selected)"
+          >
+            <MessageSquare className="h-4 w-4" />
+            {unreadChatCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-rose-500 text-[9px] font-extrabold text-white flex items-center justify-center">
+                {unreadChatCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const next = !showMaterialDrawer
+              closeAllCallDrawers()
+              setShowMaterialDrawer(next)
+            }}
+            className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+              showMaterialDrawer || isLocalScreenSharing
+                ? "bg-emerald-600 text-white"
+                : "bg-white/10 hover:bg-white/20 text-white"
+            }`}
+            title="Share Material From Device or Screen"
+          >
+            <FolderUp className="h-4 w-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const next = !showHostMembersDrawer
+              closeAllCallDrawers()
+              setShowHostMembersDrawer(next)
+            }}
+            className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+              showHostMembersDrawer
+                ? "bg-amber-500 text-slate-950"
+                : "bg-white/10 hover:bg-white/20 text-amber-300"
+            }`}
+            title="Host Controls: Mute Members & Co-Host Permissions"
+          >
+            <Crown className="h-4 w-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleFlipCamera}
+            className="h-10 w-10 shrink-0 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer transition-colors"
+            title="Flip Front / Rear Camera"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleToggleVideo}
+            className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+              isVideoOn ? "bg-white/15 hover:bg-white/25 text-white" : "bg-white text-slate-950"
+            }`}
+            title={isVideoOn ? "Turn Off Camera" : "Turn On Camera"}
+          >
+            {isVideoOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleToggleMute}
+            className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+              isMicMuted ? "bg-white text-slate-950" : "bg-white/15 hover:bg-white/25 text-white"
+            }`}
+            title={isMicMuted ? "Unmute Microphone" : "Mute Microphone"}
+          >
+            {isMicMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const next = !showShareSheet
+              closeAllCallDrawers()
+              setShowShareSheet(next)
+            }}
+            className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
               showShareSheet ? "bg-emerald-600 text-white" : "bg-white/10 hover:bg-white/20 text-white"
             }`}
             title="Share Group Call Link"
           >
-            <Share2 className="h-5 w-5" />
+            <Share2 className="h-4 w-4" />
           </button>
 
           <button
             type="button"
             onClick={handleHangup}
             style={{ color: "#FFFFFF" }}
-            className="h-11 w-13 rounded-full bg-rose-600 hover:bg-rose-500 flex items-center justify-center shadow-lg cursor-pointer transition-transform active:scale-95"
+            className="h-10 w-12 shrink-0 rounded-full bg-rose-600 hover:bg-rose-500 flex items-center justify-center shadow-lg cursor-pointer transition-transform active:scale-95"
             title="End Call for All"
           >
-            <PhoneOff className="h-5 w-5" />
+            <PhoneOff className="h-4 w-4" />
           </button>
         </div>
       </div>

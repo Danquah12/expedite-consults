@@ -13,6 +13,15 @@ import {
     ConnectLnWhatsAppCallModal,
     buildInternationalPhone,
 } from './ConnectLnWhatsAppCallModal';
+import {
+    CONNECTLN_RINGTONE_PRESETS,
+    ConnectLnRingtoneId,
+    getSelectedConnectLnRingtoneId,
+    setSelectedConnectLnRingtoneId,
+    saveCustomDeviceRingtoneDataUrl,
+    getCustomDeviceRingtoneName,
+    previewConnectLnRingtone,
+} from '@/lib/connectin-background-ring';
 
 export type MessagingWorkspaceMode =
     | 'chats'
@@ -1452,6 +1461,13 @@ export function WhatsAppModeWorkspace({
         avatar?: string;
         mode: 'audio' | 'video';
     } | null>(null);
+    const [selectedRingtoneId, setSelectedRingtoneId] = useState<ConnectLnRingtoneId>(() =>
+        getSelectedConnectLnRingtoneId()
+    );
+    const [customRingtoneName, setCustomRingtoneName] = useState<string>(() =>
+        getCustomDeviceRingtoneName()
+    );
+    const ringtoneUploadInputRef = React.useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -3996,8 +4012,100 @@ export function WhatsAppModeWorkspace({
                             Voice and video calling
                         </h3>
                         <p className="text-xs text-[#57534E] leading-relaxed">
-                            Share your screen, react with emoji and more, with up to 32 people.
+                            Share device material &amp; screen, switch studio backgrounds, chat with everyone or selected members, and use Host Mute &amp; Co-Host controls.
                         </p>
+
+                        {/* Compact In-Call Feature Badges */}
+                        <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
+                            <span className="rounded-full bg-[#EFE8DA] border border-[#D5BBA3] px-2.5 py-0.5 text-[10px] font-bold text-[#5E3119]">
+                                🎨 Studio Backgrounds
+                            </span>
+                            <span className="rounded-full bg-[#EFE8DA] border border-[#D5BBA3] px-2.5 py-0.5 text-[10px] font-bold text-[#5E3119]">
+                                💬 Team &amp; Direct Chat
+                            </span>
+                            <span className="rounded-full bg-[#EFE8DA] border border-[#D5BBA3] px-2.5 py-0.5 text-[10px] font-bold text-[#5E3119]">
+                                📁 Device Material
+                            </span>
+                            <span className="rounded-full bg-[#EFE8DA] border border-[#D5BBA3] px-2.5 py-0.5 text-[10px] font-bold text-[#5E3119]">
+                                👑 Mute &amp; Co-Host
+                            </span>
+                        </div>
+
+                        {/* Ringtone Preference & Custom Device Ringtone Picker */}
+                        <div className="mt-4 pt-3 border-t border-[#E0D6C5] text-left space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-[11px] font-extrabold text-[#5E3119]">
+                                    🔔 Call Ringtone
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => ringtoneUploadInputRef.current?.click()}
+                                    className="text-[10.5px] font-bold text-[#7C4225] hover:underline cursor-pointer"
+                                >
+                                    🎵 Upload From Device{customRingtoneName ? ` (${customRingtoneName})` : ''}
+                                </button>
+                            </div>
+                            <input
+                                ref={ringtoneUploadInputRef}
+                                type="file"
+                                accept="audio/*,.mp3,.wav,.m4a,.ogg,.aac"
+                                className="hidden"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    e.target.value = '';
+                                    if (file.size > 3 * 1024 * 1024) {
+                                        triggerToast('Please pick a ringtone audio file under 3 MB.');
+                                        return;
+                                    }
+                                    const reader = new FileReader();
+                                    reader.onload = () => {
+                                        const url = String(reader.result || '');
+                                        if (url) {
+                                            saveCustomDeviceRingtoneDataUrl(url, file.name);
+                                            setSelectedRingtoneId('device-custom');
+                                            setCustomRingtoneName(file.name);
+                                            previewConnectLnRingtone('device-custom', 3800);
+                                            triggerToast(`🔔 Ringtone set to device file: ${file.name}`);
+                                        }
+                                    };
+                                    reader.readAsDataURL(file);
+                                }}
+                            />
+                            <div className="flex items-center gap-1.5">
+                                <select
+                                    value={selectedRingtoneId}
+                                    onChange={(e) => {
+                                        const nextId = e.target.value as ConnectLnRingtoneId;
+                                        if (nextId === 'device-custom' && !customRingtoneName) {
+                                            ringtoneUploadInputRef.current?.click();
+                                            return;
+                                        }
+                                        setSelectedConnectLnRingtoneId(nextId);
+                                        setSelectedRingtoneId(nextId);
+                                        previewConnectLnRingtone(nextId, 3500);
+                                    }}
+                                    className="flex-1 rounded-xl border border-[#D0C4AE] bg-[#F3EDE2] px-2.5 py-1.5 text-xs font-semibold text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
+                                >
+                                    {CONNECTLN_RINGTONE_PRESETS.map((tone) => (
+                                        <option key={tone.id} value={tone.id}>
+                                            {tone.label}
+                                            {tone.id === 'device-custom' && customRingtoneName
+                                                ? ` (${customRingtoneName})`
+                                                : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={() => previewConnectLnRingtone(selectedRingtoneId, 3800)}
+                                    style={{ color: '#FBF8F3' }}
+                                    className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-3 py-1.5 text-xs font-bold cursor-pointer shrink-0"
+                                >
+                                    ▶️ Preview
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     {/* 4 ConnectLn Desk Note Tile Buttons: Start call, New call link, Call a number, Schedule call */}

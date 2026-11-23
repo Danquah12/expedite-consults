@@ -324,6 +324,68 @@ export function ConnectInAuthModal({
         throw new Error(data.error || "Sign in failed.")
       }
 
+      // Single-time phone validation: if the user's phone was already validated once, sign in directly!
+      if (data.alreadyVerified || data.requires2FA === false) {
+        const resolvedName = resolveDisplayName(signInName, signInEmail)
+        const vaultProfile = getVaultProfileForUser({
+          email: signInEmail,
+          name: signInName.trim() || resolvedName,
+        })
+        const finalName = signInName.trim() || data.profile?.name || vaultProfile?.name || resolvedName
+        const baseProfile =
+          data.profile ||
+          createUniqueUserProfile({
+            name: finalName,
+            email: signInEmail,
+            role: "personal",
+          })
+        const verifiedPhone = data.phone || data.user?.phone || data.profile?.phone || effectivePhone || ""
+        const candidateAvatar = vaultProfile?.avatar || data.profile?.avatar || baseProfile.avatar
+        const safeAvatar =
+          candidateAvatar && !isForeignPersonaAvatar(candidateAvatar, { name: finalName, email: signInEmail })
+            ? candidateAvatar
+            : getDefaultPortraitForUser({
+                name: finalName,
+                email: signInEmail,
+                professionEnclave: baseProfile.professionEnclave,
+              } as any)
+        const isAdminUser = isSuperAdminUser({ name: finalName, email: signInEmail })
+        const shouldOpenAdminPortal = isDedicatedAdminAccount({
+          name: finalName,
+          email: signInEmail,
+          professionId: signInProfessionId,
+        })
+        const profileToSave = {
+          ...baseProfile,
+          ...(vaultProfile || {}),
+          name: finalName,
+          email: data.email || signInEmail,
+          phone: verifiedPhone || undefined,
+          phoneVerified: Boolean(verifiedPhone),
+          avatar: safeAvatar,
+          role: isAdminUser ? "admin" : "personal",
+          roles: isAdminUser ? ["SUPER_ADMIN"] : ["NORMAL_USER"],
+          id: data.profile?.userId || data.user?.id || baseProfile.id,
+        }
+        const targetTab = shouldOpenAdminPortal ? "adminiam" : "home"
+        saveStoredUser(profileToSave)
+        saveStoredSessionRoute(targetTab, "personal")
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("connectin_posts_v1")
+          localStorage.removeItem("connectin_is_signed_out")
+          if (verifiedPhone) {
+            localStorage.setItem(MY_LINKED_PHONE_STORAGE_KEY, verifiedPhone)
+            window.dispatchEvent(new Event("connectln_phone_linked"))
+          }
+        }
+        setSuccessMessage(`✓ Welcome back, ${profileToSave.name}! Signed in with your verified number.`)
+        setTimeout(() => {
+          onLoginSuccess(profileToSave, targetTab, "personal")
+          onClose()
+        }, 120)
+        return
+      }
+
       if (data.otpChallengeToken) {
         setOtpChallengeToken(data.otpChallengeToken)
       }

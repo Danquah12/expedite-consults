@@ -69,6 +69,8 @@ export interface CommCallParticipant {
   is_speaking?: boolean
   is_screen_sharing?: boolean
   webrtc_connected?: boolean
+  is_cohost?: boolean
+  host_muted?: boolean
   virtual_bg_id?: string
   virtual_bg_badge?: string
   live_frame?: string | null
@@ -93,6 +95,11 @@ export interface SharedStageRecord {
   mode: "screen" | "file" | "snapshot" | "presentation"
   title: string
   mime_type?: string
+  file_name?: string
+  file_size_label?: string
+  recipient_scope?: "everyone" | "individual" | "selected"
+  recipient_ids?: string[]
+  recipient_names?: string[]
   use_webrtc_stream?: boolean
   frame_or_data_url: string | null
   updated_at_ms: number
@@ -104,7 +111,11 @@ export interface SharedCallChatMessage {
   sender_name: string
   text: string
   attachment_name?: string
+  attachment_mime?: string
   attachment_data_url?: string
+  recipient_scope?: "everyone" | "individual" | "selected"
+  recipient_ids?: string[]
+  recipient_names?: string[]
   sent_at: string
 }
 
@@ -116,6 +127,8 @@ export interface CommInvitedMember {
   avatar?: string
   status: "ringing" | "in-progress" | "invited" | "unanswered" | "removed"
   callSid?: string
+  is_cohost?: boolean
+  host_muted?: boolean
   updated_at_ms: number
 }
 
@@ -145,6 +158,8 @@ export interface CommCallRecord {
   }
   participants: CommCallParticipant[]
   invited_roster?: CommInvitedMember[]
+  cohost_keys?: string[]
+  muted_keys?: string[]
   shared_stage?: SharedStageRecord | null
   shared_messages?: SharedCallChatMessage[]
 }
@@ -166,6 +181,21 @@ let lastDiskSaveMs = 0
 let lastCloudPullMs = 0
 const lastCloudParticipantPushMap = new Map<string, number>()
 const lastCloudAudioSeqMap = new Map<string, number>()
+const ENDED_CALL_TOMBSTONES = new Map<string, number>()
+const ENDED_TOMBSTONE_TTL_MS = 120000
+
+function isCallTombstoned(callId: string, nowMs = Date.now()): boolean {
+  const ts = ENDED_CALL_TOMBSTONES.get(callId)
+  if (!ts) return false
+  if (nowMs - ts < ENDED_TOMBSTONE_TTL_MS) return true
+  ENDED_CALL_TOMBSTONES.delete(callId)
+  return false
+}
+
+function makeCloudEndedKey(callId: string): string {
+  const cleanCall = String(callId || "room").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48)
+  return `e__${cleanCall}`
+}
 
 function getTwilioCallsAuthHeader(): string | null {
   return "firebase-kv"
@@ -262,6 +292,43 @@ function makeCloudRosterKey(callId: string): string {
   return `r__${cleanCall}`
 }
 
+function makeCloudChatKey(callId: string): string {
+  const cleanCall = String(callId || "room").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48)
+  return `c__${cleanCall}`
+}
+
+function buildModerationIdentityKeys(entry: {
+  userId?: string
+  phone?: string
+  email?: string
+  name?: string
+}): string[] {
+  const keys: string[] = []
+  const uid = String(entry.userId || "").trim()
+  if (uid) keys.push(`uid:${uid}`)
+  const digits = String(entry.phone || "").replace(/[^\d]/g, "")
+  if (digits.length >= 7) keys.push(`tel:${digits.slice(-10)}`)
+  const em = String(entry.email || "").trim().toLowerCase()
+  if (em) keys.push(`em:${em}`)
+  const nm = String(entry.name || "").trim().toLowerCase()
+  if (nm && nm !== "connectln call" && nm !== "participant") keys.push(`nm:${nm}`)
+  return keys
+}
+
+function participantMatchesModKey(
+  entry: { user_id?: string; phone?: string; email?: string; display_name?: string; name?: string },
+  keySet: Set<string>
+): boolean {
+  if (keySet.size === 0) return false
+  const candidates = buildModerationIdentityKeys({
+    userId: entry.user_id,
+    phone: entry.phone,
+    email: entry.email,
+    name: entry.display_name || entry.name,
+  })
+  return candidates.some((k) => keySet.has(k))
+}
+
 export function makeInvitedMemberKey(entry: { id?: string; phone?: string; email?: string; name?: string }): string {
   const phoneDigits = String(entry.phone || "").replace(/[^\d]/g, "")
   if (phoneDigits.length >= 7) return `tel_${phoneDigits}`
@@ -322,6 +389,8 @@ function mergeInvitedEntriesIntoRecord(
             ? String(raw.callSid)
             : undefined
           : prev?.callSid,
+      is_cohost: raw.is_cohost !== undefined ? Boolean(raw.is_cohost) : prev?.is_cohost,
+      host_muted: raw.host_muted !== undefined ? Boolean(raw.host_muted) : prev?.host_muted,
       updated_at_ms: incomingTs,
     })
     changed = true
@@ -335,11 +404,14 @@ function mergeInvitedEntriesIntoRecord(
 
 const lastCloudStagePushMap = new Map<string, number>()
 const lastCloudRosterPushMap = new Map<string, number>()
+const lastCloudChatPushMap = new Map<string, number>()
 
 async function pushCloudInvitedRoster(
   callId: string,
   roster: CommInvitedMember[] | undefined,
-  force = false
+  force = false,
+  cohostKeys?: string[],
+  mutedKeys?: string[]
 ): Promise<void> {
   const auth = getTwilioCallsAuthHeader()
   if (!auth) return
@@ -357,15 +429,48 @@ async function pushCloudInvitedRoster(
     avatar: m.avatar && m.avatar.length < 320 ? m.avatar : undefined,
     status: m.status,
     callSid: m.callSid,
+    is_cohost: Boolean(m.is_cohost),
+    host_muted: Boolean(m.host_muted),
     updated_at_ms: m.updated_at_ms || nowMs,
   }))
   const payload = JSON.stringify({
     kind: "roster",
     call_id: callId,
     invited_roster: compactRoster,
+    cohost_keys: cohostKeys || [],
+    muted_keys: mutedKeys || [],
     updated_at_ms: nowMs,
   })
   await upsertTwilioSyncItem(auth, rosterKey, payload, "300")
+}
+
+async function pushCloudSharedMessages(
+  callId: string,
+  messages: SharedCallChatMessage[] | undefined,
+  force = false
+): Promise<void> {
+  const auth = getTwilioCallsAuthHeader()
+  if (!auth || !Array.isArray(messages) || messages.length === 0) return
+  const chatKey = makeCloudChatKey(callId)
+  const nowMs = Date.now()
+  const lastPush = lastCloudChatPushMap.get(chatKey) || 0
+  if (!force && nowMs - lastPush < 600) return
+  lastCloudChatPushMap.set(chatKey, nowMs)
+
+  const compactMsgs = messages.slice(-25).map((m) => ({
+    ...m,
+    attachment_data_url:
+      m.attachment_data_url && m.attachment_data_url.length < 96000
+        ? m.attachment_data_url
+        : undefined,
+  }))
+  const payload = JSON.stringify({
+    kind: "chat",
+    call_id: callId,
+    shared_messages: compactMsgs,
+    updated_at_ms: nowMs,
+  })
+  await upsertTwilioSyncItem(auth, chatKey, payload, "300")
 }
 
 async function pushCloudSharedStage(callId: string, stage: SharedStageRecord | null, force = false): Promise<void> {
@@ -378,7 +483,7 @@ async function pushCloudSharedStage(callId: string, stage: SharedStageRecord | n
   lastCloudStagePushMap.set(stageKey, nowMs)
 
   const compactFrame =
-    stage?.frame_or_data_url && stage.frame_or_data_url.length < 12800
+    stage?.frame_or_data_url && stage.frame_or_data_url.length < 96000
       ? stage.frame_or_data_url
       : null
   const payload = JSON.stringify({
@@ -390,6 +495,11 @@ async function pushCloudSharedStage(callId: string, stage: SharedStageRecord | n
     mode: stage?.mode || "screen",
     title: stage?.title || "",
     mime_type: stage?.mime_type,
+    file_name: stage?.file_name,
+    file_size_label: stage?.file_size_label,
+    recipient_scope: stage?.recipient_scope || "everyone",
+    recipient_ids: stage?.recipient_ids,
+    recipient_names: stage?.recipient_names,
     use_webrtc_stream: Boolean(stage?.use_webrtc_stream),
     frame_or_data_url: compactFrame,
     updated_at_ms: stage?.updated_at_ms || nowMs,
@@ -437,14 +547,41 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
   try {
     const items = await firebaseKvListItems<any>(CALLS_SYNC_MAP_NAME)
 
-    // First pass: merge participant records (`p__`) and collect shared stage (`s__`), roster (`r__`), and audio (`a__`)
-    const audioItems: any[] = []
-    const rosterItems: any[] = []
+    // Pass 0: record ended-call tombstones (`e__`) so no ended call can ever be resurrected by another lambda instance
     for (const item of items) {
       const data = item?.data
       if (!data || !data.call_id) continue
+      if (data.kind === "ended" || String(item?.key || "").startsWith("e__")) {
+        const endedTs = Number(data.ended_at_ms) || 0
+        if (endedTs > 0 && nowMs - endedTs < ENDED_TOMBSTONE_TTL_MS) {
+          ENDED_CALL_TOMBSTONES.set(data.call_id, endedTs)
+          const existingRec = ACTIVE_CALLS_STORE.get(data.call_id)
+          if (existingRec) {
+            existingRec.state = "ENDED"
+            existingRec.ended_at = data.ended_at || existingRec.ended_at || new Date(endedTs).toISOString()
+            existingRec.participants = []
+            existingRec.invited_roster = []
+            existingRec.shared_stage = null
+          }
+        }
+      }
+    }
+
+    // First pass: merge participant records (`p__`) and collect shared stage (`s__`), roster (`r__`), chat (`c__`), and audio (`a__`)
+    const audioItems: any[] = []
+    const rosterItems: any[] = []
+    const chatItems: any[] = []
+    for (const item of items) {
+      const data = item?.data
+      if (!data || !data.call_id) continue
+      if (data.kind === "ended" || String(item?.key || "").startsWith("e__")) continue
+      if (isCallTombstoned(data.call_id, nowMs)) continue
       if (data.kind === "roster" || String(item?.key || "").startsWith("r__")) {
         rosterItems.push(data)
+        continue
+      }
+      if (data.kind === "chat" || String(item?.key || "").startsWith("c__")) {
+        chatItems.push(data)
         continue
       }
       if (data.kind === "stage" || String(item?.key || "").startsWith("s__")) {
@@ -460,6 +597,11 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
               mode: data.mode || "screen",
               title: data.title || "",
               mime_type: data.mime_type,
+              file_name: data.file_name,
+              file_size_label: data.file_size_label,
+              recipient_scope: data.recipient_scope || "everyone",
+              recipient_ids: Array.isArray(data.recipient_ids) ? data.recipient_ids : undefined,
+              recipient_names: Array.isArray(data.recipient_names) ? data.recipient_names : undefined,
               use_webrtc_stream: Boolean(data.use_webrtc_stream),
               frame_or_data_url: data.frame_or_data_url || record.shared_stage?.frame_or_data_url || null,
               updated_at_ms: remoteTs,
@@ -474,7 +616,14 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
         audioItems.push(data)
         continue
       }
-      if (data.participant_state === "LEFT" || !data.last_seen_ms || nowMs - data.last_seen_ms >= PARTICIPANT_TTL_MS) {
+      if (data.participant_state === "LEFT") {
+        const leftRecord = ACTIVE_CALLS_STORE.get(data.call_id)
+        if (leftRecord) {
+          leftRecord.participants = (leftRecord.participants || []).filter((p) => p.user_id !== data.user_id)
+        }
+        continue
+      }
+      if (!data.last_seen_ms || nowMs - data.last_seen_ms >= PARTICIPANT_TTL_MS) {
         continue
       }
       let record = ACTIVE_CALLS_STORE.get(data.call_id)
@@ -555,7 +704,7 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
         }
       }
 
-      // Third pass: merge invited_roster items (`r__`) so every caller and answering phone sees all invited people!
+      // Third pass: merge invited_roster + moderation keys (`r__`) so every caller and answering phone stays in sync!
       for (const rData of rosterItems) {
         const remoteTs = Number(rData.updated_at_ms) || 0
         if (nowMs - remoteTs > 300000) continue
@@ -563,8 +712,31 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
         if (!record && Array.isArray(rData.invited_roster) && rData.invited_roster.length > 0) {
           record = ensureCallRoom(rData.call_id, "host", "ConnectLn Call", rData.call_id)
         }
-        if (record && record.state !== "ENDED" && Array.isArray(rData.invited_roster)) {
-          mergeInvitedEntriesIntoRecord(record, rData.invited_roster, remoteTs || nowMs)
+        if (record && record.state !== "ENDED") {
+          if (Array.isArray(rData.invited_roster)) {
+            mergeInvitedEntriesIntoRecord(record, rData.invited_roster, remoteTs || nowMs)
+          }
+          if (Array.isArray(rData.cohost_keys)) {
+            record.cohost_keys = Array.from(new Set([...(record.cohost_keys || []), ...rData.cohost_keys]))
+          }
+          if (Array.isArray(rData.muted_keys)) {
+            record.muted_keys = Array.from(new Set([...(record.muted_keys || []), ...rData.muted_keys]))
+          }
+        }
+      }
+
+      // Fourth pass: merge shared chat messages (`c__`)
+      for (const cData of chatItems) {
+        const remoteTs = Number(cData.updated_at_ms) || 0
+        if (nowMs - remoteTs > 300000) continue
+        const record = ACTIVE_CALLS_STORE.get(cData.call_id)
+        if (record && record.state !== "ENDED" && Array.isArray(cData.shared_messages)) {
+          const msgMap = new Map<string, SharedCallChatMessage>()
+          for (const m of record.shared_messages || []) msgMap.set(m.id, m)
+          for (const m of cData.shared_messages) {
+            if (m && m.id) msgMap.set(m.id, m)
+          }
+          record.shared_messages = Array.from(msgMap.values()).slice(-50)
         }
       }
     } catch {
@@ -611,6 +783,12 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
               mem.participants = Array.from(mergedMap.values())
               if (Array.isArray(v.invited_roster) && v.invited_roster.length > 0) {
                 mergeInvitedEntriesIntoRecord(mem, v.invited_roster, nowMs)
+              }
+              if (Array.isArray(v.cohost_keys)) {
+                mem.cohost_keys = Array.from(new Set([...(mem.cohost_keys || []), ...v.cohost_keys]))
+              }
+              if (Array.isArray(v.muted_keys)) {
+                mem.muted_keys = Array.from(new Set([...(mem.muted_keys || []), ...v.muted_keys]))
               }
             }
 
@@ -748,8 +926,17 @@ export async function GET(req: NextRequest) {
   const incomingPhoneDigits = (req.nextUrl.searchParams.get("incoming_phone") || "").replace(/[^\d]/g, "")
   const viewerPeerId = (req.nextUrl.searchParams.get("viewer_peer_id") || "").trim()
 
+  const endedCallIds: string[] = []
+  for (const [eid, ts] of ENDED_CALL_TOMBSTONES.entries()) {
+    if (nowMs - ts < ENDED_TOMBSTONE_TTL_MS) {
+      endedCallIds.push(eid)
+    } else {
+      ENDED_CALL_TOMBSTONES.delete(eid)
+    }
+  }
+
   const calls = Array.from(ACTIVE_CALLS_STORE.values()).filter((c) => {
-    if (c.state === "ENDED") return false
+    if (c.state === "ENDED" || isCallTombstoned(c.id, nowMs)) return false
     const liveParts = (c.participants || []).filter(
       (p) => p.last_seen_ms && nowMs - p.last_seen_ms < PARTICIPANT_TTL_MS
     )
@@ -830,6 +1017,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       protocol_version: 1,
       incoming_calls: incomingCalls,
+      ended_call_ids: endedCallIds,
     })
   }
 
@@ -837,6 +1025,7 @@ export async function GET(req: NextRequest) {
     protocol_version: 1,
     active_calls_count: calls.length,
     calls,
+    ended_call_ids: endedCallIds,
   })
 }
 
@@ -892,37 +1081,163 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "end" && body.call_id) {
-      const existing = ACTIVE_CALLS_STORE.get(body.call_id)
-      if (existing) {
-        // Instantly stop ringing on every invitee's open tabs/apps
-        await publishToPhones(
-          [existing.target_recipient_phone, ...(existing.invited_roster || []).map((m) => m.phone)],
-          "call-ended",
-          { callId: body.call_id }
-        ).catch(() => {})
-        for (const p of existing.participants || []) {
+      const endCallId = String(body.call_id).trim()
+      ENDED_CALL_TOMBSTONES.set(endCallId, nowMs)
+      await pullCloudCallParticipants().catch(() => {})
+      let existing = ACTIVE_CALLS_STORE.get(endCallId)
+      if (!existing) {
+        existing = ensureCallRoom(endCallId, body.user_id || "host", body.display_name || "Host", endCallId)
+      }
+
+      const phonesToSilence: Array<string | undefined> = [
+        existing.target_recipient_phone,
+        existing.initiator_phone,
+        typeof body.target_recipient_phone === "string" ? body.target_recipient_phone : undefined,
+        ...(existing.invited_roster || []).map((m) => m.phone),
+        ...(existing.participants || []).map((p) => p.phone),
+        ...(Array.isArray(body.invited_phones) ? body.invited_phones : []),
+      ]
+
+      const cloudOps: Promise<any>[] = [
+        upsertTwilioSyncItem(
+          "firebase-kv",
+          makeCloudEndedKey(endCallId),
+          JSON.stringify({
+            kind: "ended",
+            call_id: endCallId,
+            ended_at: now,
+            ended_at_ms: nowMs,
+          }),
+          "120"
+        ).catch(() => {}),
+        publishToPhones(phonesToSilence, "call-ended", { callId: endCallId }).catch(() => {}),
+        pushCloudSharedStage(endCallId, null, true).catch(() => {}),
+        pushCloudInvitedRoster(endCallId, [], true, [], []).catch(() => {}),
+      ]
+      for (const p of existing.participants || []) {
+        cloudOps.push(
           pushCloudCallParticipant(
-            body.call_id,
+            endCallId,
             { ...p, last_seen_ms: 0, left_at: now, participant_state: "LEFT" },
             true
           ).catch(() => {})
-        }
-        pushCloudSharedStage(body.call_id, null, true).catch(() => {})
-        pushCloudInvitedRoster(body.call_id, [], true).catch(() => {})
-        existing.state = "ENDED"
-        existing.ended_at = now
-        existing.participants = []
-        existing.invited_roster = []
-        existing.shared_stage = null
-        existing.state_version += 1
-        ACTIVE_CALLS_STORE.set(body.call_id, existing)
-        savePersistedCalls(true)
+        )
       }
+      await Promise.all(cloudOps)
+
+      existing.state = "ENDED"
+      existing.ended_at = now
+      existing.participants = []
+      existing.invited_roster = []
+      existing.shared_stage = null
+      existing.state_version += 1
+      ACTIVE_CALLS_STORE.set(endCallId, existing)
+      savePersistedCalls(true)
+
       return NextResponse.json({
         protocol_version: 1,
         event_type: "call.ended",
         occurred_at: now,
-        call: existing || null,
+        call: existing,
+      })
+    }
+
+    if (action === "moderate_participant" && body.call_id) {
+      const modCallId = String(body.call_id).trim()
+      await pullCloudCallParticipants().catch(() => {})
+      const record = ensureCallRoom(modCallId, body.user_id || "host", body.display_name || "Host", modCallId)
+      if (!Array.isArray(record.muted_keys)) record.muted_keys = []
+      if (!Array.isArray(record.cohost_keys)) record.cohost_keys = []
+
+      const subAction = String(body.sub_action || "")
+      const targetKeys = buildModerationIdentityKeys({
+        userId: body.target_user_id,
+        phone: body.target_phone,
+        email: body.target_email,
+        name: body.target_name,
+      })
+
+      if (subAction === "mute_all") {
+        const nextMuted = new Set<string>(record.muted_keys)
+        for (const p of record.participants || []) {
+          if (body.actor_user_id && p.user_id === body.actor_user_id) continue
+          for (const k of buildModerationIdentityKeys({
+            userId: p.user_id,
+            phone: p.phone,
+            name: p.display_name,
+          })) {
+            nextMuted.add(k)
+          }
+          p.host_muted = true
+          p.is_muted = true
+        }
+        for (const inv of record.invited_roster || []) {
+          for (const k of buildModerationIdentityKeys({
+            phone: inv.phone,
+            email: inv.email,
+            name: inv.name,
+          })) {
+            nextMuted.add(k)
+          }
+          inv.host_muted = true
+        }
+        record.muted_keys = Array.from(nextMuted)
+      } else if (subAction === "mute_member" || subAction === "unmute_member") {
+        const shouldMute = subAction === "mute_member"
+        const mutedSet = new Set<string>(record.muted_keys)
+        const targetSet = new Set<string>(targetKeys)
+        for (const k of targetKeys) {
+          if (shouldMute) mutedSet.add(k)
+          else mutedSet.delete(k)
+        }
+        record.muted_keys = Array.from(mutedSet)
+        for (const p of record.participants || []) {
+          if (participantMatchesModKey(p, targetSet)) {
+            p.host_muted = shouldMute
+            if (shouldMute) p.is_muted = true
+          }
+        }
+        for (const inv of record.invited_roster || []) {
+          if (participantMatchesModKey(inv, targetSet)) {
+            inv.host_muted = shouldMute
+          }
+        }
+      } else if (subAction === "toggle_cohost") {
+        const grant = body.is_cohost !== false
+        const cohostSet = new Set<string>(record.cohost_keys)
+        const targetSet = new Set<string>(targetKeys)
+        for (const k of targetKeys) {
+          if (grant) cohostSet.add(k)
+          else cohostSet.delete(k)
+        }
+        record.cohost_keys = Array.from(cohostSet)
+        for (const p of record.participants || []) {
+          if (participantMatchesModKey(p, targetSet)) {
+            p.is_cohost = grant
+          }
+        }
+        for (const inv of record.invited_roster || []) {
+          if (participantMatchesModKey(inv, targetSet)) {
+            inv.is_cohost = grant
+          }
+        }
+      }
+
+      record.state_version += 1
+      ACTIVE_CALLS_STORE.set(modCallId, record)
+      await pushCloudInvitedRoster(
+        modCallId,
+        record.invited_roster,
+        true,
+        record.cohost_keys,
+        record.muted_keys
+      ).catch(() => {})
+      savePersistedCalls(true)
+      return NextResponse.json({
+        protocol_version: 1,
+        event_type: "call.moderated",
+        occurred_at: now,
+        call: record,
       })
     }
 
@@ -991,13 +1306,31 @@ export async function POST(req: NextRequest) {
       const displayName = body.display_name || "Meeting Participant"
       const conversationId = body.conversation_id || "9b0bbf68-20c8-4416-b82c-0f0e81b8df80"
 
+      if (action === "heartbeat" && !body.reopen && isCallTombstoned(callId, nowMs)) {
+        const endedRec = ACTIVE_CALLS_STORE.get(callId)
+        if (endedRec) {
+          endedRec.state = "ENDED"
+          endedRec.participants = []
+        }
+        return NextResponse.json({
+          protocol_version: 1,
+          event_type: "call.ended",
+          occurred_at: now,
+          call: endedRec || { id: callId, state: "ENDED", participants: [] },
+        })
+      }
+
+      if (action === "create" || (action === "join" && body.reopen)) {
+        ENDED_CALL_TOMBSTONES.delete(callId)
+      }
+
       const record = ensureCallRoom(callId, userId, displayName, conversationId)
 
       // If this call room was recently ended (< 15s ago) and a client is only sending a periodic heartbeat (not explicitly creating/joining/reopening a call),
       // return the ENDED state immediately so all remaining screens close/clear frozen participants!
       if (record.state === "ENDED") {
         const endedMs = record.ended_at ? new Date(record.ended_at).getTime() : 0
-        if (action === "heartbeat" && !body.reopen && nowMs - endedMs < 15000) {
+        if (action === "heartbeat" && !body.reopen && nowMs - endedMs < 45000) {
           record.participants = []
           return NextResponse.json({
             protocol_version: 1,
@@ -1037,6 +1370,11 @@ export async function POST(req: NextRequest) {
             mode: body.shared_stage.mode || "screen",
             title: body.shared_stage.title || "Live Shared Content",
             mime_type: body.shared_stage.mime_type,
+            file_name: body.shared_stage.file_name,
+            file_size_label: body.shared_stage.file_size_label,
+            recipient_scope: body.shared_stage.recipient_scope || "everyone",
+            recipient_ids: Array.isArray(body.shared_stage.recipient_ids) ? body.shared_stage.recipient_ids : undefined,
+            recipient_names: Array.isArray(body.shared_stage.recipient_names) ? body.shared_stage.recipient_names : undefined,
             use_webrtc_stream: Boolean(body.shared_stage.use_webrtc_stream),
             frame_or_data_url: body.shared_stage.frame_or_data_url || null,
             updated_at_ms: nowMs,
@@ -1045,6 +1383,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Append shared chat message / shared file attachment if provided
+      let chatChanged = false
       if (body.chat_message) {
         if (!Array.isArray(record.shared_messages)) {
           record.shared_messages = []
@@ -1057,12 +1396,17 @@ export async function POST(req: NextRequest) {
             sender_name: displayName,
             text: body.chat_message.text || "",
             attachment_name: body.chat_message.attachment_name,
+            attachment_mime: body.chat_message.attachment_mime,
             attachment_data_url: body.chat_message.attachment_data_url,
+            recipient_scope: body.chat_message.recipient_scope || "everyone",
+            recipient_ids: Array.isArray(body.chat_message.recipient_ids) ? body.chat_message.recipient_ids : undefined,
+            recipient_names: Array.isArray(body.chat_message.recipient_names) ? body.chat_message.recipient_names : undefined,
             sent_at: now,
           })
           if (record.shared_messages.length > 50) {
             record.shared_messages = record.shared_messages.slice(-50)
           }
+          chatChanged = true
         }
       }
 
@@ -1099,6 +1443,40 @@ export async function POST(req: NextRequest) {
         rosterChanged = mergeInvitedEntriesIntoRecord(record, inlineRosterUpdates, nowMs)
       }
 
+      const participantPhone =
+        typeof body.participant_phone === "string" && body.participant_phone.trim()
+          ? body.participant_phone.trim()
+          : existingIdx >= 0
+          ? record.participants[existingIdx].phone
+          : undefined
+
+      if (body.clear_host_mute === true && Array.isArray(record.muted_keys)) {
+        const selfKeys = new Set(
+          buildModerationIdentityKeys({
+            userId,
+            phone: participantPhone,
+            name: displayName,
+          })
+        )
+        const beforeLen = record.muted_keys.length
+        record.muted_keys = record.muted_keys.filter((k) => !selfKeys.has(k))
+        if (record.muted_keys.length !== beforeLen) {
+          rosterChanged = true
+        }
+      }
+
+      const cohostSet = new Set(record.cohost_keys || [])
+      const mutedSet = new Set(record.muted_keys || [])
+      const isCohost =
+        participantMatchesModKey(
+          { user_id: userId, phone: participantPhone, display_name: displayName },
+          cohostSet
+        ) || Boolean(body.is_cohost)
+      const isHostMuted = participantMatchesModKey(
+        { user_id: userId, phone: participantPhone, display_name: displayName },
+        mutedSet
+      )
+
       const updatedParticipant: CommCallParticipant = {
         call_id: callId,
         user_id: userId,
@@ -1107,12 +1485,7 @@ export async function POST(req: NextRequest) {
         display_name: displayName,
         role: body.role || (existingIdx === 0 ? "Host · Local Camera & Mic" : "Invited Friend · Live Video"),
         device_label: body.device_label || "Live WebRTC Camera",
-        phone:
-          typeof body.participant_phone === "string" && body.participant_phone.trim()
-            ? body.participant_phone.trim()
-            : existingIdx >= 0
-            ? record.participants[existingIdx].phone
-            : undefined,
+        phone: participantPhone,
         target_recipient_name: record.target_recipient_name,
         target_recipient_email: record.target_recipient_email,
         target_recipient_phone: record.target_recipient_phone,
@@ -1121,7 +1494,9 @@ export async function POST(req: NextRequest) {
         joined_at: existingIdx >= 0 ? record.participants[existingIdx].joined_at : now,
         last_seen_ms: nowMs,
         left_at: null,
-        is_muted: isMuted,
+        is_muted: isHostMuted ? true : isMuted,
+        is_cohost: isCohost,
+        host_muted: isHostMuted,
         is_video_on: isVideoOn,
         is_speaking: typeof body.is_speaking === "boolean" ? body.is_speaking : true,
         is_screen_sharing: typeof body.is_screen_sharing === "boolean" ? body.is_screen_sharing : false,
@@ -1149,7 +1524,7 @@ export async function POST(req: NextRequest) {
             ? record.participants[existingIdx].live_frame
             : null,
         live_audio_chunk:
-          isMuted || isWebRtcConnected
+          isMuted || isHostMuted || isWebRtcConnected
             ? null
             : body.live_audio_chunk &&
               typeof body.live_audio_chunk.data_url === "string" &&
@@ -1163,7 +1538,7 @@ export async function POST(req: NextRequest) {
             ? record.participants[existingIdx].live_audio_chunk
             : null,
         recent_audio_chunks:
-          isMuted || isWebRtcConnected
+          isMuted || isHostMuted || isWebRtcConnected
             ? null
             : Array.isArray(body.recent_audio_chunks) && body.recent_audio_chunks.length > 0
             ? body.recent_audio_chunks
@@ -1219,8 +1594,17 @@ export async function POST(req: NextRequest) {
         stageChanged
           ? pushCloudSharedStage(callId, record.shared_stage || null, action === "share_stage").catch(() => {})
           : Promise.resolve(),
+        chatChanged
+          ? pushCloudSharedMessages(callId, record.shared_messages, true).catch(() => {})
+          : Promise.resolve(),
         rosterChanged
-          ? pushCloudInvitedRoster(callId, record.invited_roster, true).catch(() => {})
+          ? pushCloudInvitedRoster(
+              callId,
+              record.invited_roster,
+              true,
+              record.cohost_keys,
+              record.muted_keys
+            ).catch(() => {})
           : Promise.resolve(),
         pullCloudCallParticipants(userId).catch(() => {}),
       ])

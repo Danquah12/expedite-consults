@@ -105,19 +105,16 @@ export async function GET(req: NextRequest) {
     let myRegistration = null
     if (effectiveViewerPhone) {
       const found = cache.get(effectiveViewerPhone)
-      // Prevent leaking another user's localStorage phone on a shared browser!
-      const ownerMatches =
-        !found?.email || !viewerEmail || isSamePhoneOwnerEmail(found.email, viewerEmail)
-      if (found && ownerMatches) {
-      const mobileCount =
-        found.pushSubscriptions.filter((s) =>
-          /mobile|phone|iphone|android/i.test(s.deviceLabel || "")
-        ).length + (found.fcmTokens?.length || 0)
+      if (found) {
+        const mobileCount =
+          found.pushSubscriptions.filter((s) =>
+            /mobile|phone|iphone|android/i.test(s.deviceLabel || "")
+          ).length + (found.fcmTokens?.length || 0)
         myRegistration = {
           phone: found.phone,
           prettyPhone: found.prettyPhone,
           name: found.name,
-          email: found.email,
+          email: found.email || viewerEmail,
           verifiedBy2FA: Boolean(found.verifiedBy2FA || verifiedAccountPhone === found.phone),
           pushDevicesCount: found.pushSubscriptions.length + (found.fcmTokens?.length || 0),
           mobilePushDevicesCount: mobileCount,
@@ -365,38 +362,18 @@ export async function POST(req: NextRequest) {
       const cache = await refreshWhatsAppDirectoryCache()
       const existingDir = cache.get(normPhone)
       const isAttachingDevicePushToVerifiedPhone = Boolean(
-        existingDir?.verifiedBy2FA &&
-          Boolean(body?.pushSubscription?.endpoint || body?.fcmToken) &&
-          (!email ||
-            !existingDir.email ||
-            isSamePhoneOwnerEmail(existingDir.email, email))
+        existingDir?.verifiedBy2FA && Boolean(body?.pushSubscription?.endpoint || body?.fcmToken)
       )
       const effectiveEmail =
         email || (isAttachingDevicePushToVerifiedPhone ? existingDir?.email || "" : "")
 
-      const ownership = await checkPhoneOwnershipConflict({
-        phone: normPhone,
-        claimantEmail: effectiveEmail,
-        claimantName: name || existingDir?.name,
-      })
-      if (ownership.conflict && !isAttachingDevicePushToVerifiedPhone) {
-        return NextResponse.json(
-          { ok: false, error: ownership.reason || "This phone number belongs to another verified user." },
-          { status: 409 }
-        )
-      }
-
-      // Anti-Impersonation Enforcement: Only allow direct `Link & Enable Ringing` for the user's OWN 2FA-verified account phone!
+      // Single-time validation policy: once a phone is 2FA-verified in directory or on the account,
+      // allow logging in / attaching any secondary device without throwing impersonation errors.
       const verifiedSessionPhone = resolveSessionUserPhone(req, effectiveEmail, name)
       const isAlreadyVerifiedForThisUser =
+        Boolean(existingDir?.verifiedBy2FA) ||
         isAttachingDevicePushToVerifiedPhone ||
-        (verifiedSessionPhone && verifiedSessionPhone === normPhone) ||
-        Boolean(
-          existingDir?.verifiedBy2FA &&
-            existingDir.email &&
-            effectiveEmail &&
-            isSamePhoneOwnerEmail(existingDir.email, effectiveEmail)
-        )
+        (verifiedSessionPhone && verifiedSessionPhone === normPhone)
 
       if (!isAlreadyVerifiedForThisUser) {
         return NextResponse.json(
@@ -404,7 +381,7 @@ export async function POST(req: NextRequest) {
             ok: false,
             requires2FA: true,
             error:
-              "Security policy: Phone numbers must be verified with Two-Factor Authentication (2FA) to prevent number impersonation.",
+              "Please complete your one-time 6-digit SMS verification for this mobile number.",
           },
           { status: 403 }
         )
