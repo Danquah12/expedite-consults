@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Build;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.Person;
 
 import com.capacitorjs.plugins.pushnotifications.MessagingService;
 import com.google.firebase.messaging.RemoteMessage;
@@ -75,10 +76,24 @@ public class ConnectLnMessagingService extends MessagingService {
         decline.putExtra("callId", callId);
         PendingIntent declinePi = PendingIntent.getBroadcast(ctx, id + 1, decline, flags);
 
+        Person callerPerson = new Person.Builder()
+                .setName(caller)
+                .setImportant(true)
+                .build();
+
+        NotificationCompat.CallStyle callStyle = NotificationCompat.CallStyle
+                .forIncomingCall(callerPerson, declinePi, answerPi)
+                .setIsVideo("video".equals(mode))
+                .setAnswerButtonColorHint(0xFF25D366)
+                .setDeclineButtonColorHint(0xFFFF3B30);
+
         NotificationCompat.Builder b = new NotificationCompat.Builder(ctx, CALL_CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.sym_call_incoming)
-                .setContentTitle("video".equals(mode) ? "Incoming video call" : "Incoming voice call")
-                .setContentText(caller + " is calling on ConnectLn")
+                .setContentTitle(caller)
+                .setContentText("video".equals(mode) ? "ConnectLn Video Call" : "ConnectLn Voice Call")
+                .setStyle(callStyle)
+                .setColor(0xFF075E54)
+                .setColorized(true)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -87,9 +102,7 @@ public class ConnectLnMessagingService extends MessagingService {
                 .setTimeoutAfter(45000)
                 .setSound(ringtone)
                 .setFullScreenIntent(answerPi, true)
-                .setContentIntent(answerPi)
-                .addAction(android.R.drawable.ic_menu_call, "Answer", answerPi)
-                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Decline", declinePi);
+                .setContentIntent(answerPi);
 
         Notification n = b.build();
         n.flags |= Notification.FLAG_INSISTENT; // keep ringing until answered/declined/timeout

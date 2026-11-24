@@ -1120,50 +1120,77 @@ function renderIncomingCallDomIntoWindow(
     doc.body.dataset.renderedCallId = spec.callId
 
     try {
+      win.resizeTo?.(440, 540)
       win.focus?.()
     } catch {}
 
     const safeName = String(spec.callerName || "ConnectLn Caller").replace(/[<>&"]/g, "")
     const safePhone = String(spec.callerPhone || "").replace(/[<>&"]/g, "")
     const isVideo = spec.callMode === "video"
+    const nameParts = safeName.trim().split(/\s+/).filter(Boolean)
+    const safeInitials = (
+      nameParts.length >= 2
+        ? `${nameParts[0][0] || ""}${nameParts[nameParts.length - 1][0] || ""}`
+        : safeName.slice(0, 2) || "CL"
+    ).toUpperCase()
 
-    doc.title = `🔔 Incoming Call · ${safeName}`
+    doc.title = `🔔 INCOMING CALL · ${safeName}`
     doc.body.style.margin = "0"
-    doc.body.style.background = "#071E1A"
+    doc.body.style.background = "#0B141A"
     doc.body.innerHTML = `
       <style>
-        @keyframes pulseRing {
-          0% { transform: scale(0.94); opacity: 0.85; }
-          70% { transform: scale(1.25); opacity: 0; }
-          100% { transform: scale(1.25); opacity: 0; }
+        @keyframes waRipple {
+          0% { transform: scale(0.95); opacity: 0.78; }
+          75% { transform: scale(1.48); opacity: 0; }
+          100% { transform: scale(1.48); opacity: 0; }
         }
+        @keyframes waAcceptGlow {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 28px rgba(37, 211, 102, 0.65); }
+          50% { transform: scale(1.06); box-shadow: 0 0 46px rgba(37, 211, 102, 0.98); }
+        }
+        #btn-answer:hover .wa-circle { filter: brightness(1.08); }
+        #btn-decline:hover .wa-circle { filter: brightness(1.08); }
       </style>
-      <div style="height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:12px 14px;background:linear-gradient(180deg,#071E1A 0%,#0B141A 100%);color:#FFFFFF;font-family:system-ui,-apple-system,sans-serif;box-sizing:border-box;text-align:center;overflow:hidden;">
-        <div style="font-size:10px;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;color:#34D399;">
-          ● CONNECTLN INCOMING ${isVideo ? "VIDEO" : "VOICE"} CALL
+      <div style="height:100vh;width:100vw;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(circle at 50% 35%, rgba(37,211,102,0.22) 0%, rgba(14,44,39,0.94) 40%, #0B141A 80%);color:#FFFFFF;font-family:system-ui,-apple-system,sans-serif;box-sizing:border-box;text-align:center;overflow:hidden;border:1px solid rgba(37,211,102,0.35);">
+        <div style="padding:18px 20px 6px 20px;display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.65);">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>End-to-end encrypted</span>
+          </div>
+          <div style="font-size:11px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:#25D366;margin-top:2px;">
+            CONNECTLN ${isVideo ? "VIDEO" : "VOICE"} CALL
+          </div>
+          <div style="font-size:28px;font-weight:800;line-height:1.15;max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#FFFFFF;margin-top:2px;">${safeName}</div>
+          <div style="font-size:14px;color:#86EFAC;font-weight:600;">${safePhone || "Ringing…"}</div>
         </div>
 
-        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
-          <div style="position:relative;width:52px;height:52px;display:flex;align-items:center;justify-content:center;margin-bottom:3px;">
-            <span style="position:absolute;inset:-5px;border-radius:999px;border:2.5px solid #34D399;animation:pulseRing 1.4s infinite;"></span>
-            <div style="width:48px;height:48px;border-radius:999px;background:#059669;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 8px 20px rgba(5,150,105,0.45);border:2px solid #6EE7B7;">
-              ${isVideo ? "📹" : "📞"}
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:8px;">
+          <div style="position:relative;width:104px;height:104px;display:flex;align-items:center;justify-content:center;">
+            <span style="position:absolute;inset:-14px;border-radius:999px;border:2px solid rgba(37,211,102,0.55);animation:waRipple 1.6s ease-out infinite;"></span>
+            <span style="position:absolute;inset:-6px;border-radius:999px;background:rgba(37,211,102,0.2);animation:waRipple 1.6s ease-out 0.45s infinite;"></span>
+            <div style="position:relative;width:104px;height:104px;border-radius:999px;background:linear-gradient(135deg,#128C7E 0%,#075E54 100%);border:3px solid #25D366;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:800;color:#FFFFFF;box-shadow:0 0 42px rgba(37,211,102,0.4);">
+              ${safeInitials}
             </div>
           </div>
-          <div style="font-size:17px;font-weight:800;line-height:1.15;max-width:285px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeName}</div>
-          ${
-            safePhone
-              ? `<div style="font-size:11.5px;color:#6EE7B7;font-family:monospace;font-weight:700;">${safePhone}</div>`
-              : `<div style="font-size:11px;color:#CBD5E1;">Ringing over ConnectLn Internet...</div>`
-          }
         </div>
 
-        <div style="display:flex;gap:8px;width:100%;justify-content:center;">
-          <button id="btn-decline" style="flex:1;padding:10px 10px;border-radius:999px;border:none;background:#E11D48;color:#FFFFFF;font-weight:800;font-size:12px;cursor:pointer;box-shadow:0 4px 12px rgba(225,29,72,0.4);">
-            ✕ Decline
+        <div style="background:rgba(255,255,255,0.06);border-top:1px solid rgba(255,255,255,0.12);padding:18px 24px 22px 24px;display:flex;align-items:center;justify-content:space-around;gap:24px;width:100%;box-sizing:border-box;">
+          <button id="btn-decline" type="button" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;padding:4px 10px;color:#FFFFFF;">
+            <div class="wa-circle" style="width:68px;height:68px;border-radius:999px;background:#FF3B30;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px rgba(255,59,48,0.5);border:2px solid rgba(255,255,255,0.22);">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
+            </div>
+            <span style="font-size:15px;font-weight:700;color:#FFFFFF;">Decline</span>
           </button>
-          <button id="btn-answer" style="flex:1.45;padding:10px 12px;border-radius:999px;border:none;background:#10B981;color:#FFFFFF;font-weight:800;font-size:12px;cursor:pointer;box-shadow:0 4px 14px rgba(16,185,129,0.5);">
-            ${isVideo ? "📹 Answer Video" : "📞 Answer Call"}
+
+          <button id="btn-answer" type="button" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;padding:4px 10px;color:#FFFFFF;">
+            <div class="wa-circle" style="width:76px;height:76px;border-radius:999px;background:#25D366;display:flex;align-items:center;justify-content:center;border:3px solid #BBF7D0;animation:waAcceptGlow 1.3s ease-in-out infinite;">
+              ${
+                isVideo
+                  ? `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`
+                  : `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`
+              }
+            </div>
+            <span style="font-size:16px;font-weight:800;color:#FFFFFF;">Accept</span>
           </button>
         </div>
       </div>
@@ -1188,24 +1215,35 @@ function renderIncomingCallDomIntoWindow(
     const ansBtn = doc.getElementById("btn-answer")
     const decBtn = doc.getElementById("btn-decline")
     let handled = false
+    const handleAnswerAction = () => {
+      if (handled) return
+      handled = true
+      const liveSpec = currentRingingSpec || spec
+      liveSpec?.onAnswer?.()
+      try {
+        ;(win.opener || window).focus()
+        window.focus()
+      } catch {}
+    }
+    const handleDeclineAction = () => {
+      if (handled) return
+      handled = true
+      const liveSpec = currentRingingSpec || spec
+      liveSpec?.onDecline?.()
+    }
     if (ansBtn) {
-      ansBtn.onclick = () => {
-        if (handled) return
-        handled = true
-        const liveSpec = currentRingingSpec || spec
-        liveSpec?.onAnswer?.()
-        try {
-          ;(win.opener || window).focus()
-          window.focus()
-        } catch {}
-      }
+      ansBtn.onclick = handleAnswerAction
     }
     if (decBtn) {
-      decBtn.onclick = () => {
-        if (handled) return
-        handled = true
-        const liveSpec = currentRingingSpec || spec
-        liveSpec?.onDecline?.()
+      decBtn.onclick = handleDeclineAction
+    }
+    doc.onkeydown = (ev: KeyboardEvent) => {
+      if (ev.key === "Enter" || ev.key === " ") {
+        ev.preventDefault()
+        handleAnswerAction()
+      } else if (ev.key === "Escape") {
+        ev.preventDefault()
+        handleDeclineAction()
       }
     }
   } catch {}
@@ -1221,7 +1259,7 @@ export function isAlwaysOnTopReceiverOpen(): boolean {
 
 /**
  * Opens an Always-On-Top Document Picture-in-Picture Standby Receiver (Chrome / Edge Desktop).
- * Sized at 320x215 so the full Incoming Call Pop-Up Screen renders cleanly inside it when minimized!
+ * Sized at 420x480 so the WhatsApp-style Incoming Call Screen renders cleanly inside it when minimized!
  */
 export async function openAlwaysOnTopCallStandbyPiP(manualUserAction = false): Promise<boolean> {
   if (!isDocumentPipSupported()) return false
@@ -1239,8 +1277,8 @@ export async function openAlwaysOnTopCallStandbyPiP(manualUserAction = false): P
     }
     const dpip = (window as any).documentPictureInPicture
     const pipWindow: Window = await dpip.requestWindow({
-      width: 320,
-      height: 215,
+      width: 420,
+      height: 480,
     })
     activePipWin = pipWindow
     programmaticPipClose = false
@@ -1341,15 +1379,15 @@ export async function triggerSystemIncomingCallAlert(
   if (activePipWin && !activePipWin.closed) {
     renderIncomingCallDomIntoWindow(activePipWin, spec, true)
   } else {
-    // 2. Also attempt opening a standalone 380x460 Pop-Up Call Window (succeeds whenever popups are allowed!)
+    // 2. Also attempt opening a standalone 440x540 Pop-Up Call Window (succeeds whenever popups are allowed!)
     try {
-      const left = Math.max(20, Math.round((window.screen.availWidth - 380) / 2))
-      const top = Math.max(30, Math.round((window.screen.availHeight - 460) / 2))
+      const left = Math.max(20, Math.round((window.screen.availWidth - 440) / 2))
+      const top = Math.max(30, Math.round((window.screen.availHeight - 540) / 2))
       if (!activePopupWin || activePopupWin.closed) {
         activePopupWin = window.open(
           "",
           "connectln_incoming_call_popup",
-          `popup=yes,width=380,height=460,left=${left},top=${top}`
+          `popup=yes,width=440,height=540,left=${left},top=${top}`
         )
       }
       if (activePopupWin && !activePopupWin.closed) {
@@ -1369,11 +1407,11 @@ export async function triggerSystemIncomingCallAlert(
 
   const isVideo = spec.callMode === "video"
   const title = isVideo
-    ? `📹 Incoming Video Call · ${spec.callerName}`
-    : `📞 Incoming Voice Call · ${spec.callerName}`
-  const body = `Calling${
+    ? `🔔 INCOMING VIDEO CALL · ${spec.callerName}`
+    : `🔔 INCOMING CALL · ${spec.callerName}`
+  const body = `TAP THIS BANNER OR PRESS ACCEPT CALL BELOW${
     spec.callerPhone ? ` (${spec.callerPhone})` : ""
-  } on ConnectLn — Click Answer to open call screen`
+  }`
 
   // 3. Direct ServiceWorkerRegistration.showNotification (`requireInteraction: true`) — skip if SW already holds a notification for this tag
   try {
@@ -1395,12 +1433,18 @@ export async function triggerSystemIncomingCallAlert(
         const joinUrl = `${origin}/connectin?waCall=${encodeURIComponent(
           spec.callId
         )}&mode=${spec.callMode}&callerName=${encodeURIComponent(spec.callerName)}&autoAnswer=1`
+        const bannerImageUrl = `${origin}/api/connectin/call-banner?caller=${encodeURIComponent(
+          spec.callerName
+        )}&mode=${spec.callMode}${
+          spec.callerPhone ? `&phone=${encodeURIComponent(spec.callerPhone)}` : ""
+        }`
         const isTabHidden = typeof document !== "undefined" && document.hidden
         const isAnyAudioActivelyPlaying = isIncomingRingtoneAudiblyPlaying()
         await reg.showNotification(title, {
           body,
           icon: "/brand/connectln-icon-256.png",
           badge: "/brand/connectln-icon.png",
+          image: bannerImageUrl,
           tag: `connectln-call-${spec.callId}`,
           renotify: false,
           requireInteraction: true,
@@ -1416,11 +1460,11 @@ export async function triggerSystemIncomingCallAlert(
           actions: [
             {
               action: "answer",
-              title: isVideo ? "📹 Answer Video" : "📞 Answer Call",
+              title: isVideo ? "✅ ACCEPT VIDEO CALL" : "✅ ACCEPT CALL",
             },
             {
               action: "decline",
-              title: "❌ Decline",
+              title: "❌ DECLINE",
             },
           ],
         } as any)

@@ -1,4 +1,4 @@
-/* ConnectLn Service Worker — Background & Minimized Incoming Video & Voice Call Ringing + Pop-Up Call Window */
+/* ConnectLn Service Worker v2026-11-24-large-popup — Background & Minimized Incoming Video & Voice Call Ringing + High-Visibility Banner */
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
 });
@@ -15,16 +15,18 @@ function buildCallNotificationSpec(payload) {
   const joinUrl =
     payload.joinUrl ||
     `/connectin?waCall=${encodeURIComponent(callId)}&mode=${isVideo ? "video" : "audio"}&callerName=${encodeURIComponent(callerName)}&autoAnswer=1`;
+  const bannerImageUrl = `/api/connectin/call-banner?caller=${encodeURIComponent(callerName)}&mode=${isVideo ? "video" : "audio"}${payload.callerPhone ? `&phone=${encodeURIComponent(payload.callerPhone)}` : ""}`;
 
   const title = isVideo
-    ? `📹 Incoming Video Call · ${callerName}`
-    : `📞 Incoming Voice Call · ${callerName}`;
-  const body = `Calling${callerPhone} on ConnectLn — Click Answer to open call screen`;
+    ? `🔔 INCOMING VIDEO CALL · ${callerName}`
+    : `🔔 INCOMING CALL · ${callerName}`;
+  const body = `TAP THIS BANNER OR PRESS ACCEPT CALL BELOW${callerPhone}`;
 
   const options = {
     body,
     icon: payload.callerAvatar || "/brand/connectln-icon-256.png",
     badge: "/brand/connectln-icon.png",
+    image: bannerImageUrl,
     tag: `connectln-call-${callId}`,
     renotify: true,
     requireInteraction: true,
@@ -40,11 +42,11 @@ function buildCallNotificationSpec(payload) {
     actions: [
       {
         action: "answer",
-        title: isVideo ? "📹 Answer Video" : "📞 Answer Call",
+        title: isVideo ? "✅ ACCEPT VIDEO CALL" : "✅ ACCEPT CALL",
       },
       {
         action: "decline",
-        title: "❌ Decline",
+        title: "❌ DECLINE",
       },
     ],
   };

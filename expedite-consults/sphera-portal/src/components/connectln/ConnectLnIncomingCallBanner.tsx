@@ -1,7 +1,17 @@
 "use client"
 
 import React, { useEffect, useRef, useState } from "react"
-import { Video, Phone, PhoneOff, Bell, X, PictureInPicture2 } from "lucide-react"
+import { Video, Phone, PhoneOff, Bell, X, PictureInPicture2, Lock } from "lucide-react"
+
+function getCallerInitials(name: string): string {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+  if (parts.length === 0) return "CL"
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0] || ""}${parts[parts.length - 1][0] || ""}`.toUpperCase()
+}
 import {
   getMyLinkedConnectLnPhone,
   MY_LINKED_PHONE_STORAGE_KEY,
@@ -793,6 +803,34 @@ export function ConnectLnIncomingCallBanner({
     }
   }, [])
 
+  useEffect(() => {
+    if (!incomingCall || hasOpenModal || isAlreadyInCallStudio) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        return
+      }
+      if (e.key === "Escape") {
+        e.preventDefault()
+        declineAndEndIncomingCall(incomingCall.id, true)
+      } else if (e.key === "Enter") {
+        e.preventDefault()
+        const cName =
+          incomingCall.participants?.[0]?.display_name ||
+          incomingCall.initiator_name ||
+          "ConnectLn Caller"
+        acceptIncomingCallNow(
+          incomingCall.id,
+          cName,
+          incomingCall.call_type === "audio" ? "audio" : "video",
+          incomingCall.initiator_phone
+        )
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [incomingCall, hasOpenModal, isAlreadyInCallStudio])
+
   if (hasOpenModal || isAlreadyInCallStudio) return null
 
   if (!incomingCall) {
@@ -851,6 +889,7 @@ export function ConnectLnIncomingCallBanner({
   const callerPhone = incomingCall.initiator_phone
     ? prettyClientPhone(incomingCall.initiator_phone)
     : ""
+  const callerInitials = getCallerInitials(callerName)
   const isVideo = incomingCall.call_type !== "audio"
   const activeInvitesCount = (incomingCall.invited_roster || []).filter(
     (m) => m.status !== "removed"
@@ -861,30 +900,59 @@ export function ConnectLnIncomingCallBanner({
       role="dialog"
       aria-modal="true"
       aria-label={`Incoming ${isVideo ? "Video" : "Voice"} Call from ${callerName}`}
-      className="fixed inset-0 sm:inset-auto sm:top-4 sm:left-1/2 sm:-translate-x-1/2 z-[260] flex sm:block items-center justify-center bg-black/65 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none p-4 sm:p-0"
+      className="fixed inset-0 z-[260] flex items-center justify-center bg-black/80 backdrop-blur-xl sm:p-4"
     >
-      <div className="w-full max-w-sm sm:w-[94vw] sm:max-w-md rounded-3xl bg-[#0B141A] border-2 border-emerald-400 shadow-[0_24px_60px_rgba(0,0,0,0.65)] px-5 py-5 sm:px-4 sm:py-4 text-[#FBF8F3]">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-3">
-          <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-3 min-w-0">
-            <div className="relative shrink-0">
-              <span className="absolute -inset-1 rounded-full bg-emerald-400/50 animate-ping" />
-              <div className="relative h-16 w-16 sm:h-12 sm:w-12 rounded-full bg-emerald-600 flex items-center justify-center text-white font-extrabold text-sm border-2 border-emerald-300 shadow-lg">
-                {isVideo ? <Video className="h-7 w-7 sm:h-5 sm:w-5" /> : <Phone className="h-7 w-7 sm:h-5 sm:w-5" />}
-              </div>
-            </div>
-            <div className="min-w-0">
-              <p className="text-[11px] sm:text-[10px] font-extrabold uppercase tracking-wider text-emerald-300">
-                ● ConnectLn Incoming {isVideo ? "Video" : "Voice"} Call
-                {activeInvitesCount >= 2 ? ` · Group (${activeInvitesCount + 1})` : ""}
-              </p>
-              <p className="text-xl sm:text-base font-extrabold text-white truncate mt-0.5">{callerName}</p>
-              <p className="text-xs sm:text-[11px] text-emerald-200/90 font-mono truncate mt-0.5">
-                {callerPhone || (isVideo ? "Tap Answer Video to turn on camera" : "Ringing over ConnectLn Internet")}
-              </p>
+      <div
+        className="w-screen h-[100dvh] rounded-none sm:w-full sm:max-w-[420px] sm:h-auto sm:min-h-[600px] sm:rounded-[36px] overflow-hidden flex flex-col justify-between shadow-[0_28px_90px_rgba(0,0,0,0.85)] border-0 sm:border sm:border-white/15 text-white relative"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 36%, rgba(37, 211, 102, 0.22) 0%, rgba(14, 44, 39, 0.92) 38%, #0B141A 78%)",
+        }}
+      >
+        {/* Top WhatsApp Header Section */}
+        <div className="pt-12 sm:pt-8 px-6 text-center space-y-2">
+          <div className="inline-flex items-center gap-1.5 text-xs font-medium text-white/65">
+            <Lock className="h-3.5 w-3.5" />
+            <span>End-to-end encrypted</span>
+          </div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#25D366]">
+            {isVideo ? "ConnectLn Video Call" : "ConnectLn Voice Call"}
+            {activeInvitesCount >= 2 ? ` · Group (${activeInvitesCount + 1})` : ""}
+          </p>
+          <p className="text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight break-words pt-1">
+            {callerName}
+          </p>
+          <p className="text-base font-medium text-[#A3B8B2] truncate">
+            {callerPhone || "Ringing…"}
+          </p>
+        </div>
+
+        {/* Center Hero Monogram Crest with Concentric Ripple Rings */}
+        <div className="flex-1 flex items-center justify-center py-8">
+          <div className="relative flex items-center justify-center">
+            <span className="absolute -inset-6 rounded-full bg-[#25D366]/25 animate-ping" />
+            <span className="absolute -inset-3 rounded-full border-2 border-[#25D366]/35" />
+            <div className="relative h-[136px] w-[136px] rounded-full bg-gradient-to-br from-[#128C7E] to-[#075E54] border-[3px] border-[#25D366]/80 shadow-[0_0_50px_rgba(37,211,102,0.35)] flex items-center justify-center">
+              <span className="text-5xl font-bold text-white select-none">
+                {callerInitials}
+              </span>
+              <span className="absolute -bottom-1 -right-1 h-10 w-10 rounded-full bg-[#25D366] border-[3px] border-[#0B141A] flex items-center justify-center shadow-lg">
+                {isVideo ? (
+                  <Video className="h-5 w-5 text-white" />
+                ) : (
+                  <Phone className="h-5 w-5 text-white" />
+                )}
+              </span>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center justify-center gap-3 sm:gap-2 shrink-0 w-full sm:w-auto pt-1 sm:pt-0">
+        {/* Bottom Frosted WhatsApp Action Dock */}
+        <div className="px-8 pt-6 pb-12 sm:pb-9 bg-white/[0.05] backdrop-blur-md border-t border-white/10">
+          <p className="text-center text-xs font-medium text-white/70 mb-5">
+            Tap Accept to answer
+          </p>
+          <div className="flex items-center justify-around gap-8 max-w-[320px] mx-auto">
             <button
               type="button"
               data-connectln-call-action="decline"
@@ -893,12 +961,15 @@ export function ConnectLnIncomingCallBanner({
                 declineAndEndIncomingCall(incomingCall.id, true)
               }}
               style={{ color: "#FFFFFF" }}
-              className="flex-1 sm:flex-none h-12 sm:h-11 sm:w-11 rounded-full bg-rose-600 hover:bg-rose-500 px-4 sm:px-0 flex items-center justify-center gap-1.5 text-sm sm:text-xs font-extrabold shadow-md cursor-pointer touch-manipulation"
+              className="group flex flex-col items-center cursor-pointer touch-manipulation focus:outline-none"
               title="Decline Call"
             >
-              <PhoneOff className="h-4 w-4" />
-              <span className="sm:hidden">Decline</span>
+              <span className="h-[76px] w-[76px] rounded-full bg-[#FF3B30] hover:bg-[#FF5147] group-active:scale-95 shadow-[0_12px_32px_rgba(255,59,48,0.5)] flex items-center justify-center transition-all">
+                <PhoneOff className="h-8 w-8 text-white" />
+              </span>
+              <span className="text-base font-bold text-white mt-2.5">Decline</span>
             </button>
+
             <button
               type="button"
               data-connectln-call-action="answer"
@@ -912,10 +983,18 @@ export function ConnectLnIncomingCallBanner({
                 )
               }}
               style={{ color: "#FFFFFF" }}
-              className="flex-[1.6] sm:flex-none h-12 sm:h-auto rounded-full bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-sm sm:text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg cursor-pointer touch-manipulation"
+              className="group flex flex-col items-center cursor-pointer touch-manipulation focus:outline-none"
+              title={isVideo ? "Accept Video Call" : "Accept Call"}
             >
-              {isVideo ? <Video className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
-              <span>{isVideo ? "Answer Video" : "Answer Call"}</span>
+              <span className="relative h-[82px] w-[82px] rounded-full bg-[#25D366] hover:bg-[#2EE070] group-active:scale-95 shadow-[0_0_42px_rgba(37,211,102,0.8)] flex items-center justify-center transition-all">
+                <span className="absolute -inset-2 rounded-full border-2 border-[#25D366]/60 animate-ping" />
+                {isVideo ? (
+                  <Video className="relative h-9 w-9 text-white" />
+                ) : (
+                  <Phone className="relative h-9 w-9 text-white" />
+                )}
+              </span>
+              <span className="text-base font-extrabold text-white mt-2.5">Accept</span>
             </button>
           </div>
         </div>
