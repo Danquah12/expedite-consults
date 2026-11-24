@@ -1,6 +1,7 @@
 "use client"
 
 import { X } from "lucide-react"
+import Link from "next/link"
 import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
 import React, { useState, useRef } from "react"
 import {
@@ -11,21 +12,27 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Download,
   Printer,
   CheckCircle2,
+  CheckSquare,
   Sparkles,
   Award,
   Microscope,
   Search,
   Shield,
+  ShieldCheck,
+  Briefcase,
   BookOpen,
   Users,
   Clock,
   Check,
   Plus,
+  Send,
   Globe
 } from "lucide-react"
+import type { UserProfile } from "@/lib/connectln-data"
 import {
   CONNECTLN_CYBER_SPECIALIST_SHELVES,
   CONNECTLN_AI_STUDIES_SHELVES,
@@ -45,11 +52,21 @@ import {
 } from "@/components/ui/dialog"
 
 interface ConnectLnStudiesCatalogViewProps {
+  user?: UserProfile | null
   onClaimCertificate?: (title: string) => void
   initialAcademyFilter?: "all" | "cyber_specialist" | "ai_studies" | "certifications_ceu"
 }
 
+function parseChapterTimestampToSeconds(ts: string): number {
+  const parts = String(ts || "").split(":").map(Number)
+  if (parts.length === 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1])) {
+    return Math.max(0, parts[0] * 60 + parts[1])
+  }
+  return 0
+}
+
 export function ConnectLnStudiesCatalogView({
+  user,
   onClaimCertificate,
   initialAcademyFilter = "all"
 }: ConnectLnStudiesCatalogViewProps) {
@@ -75,15 +92,21 @@ export function ConnectLnStudiesCatalogView({
   // Active Multimedia Dossier Modal State
   const [activeDossier, setActiveDossier] = useState<ConnectLnCourseMultimediaDossier | null>(null)
   const [activeModalTab, setActiveModalTab] = useState<
-    "whitepaper" | "video" | "slides" | "sources"
+    "whitepaper" | "video" | "slides" | "sources" | "truth_quiz"
   >("whitepaper")
   const [activeWhitePaperPage, setActiveWhitePaperPage] = useState<number>(1)
   const [whitePaperViewAll, setWhitePaperViewAll] = useState<boolean>(false)
   const [highlightedSkillName, setHighlightedSkillName] = useState<string | null>(null)
   const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0)
   const [activeVideoChapter, setActiveVideoChapter] = useState<number>(1)
+  const [videoSeekRequest, setVideoSeekRequest] = useState<{ seconds: number; nonce: number } | null>(null)
   const [useMp4Fallback, setUseMp4Fallback] = useState<boolean>(false)
   const [claimedCertIds, setClaimedCertIds] = useState<Record<string, boolean>>({})
+  const [showPrimaryStandardsBar, setShowPrimaryStandardsBar] = useState<boolean>(false)
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({})
+  const [coachQuestion, setCoachQuestion] = useState<string>("")
+  const [coachAnswer, setCoachAnswer] = useState<string | null>(null)
+  const [isAskingCoach, setIsAskingCoach] = useState<boolean>(false)
 
   // Shelf horizontal scroll refs
   const shelfRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -97,7 +120,7 @@ export function ConnectLnStudiesCatalogView({
   const openCourseDossier = (
     course: ConnectLnCatalogCourse,
     shelfTitle?: string,
-    initialTab: "whitepaper" | "video" | "slides" | "sources" = "whitepaper",
+    initialTab: "whitepaper" | "video" | "slides" | "sources" | "truth_quiz" = "whitepaper",
     focusSkill?: string
   ) => {
     const dossier = getConnectLnCourseMultimediaDossier(course, shelfTitle)
@@ -105,6 +128,11 @@ export function ConnectLnStudiesCatalogView({
     setActiveModalTab(initialTab)
     setActiveSlideIndex(0)
     setActiveVideoChapter(1)
+    setVideoSeekRequest(null)
+    setUseMp4Fallback(false)
+    setQuizAnswers({})
+    setCoachQuestion("")
+    setCoachAnswer(null)
     if (focusSkill) {
       setHighlightedSkillName(focusSkill)
       const matched = dossier.whitePaper.skillDeepDives.find((s) => s.skillName === focusSkill)
@@ -189,6 +217,15 @@ export function ConnectLnStudiesCatalogView({
 
   const renderShelf = (shelf: ConnectLnCourseShelf) => {
     const isUpskillingShelf = shelf.id === "shelf-ai-upskilling-framework"
+    const firstName = user?.name ? user.name.trim().split(" ")[0] : ""
+    const resolvedTitle =
+      shelf.id === "shelf-top-picks-kwesi"
+        ? `Top picks for ${firstName || "you"}`
+        : shelf.title
+    const resolvedSubtitle =
+      shelf.id === "shelf-top-picks-kwesi"
+        ? `Personalized ConnectLn Studies Recommendations${user?.name ? ` for ${user.name}` : ""}`
+        : shelf.subtitle
     const displayedCourses =
       isUpskillingShelf && selectedFrameworkPill !== "All"
         ? shelf.courses.filter((c) => c.aiFrameworkLevel === selectedFrameworkPill)
@@ -215,9 +252,9 @@ export function ConnectLnStudiesCatalogView({
               )}
             </div>
             <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100">
-              {shelf.title}
+              {resolvedTitle}
             </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">{shelf.subtitle}</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">{resolvedSubtitle}</p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -606,8 +643,59 @@ export function ConnectLnStudiesCatalogView({
             )}
           </div>
           <span className="text-[11px] font-mono text-amber-300 shrink-0">
-            ✓ Click any card for 10-Page White Paper · Video · 10 Slides · Official Links
+            ✓ Click any card for 10-Page White Paper · Video · 10 Slides · Primary Standards &amp; Quiz
           </span>
+        </div>
+
+        {/* Slim Collapsible Verified Primary Standards & Open Truth Bar */}
+        <div className="mt-3 pt-3 border-t border-white/10">
+          <button
+            type="button"
+            onClick={() => setShowPrimaryStandardsBar((v) => !v)}
+            className="flex items-center justify-between w-full text-left text-[11px] font-bold text-indigo-100 hover:text-amber-300 transition-colors cursor-pointer"
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+              <span>
+                Verified Primary Standards &amp; Open Truth Sources (NIST AI RMF 600-1 · OWASP LLM · MITRE ATLAS/ATT&amp;CK · ISO 42001 · CISA Zero Trust · MIT OCW · O*NET/BLS)
+              </span>
+            </span>
+            <ChevronDown
+              className={`h-3.5 w-3.5 shrink-0 transition-transform ${
+                showPrimaryStandardsBar ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {showPrimaryStandardsBar && (
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {[
+                { label: "NIST AI RMF & AI 600-1", url: "https://www.nist.gov/itl/ai-risk-management-framework" },
+                { label: "OWASP Top 10 for LLM/GenAI", url: "https://genai.owasp.org/" },
+                { label: "MITRE ATLAS (AI Threats)", url: "https://atlas.mitre.org/" },
+                { label: "MITRE ATT&CK v16", url: "https://attack.mitre.org/" },
+                { label: "ISO/IEC 42001 AI Mgmt", url: "https://www.iso.org/standard/81230.html" },
+                { label: "CISA Zero Trust Model", url: "https://www.cisa.gov/zero-trust-maturity-model" },
+                { label: "Stanford CS224N NLP", url: "http://web.stanford.edu/class/cs224n/" },
+                { label: "MIT OpenCourseWare", url: "https://ocw.mit.edu/" },
+                { label: "OpenStax Free Texts", url: "https://openstax.org/subjects" },
+                { label: "SkillsCommons DOL OER", url: "https://www.skillscommons.org/" },
+                { label: "O*NET OnLine SOC", url: "https://www.onetonline.org/" },
+                { label: "BLS Occupational Outlook", url: "https://www.bls.gov/ooh/" },
+              ].map((ref) => (
+                <a
+                  key={ref.url}
+                  href={ref.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-2.5 py-1 text-[10px] font-bold text-white inline-flex items-center gap-1 transition-colors"
+                >
+                  <span>{ref.label}</span>
+                  <ExternalLink className="h-2.5 w-2.5 opacity-80" />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -643,13 +731,13 @@ export function ConnectLnStudiesCatalogView({
                   You can manage the skills you have on your ConnectLn profile or click any skill below to open its 10-Page Technical White Paper, Video &amp; Slide Deck.
                 </p>
               </div>
-              <a
-                href="https://connectln.vercel.app/connectin"
+              <Link
+                href="/connectin?tab=profile"
                 className="rounded-xl bg-[#0A66C2] hover:bg-[#084e96] px-4 py-2 text-xs font-bold text-white shrink-0 inline-flex items-center gap-1.5"
               >
                 <span>Edit Skills on ConnectLn Profile</span>
                 <ExternalLink className="h-3.5 w-3.5" />
-              </a>
+              </Link>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
@@ -760,24 +848,24 @@ export function ConnectLnStudiesCatalogView({
             <Globe className="h-4 w-4 text-[#0A66C2]" />
             <span>ConnectLn Studies · English (English)</span>
           </span>
-          <a href="https://connectln.vercel.app/connectin" className="hover:text-[#0A66C2] hover:underline">
+          <Link href="/connectin?tab=learning" className="hover:text-[#0A66C2] hover:underline">
             About ConnectLn Studies
-          </a>
-          <a href="https://connectln.vercel.app/connectin" className="hover:text-[#0A66C2] hover:underline">
+          </Link>
+          <Link href="/connectin?tab=learning" className="hover:text-[#0A66C2] hover:underline">
             Become an Instructor
-          </a>
-          <a href="https://connectln.vercel.app/connectin" className="hover:text-[#0A66C2] hover:underline">
+          </Link>
+          <Link href="/connectin?tab=learning" className="hover:text-[#0A66C2] hover:underline">
             Buy for my team
-          </a>
-          <a href="https://connectln.vercel.app/connectin" className="hover:text-[#0A66C2] hover:underline">
+          </Link>
+          <Link href="/connectin?tab=learning" className="hover:text-[#0A66C2] hover:underline">
             Help Center
-          </a>
-          <a href="https://connectln.vercel.app/connectin" className="hover:text-[#0A66C2] hover:underline">
+          </Link>
+          <Link href="/connectin?tab=learning" className="hover:text-[#0A66C2] hover:underline">
             Privacy &amp; Terms
-          </a>
-          <a href="https://connectln.vercel.app/connectin" className="hover:text-[#0A66C2] hover:underline">
+          </Link>
+          <Link href="/connectin?tab=learning" className="hover:text-[#0A66C2] hover:underline">
             Accessibility
-          </a>
+          </Link>
         </div>
         <span className="text-[11px] font-mono text-zinc-400">
           ConnectLn Studies Enterprise Learning · Powered by Expedite Consults
@@ -924,6 +1012,19 @@ export function ConnectLnStudiesCatalogView({
                       >
                         <ImageIcon className="h-4 w-4" />
                         <span>🖼️ Visuals &amp; Legitimate Sources ({activeDossier.legitimateSources.length})</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveModalTab("truth_quiz")}
+                        className={`rounded-xl px-3.5 py-2 text-xs font-black flex items-center gap-1.5 cursor-pointer transition-all ${
+                          activeModalTab === "truth_quiz"
+                            ? "bg-amber-400 text-slate-950 shadow-md"
+                            : "bg-white/10 text-white hover:bg-white/20"
+                        }`}
+                      >
+                        <CheckSquare className="h-4 w-4" />
+                        <span>✓ Truth, Quiz &amp; Coach</span>
                       </button>
                     </div>
 
@@ -1233,16 +1334,19 @@ export function ConnectLnStudiesCatalogView({
                 <div className="p-4 sm:p-6 space-y-6">
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-8 space-y-4">
-                      <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-black aspect-video relative shadow-xl">
+                      <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-black shadow-xl">
                         {!useMp4Fallback ? (
                           <ConnectLnStudioPlayer
-                            key={`${activeDossier.youtubeId}-${activeVideoChapter}`}
+                            key={`${activeDossier.course.id}-${activeDossier.youtubeId}`}
                             youtubeId={activeDossier.youtubeId}
-                            title={activeDossier.course.title}
-                            serialPlate={activeDossier.course.code || "CLN-COURSE"}
-                            speaker={activeDossier.course.instructor || "ConnectLn Academy"}
+                            sourceVideoUrl={activeDossier.videoSourceUrl}
+                            title={activeDossier.videoTitle}
+                            serialPlate={activeDossier.whitePaper.docId}
+                            speaker={activeDossier.videoChannel}
+                            speakerRole={activeDossier.course.title}
                             durationLabel={activeDossier.course.duration || "12:00"}
-                            className="w-full h-full"
+                            seekRequest={videoSeekRequest}
+                            className="w-full"
                           />
                         ) : (
                           <video
@@ -1250,19 +1354,22 @@ export function ConnectLnStudiesCatalogView({
                             poster={activeDossier.course.customCoverArt}
                             controls
                             autoPlay
-                            className="w-full h-full object-cover"
+                            className="w-full aspect-video bg-black object-contain"
                           />
                         )}
                       </div>
 
                       <div className="flex flex-wrap items-center justify-between gap-2 bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                        <div>
+                        <div className="space-y-0.5">
                           <span className="text-[10px] font-mono font-bold uppercase text-indigo-600">
-                            Active Chapter {activeVideoChapter} of {activeDossier.videoChapters.length}
+                            Active Chapter {activeVideoChapter} of {activeDossier.videoChapters.length} · Verified Lecture: {activeDossier.videoChannel}
                           </span>
                           <h4 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
                             {activeDossier.videoChapters[activeVideoChapter - 1]?.title}
                           </h4>
+                          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                            Companion Stream: {activeDossier.videoTitle} · {activeDossier.auditedDateLabel}
+                          </p>
                         </div>
                         <button
                           type="button"
@@ -1271,15 +1378,15 @@ export function ConnectLnStudiesCatalogView({
                         >
                           {useMp4Fallback
                             ? "Switch to YouTube Masterclass Stream"
-                            : "Switch to Native HTML5 MP4 Stream"}
+                            : "Switch to MIT OCW Open MP4 Stream"}
                         </button>
                       </div>
                     </div>
 
-                    {/* Right Column: 5 Interactive Video Chapters */}
+                    {/* Right Column: 5 Interactive Seekable Video Chapters */}
                     <div className="lg:col-span-4 space-y-3">
                       <h4 className="font-black text-sm uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
-                        🎬 Course Video Chapters ({activeDossier.course.duration})
+                        🎬 Seekable Chapters ({activeDossier.course.duration})
                       </h4>
                       <div className="space-y-2">
                         {activeDossier.videoChapters.map((ch) => {
@@ -1288,7 +1395,13 @@ export function ConnectLnStudiesCatalogView({
                             <button
                               key={ch.chapterNumber}
                               type="button"
-                              onClick={() => setActiveVideoChapter(ch.chapterNumber)}
+                              onClick={() => {
+                                setActiveVideoChapter(ch.chapterNumber)
+                                setVideoSeekRequest((prev) => ({
+                                  seconds: parseChapterTimestampToSeconds(ch.timestamp),
+                                  nonce: (prev?.nonce || 0) + 1,
+                                }))
+                              }}
                               className={`w-full text-left rounded-xl p-3.5 border transition-all cursor-pointer ${
                                 isCurrent
                                   ? "border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 shadow-xs"
@@ -1297,7 +1410,7 @@ export function ConnectLnStudiesCatalogView({
                             >
                               <div className="flex items-center justify-between text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
                                 <span>
-                                  CHAPTER {ch.chapterNumber} · {ch.timestamp}
+                                  CHAPTER {ch.chapterNumber} · @ {ch.timestamp}
                                 </span>
                                 <span>{ch.duration}</span>
                               </div>
@@ -1502,6 +1615,273 @@ export function ConnectLnStudiesCatalogView({
                           <ExternalLink className="h-4 w-4 text-emerald-600 shrink-0 mt-1" />
                         </a>
                       ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* =============================================================== */}
+              {/* TAB 5: CAREER TRUTH (O*NET / BLS), MASTERY QUIZ & NOCTIS COACH  */}
+              {/* =============================================================== */}
+              {activeModalTab === "truth_quiz" && (
+                <div className="p-4 sm:p-6 space-y-6">
+                  {/* Verified Career & Labor Market Truth */}
+                  <div className="rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-zinc-900 p-5 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-mono font-black uppercase text-emerald-700 dark:text-emerald-400">
+                          Verified Labor Market &amp; Career Outcomes ({activeDossier.auditedDateLabel})
+                        </span>
+                        <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100">
+                          O*NET SOC {activeDossier.careerTruth.onetSocCode} · {activeDossier.careerTruth.onetTitle}
+                        </h3>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <a
+                          href={activeDossier.careerTruth.onetUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-full border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/50 px-3 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-200 inline-flex items-center gap-1"
+                        >
+                          <span>O*NET Taxonomy</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                        <a
+                          href={activeDossier.careerTruth.blsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-full border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/50 px-3 py-1 text-[11px] font-bold text-[#0A66C2] dark:text-sky-300 inline-flex items-center gap-1"
+                        >
+                          <span>BLS Occupational Outlook</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 p-3">
+                        <span className="text-[10px] font-bold uppercase text-zinc-500 block">
+                          BLS Median Pay (May 2025)
+                        </span>
+                        <span className="text-base font-black text-[#01754F] dark:text-emerald-400">
+                          {activeDossier.careerTruth.blsMedianPay}
+                        </span>
+                      </div>
+                      <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 p-3">
+                        <span className="text-[10px] font-bold uppercase text-zinc-500 block">
+                          Projected Growth (2025–2035)
+                        </span>
+                        <span className="text-sm font-black text-[#0A66C2] dark:text-sky-300">
+                          {activeDossier.careerTruth.blsGrowth}
+                        </span>
+                      </div>
+                      <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 p-3">
+                        <span className="text-[10px] font-bold uppercase text-zinc-500 block">
+                          Target Roles
+                        </span>
+                        <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                          {activeDossier.careerTruth.targetRoles.join(" · ")}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold uppercase text-zinc-500 block">
+                          Prerequisites (&ldquo;Is This Right For You?&rdquo;)
+                        </span>
+                        <ul className="space-y-1 text-xs text-zinc-700 dark:text-zinc-300">
+                          {activeDossier.careerTruth.prerequisites.map((pre, i) => (
+                            <li key={i} className="flex items-start gap-1.5">
+                              <Briefcase className="h-3.5 w-3.5 text-[#0A66C2] shrink-0 mt-0.5" />
+                              <span>{pre}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold uppercase text-zinc-500 block">
+                          Verified Learning Outcomes
+                        </span>
+                        <ul className="space-y-1 text-xs text-zinc-700 dark:text-zinc-300">
+                          {activeDossier.careerTruth.learningOutcomes.map((out, i) => (
+                            <li key={i} className="flex items-start gap-1.5">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-[#01754F] shrink-0 mt-0.5" />
+                              <span>{out}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Interactive 3-Question Mastery Knowledge & Exam Check */}
+                  <div className="rounded-2xl border border-indigo-300 dark:border-indigo-800 bg-white dark:bg-zinc-900 p-5 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-mono font-bold uppercase text-indigo-600 dark:text-indigo-400">
+                          Interactive Knowledge &amp; Standards Verification
+                        </span>
+                        <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
+                          3-Question Mastery Check ({activeDossier.masteryQuiz.filter((q, idx) => quizAnswers[idx] === q.correctIndex).length}/{activeDossier.masteryQuiz.length} Correct)
+                        </h3>
+                      </div>
+                      {activeDossier.masteryQuiz.every((q, idx) => quizAnswers[idx] === q.correctIndex) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setClaimedCertIds((prev) => ({ ...prev, [activeDossier.course.id]: true }))
+                            onClaimCertificate?.(activeDossier.course.title)
+                          }}
+                          className="rounded-full bg-[#01754F] hover:bg-[#015e3f] text-white px-4 py-1.5 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Award className="h-3.5 w-3.5" />
+                          <span>
+                            {claimedCertIds[activeDossier.course.id] ? "Credential Issued ✓" : "Claim Verified Credential"}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      {activeDossier.masteryQuiz.map((q, qIdx) => {
+                        const chosen = quizAnswers[qIdx]
+                        const isRight = chosen === q.correctIndex
+                        return (
+                          <div
+                            key={qIdx}
+                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/40 p-3.5 space-y-2"
+                          >
+                            <p className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                              Q{qIdx + 1}: {q.question}
+                            </p>
+                            <div className="space-y-1.5">
+                              {q.options.map((opt, oIdx) => {
+                                const picked = chosen === oIdx
+                                const correctOpt = oIdx === q.correctIndex
+                                return (
+                                  <button
+                                    key={oIdx}
+                                    type="button"
+                                    onClick={() => setQuizAnswers((prev) => ({ ...prev, [qIdx]: oIdx }))}
+                                    className={`w-full text-left rounded-lg px-3 py-2 text-xs border cursor-pointer transition-colors ${
+                                      picked && correctOpt
+                                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-200 font-bold"
+                                        : picked
+                                        ? "border-rose-400 bg-rose-50 dark:bg-rose-950/50 text-rose-900 dark:text-rose-200"
+                                        : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#0A66C2] text-zinc-700 dark:text-zinc-200"
+                                    }`}
+                                  >
+                                    {opt}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                            {chosen !== undefined && (
+                              <p
+                                className={`text-[11px] rounded-lg p-2 ${
+                                  isRight
+                                    ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200"
+                                    : "bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200"
+                                }`}
+                              >
+                                <strong>{isRight ? "Verified ✓: " : "Review Standard: "}</strong>
+                                {q.explanation}
+                              </p>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Cross-Platform Reference Verification + Noctis Study Coach */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+                      <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block">
+                        Cross-Platform Verification Across Supported Learning Academies
+                      </span>
+                      <div className="grid grid-cols-2 gap-2">
+                        {activeDossier.crossPlatformLinks.map((cp) => (
+                          <a
+                            key={cp.id}
+                            href={cp.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 hover:border-[#0A66C2] p-2.5 flex items-center justify-between gap-2 text-xs transition-colors"
+                          >
+                            <div className="min-w-0">
+                              <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate">{cp.label}</p>
+                              <p className="text-[10px] text-zinc-500 truncate">{cp.authority}</p>
+                            </div>
+                            <ExternalLink className="h-3.5 w-3.5 text-[#0A66C2] shrink-0" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+                      <span className="text-[10px] font-mono font-bold uppercase text-[#01754F] dark:text-emerald-400 flex items-center gap-1">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        <span>Ask Noctis Study Coach ({activeDossier.course.category})</span>
+                      </span>
+                      <form
+                        onSubmit={async (e) => {
+                          e.preventDefault()
+                          if (!coachQuestion.trim() || isAskingCoach) return
+                          setIsAskingCoach(true)
+                          try {
+                            const r = await fetch("/api/connectin/learning-workspace", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                action: "ask_coach",
+                                lessonId: activeDossier.course.id,
+                                userKey: user?.email || user?.name || "guest",
+                                lessonTitle: activeDossier.course.title,
+                                category:
+                                  activeDossier.course.category === "AI & Agentic Systems"
+                                    ? "Software & AI"
+                                    : activeDossier.course.category === "Leadership & Consulting"
+                                    ? "Finance & Business"
+                                    : activeDossier.course.category === "Networking & Packets"
+                                    ? "Telecom & Fiber Optics"
+                                    : "Cybersecurity & IT",
+                                description: activeDossier.course.summary,
+                                skills: activeDossier.course.skills,
+                                fieldTip: `Align with ${activeDossier.whitePaper.standardsBody}`,
+                                question: coachQuestion.trim(),
+                              }),
+                            })
+                            const d = await r.json().catch(() => null)
+                            setCoachAnswer(d?.answer || "Review the 10-Page White Paper and Primary Sources tabs for detailed guidance.")
+                          } finally {
+                            setIsAskingCoach(false)
+                          }
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <input
+                          type="text"
+                          value={coachQuestion}
+                          onChange={(e) => setCoachQuestion(e.target.value)}
+                          placeholder={`Ask about ${activeDossier.course.skills[0] || "exam prep"}...`}
+                          className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-[#01754F]"
+                        />
+                        <button
+                          type="submit"
+                          disabled={isAskingCoach || !coachQuestion.trim()}
+                          className="rounded-full bg-[#01754F] hover:bg-[#015e3f] disabled:opacity-50 text-white px-3.5 py-1.5 text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Send className="h-3 w-3" />
+                          <span>{isAskingCoach ? "..." : "Ask"}</span>
+                        </button>
+                      </form>
+                      {coachAnswer && (
+                        <div className="rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-3 text-xs text-emerald-950 dark:text-emerald-100 whitespace-pre-line leading-relaxed max-h-40 overflow-y-auto">
+                          {coachAnswer}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

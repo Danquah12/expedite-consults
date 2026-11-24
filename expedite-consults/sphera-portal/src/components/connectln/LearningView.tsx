@@ -71,9 +71,15 @@ import { ConnectLnStudioPlayer } from "@/components/connectln/ConnectLnStudioPla
 import { HOME_TAB_EXCLUSIVE_YOUTUBE_IDS } from "@/lib/connectin-videos"
 import { SkilledTradesLearnByDoingSection } from "@/components/connectln/SkilledTradesLearnByDoingSection"
 import {
+  LEARN_CATEGORY_META,
   SKILLED_TRADES_LEARN_BY_DOING_LESSONS,
   SkilledTradesCategory,
 } from "@/lib/skilled-trades-learn-by-doing-data"
+import {
+  PROFESSION_TRUTH_BLUEPRINTS,
+  getCrossPlatformStudyLinks,
+  getProfessionTruthBlueprint,
+} from "@/lib/connectln-source-of-truth"
 import {
   LEARNING_VENDOR_SOURCES,
   VENDOR_CATEGORY_TABS,
@@ -227,6 +233,15 @@ export function LearningView({
     journeyLessonIds: [],
     completedLessonIds: [],
     overallProgressPercent: 0
+  })
+  const [overrideLearnCategory, setOverrideLearnCategory] = useState<SkilledTradesCategory | null>(null)
+  const [blueprintCategory, setBlueprintCategory] = useState<SkilledTradesCategory>(() => {
+    if (initialLearnByDoingCategory) return initialLearnByDoingCategory
+    const allCats = Object.keys(LEARN_CATEGORY_META) as SkilledTradesCategory[]
+    const match = allCats.find((c) =>
+      LEARN_CATEGORY_META[c]?.enclaveIds?.includes(user?.professionEnclave || "")
+    )
+    return match || "Carpentry"
   })
   const [selectedMobilityCareerNumber, setSelectedMobilityCareerNumber] = useState<number | null>(null)
   const [vibetokExpanded, setVibetokExpanded] = useState(false)
@@ -565,13 +580,15 @@ export function LearningView({
 
           <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
             <div className="inline-flex items-center gap-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 px-3.5 py-2">
-              <span className="text-lg font-black text-[#0A66C2] dark:text-sky-400 leading-none">65%</span>
+              <span className="text-lg font-black text-[#0A66C2] dark:text-sky-400 leading-none">
+                {learnByDoingSummary.overallProgressPercent}%
+              </span>
               <div className="leading-tight">
                 <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">
                   Progress
                 </p>
                 <p className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-200">
-                  Specialist Track
+                  {learnByDoingSummary.completedLessonIds.length} Completed
                 </p>
               </div>
             </div>
@@ -1031,7 +1048,7 @@ export function LearningView({
           user={user}
           mode="full_academy"
           initialLessonId={initialLearnByDoingLessonId}
-          initialCategory={initialLearnByDoingCategory}
+          initialCategory={overrideLearnCategory ?? initialLearnByDoingCategory}
           onTelemetryChange={setLearnByDoingSummary}
           onClaimCertificate={handleClaimCertificate}
         />
@@ -1044,6 +1061,179 @@ export function LearningView({
       {/* ========================================================================= */}
       {learningMode === 'paths' && (
         <div className="space-y-6">
+          {/* 26-Profession Source-of-Truth Career Blueprint Explorer */}
+          {(() => {
+            const blueprint = getProfessionTruthBlueprint(blueprintCategory)
+            const cpLinks = getCrossPlatformStudyLinks(blueprintCategory)
+            return (
+              <div className="rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3.5">
+                  <div className="space-y-1">
+                    <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 text-[10px] font-black uppercase text-[#01754F] dark:text-emerald-300">
+                      Source-of-Truth Career Blueprint Explorer · {blueprint.lastAuditedLabel}
+                    </span>
+                    <h2 className="text-lg sm:text-xl font-black text-zinc-900 dark:text-zinc-100">
+                      {LEARN_CATEGORY_META[blueprintCategory]?.emoji} {blueprintCategory} — Official Codes, O*NET &amp; BLS Blueprint
+                    </h2>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap shrink-0">
+                    <select
+                      aria-label="Select profession blueprint"
+                      value={blueprintCategory}
+                      onChange={(e) => setBlueprintCategory(e.target.value as SkilledTradesCategory)}
+                      className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3.5 py-1.5 text-xs font-bold text-zinc-800 dark:text-zinc-100 cursor-pointer"
+                    >
+                      {(Object.keys(PROFESSION_TRUTH_BLUEPRINTS) as SkilledTradesCategory[]).map((cat) => (
+                        <option key={cat} value={cat}>
+                          {LEARN_CATEGORY_META[cat]?.emoji} {cat}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOverrideLearnCategory(blueprintCategory)
+                        setLearningMode('learn_by_doing')
+                      }}
+                      className="rounded-full bg-[#01754F] hover:bg-[#015e3f] text-white px-4 py-1.5 text-xs font-bold cursor-pointer"
+                    >
+                      Watch Hands-On Videos →
+                    </button>
+                  </div>
+                </div>
+
+                {/* Primary Metrics Row */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <a
+                    href={blueprint.onetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 p-3 hover:border-[#0A66C2]"
+                  >
+                    <span className="text-[10px] font-bold uppercase text-zinc-500 block">
+                      O*NET SOC {blueprint.onetSocCode}
+                    </span>
+                    <span className="text-xs font-black text-zinc-900 dark:text-zinc-100 inline-flex items-center gap-1 mt-0.5">
+                      <span>{blueprint.onetTitle}</span>
+                      <ExternalLink className="h-3 w-3 text-[#0A66C2]" />
+                    </span>
+                  </a>
+                  <a
+                    href={blueprint.blsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 p-3 hover:border-[#01754F]"
+                  >
+                    <span className="text-[10px] font-bold uppercase text-zinc-500 block">
+                      BLS Median Pay (May 2025)
+                    </span>
+                    <span className="text-xs font-black text-[#01754F] dark:text-emerald-300 inline-flex items-center gap-1 mt-0.5">
+                      <span>{blueprint.blsMedianPay}</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </span>
+                  </a>
+                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 p-3">
+                    <span className="text-[10px] font-bold uppercase text-zinc-500 block">
+                      10-Year Growth (2025–2035)
+                    </span>
+                    <span className="text-xs font-black text-[#0A66C2] dark:text-sky-300 block mt-0.5">
+                      {blueprint.blsGrowth2025_2035}
+                    </span>
+                  </div>
+                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 p-3">
+                    <span className="text-[10px] font-bold uppercase text-zinc-500 block">
+                      Entry Pathway
+                    </span>
+                    <span className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 block mt-0.5 leading-snug">
+                      {blueprint.entryPathway}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Career Ladder, Prerequisites, Standards & Open Textbooks */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3.5 space-y-2">
+                    <span className="text-[10px] font-black uppercase text-zinc-500 block">
+                      Career Ladder &amp; Prerequisites
+                    </span>
+                    <p className="text-xs font-bold text-[#01754F] dark:text-emerald-300">
+                      {blueprint.careerLadder.join(" → ")}
+                    </p>
+                    <ul className="space-y-1 text-[11.5px] text-zinc-700 dark:text-zinc-300">
+                      {blueprint.prerequisites.map((pre, i) => (
+                        <li key={i} className="flex items-start gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-[#0A66C2] shrink-0 mt-0.5" />
+                          <span>{pre}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+                      <strong>Starter Kit:</strong> {blueprint.starterKitSummary}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3.5 space-y-2">
+                    <span className="text-[10px] font-black uppercase text-zinc-500 block">
+                      Governing Codes &amp; Free Open Textbooks (OER)
+                    </span>
+                    <div className="space-y-1.5">
+                      {[...blueprint.governingStandards, ...blueprint.openTextbooksAndOer].map((ref) => (
+                        <a
+                          key={ref.url + ref.title}
+                          href={ref.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between gap-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/70 hover:bg-blue-50/70 dark:hover:bg-blue-950/40 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-[11px]"
+                        >
+                          <span className="font-semibold text-zinc-800 dark:text-zinc-200 truncate">
+                            {ref.title}
+                          </span>
+                          <span className="text-[9.5px] font-bold text-[#0A66C2] shrink-0 inline-flex items-center gap-0.5">
+                            <span>{ref.authority}</span>
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3.5 space-y-2">
+                    <span className="text-[10px] font-black uppercase text-zinc-500 block">
+                      4-Stage Mastery Syllabus &amp; Supported Academies
+                    </span>
+                    <div className="space-y-1.5">
+                      {blueprint.masteryStages.map((st) => (
+                        <div key={st.stage} className="rounded-lg bg-zinc-50 dark:bg-zinc-800/70 p-2 text-[11px]">
+                          <p className="font-bold text-zinc-900 dark:text-zinc-100">
+                            Stage {st.stage} ({st.duration}): {st.title}
+                          </p>
+                          <p className="text-zinc-600 dark:text-zinc-400 text-[10.5px]">
+                            Deliverable: {st.deliverable}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {cpLinks.slice(0, 6).map((cp) => (
+                        <a
+                          key={cp.id}
+                          href={cp.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2] px-2 py-0.5 text-[9.5px] font-bold text-zinc-700 dark:text-zinc-300 inline-flex items-center gap-0.5"
+                        >
+                          <span>{cp.label}</span>
+                          <ExternalLink className="h-2 w-2" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
+
           <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 p-6 text-white shadow-xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div className="space-y-1">
@@ -1387,6 +1577,7 @@ export function LearningView({
       {/* ========================================================================= */}
       {learningMode === 'connectln_studies' && (
         <ConnectLnStudiesCatalogView
+          user={user}
           onClaimCertificate={handleClaimCertificate}
           initialAcademyFilter="all"
         />
@@ -1525,6 +1716,7 @@ export function LearningView({
 
           {/* Full ConnectLn Studies shelves inside Courses view */}
           <ConnectLnStudiesCatalogView
+            user={user}
             onClaimCertificate={handleClaimCertificate}
             initialAcademyFilter="all"
           />
@@ -1732,6 +1924,7 @@ export function LearningView({
 
           {/* 175+ Official Certifications, Professional Certificates, Practice Exams, CEUs & Instructor Office Hours */}
           <ConnectLnStudiesCatalogView
+            user={user}
             onClaimCertificate={handleClaimCertificate}
             initialAcademyFilter="certifications_ceu"
           />

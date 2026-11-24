@@ -85,7 +85,17 @@ export interface InteractiveLab {
 export interface CertificationTrack {
   id: string
   name: string
-  issuingBody: 'ISC2' | 'AWS' | 'OffSec' | 'ISACA' | 'CompTIA'
+  issuingBody:
+    | 'ISC2'
+    | 'AWS'
+    | 'OffSec'
+    | 'ISACA'
+    | 'CompTIA'
+    | 'U.S. DOL / OSHA'
+    | 'Timber Framers Guild / NCCER'
+    | 'ABOS'
+    | 'AACN'
+    | 'ASE'
   badgeIcon: string
   examCode: string
   questionsCount: number
@@ -1859,7 +1869,7 @@ export function getEnclaveCertificationTracks(enclaveId?: string): Certification
       {
         id: 'cert_master_carpenter',
         name: 'Master Carpenter Guild Certification (Timber Framing & Joinery)',
-        issuingBody: 'CompTIA',
+        issuingBody: 'Timber Framers Guild / NCCER',
         badgeIcon: '🔨',
         examCode: 'TFG-MC-2026',
         questionsCount: 100,
@@ -1879,7 +1889,7 @@ export function getEnclaveCertificationTracks(enclaveId?: string): Certification
       {
         id: 'cert_osha_30',
         name: 'OSHA 30-Hour Construction Safety & Health Card',
-        issuingBody: 'CompTIA',
+        issuingBody: 'U.S. DOL / OSHA',
         badgeIcon: '🦺',
         examCode: 'OSHA-CONST-30',
         questionsCount: 80,
@@ -1904,7 +1914,7 @@ export function getEnclaveCertificationTracks(enclaveId?: string): Certification
       {
         id: 'cert_abos_ortho',
         name: 'ABOS Board Certification (Orthopaedic Surgery & Trauma)',
-        issuingBody: 'ISC2',
+        issuingBody: 'ABOS',
         badgeIcon: '🔪',
         examCode: 'ABOS-PART-II',
         questionsCount: 120,
@@ -1924,7 +1934,7 @@ export function getEnclaveCertificationTracks(enclaveId?: string): Certification
       {
         id: 'cert_aacn_ccrn',
         name: 'AACN CCRN: Critical Care Registered Nurse (Adult)',
-        issuingBody: 'ISC2',
+        issuingBody: 'AACN',
         badgeIcon: '🩺',
         examCode: 'AACN-CCRN-ADULT',
         questionsCount: 150,
@@ -1948,7 +1958,7 @@ export function getEnclaveCertificationTracks(enclaveId?: string): Certification
       {
         id: 'cert_ase_master',
         name: 'ASE Certified Master Automobile Technician (A1–A8)',
-        issuingBody: 'OffSec',
+        issuingBody: 'ASE',
         badgeIcon: '🔧',
         examCode: 'ASE-A1-A8-MASTER',
         questionsCount: 200,
@@ -1970,7 +1980,7 @@ export function getEnclaveCertificationTracks(enclaveId?: string): Certification
       {
         id: 'cert_ase_l1',
         name: 'ASE L1: Advanced Engine Performance Specialist',
-        issuingBody: 'OffSec',
+        issuingBody: 'ASE',
         badgeIcon: '⚡',
         examCode: 'ASE-L1-COMPOSITE',
         questionsCount: 50,

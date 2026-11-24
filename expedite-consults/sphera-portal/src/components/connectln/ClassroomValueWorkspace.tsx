@@ -35,6 +35,10 @@ import {
   SKILLED_TRADES_COLLECTION_META,
   SkilledTradesCategory,
 } from "@/lib/skilled-trades-learn-by-doing-data"
+import {
+  getCrossPlatformStudyLinks,
+  getProfessionTruthBlueprint,
+} from "@/lib/connectln-source-of-truth"
 import { UserProfile } from "@/lib/connectln-data"
 import { GLOBAL_JOBS_CATALOG, GlobalJobItem } from "@/lib/global-jobs-data"
 import {
@@ -464,6 +468,7 @@ export function ClassroomValueWorkspace({
   // Overview progressive disclosure drawers
   const [showChecklist, setShowChecklist] = useState<boolean>(false)
   const [showCalculator, setShowCalculator] = useState<boolean>(false)
+  const [showTruthStandards, setShowTruthStandards] = useState<boolean>(false)
   const [checkedMap, setCheckedMap] = useState<Record<string, boolean>>({})
 
   // Practice proof-of-work state
@@ -537,6 +542,14 @@ export function ClassroomValueWorkspace({
   const baselineRegionalTips = useMemo(
     () => getBaselineRegionalTips(lesson.category),
     [lesson.category]
+  )
+  const truthBlueprint = useMemo(
+    () => getProfessionTruthBlueprint(lesson.category),
+    [lesson.category]
+  )
+  const crossPlatformStudyLinks = useMemo(
+    () => getCrossPlatformStudyLinks(`${view.title} ${lesson.category}`),
+    [view.title, lesson.category]
   )
 
   // Reset ephemeral state cleanly when lesson changes
@@ -1087,6 +1100,126 @@ export function ClassroomValueWorkspace({
                 />
               </button>
               {showCalculator && <TradeCalculatorPanel category={lesson.category} />}
+            </div>
+
+            {/* Collapsible Primary Standards, OER Textbooks & BLS Career Truth Drawer */}
+            <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-zinc-900 p-2.5">
+              <button
+                type="button"
+                onClick={() => setShowTruthStandards((v) => !v)}
+                className="w-full flex items-center justify-between gap-2 text-left text-xs font-bold text-zinc-900 dark:text-zinc-100 cursor-pointer"
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#01754F]" />
+                  <span>Standards, OER Textbooks &amp; BLS Career Truth</span>
+                </span>
+                <ChevronDown
+                  className={`h-3.5 w-3.5 text-zinc-500 transition-transform ${
+                    showTruthStandards ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {showTruthStandards && (
+                <div className="space-y-2.5 pt-2 mt-2 border-t border-zinc-100 dark:border-zinc-800 text-[11px]">
+                  <div className="grid grid-cols-2 gap-2">
+                    <a
+                      href={truthBlueprint.onetUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 p-2 hover:border-[#0A66C2]"
+                    >
+                      <span className="text-[9.5px] font-bold uppercase text-zinc-500 block">
+                        O*NET SOC {truthBlueprint.onetSocCode}
+                      </span>
+                      <span className="font-bold text-zinc-900 dark:text-zinc-100 inline-flex items-center gap-1">
+                        {truthBlueprint.onetTitle}
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </span>
+                    </a>
+                    <a
+                      href={truthBlueprint.blsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-2 hover:border-[#01754F]"
+                    >
+                      <span className="text-[9.5px] font-bold uppercase text-zinc-500 block">
+                        BLS Pay ({truthBlueprint.blsGrowth2025_2035})
+                      </span>
+                      <span className="font-bold text-[#01754F] dark:text-emerald-300 inline-flex items-center gap-1">
+                        {truthBlueprint.blsMedianPay}
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </span>
+                    </a>
+                  </div>
+
+                  <div>
+                    <span className="text-[9.5px] font-bold uppercase text-zinc-500 block mb-1">
+                      Career Progression: {truthBlueprint.careerLadder.join(" → ")}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[9.5px] font-bold uppercase text-zinc-500 block">
+                      Governing Codes &amp; Primary Standards
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {truthBlueprint.governingStandards.map((st) => (
+                        <a
+                          key={st.url + st.title}
+                          href={st.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-2.5 py-0.5 text-[10px] font-bold text-amber-900 dark:text-amber-200 inline-flex items-center gap-1 hover:border-amber-500"
+                        >
+                          <span>{st.title}</span>
+                          <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[9.5px] font-bold uppercase text-zinc-500 block">
+                      Free Open Textbooks &amp; U.S. DOL OER
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {truthBlueprint.openTextbooksAndOer.map((oer) => (
+                        <a
+                          key={oer.url + oer.title}
+                          href={oer.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 px-2.5 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300 inline-flex items-center gap-1 hover:border-[#0A66C2]"
+                        >
+                          <span>{oer.title}</span>
+                          <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[9.5px] font-bold uppercase text-zinc-500 block">
+                      Cross-Platform Verification Links
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {crossPlatformStudyLinks.slice(0, 6).map((cp) => (
+                        <a
+                          key={cp.id}
+                          href={cp.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[9.5px] font-semibold text-zinc-700 dark:text-zinc-200 hover:border-[#0A66C2] inline-flex items-center gap-0.5"
+                        >
+                          <span>{cp.label}</span>
+                          <ExternalLink className="h-2 w-2" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

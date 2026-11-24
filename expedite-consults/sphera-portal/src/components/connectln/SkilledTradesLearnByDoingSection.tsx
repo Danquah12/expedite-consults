@@ -103,6 +103,13 @@ export function SkilledTradesLearnByDoingSection({
     initialCategory || 'All'
   )
   const [searchQuery, setSearchQuery] = useState<string>('')
+
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory)
+      setSelectedIndustryGroup(getIndustryGroupForCategory(initialCategory))
+    }
+  }, [initialCategory])
   const [telemetryMap, setTelemetryMap] = useState<Record<string, LearnByDoingLessonTelemetry>>(() =>
     loadAllLearnByDoingTelemetry()
   )
