@@ -548,67 +548,42 @@ export function LearningView({
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
       {/* 1. TOP LEARNING BANNER */}
-      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-3 py-0.5 text-xs font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-1.5">
-                <GraduationCap className="h-3.5 w-3.5" />
-                ConnectIn Learning &amp; Masterclasses
-              </span>
-              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-                Courses · Labs · Certifications · Blueprints
-              </span>
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-5 text-zinc-900 dark:text-zinc-100 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1 min-w-0">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-950/50 px-2.5 py-0.5 text-[11px] font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60">
+              <GraduationCap className="h-3.5 w-3.5" />
+              <span>ConnectLn Learning</span>
             </div>
-
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-              Professional Skills &amp; Career Blueprints
+              Skills, Trades &amp; Career Blueprints
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
-              Advance your career through structured learning paths, practical hands-on labs, practice tests, and industry-recognized certifications.
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+              Hands-on profession videos, interactive labs, career paths, and certifications.
             </p>
-
-            {/* Direct VibeTOK Learning Hub & Change Profession Integration Banner */}
-            <div className="pt-2 flex items-center gap-2.5 flex-wrap">
-              <button
-                type="button"
-                onClick={() => setLearningMode('change_profession')}
-                className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2 text-xs font-bold text-white shadow-xs transition-all cursor-pointer"
-              >
-                <GitBranch className="h-3.5 w-3.5" />
-                <span>Change or Upgrade Profession</span>
-                <span className="rounded-full bg-white/20 px-2 py-0.2 text-[10px] font-mono">Noctis Decision Engine</span>
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setLearningMode('vibetok')}
-                className="group inline-flex items-center gap-2 rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all cursor-pointer"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Explore Noctis Video Hub</span>
-                <span className="rounded-full bg-white/20 px-2 py-0.2 text-[10px] font-mono">118,314 Assets</span>
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </button>
-              <a
-                href="https://vibetok-learning-hub.vercel.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 px-3.5 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors"
-              >
-                <span>Open in New Tab</span>
-                <ExternalLink className="h-3 w-3 text-zinc-400" />
-              </a>
-            </div>
           </div>
 
-          {/* Quick Metrics */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 p-4 text-center min-w-[170px]">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">Learning Progress</span>
-              <p className="text-2xl font-black text-[#0A66C2] dark:text-sky-400">65%</p>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Specialist Track Active</p>
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+            <div className="inline-flex items-center gap-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 px-3.5 py-2">
+              <span className="text-lg font-black text-[#0A66C2] dark:text-sky-400 leading-none">65%</span>
+              <div className="leading-tight">
+                <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">
+                  Progress
+                </p>
+                <p className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-200">
+                  Specialist Track
+                </p>
+              </div>
             </div>
+            <a
+              href="https://vibetok-learning-hub.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors"
+            >
+              <span>Noctis Hub</span>
+              <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
+            </a>
           </div>
         </div>
 
@@ -889,96 +864,19 @@ export function LearningView({
         )}
 
         {/* Master Modes Switcher */}
-        <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+        <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               type="button"
               onClick={() => setLearningMode('learn_by_doing')}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 learningMode === 'learn_by_doing'
-                  ? "bg-amber-400 text-slate-950 font-black shadow-xs"
-                  : "bg-amber-50 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 hover:bg-amber-100 border border-amber-300 dark:border-amber-800"
-              }`}
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>🛠️ Learn a Trade or Profession ({SKILLED_TRADES_LEARN_BY_DOING_LESSONS.length} Hands-On Videos)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setLearningMode('vendors')}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                learningMode === 'vendors'
-                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
-                  : "bg-blue-50 dark:bg-blue-950/50 text-[#0A66C2] dark:text-sky-300 hover:bg-blue-100 border border-blue-300 dark:border-blue-800 font-bold"
-              }`}
-            >
-              <Globe className="h-3.5 w-3.5" />
-              <span>🌐 Vendor Sources (O&apos;Reilly · LinkedIn · GitHub + {LEARNING_VENDOR_SOURCES.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setLearningMode('change_profession')}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                learningMode === 'change_profession'
-                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
-                  : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 border border-emerald-300 dark:border-emerald-800 font-bold"
-              }`}
-            >
-              <GitBranch className="h-3.5 w-3.5" />
-              <span>🔄 Change or Upgrade Profession (Noctis)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setLearningMode('vibetok')}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                learningMode === 'vibetok'
-                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
-                  : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 border border-rose-200 dark:border-rose-800"
-              }`}
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Noctis Video Hub (118K+)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setLearningMode('paths')}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                learningMode === 'paths'
-                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  ? "bg-amber-400 text-slate-950 font-bold shadow-xs"
                   : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
               }`}
             >
-              <Compass className="h-3.5 w-3.5" />
-              <span>Learning Paths</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setLearningMode('career_mastery')}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                learningMode === 'career_mastery'
-                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
-                  : "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 border border-amber-200 dark:border-amber-800"
-              }`}
-            >
-              <GraduationCap className="h-3.5 w-3.5" />
-              <span>Career Mastery Academy (13 Industries · 108+ Careers)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setLearningMode('connectln_studies')}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                learningMode === 'connectln_studies'
-                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
-                  : "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-800"
-              }`}
-            >
-              <Shield className="h-3.5 w-3.5" />
-              <span>ConnectLn Studies (Cyber, AI &amp; 175+ Certs)</span>
+              <PlayCircle className="h-3.5 w-3.5" />
+              <span>Hands-On Videos ({SKILLED_TRADES_LEARN_BY_DOING_LESSONS.length})</span>
             </button>
 
             <button
@@ -996,6 +894,58 @@ export function LearningView({
 
             <button
               type="button"
+              onClick={() => setLearningMode('paths')}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                learningMode === 'paths'
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
+              }`}
+            >
+              <Compass className="h-3.5 w-3.5" />
+              <span>Career Paths</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLearningMode('change_profession')}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                learningMode === 'change_profession'
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
+              }`}
+            >
+              <GitBranch className="h-3.5 w-3.5" />
+              <span>Change Profession</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLearningMode('career_mastery')}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                learningMode === 'career_mastery'
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
+              }`}
+            >
+              <GraduationCap className="h-3.5 w-3.5" />
+              <span>Mastery Academy</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLearningMode('connectln_studies')}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                learningMode === 'connectln_studies'
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
+              }`}
+            >
+              <Shield className="h-3.5 w-3.5" />
+              <span>Studies &amp; Certs</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setLearningMode('labs')}
               className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 learningMode === 'labs'
@@ -1004,7 +954,7 @@ export function LearningView({
               }`}
             >
               <FlaskConical className="h-3.5 w-3.5" />
-              <span>Interactive Labs ({enclaveLabs.length})</span>
+              <span>Labs ({enclaveLabs.length})</span>
             </button>
 
             <button
@@ -1017,127 +967,35 @@ export function LearningView({
               }`}
             >
               <Award className="h-3.5 w-3.5" />
-              <span>Certifications (175+ &amp; CEUs)</span>
+              <span>Certifications</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLearningMode('vibetok')}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                learningMode === 'vibetok'
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Video Hub</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLearningMode('vendors')}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                learningMode === 'vendors'
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
+              }`}
+            >
+              <Globe className="h-3.5 w-3.5" />
+              <span>Vendors ({LEARNING_VENDOR_SOURCES.length})</span>
             </button>
           </div>
-        </div>
-
-        {/* Visual 5-Card Learning & Career Quick-Map */}
-        <div className="mt-4 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-          <button
-            type="button"
-            onClick={() => setLearningMode('change_profession')}
-            className={`rounded-xl p-3 text-left border transition-all cursor-pointer flex flex-col justify-between ${
-              learningMode === 'change_profession'
-                ? "border-[#0A66C2] bg-blue-50/70 dark:bg-sky-950/40 ring-2 ring-[#0A66C2]/20"
-                : "border-emerald-300/90 dark:border-emerald-700/80 bg-emerald-50/60 dark:bg-emerald-950/30 hover:border-emerald-500"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="rounded bg-emerald-600 text-white px-1.5 py-0.2 text-[9px] font-mono font-black">
-                NOCTIS MOBILITY
-              </span>
-              <GitBranch className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100">
-              1. Change or Upgrade Profession
-            </p>
-            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">
-              Upgrade Grade/Level or Pivot to New Career →
-            </p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setLearningMode('career_mastery')}
-            className={`rounded-xl p-3 text-left border transition-all cursor-pointer flex flex-col justify-between ${
-              learningMode === 'career_mastery'
-                ? "border-[#0A66C2] bg-blue-50/70 dark:bg-sky-950/40 ring-2 ring-[#0A66C2]/20"
-                : "border-amber-200/80 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-950/20 hover:border-amber-400"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="rounded bg-amber-500 text-slate-950 px-1.5 py-0.2 text-[9px] font-mono font-black">
-                13 INDUSTRIES · 108+ CAREERS
-              </span>
-              <GraduationCap className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            </div>
-            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100">
-              2. Career Mastery Academy
-            </p>
-            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">
-              9-Milestone Classroom, Live Calculators &amp; Spec Builder →
-            </p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setLearningMode('connectln_studies')}
-            className={`rounded-xl p-3 text-left border transition-all cursor-pointer flex flex-col justify-between ${
-              learningMode === 'connectln_studies'
-                ? "border-[#0A66C2] bg-blue-50/70 dark:bg-sky-950/40 ring-2 ring-[#0A66C2]/20"
-                : "border-indigo-200/80 dark:border-indigo-800/60 bg-indigo-50/40 dark:bg-indigo-950/20 hover:border-indigo-400"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="rounded bg-indigo-600 text-white px-1.5 py-0.2 text-[9px] font-mono font-black">
-                CYBER · AI · 175+ CERTS
-              </span>
-              <Shield className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-            </div>
-            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100">
-              3. ConnectLn Studies Catalog
-            </p>
-            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">
-              12 Cyber Shelves, AI Framework, Videos &amp; 10-Slide Decks →
-            </p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setLearningMode('paths')}
-            className={`rounded-xl p-3 text-left border transition-all cursor-pointer flex flex-col justify-between ${
-              learningMode === 'paths'
-                ? "border-[#0A66C2] bg-blue-50/70 dark:bg-sky-950/40 ring-2 ring-[#0A66C2]/20"
-                : "border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-950/20 hover:border-emerald-400"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="rounded bg-emerald-600 text-white px-1.5 py-0.2 text-[9px] font-mono font-black">
-                9-STEP ENCLAVE ROADMAP
-              </span>
-              <Compass className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100">
-              4. Featured Career Blueprint
-            </p>
-            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">
-              {learningPath.title} (90 Pgs of White Papers) →
-            </p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setLearningMode('certifications')}
-            className={`rounded-xl p-3 text-left border transition-all cursor-pointer flex flex-col justify-between ${
-              learningMode === 'certifications'
-                ? "border-[#0A66C2] bg-blue-50/70 dark:bg-sky-950/40 ring-2 ring-[#0A66C2]/20"
-                : "border-rose-200/80 dark:border-rose-800/60 bg-rose-50/40 dark:bg-rose-950/20 hover:border-rose-400"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="rounded bg-rose-600 text-white px-1.5 py-0.2 text-[9px] font-mono font-black">
-                24 OFFICIAL AUTHORITIES
-              </span>
-              <Award className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-            </div>
-            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100">
-              5. Certifications &amp; CEU Hub
-            </p>
-            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">
-              Microsoft, AWS, ISC2, CompTIA, PMI &amp; Practice Exams →
-            </p>
-          </button>
         </div>
 
         {/* Course Categories Ribbon (Visible in Courses Mode) */}

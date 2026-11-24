@@ -268,11 +268,103 @@ export interface LearnByDoingLessonTelemetry {
   lastUpdatedAt?: string
 }
 
+export type LearnIndustryGroupId =
+  | 'all'
+  | 'trades'
+  | 'field_ops'
+  | 'health_science'
+  | 'tech_business'
+  | 'services_media'
+
+export interface LearnIndustryGroup {
+  id: Exclude<LearnIndustryGroupId, 'all'>
+  label: string
+  shortLabel: string
+  emoji: string
+  categories: SkilledTradesCategory[]
+}
+
+export const LEARN_INDUSTRY_GROUPS: LearnIndustryGroup[] = [
+  {
+    id: 'trades',
+    label: 'Trades & Construction',
+    shortLabel: 'Trades & Build',
+    emoji: '🔨',
+    categories: [
+      'Carpentry',
+      'Plumbing',
+      'Electrical Fundamentals',
+      'Welding',
+      'HVAC',
+      'Painting & Decorating',
+      'Masonry & Tile',
+      'Roofing & Drywall',
+      'Machining & Repair'
+    ]
+  },
+  {
+    id: 'field_ops',
+    label: 'Auto, Energy & Field Ops',
+    shortLabel: 'Auto & Field',
+    emoji: '⚡',
+    categories: [
+      'Auto Mechanics',
+      'Solar & Energy',
+      'Telecom & Fiber Optics',
+      'Aviation & Maritime',
+      'Safety & Civic Ops'
+    ]
+  },
+  {
+    id: 'health_science',
+    label: 'Health, Science & Ed',
+    shortLabel: 'Health & Science',
+    emoji: '🩺',
+    categories: [
+      'Healthcare & Nursing',
+      'Science & Lab Tech',
+      'Education & Training'
+    ]
+  },
+  {
+    id: 'tech_business',
+    label: 'Tech, Business & Law',
+    shortLabel: 'Tech, Biz & Law',
+    emoji: '💻',
+    categories: [
+      'Software & AI',
+      'Cybersecurity & IT',
+      'Finance & Business',
+      'Law & Legal'
+    ]
+  },
+  {
+    id: 'services_media',
+    label: 'Culinary, Services & Media',
+    shortLabel: 'Services & Media',
+    emoji: '🎨',
+    categories: [
+      'Culinary & Hospitality',
+      'Barbering & Beauty',
+      'Tailoring & Sewing',
+      'Agriculture & Landscaping',
+      'Creative Media & Design'
+    ]
+  }
+]
+
+export function getIndustryGroupForCategory(
+  cat: SkilledTradesCategory
+): Exclude<LearnIndustryGroupId, 'all'> {
+  const found = LEARN_INDUSTRY_GROUPS.find(g => g.categories.includes(cat))
+  return found ? found.id : 'trades'
+}
+
 export const SKILLED_TRADES_COLLECTION_META = {
   id: 'collection_skilled_trades_learn_by_doing',
   title: 'Learn a Trade or Profession: Learn by Doing',
   subtitle:
-    'Hands-on instructional video lessons aligned with ConnectLn’s professions and trades — from Carpentry, Plumbing, Electrical, Welding, HVAC, Masonry, Solar, Auto & Machining to Healthcare, Culinary, Barbering, Tailoring, Agriculture, Software, Cybersecurity, Finance, Law, Media, Telecom, Aviation & Lab Science.',
+    'Step-by-step hands-on video training with practice exercises and knowledge checks tailored to every ConnectLn trade and profession.',
   categories: [
     'Carpentry',
     'Auto Mechanics',

@@ -36,6 +36,9 @@ import {
   LearnByDoingLesson,
   LearnByDoingLessonTelemetry,
   LEARN_CATEGORY_META,
+  LEARN_INDUSTRY_GROUPS,
+  LearnIndustryGroupId,
+  getIndustryGroupForCategory,
   SKILLED_TRADES_COLLECTION_META,
   SKILLED_TRADES_LEARN_BY_DOING_LESSONS,
   RUNNING_YOUR_TRADE_BUSINESS_PATH,
@@ -88,6 +91,9 @@ export function SkilledTradesLearnByDoingSection({
   const isHomeVideos = mode === 'home_videos_only'
   const autoplayPrefRef = useRef(autoplayPref)
   autoplayPrefRef.current = autoplayPref
+  const [selectedIndustryGroup, setSelectedIndustryGroup] = useState<LearnIndustryGroupId>(() =>
+    initialCategory ? getIndustryGroupForCategory(initialCategory) : 'all'
+  )
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(
     initialCategory || 'All'
   )
@@ -123,6 +129,7 @@ export function SkilledTradesLearnByDoingSection({
   useEffect(() => {
     if (initialCategory) {
       setSelectedCategory(initialCategory)
+      setSelectedIndustryGroup(getIndustryGroupForCategory(initialCategory))
     }
   }, [initialCategory])
 
@@ -297,7 +304,13 @@ export function SkilledTradesLearnByDoingSection({
       resolvedCat = enclaveMatch || 'All'
     }
 
-    setSelectedCategory(resolvedCat || 'All')
+    const nextCat = resolvedCat || 'All'
+    setSelectedCategory(nextCat)
+    setSelectedIndustryGroup(
+      nextCat === 'All'
+        ? 'all'
+        : getIndustryGroupForCategory(nextCat as SkilledTradesCategory)
+    )
     setHomeRotationOffset(0)
   }, [user?.professionId, user?.profession, user?.professionEnclave, user?.headline, initialCategory])
 
@@ -496,13 +509,19 @@ export function SkilledTradesLearnByDoingSection({
     }))
   }
 
-  // Filtered lessons (category + keyword search)
+  // Filtered lessons (industry group + category + keyword search)
+  const activeGroupObj =
+    selectedIndustryGroup !== 'all'
+      ? LEARN_INDUSTRY_GROUPS.find(g => g.id === selectedIndustryGroup)
+      : undefined
   const normalizedSearch = searchQuery.trim().toLowerCase()
   const filteredLessons = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(lesson => {
     const t = telemetryMap[lesson.id] || createInitialLessonTelemetry(lesson.id)
     const categoryMatches =
       selectedCategory === 'All'
-        ? true
+        ? activeGroupObj
+          ? activeGroupObj.categories.includes(lesson.category)
+          : true
         : selectedCategory === 'Global Interpreted'
           ? Boolean(lesson.sourceLanguage && lesson.sourceLanguage !== 'en')
           : selectedCategory === 'Saved'
@@ -1379,197 +1398,349 @@ export function SkilledTradesLearnByDoingSection({
   return (
     <section
       id="skilled-trades-learn-by-doing"
-      className="rounded-2xl border-2 border-amber-500/40 dark:border-amber-500/30 bg-white dark:bg-zinc-900 shadow-md overflow-hidden"
+      className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden"
     >
-      {/* Top Collection Header Banner */}
-      <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-amber-950 p-5 sm:p-6 text-white border-b border-amber-500/30">
+      {/* Zone 1: Sleek Compact Header Strip */}
+      <div className="bg-gradient-to-r from-slate-900 via-zinc-900 to-stone-900 px-5 py-4 text-white border-b border-zinc-800">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-amber-400 text-slate-950 px-3 py-0.5 text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5">
-                <Hammer className="h-3.5 w-3.5" />
-                Featured Collection
-              </span>
-              <span className="rounded-full bg-white/10 border border-white/20 px-2.5 py-0.5 text-[11px] font-semibold text-amber-200">
-                26 Trades &amp; Professions · All ConnectLn Enclaves
-              </span>
-              <span className="rounded-full bg-emerald-500/20 border border-emerald-400/40 px-2.5 py-0.5 text-[10px] font-mono font-bold text-emerald-300">
-                100% Real User Activity Telemetry · Zero Seeded Counts
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-amber-300">
+              <Hammer className="h-3.5 w-3.5" />
+              <span>
+                Hands-On Video Academy · {totalLessonsCount} Lessons · {SKILLED_TRADES_COLLECTION_META.categories.length} Professions
               </span>
             </div>
-
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-              {SKILLED_TRADES_COLLECTION_META.title}
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white">
+              Learn a Trade or Profession
             </h2>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-3xl leading-relaxed">
+            <p className="text-xs text-zinc-300 max-w-2xl leading-relaxed">
               {SKILLED_TRADES_COLLECTION_META.subtitle}
             </p>
           </div>
 
-          {/* Live User Activity & Learning Journey Counters (Strictly from actual user actions) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0">
-            <div className="rounded-xl bg-white/10 border border-white/15 px-3.5 py-2.5 text-center">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-300 block">
-                Verified Views
+          {/* Compact Single-Row Inline Telemetry Bar */}
+          <div className="inline-flex items-center rounded-xl bg-white/8 border border-white/15 divide-x divide-white/15 text-center shrink-0 self-start lg:self-auto">
+            <div className="px-3.5 py-2">
+              <span className="block text-[10px] uppercase font-bold tracking-wider text-zinc-400">
+                Views
               </span>
-              <span className="text-lg font-black text-amber-300">{totalVerifiedViews}</span>
-              <span className="text-[10px] text-zinc-400 block">Actual Plays</span>
+              <span className="text-sm font-black text-amber-300">{totalVerifiedViews}</span>
             </div>
-            <div className="rounded-xl bg-white/10 border border-white/15 px-3.5 py-2.5 text-center">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-300 block">
-                Saved Lessons
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedIndustryGroup('all')
+                setSelectedCategory('Saved')
+              }}
+              className="px-3.5 py-2 hover:bg-white/10 transition-colors cursor-pointer"
+              title="Filter to your saved lessons"
+            >
+              <span className="block text-[10px] uppercase font-bold tracking-wider text-zinc-400">
+                Saved
               </span>
-              <span className="text-lg font-black text-sky-300">{totalSavedCount}</span>
-              <span className="text-[10px] text-zinc-400 block">In Saved List</span>
-            </div>
-            <div className="rounded-xl bg-white/10 border border-white/15 px-3.5 py-2.5 text-center">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-300 block">
-                Learning Journey
+              <span className="text-sm font-black text-sky-300">{totalSavedCount}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedIndustryGroup('all')
+                setSelectedCategory('Learning Journey')
+              }}
+              className="px-3.5 py-2 hover:bg-white/10 transition-colors cursor-pointer"
+              title="Filter to your Learning Journey"
+            >
+              <span className="block text-[10px] uppercase font-bold tracking-wider text-zinc-400">
+                Journey
               </span>
-              <span className="text-lg font-black text-emerald-300">
-                {totalJourneyCount} / {totalLessonsCount}
+              <span className="text-sm font-black text-emerald-300">
+                {totalJourneyCount}/{totalLessonsCount}
               </span>
-              <span className="text-[10px] text-zinc-400 block">Enrolled</span>
-            </div>
-            <div className="rounded-xl bg-white/10 border border-white/15 px-3.5 py-2.5 text-center">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-300 block">
-                Your Progress
+            </button>
+            <div className="px-3.5 py-2">
+              <span className="block text-[10px] uppercase font-bold tracking-wider text-zinc-400">
+                Progress
               </span>
-              <span className="text-lg font-black text-white">{overallCollectionProgress}%</span>
-              <span className="text-[10px] text-zinc-400 block">
-                {totalCompletedCount}/{totalLessonsCount} Completed
-              </span>
+              <span className="text-sm font-black text-white">{overallCollectionProgress}%</span>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Search & Category Filter Bar */}
-        <div className="mt-4 pt-3.5 border-t border-white/15 space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-            <div className="relative flex-1 max-w-md">
-              <Search className="h-3.5 w-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search any trade, profession, skill, or instructor..."
-                className="w-full rounded-full bg-white/10 border border-white/20 pl-8 pr-8 py-1.5 text-xs text-white placeholder:text-zinc-400 focus:outline-none focus:border-amber-400"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  title="Clear search"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-300 hover:text-white cursor-pointer"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-            <div className="text-[11px] text-zinc-300 font-medium shrink-0">
-              Showing <strong className="text-white">{filteredLessons.length}</strong> of{' '}
-              <strong className="text-amber-300">{totalLessonsCount}</strong> videos · Recorded User Interactions:{' '}
-              <strong className="text-amber-300">{totalInteractions}</strong>
-            </div>
+      {/* Zone 2: Organized Light Filter & Industry Toolbar */}
+      <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-5 py-3.5 space-y-3">
+        {/* Row 1: Search + Grouped Profession Selector + Quick Filter Pills */}
+        <div className="flex flex-col md:flex-row md:items-center gap-2.5">
+          <div className="relative flex-1 min-w-0">
+            <Search className="h-3.5 w-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search trades, professions, skills, or instructors..."
+              className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-8 pr-8 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#0A66C2]"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            {(
-              [
-                { id: 'All', label: `All ${totalLessonsCount} Lessons`, count: totalLessonsCount },
-                { id: 'Global Interpreted', label: `🌍 Global → ${currentLanguage.flag} ${currentLanguage.localName}`, count: globalInterpretedCount },
-                ...SKILLED_TRADES_COLLECTION_META.categories.map((cat) => {
-                  const meta = LEARN_CATEGORY_META[cat]
-                  return {
-                    id: cat,
-                    label: `${meta?.emoji || '📚'} ${cat}`,
-                    count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === cat).length
+          <select
+            aria-label="Filter by trade or profession"
+            value={
+              selectedCategory === 'All' ||
+              selectedCategory === 'Global Interpreted' ||
+              selectedCategory === 'Saved' ||
+              selectedCategory === 'Learning Journey'
+                ? ''
+                : selectedCategory
+            }
+            onChange={(e) => {
+              const val = e.target.value as SkilledTradesCategory | ''
+              if (!val) {
+                setSelectedCategory('All')
+                setSelectedIndustryGroup('all')
+              } else {
+                setSelectedCategory(val)
+                setSelectedIndustryGroup(getIndustryGroupForCategory(val))
+                const firstMatch = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => l.category === val)
+                if (firstMatch) {
+                  notifyExclusiveVideoPlay(`lbd-player-${firstMatch.id}`)
+                  setActiveVideoLessonId(firstMatch.id)
+                  setAutoPlayRequested(true)
+                }
+              }
+            }}
+            className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-800 dark:text-zinc-100 focus:outline-none focus:border-[#0A66C2] md:w-64 shrink-0 cursor-pointer"
+          >
+            <option value="">All 26 Professions ({totalLessonsCount} Videos)</option>
+            {LEARN_INDUSTRY_GROUPS.map(group => (
+              <optgroup key={group.id} label={`${group.emoji} ${group.label}`}>
+                {group.categories.map(cat => {
+                  const count = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(
+                    l => l.category === cat
+                  ).length
+                  return (
+                    <option key={cat} value={cat}>
+                      {cat} ({count})
+                    </option>
+                  )
+                })}
+              </optgroup>
+            ))}
+          </select>
+
+          <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedIndustryGroup('all')
+                setSelectedCategory(prev => (prev === 'Global Interpreted' ? 'All' : 'Global Interpreted'))
+              }}
+              className={`rounded-lg px-2.5 py-1.5 text-[11px] font-semibold border transition-colors cursor-pointer ${
+                selectedCategory === 'Global Interpreted'
+                  ? 'bg-[#0A66C2] text-white border-[#0A66C2]'
+                  : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700'
+              }`}
+            >
+              🌍 Global ({globalInterpretedCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedIndustryGroup('all')
+                setSelectedCategory(prev => (prev === 'Saved' ? 'All' : 'Saved'))
+              }}
+              className={`rounded-lg px-2.5 py-1.5 text-[11px] font-semibold border transition-colors cursor-pointer ${
+                selectedCategory === 'Saved'
+                  ? 'bg-[#0A66C2] text-white border-[#0A66C2]'
+                  : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700'
+              }`}
+            >
+              🔖 Saved ({totalSavedCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedIndustryGroup('all')
+                setSelectedCategory(prev => (prev === 'Learning Journey' ? 'All' : 'Learning Journey'))
+              }}
+              className={`rounded-lg px-2.5 py-1.5 text-[11px] font-semibold border transition-colors cursor-pointer ${
+                selectedCategory === 'Learning Journey'
+                  ? 'bg-[#0A66C2] text-white border-[#0A66C2]'
+                  : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700'
+              }`}
+            >
+              🧭 Journey ({totalJourneyCount})
+            </button>
+          </div>
+        </div>
+
+        {/* Row 2: 6 Clean Industry Sector Tabs on 1 Row */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedIndustryGroup('all')
+              setSelectedCategory('All')
+            }}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border ${
+              selectedIndustryGroup === 'all' && selectedCategory === 'All'
+                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-zinc-900 dark:border-white shadow-2xs'
+                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200/80 dark:hover:bg-zinc-700'
+            }`}
+          >
+            <span>All Professions</span>
+            <span className="text-[10px] font-mono opacity-80">{totalLessonsCount}</span>
+          </button>
+
+          {LEARN_INDUSTRY_GROUPS.map(group => {
+            const groupCount = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l =>
+              group.categories.includes(l.category)
+            ).length
+            const isSelectedGroup =
+              selectedIndustryGroup === group.id &&
+              selectedCategory !== 'Global Interpreted' &&
+              selectedCategory !== 'Saved' &&
+              selectedCategory !== 'Learning Journey'
+            return (
+              <button
+                key={group.id}
+                type="button"
+                onClick={() => {
+                  setSelectedIndustryGroup(group.id)
+                  setSelectedCategory('All')
+                  const firstMatch = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l =>
+                    group.categories.includes(l.category)
+                  )
+                  if (firstMatch) {
+                    notifyExclusiveVideoPlay(`lbd-player-${firstMatch.id}`)
+                    setActiveVideoLessonId(firstMatch.id)
+                    setAutoPlayRequested(true)
                   }
-                }),
-                { id: 'Saved', label: '🔖 Saved Content', count: totalSavedCount },
-                { id: 'Learning Journey', label: '🧭 My Learning Journey', count: totalJourneyCount }
-              ] as { id: CategoryFilter; label: string; count: number }[]
-            ).map(tab => {
-              const isSelected = selectedCategory === tab.id
+                }}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border ${
+                  isSelectedGroup
+                    ? 'bg-amber-400 text-slate-950 border-amber-500 font-bold shadow-2xs'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200/80 dark:hover:bg-zinc-700'
+                }`}
+              >
+                <span>{group.emoji}</span>
+                <span>{group.label}</span>
+                <span className="text-[10px] font-mono opacity-80">{groupCount}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Row 3 (Contextual): Only the 3–9 Professions Inside the Active Industry Group */}
+        {activeGroupObj && (
+          <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('All')}
+              className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer border ${
+                selectedCategory === 'All'
+                  ? 'bg-[#0A66C2] text-white border-[#0A66C2]'
+                  : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2]'
+              }`}
+            >
+              All in {activeGroupObj.shortLabel}
+            </button>
+            {activeGroupObj.categories.map(cat => {
+              const meta = LEARN_CATEGORY_META[cat]
+              const count = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(
+                l => l.category === cat
+              ).length
+              const isSelectedCat = selectedCategory === cat
               return (
                 <button
-                  key={tab.id}
+                  key={cat}
                   type="button"
                   onClick={() => {
-                    setSelectedCategory(tab.id)
-                    const firstMatch =
-                      tab.id === 'All'
-                        ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]
-                        : tab.id === 'Global Interpreted'
-                          ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(
-                              l => Boolean(l.sourceLanguage && l.sourceLanguage !== 'en')
-                            )
-                          : tab.id === 'Saved'
-                            ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => telemetryMap[l.id]?.isSaved)
-                            : tab.id === 'Learning Journey'
-                              ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => telemetryMap[l.id]?.inLearningJourney)
-                              : SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => l.category === tab.id)
+                    setSelectedCategory(cat)
+                    const firstMatch = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(
+                      l => l.category === cat
+                    )
                     if (firstMatch) {
                       notifyExclusiveVideoPlay(`lbd-player-${firstMatch.id}`)
                       setActiveVideoLessonId(firstMatch.id)
                       setAutoPlayRequested(true)
                     }
                   }}
-                  className={`rounded-full px-3 py-1 text-[11px] font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
-                    isSelected
-                      ? 'bg-amber-400 text-slate-950 shadow-xs'
-                      : 'bg-white/10 text-zinc-200 hover:bg-white/20 border border-white/15'
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer inline-flex items-center gap-1 border ${
+                    isSelectedCat
+                      ? 'bg-[#0A66C2] text-white border-[#0A66C2]'
+                      : 'bg-zinc-50 dark:bg-zinc-800/70 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2]'
                   }`}
                 >
-                  <span>{tab.label}</span>
-                  <span
-                    className={`rounded-full px-1.5 py-0.2 text-[10px] font-mono ${
-                      isSelected ? 'bg-slate-950/20 text-slate-950' : 'bg-black/30 text-amber-300'
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
+                  <span>{meta?.emoji || '📚'}</span>
+                  <span>{cat}</span>
+                  <span className="text-[10px] font-mono opacity-80">{count}</span>
                 </button>
               )
             })}
           </div>
-        </div>
+        )}
 
-        {/* Quick-Jump Section Bar on Learn Tab */}
-        <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+        {/* Slim Status Summary & Subtle Jump Links */}
+        <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
-              Study Guide Sections:
+            <span>
+              Showing <strong className="text-zinc-900 dark:text-zinc-100">{filteredLessons.length}</strong> of{' '}
+              <strong className="text-zinc-900 dark:text-zinc-100">{totalLessonsCount}</strong> videos
             </span>
-            <button
-              type="button"
-              onClick={() => {
-                const el = document.getElementById('lbd-detailed-lessons-grid')
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }}
-              className="rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 px-2.5 py-1 text-[11px] font-bold text-white cursor-pointer transition-colors"
-            >
-              📚 {totalLessonsCount} Video Lessons &amp; Detailed Study Notes
-            </button>
+            {(selectedCategory !== 'All' || selectedIndustryGroup !== 'all' || searchQuery.trim() !== '') && (
+              <>
+                <span className="rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2 py-0.5 text-[10px] font-semibold text-[#0A66C2] dark:text-sky-300">
+                  {selectedCategory !== 'All'
+                    ? selectedCategory
+                    : activeGroupObj
+                    ? activeGroupObj.label
+                    : `“${searchQuery.trim()}”`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory('All')
+                    setSelectedIndustryGroup('all')
+                    setSearchQuery('')
+                  }}
+                  className="text-[11px] font-bold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
+                >
+                  Reset to All {totalLessonsCount}
+                </button>
+              </>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => {
                 const el = document.getElementById('lbd-running-your-business')
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }}
-              className="rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 px-2.5 py-1 text-[11px] font-bold text-emerald-200 cursor-pointer transition-colors"
+              className="font-semibold text-zinc-600 dark:text-zinc-300 hover:text-[#0A66C2] dark:hover:text-sky-400 cursor-pointer"
             >
-              💼 Running Your Business Path (5 Steps)
+              Business Path (5 Steps) ↓
             </button>
+            <span>·</span>
             <button
               type="button"
               onClick={() => {
                 const el = document.getElementById('lbd-next-professions-catalogue')
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }}
-              className="rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/40 px-2.5 py-1 text-[11px] font-bold text-indigo-200 cursor-pointer transition-colors"
+              className="font-semibold text-zinc-600 dark:text-zinc-300 hover:text-[#0A66C2] dark:hover:text-sky-400 cursor-pointer"
             >
-              🗺️ Next 10 Professions Catalogue
+              Upcoming Topics ↓
             </button>
           </div>
         </div>
@@ -1593,6 +1764,7 @@ export function SkilledTradesLearnByDoingSection({
               type="button"
               onClick={() => {
                 setSelectedCategory('All')
+                setSelectedIndustryGroup('all')
                 setSearchQuery('')
               }}
               className="mt-2 rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-1.5 text-xs font-bold text-white cursor-pointer"
