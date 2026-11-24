@@ -149,6 +149,44 @@ import {
 } from "@/lib/connectln-post-sync"
 import type { PersistedPostInteractionDoc } from "@/lib/connectln-mongodb"
 
+const NEUTRAL_UNAUTHENTICATED_USER = {
+  ...initialCurrentUser,
+  id: "guest_unauthenticated",
+  userId: undefined,
+  email: undefined,
+  phone: undefined,
+  role: "member",
+  roles: ["member"],
+  profession: undefined,
+  professionId: undefined,
+  professionCategory: undefined,
+  professionEnclave: undefined,
+  name: "ConnectLn Member",
+  headline: "Sign in to connect and collaborate",
+  avatar: "",
+  coverImage: "",
+  location: "",
+  connectionsCount: 0,
+  followersCount: 0,
+  profileViews: 0,
+  postImpressions: 0,
+  searchAppearances: 0,
+  profileStrength: 0,
+  about: "",
+  openToWork: {
+    isOpen: false,
+    roles: [],
+    jobTypes: [],
+    locations: [],
+  },
+  featured: [],
+  experience: [],
+  education: [],
+  certifications: [],
+  skills: [],
+  recommendations: [],
+}
+
 export default function ConnectLnPage() {
   const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState<
@@ -419,7 +457,7 @@ export default function ConnectLnPage() {
     } catch {
       // ignore
     }
-    return initialCurrentUser
+    return NEUTRAL_UNAUTHENTICATED_USER
   })
   const [inspectedMember, setInspectedMember] = useState<UserProfile | null>(null)
   const [composeRecipient, setComposeRecipient] = useState<DirectMessageRecipient | null>(null)
@@ -1002,6 +1040,7 @@ export default function ConnectLnPage() {
       // If someone opens a shared content link (Pulse card, video, or feed post), direct them straight to the content without blocking on login!
       if (hasSharedContentLink && (!explicitUser || isSignedOut)) {
         if (isMounted) {
+          setUserData(NEUTRAL_UNAUTHENTICATED_USER)
           setIsAuthenticated(true)
           setIsAuthModalOpen(false)
           if (resolvedUrlTab) {
@@ -1012,12 +1051,15 @@ export default function ConnectLnPage() {
         return
       }
 
-      // If explicitly signed out, show auth modal immediately
+      // If explicitly signed out, ensure neutral identity and redirect cleanly to login
       if (isSignedOut) {
         if (isMounted) {
+          setUserData(NEUTRAL_UNAUTHENTICATED_USER)
           setIsAuthenticated(false)
-          setIsAuthModalOpen(true)
           setHasHydrated(true)
+          if (typeof window !== "undefined") {
+            window.location.replace("/connectin-login")
+          }
         }
         return
       }
@@ -1131,18 +1173,20 @@ export default function ConnectLnPage() {
               }
               saveStoredUser(profile)
               setUserData(getExplicitStoredUser() || profile)
+            } else {
+              localStorage.removeItem("connectin_verified")
+              setUserData(NEUTRAL_UNAUTHENTICATED_USER)
+              setIsAuthenticated(false)
+              if (typeof window !== "undefined") {
+                window.location.replace("/connectin-login")
+              }
             }
           }
         } catch (e) { /* silent */ }
         return
       }
 
-      // Hydrate immediately so the page never hangs on "Verifying ConnectIn session..."
-      if (isMounted) {
-        setHasHydrated(true)
-      }
-
-      // No session in localStorage — check server asynchronously with a short timeout
+      // Check server session cleanly before finalizing hydration so fresh visits don't flash content while redirecting
       try {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 3500)
@@ -1173,6 +1217,7 @@ export default function ConnectLnPage() {
             const storedAfterSave = getExplicitStoredUser() || profile
             setUserData(storedAfterSave)
             setIsAuthenticated(true)
+            setHasHydrated(true)
             if (resolvedUrlTab && (resolvedUrlTab !== 'adminiam' || isSuperAdminUser(storedAfterSave))) {
               setActiveTab(resolvedUrlTab as any)
             }
@@ -1187,13 +1232,14 @@ export default function ConnectLnPage() {
         console.warn("[Auth] /me check:", e)
       }
 
-      // Default to authenticated guest/member view so https://www.conectln.com/connectin always loads immediately
+      // Require sign-in on fresh APK/device/browser visits without an active session
       if (isMounted) {
-        setIsAuthenticated(true)
-        if (resolvedUrlTab) {
-          setActiveTab(resolvedUrlTab as any)
-        }
+        setUserData(NEUTRAL_UNAUTHENTICATED_USER)
+        setIsAuthenticated(false)
         setHasHydrated(true)
+        if (typeof window !== "undefined") {
+          window.location.replace("/connectin-login")
+        }
       }
     }
 
@@ -1389,7 +1435,13 @@ export default function ConnectLnPage() {
     const syncLiveUsers = async () => {
       try {
         // 1. Fire non-blocking heartbeat push of current user + local accounts (preserving compact real avatars)
-        if (userData && userData.name) {
+        if (
+          isAuthenticated === true &&
+          userData &&
+          userData.name &&
+          userData.id !== "guest_unauthenticated" &&
+          !String(userData.id || "").startsWith("guest-")
+        ) {
           const clientTimezone =
             typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined
           const crispAvatar = await resolveAndCompressLocalCallerAvatar(userData, 60000).catch(
@@ -2754,15 +2806,22 @@ export default function ConnectLnPage() {
     return () => observer.disconnect()
   }, [activeTab, remainingStreamPosts.length, visibleStreamCount])
 
-  if (!hasHydrated) {
+  if (!hasHydrated || isAuthenticated !== true) {
     return (
       <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] antialiased">
-        <header className="sticky top-0 z-50 w-full border-b border-[#2a2723] bg-[#171513] text-[#F5F0EB]">
+        <header
+          className="sticky top-0 z-50 w-full border-b border-[#2a2723] bg-[#171513] text-[#F5F0EB]"
+          style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+        >
           <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
             <ConnectInLogo size="sm" showSubtitle={true} className="text-[#F5F0EB]" />
             <div className="flex items-center gap-2 text-xs font-semibold text-stone-300">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Connecting to your ConnectLn profile...</span>
+              <span>
+                {isAuthenticated === false
+                  ? "Redirecting to ConnectLn sign in..."
+                  : "Connecting to your ConnectLn profile..."}
+              </span>
             </div>
           </div>
         </header>

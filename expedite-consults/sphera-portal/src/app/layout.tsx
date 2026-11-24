@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://conectln.com"),
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "ConnectLn",
   },
   formatDetection: {

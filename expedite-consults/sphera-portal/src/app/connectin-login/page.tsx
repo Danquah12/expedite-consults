@@ -957,9 +957,15 @@ export default function ConnectInLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] flex flex-col justify-between font-sans transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white">
+    <div
+      className="min-h-screen bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] flex flex-col justify-between font-sans transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white"
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
       {/* ─── 1. TOP CONNECTLN NAVBAR ─── */}
-      <header className="w-full bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-3 sm:px-6 md:px-12 py-2.5 sm:py-3 flex items-center justify-between shadow-xs">
+      <header
+        className="w-full bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-3 sm:px-6 md:px-12 pb-2.5 sm:pb-3 flex items-center justify-between shadow-xs"
+        style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 10px)" }}
+      >
         <Link href="/connectin" className="flex items-center gap-1.5 group shrink-0">
           <ConnectInLogo size="md" showSubtitle={true} />
         </Link>
