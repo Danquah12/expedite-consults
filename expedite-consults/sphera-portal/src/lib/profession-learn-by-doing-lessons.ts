@@ -3548,139 +3548,140 @@ export const PROFESSION_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
   {
     id: 'lbd_vimeo_lighting_design_104',
     lessonNumber: 104,
-    videoLabel: 'Vimeo Design 104: Sustainable Lighting & Form',
-    title: 'Light Volumes, Dark Matters: Sustainable Lighting Design',
+    videoLabel: 'Vimeo Design 104: Culinary Craft & Serviceware Design',
+    title: 'Alinea & Crucial Detail: Culinary Craft & Industrial Serviceware Design',
     category: 'Creative Media & Design',
     enclaveId: 'creative_media_arts',
     professionId: 'photographer',
     level: 'Intermediate',
-    originalCreator: 'Helen Hamlyn Centre · Vimeo Design',
+    originalCreator: 'Crucial Detail · Vimeo Design',
     creatorDomain: 'vimeo.com',
     sourceProvider: 'vimeo',
-    sourceVideoUrl: 'https://vimeo.com/7965429',
-    referenceArticleUrl: 'https://vimeo.com/7965429',
-    embedUrl: 'https://player.vimeo.com/video/7965429',
+    sourceVideoUrl: 'https://vimeo.com/6184730',
+    referenceArticleUrl: 'https://vimeo.com/6184730',
+    embedUrl: 'https://player.vimeo.com/video/6184730',
     licenseLabel: 'Standard Vimeo Embed · Creator Attributed',
     youtubeId: '',
     embedAvailable: true,
-    duration: '3:50',
-    thumbnailUrl: 'https://i.vimeocdn.com/video/35887894-c677f2fe0a084695299fe7e3a096f6cadb25efbfc4405704fc6c6bebc9133ee8-d_640?region=us',
+    duration: '3:46',
+    thumbnailUrl: 'https://i.vimeocdn.com/video/22555355-bc10c05ba8bd7d4f41843da0a517acead87761419bee18f68862fcac7ca4b181-d_640?region=us',
     description:
-      'Industrial & spatial design exploration hosted on Vimeo examining architectural light diffusion, human-centered urban fixture placement, and sustainable illumination efficiency.',
+      'Industrial & experiential design study hosted on Vimeo showing precision metal, ceramic, and sensory prototyping between culinary chefs and industrial fabricators.',
     skillsCovered: [
-      'Direct vs. Diffused Architectural Illumination',
-      'Minimizing Light Spill & Glare Fatigue',
-      'Human-Scale Environmental Storytelling',
-      'Iterative Lighting Prototype Critique'
+      'Cross-Disciplinary Industrial Prototyping',
+      'Material Finish & Tactile Ergonomics',
+      'Human-Scale Experiential Design',
+      'Iterative Studio Fabrication Review'
     ],
     practiceActivity:
-      'Evaluate a workspace or street corner at dusk: log dark trip zones vs. harsh unshielded glare fixtures and propose softer shielded bounce lighting.',
+      'Pick one everyday tool or client touchpoint in your trade and sketch two material or grip refinements that reduce friction and improve precision.',
     practiceDeliverablePrompt:
-      'Explain why shielded indirect light improves safety and night visibility compared to exposed glaring bulbs.',
+      'Explain how matching surface finish, balance weight, and presentation upgrades real-world usability.',
     knowledgeCheck: {
       question:
-        'Why do architectural and stage lighting designers shield raw emitters or bounce light off matte surfaces?',
+        'Why do industrial designers iterate physical prototypes directly inside the real working studio or kitchen environment?',
       options: [
-        'Shielded bounce illumination eliminates blinding contrast glare and wraps soft uniform readability across subjects',
-        'Bouncing turns off electrical circuits automatically',
-        'Bare point glare improves night-vision pupil comfort',
-        'Diffusers eliminate shadows permanently outdoors'
+        'Testing under real heat, grip, weight, and workflow pace uncovers ergonomic issues CAD drawings never show',
+        'Physical mockups replace safety and durability standards permanently',
+        'Studio prototypes remove the need for material selection',
+        'Visual gloss alone guarantees comfortable tool balance'
       ],
       correctIndex: 0,
       explanation:
-        'Managing beam cutoff and surface softness keeps spaces comfortable, legible, and energy-conscious.'
+        'Observing tools under authentic working stress reveals balance, cleaning, and workflow improvements immediately.'
     }
   },
   {
-    id: 'lbd_vimeo_fluids_lab_105',
+    id: 'lbd_archive_mit_mechanics_105',
     lessonNumber: 105,
-    videoLabel: 'Vimeo Science 105: Non-Newtonian Fluid Physics',
-    title: 'Physical Fluid Mechanics: Non-Newtonian Shear Response',
+    videoLabel: 'MIT OCW / Internet Archive 105: Lab Physics & Units',
+    title: 'MIT 8.01 Classical Mechanics: Measurement Units & Lab Physics',
     category: 'Science & Lab Tech',
     enclaveId: 'science_laboratory_research',
     professionId: 'research_scientist',
     level: 'Beginner',
-    originalCreator: 'psharkr · Vimeo Science',
-    creatorDomain: 'vimeo.com',
-    sourceProvider: 'vimeo',
-    sourceVideoUrl: 'https://vimeo.com/6900459',
-    referenceArticleUrl: 'https://vimeo.com/6900459',
-    embedUrl: 'https://player.vimeo.com/video/6900459',
-    licenseLabel: 'Standard Vimeo Embed · Creator Attributed',
+    originalCreator: 'MIT OpenCourseWare · Internet Archive',
+    creatorDomain: 'archive.org',
+    sourceProvider: 'archive_org',
+    sourceVideoUrl: 'https://archive.org/details/MIT8.01F99',
+    referenceArticleUrl: 'https://archive.org/details/MIT8.01F99',
+    directVideoUrl: 'https://archive.org/download/MIT8.01F99/00intro.mp4',
+    embedUrl: 'https://archive.org/embed/MIT8.01F99',
+    licenseLabel: 'CC BY-NC-SA 4.0 · Internet Archive Open MP4',
     youtubeId: '',
     embedAvailable: true,
-    duration: '2:45',
-    thumbnailUrl: 'https://i.vimeocdn.com/video/27857623-261d0885240d82dd5043e6f45c0f8cb67f3af2536cc8621eeb5a50491561f782-d_640?region=us',
+    duration: '40:00',
+    thumbnailUrl: 'https://archive.org/services/img/MIT8.01F99',
     description:
-      'Real-world laboratory fluid dynamics demonstration on Vimeo illustrating shear-thickening suspensions where rapid impact locks particles while slow immersion flows freely.',
+      'Open-licensed MIT physics lecture streamed directly via Internet Archive MP4 covering SI dimensional analysis, experimental uncertainty bounds, and verifiable lab scaling laws.',
     skillsCovered: [
-      'Shear-Thickening (Dilatant) Fluid Behavior',
-      'Strain Rate vs. Apparent Viscosity',
-      'Industrial Rheology & Impact Dampening Applications',
+      'Dimensional Analysis & Unit Consistency',
+      'Experimental Uncertainty Bounds',
+      'Physical Scaling & Stress Checks',
       'Controlled Lab Observation'
     ],
     practiceActivity:
-      'Compare shear-thickening vs. shear-thinning industrial fluids (e.g., mortar/paint vs. cornstarch suspension) and note how stirring speed alters resistance.',
+      'Check a physical jobsite or lab formula by matching units on both sides and calculating +/- measurement tolerance bounds cleanly.',
     practiceDeliverablePrompt:
-      'Explain why slow stirring vs. sudden strike force produces opposite resistance in shear-thickening suspensions.',
+      'Explain why unit dimensional checks catch fatal calculation errors before hardware is built or tested.',
     knowledgeCheck: {
       question:
-        'What characterizes a shear-thickening (dilatant) non-Newtonian fluid when struck rapidly?',
+        'Why do engineers and lab technicians perform dimensional analysis on every formula before trusting numeric output?',
       options: [
-        'Its effective viscosity spikes sharply under rapid shear stress, temporarily acting almost solid until impact force relaxes',
-        'It vaporizes instantaneously into helium gas',
-        'Its viscosity stays fixed identically regardless of shear speed',
-        'It freezes solid whenever room lights turn off'
+        'Consistent SI/imperial unit cancellation immediately exposes missing conversion factors or inverted ratios',
+        'Dimensional analysis deletes significant figures permanently',
+        'Units automatically adjust calibrated sensors',
+        'SI meters and inches never require explicit conversion'
       ],
       correctIndex: 0,
       explanation:
-        'Under sudden force, suspended particles jam against one another; moving slowly lets liquid lubricate past smoothly.'
+        'Confirming matching physical units guarantees formulas make physical sense and prevents catastrophic scaling errors.'
     }
   },
   {
-    id: 'lbd_vimeo_resilient_city_106',
+    id: 'lbd_vimeo_food_rules_106',
     lessonNumber: 106,
-    videoLabel: 'Vimeo Architecture 106: Resilient Urban Building',
-    title: 'CROSSROADS: Life & Construction in the Resilient City',
-    category: 'Roofing & Drywall',
-    enclaveId: 'trades_construction',
-    professionId: 'construction_worker',
-    level: 'Intermediate',
-    originalCreator: 'Nils Clauss · Vimeo Documentary',
+    videoLabel: 'Vimeo Culinary 106: Whole-Ingredient Craft Standards',
+    title: "Michael Pollan's Food Rules: Culinary Whole-Ingredient Standards",
+    category: 'Culinary & Hospitality',
+    enclaveId: 'culinary_hospitality_events',
+    professionId: 'chef',
+    level: 'Beginner',
+    originalCreator: 'Ant House Studio · Vimeo Culinary',
     creatorDomain: 'vimeo.com',
     sourceProvider: 'vimeo',
-    sourceVideoUrl: 'https://vimeo.com/623446741',
-    referenceArticleUrl: 'https://vimeo.com/623446741',
-    embedUrl: 'https://player.vimeo.com/video/623446741',
+    sourceVideoUrl: 'https://vimeo.com/35444471',
+    referenceArticleUrl: 'https://vimeo.com/35444471',
+    embedUrl: 'https://player.vimeo.com/video/35444471',
     licenseLabel: 'Standard Vimeo Embed · Creator Attributed',
     youtubeId: '',
     embedAvailable: true,
-    duration: '8:10',
-    thumbnailUrl: 'https://i.vimeocdn.com/video/1271296556-29a0a0e3076794ca3ffb3d5ef684b434c55d1162ba193ce8a_640?region=us',
+    duration: '2:13',
+    thumbnailUrl: 'https://i.vimeocdn.com/video/242308225-2e0ff6f10ebd36452ad4c7b1b909b224a25593c357738463f2a1f5c06ea6b3c2-d_295x166?region=us',
     description:
-      'Architectural field documentary on Vimeo examining high-density building envelopes, flood/heat resilience retrofits, and skilled infrastructure upkeep in growing cities.',
+      'Concise visual kitchen & procurement briefing hosted on Vimeo distilling core whole-ingredient sourcing rules, label discipline, and scratch-preparation standards.',
     skillsCovered: [
-      'Urban Building Envelope Resilience',
-      'Heat & Weather Stress Retrofits',
-      'Trade Coordination in High-Density Sites',
-      'Long-Lifecycle Material Durability'
+      'Whole-Ingredient Menu Procurement',
+      'Label & Additive Screening',
+      'Scratch Kitchen Quality Control',
+      'Client Nutrition Transparency'
     ],
     practiceActivity:
-      'List three roof, drainage, or cladding upgrades that help buildings survive heavier storm gusts and urban heat spikes.',
+      'Audit three pantry or catering supply items by checking ingredient list length, shelf turnover, and scratch-cooked alternatives.',
     practiceDeliverablePrompt:
-      'Explain why continuous air/water barriers and cool-roof reflectivity cut both leak damage and summer HVAC loads.',
+      'Explain how cooking from clean primary ingredients improves plate consistency, flavor clarity, and allergen control.',
     knowledgeCheck: {
       question:
-        'Why are modern resilient building codes pairing sealed continuous envelopes with dedicated storm-drainage redundancy?',
+        'Why do professional kitchens audit vendor ingredient labels instead of relying on ultra-processed premixes?',
       options: [
-        'To protect structural framing from extreme wind-driven rain while keeping indoor thermal comfort stable during grid peaks',
-        'To seal gutters shut with concrete mortar',
-        'To remove roof insulation permanently',
-        'So interior drywall absorbs standing water'
+        'Primary whole ingredients give exact allergen control, repeatable seasoning balance, and cleaner food-cost forecasting',
+        'Unlabeled industrial additives lower preparation hygiene',
+        'Scratch prep prevents FIFO inventory rotation',
+        'Whole ingredients cannot be portion-measured accurately'
       ],
       correctIndex: 0,
       explanation:
-        'Durable weather envelopes prevent moisture rot and sharply lower peak energy demand across city neighborhoods.'
+        'Knowing every raw input protects guest safety, allergens, and consistent culinary quality across shifts.'
     }
   },
   {

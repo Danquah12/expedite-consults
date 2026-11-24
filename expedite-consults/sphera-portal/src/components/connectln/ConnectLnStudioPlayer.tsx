@@ -198,9 +198,15 @@ export function ConnectLnStudioPlayer({
 }: ConnectLnStudioPlayerProps) {
   const { language } = useLanguage()
   const effectiveProvider = inferProviderFromUrls(sourceProvider, directVideoUrl, embedUrl, youtubeId)
+  const [html5FallbackToEmbed, setHtml5FallbackToEmbed] = useState<boolean>(false)
   const isHtml5Direct =
+    !html5FallbackToEmbed &&
     Boolean(directVideoUrl) &&
     (effectiveProvider === "connectln_native" || effectiveProvider === "archive_org")
+
+  useEffect(() => {
+    setHtml5FallbackToEmbed(false)
+  }, [directVideoUrl, embedUrl])
 
   const normalizedSourceLang = (sourceLanguage || "en").toLowerCase()
   const preferredNoctisLang =
@@ -568,6 +574,11 @@ export function ConnectLnStudioPlayer({
             }}
             onTimeUpdate={(e) => {
               setCurrentTime(e.currentTarget.currentTime || 0)
+            }}
+            onError={() => {
+              if (embedUrl) {
+                setHtml5FallbackToEmbed(true)
+              }
             }}
             className="h-full w-full bg-black object-contain"
           />

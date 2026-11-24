@@ -478,13 +478,17 @@ function cleanRssDescription(rawDesc: string, title: string, category: string, c
   return `Verified ${category} hands-on training session by ${creator}: "${title}". Synced via the ConnectLn 24-hour multi-source curriculum pipeline.`
 }
 
-function isCleanLearningCandidateTitle(title: string): boolean {
-  const lower = title.toLowerCase()
-  if (!title || title.length < 10) return false
-  if (/#shorts?\b/i.test(lower)) return false
-  if (/\b(giveaway|black friday|cyber monday|merch drop|unboxing|vlog|q&a livestream|podcast ep)\b/i.test(lower)) {
-    return false
-  }
+const OFF_TOPIC_TITLE_RE =
+  /(#shorts?\b|\bgiveaway\b|\bblack friday\b|\bcyber monday\b|\bmerch drop\b|\bunboxing\b|\bvlog\b|\bpodcast ep\b|\bgenshin\b|\bsmash bros\b|\bnintendo\b|\bminecraft\b|\bfortnite\b|\bfactorio\b|\bwarlock\b|\btouhou\b|\barchon quest\b|\bclass quests?\b|\bepic loot\b|\bgaming\b|\blet'?s play\b|\blet'?s rock\b|\bblind reaction\b|\btrailer\b|\bpublic domain movies\b|\b1951\b|\bpublicit[eé]\b|\badvertising\b|\btintin\b|\bmilitant\b|\bth[eé][aâ]tre\b|\bskandal\b|\btrump\b|\bgnostic jesus\b|\bghoul\b|\bdigital circus\b|\bsecond life\b|\broleplay\b|\bpiano cover\b|\bgorillaz\b|\braekwon\b|\bbj[oö]rk\b|\bepic fail\b|\bsci club\b|\bbarony bar\b|\bsinging\b|\bdancing\b|\bnew york, new york\b|\btrilogia\b|\bel documental\b|\blive streams?\b|\bhard mode\b|\baliexpress\b)/i
+
+const OFF_TOPIC_CREATOR_RE =
+  /\b(gaming|public domain movies|reacts|live streams|tintin|ghoul|raekwon|ruby hornet|vegan|battle)\b/i
+
+function isCleanLearningCandidateTitle(title: string, creator?: string): boolean {
+  const cleanTitle = String(title || "").trim()
+  if (!cleanTitle || cleanTitle.length < 10) return false
+  if (OFF_TOPIC_TITLE_RE.test(cleanTitle)) return false
+  if (creator && OFF_TOPIC_CREATOR_RE.test(creator)) return false
   return true
 }
 
@@ -565,27 +569,39 @@ export function buildCategoryMetadataDefaults(category: SkilledTradesCategory): 
   }
 }
 
+function mapKeywordsToCategoryStrict(text: string): SkilledTradesCategory | null {
+  const lower = String(text || "").toLowerCase()
+  if (/\b(wood|carpenter|carpentry|joinery|cabinet|timber|furniture|chisel|woodwork)\b/.test(lower)) return "Carpentry"
+  if (/\b(weld|welding|tig|mig|stick weld|arc weld)\b/.test(lower)) return "Welding"
+  if (/\b(plumb|plumbing|pipe|drain|p-trap|venting|toilet|flapper|faucet|solder)\b/.test(lower)) return "Plumbing"
+  if (/\b(electric|electrical|circuit|volt|voltage|amp|wiring|multimeter|electronics|breaker)\b/.test(lower)) return "Electrical Fundamentals"
+  if (/\b(hvac|air condition|refriger|furnace|heat pump|chiller|thermostat|mep)\b/.test(lower)) return "HVAC"
+  if (/\b(auto|automotive|engine|brake|coolant|mechanic|transmission|obd)\b/.test(lower)) return "Auto Mechanics"
+  if (/\b(solar|battery|lifepo4|photovoltaic|inverter|mppt|wind turbine|renewable)\b/.test(lower)) return "Solar & Energy"
+  if (/\b(masonry|brick|tile|mortar|grout|concrete|trowel)\b/.test(lower)) return "Masonry & Tile"
+  if (/\b(roof|roofing|shingle|flashing|drywall|framing)\b/.test(lower)) return "Roofing & Drywall"
+  if (/\b(paint|painting|primer|stain|varnish|roller|brush)\b/.test(lower)) return "Painting & Decorating"
+  if (/\b(machin|cnc|lathe|milling|caliper|micrometer|tolerance)\b/.test(lower)) return "Machining & Repair"
+  if (/\b(agricult|garden|compost|soil|prun|crop|hydroponic|farm)\b/.test(lower)) return "Agriculture & Landscaping"
+  if (/\b(barber|haircut|fade|clipper|salon|cosmetolog)\b/.test(lower)) return "Barbering & Beauty"
+  if (/\b(tailor|sewing|seam|stitch|pattern|garment|fabric)\b/.test(lower)) return "Tailoring & Sewing"
+  if (/\b(cyber|security|debian|cve|linux|encryption|firewall|https|reverse proxy|caddy|nginx|self-hosted)\b/.test(lower)) return "Cybersecurity & IT"
+  if (/\b(router|network|switch|fiber|vlan|ethernet|tcp|dns|ssh|bgp)\b/.test(lower)) return "Telecom & Fiber Optics"
+  if (/\b(python|code|algorithm|software|programming|computer science|ai|vector|typescript|api|database)\b/.test(lower)) return "Software & AI"
+  if (/\b(cook|kitchen|chef|culinary|recipe|food rules|baking|serviceware)\b/.test(lower)) return "Culinary & Hospitality"
+  if (/\b(nurse|clinical|medical|health|patient|vitals|first aid|cpr)\b/.test(lower)) return "Healthcare & Nursing"
+  if (/\b(finance|accounting|cash flow|valuation|pricing|margin|invoice|small business)\b/.test(lower)) return "Finance & Business"
+  if (/\b(law|legal|contract|statute|permit|compliance|osha)\b/.test(lower)) return "Law & Legal"
+  if (/\b(aviation|aircraft|pilot|cockpit|maritime|hull|navigation)\b/.test(lower)) return "Aviation & Maritime"
+  if (/\b(safety|lockout|loto|ppe|hazard|disinfect|respirator)\b/.test(lower)) return "Safety & Civic Ops"
+  if (/\b(lighting|design|architecture|3d|blender|film|photo|typography)\b/.test(lower)) return "Creative Media & Design"
+  if (/\b(teach|linear algebra|lecture|pedagogy|education|calculus|differential|courseware|mit)\b/.test(lower)) return "Education & Training"
+  if (/\b(physics|chemistry|fluid|lab|viscosity|experiment|science|microscope)\b/.test(lower)) return "Science & Lab Tech"
+  return null
+}
+
 function mapKeywordsToCategory(text: string, fallback: SkilledTradesCategory): SkilledTradesCategory {
-  const lower = text.toLowerCase()
-  if (/\b(wood|carpenter|joinery|cabinet|timber|furniture|chisel)\b/.test(lower)) return "Carpentry"
-  if (/\b(weld|tig|mig|stick|arc weld)\b/.test(lower)) return "Welding"
-  if (/\b(plumb|pipe|drain|p-trap|venting|solder)\b/.test(lower)) return "Plumbing"
-  if (/\b(electric|circuit|volt|amp|wiring|multimeter|electronics)\b/.test(lower)) return "Electrical Fundamentals"
-  if (/\b(hvac|air condition|refriger|furnace|heat pump|chiller)\b/.test(lower)) return "HVAC"
-  if (/\b(auto|engine|brake|coolant|mechanic|transmission|car)\b/.test(lower)) return "Auto Mechanics"
-  if (/\b(solar|battery|lifepo4|photovoltaic|inverter)\b/.test(lower)) return "Solar & Energy"
-  if (/\b(masonry|brick|tile|mortar|grout|concrete)\b/.test(lower)) return "Masonry & Tile"
-  if (/\b(roof|shingle|flashing|drywall)\b/.test(lower)) return "Roofing & Drywall"
-  if (/\b(paint|primer|stain|varnish)\b/.test(lower)) return "Painting & Decorating"
-  if (/\b(cyber|security|debian|cve|linux|encryption|firewall)\b/.test(lower)) return "Cybersecurity & IT"
-  if (/\b(router|network|switch|fiber|vlan|ethernet|tcp)\b/.test(lower)) return "Telecom & Fiber Optics"
-  if (/\b(python|code|algorithm|software|programming|computer science|ai|vector)\b/.test(lower)) return "Software & AI"
-  if (/\b(cook|kitchen|chef|culinary|recipe)\b/.test(lower)) return "Culinary & Hospitality"
-  if (/\b(nurse|clinical|medical|health|patient)\b/.test(lower)) return "Healthcare & Nursing"
-  if (/\b(lighting|design|architecture|3d|blender|film|photo)\b/.test(lower)) return "Creative Media & Design"
-  if (/\b(teach|linear algebra|lecture|pedagogy|education|geology)\b/.test(lower)) return "Education & Training"
-  if (/\b(physics|chemistry|fluid|lab|viscosity|experiment|science)\b/.test(lower)) return "Science & Lab Tech"
-  return fallback
+  return mapKeywordsToCategoryStrict(text) ?? fallback
 }
 
 // =====================================================================
@@ -750,6 +766,26 @@ const VIMEO_CHANNEL_FEEDS: Array<{ slug: string; fallbackCategory: SkilledTrades
   { slug: "channels/science/videos/rss", fallbackCategory: "Science & Lab Tech" },
 ]
 
+export async function verifyVimeoPlayerEmbeddable(videoId: string): Promise<boolean> {
+  const cleanId = String(videoId || "").trim()
+  if (!/^\d+$/.test(cleanId)) return false
+  try {
+    const res = await fetch(`https://player.vimeo.com/video/${cleanId}`, {
+      headers: { Referer: "https://conectln.com/" },
+      signal: AbortSignal.timeout(3500),
+      cache: "no-store",
+    })
+    if (res.status !== 200) return false
+    const snippet = (await res.text()).slice(0, 1200)
+    if (/not rated|privacy|sorry|cannot be played|unable to find/i.test(snippet)) {
+      return false
+    }
+    return true
+  } catch {
+    return false
+  }
+}
+
 export async function verifyVimeoOembed(
   url: string
 ): Promise<{
@@ -763,14 +799,17 @@ export async function verifyVimeoOembed(
   try {
     const res = await fetch(
       `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`,
-      { signal: AbortSignal.timeout(4000), cache: "no-store" }
+      { signal: AbortSignal.timeout(3500), cache: "no-store" }
     )
     if (!res.ok) return null
     const d: any = await res.json().catch(() => null)
     if (!d?.video_id) return null
+    const videoId = String(d.video_id)
+    const canEmbed = await verifyVimeoPlayerEmbeddable(videoId)
+    if (!canEmbed) return null
     return {
       ok: true,
-      videoId: String(d.video_id),
+      videoId,
       title: typeof d.title === "string" ? d.title.trim() : undefined,
       authorName: typeof d.author_name === "string" ? d.author_name.trim() : undefined,
       thumbnailUrl: typeof d.thumbnail_url === "string" ? d.thumbnail_url.trim() : undefined,
@@ -792,13 +831,13 @@ async function syncVimeoSource(
       try {
         const res = await fetch(`https://vimeo.com/${feed.slug}`, {
           headers: { "User-Agent": "Mozilla/5.0 (compatible; ConnectLnLearningSync/1.0)" },
-          signal: AbortSignal.timeout(4500),
+          signal: AbortSignal.timeout(4000),
           cache: "no-store",
         })
         if (!res.ok) return
         const xml = await res.text()
         const items = xml.match(/<item>[\s\S]*?<\/item>/g) || []
-        for (const item of items.slice(0, 4)) {
+        for (const item of items.slice(0, 5)) {
           const linkMatch = item.match(/<link>([\s\S]*?)<\/link>/)
           const titleMatch = item.match(/<title>([\s\S]*?)<\/title>/)
           const link = decodeXmlEntities(linkMatch?.[1] || "").trim()
@@ -820,13 +859,18 @@ async function syncVimeoSource(
     const lessonId = `lbd_sync_vimeo_${oe.videoId}`
     const norm = normalizeUrlDedupeKey(cand.link)
     if (seenIds.has(lessonId) || seenUrls.has(norm)) continue
+
+    const finalTitle = (oe.title || cand.title).slice(0, 115)
+    const creator = oe.authorName || "Vimeo Creator"
+    if (!isCleanLearningCandidateTitle(finalTitle, creator)) continue
+    const strictCat = mapKeywordsToCategoryStrict(finalTitle)
+    if (!strictCat) continue
+
     seenIds.add(lessonId)
     seenUrls.add(norm)
 
-    const finalTitle = (oe.title || cand.title).slice(0, 115)
-    const cat = mapKeywordsToCategory(finalTitle, cand.fallbackCat)
+    const cat = strictCat
     const defaults = buildCategoryMetadataDefaults(cat)
-    const creator = oe.authorName || "Vimeo Creator"
     const mins = oe.duration ? `${Math.floor(oe.duration / 60)}:${String(oe.duration % 60).padStart(2, "0")}` : ""
 
     out.push({
@@ -959,13 +1003,14 @@ async function syncPeerTubeAndDailymotionSource(
 ): Promise<LearnByDoingLesson[]> {
   const out: LearnByDoingLesson[] = []
 
-  // A. PeerTube (MakerTube + TILvids)
+  // A. PeerTube (MakerTube + TILvids — strictly local, How To / Education / Science & Technology)
   const ptHosts = ["makertube.net", "tilvids.com"]
+  const disallowedPtCategoryRe = /gaming|music|entertainment|films|art|sport|animals|politics|news/i
   for (const host of ptHosts) {
     if (out.length >= 3) break
     try {
       const res = await fetch(
-        `https://${host}/api/v1/videos?count=6&sort=-publishedAt&nsfw=false`,
+        `https://${host}/api/v1/videos?count=12&sort=-views&isLocal=true&nsfw=false&categoryOneOf=12&categoryOneOf=13&categoryOneOf=15`,
         { signal: AbortSignal.timeout(4000), cache: "no-store" }
       )
       if (!res.ok) continue
@@ -976,7 +1021,14 @@ async function syncPeerTubeAndDailymotionSource(
         const uuid = String(v?.shortUUID || v?.uuid || "").trim()
         const name = String(v?.name || "").trim()
         const dur = Number(v?.duration || 0)
-        if (!uuid || !name || dur < 120 || !isCleanLearningCandidateTitle(name)) continue
+        const creator = String(v?.channel?.displayName || "PeerTube Creator").trim()
+        const ptCatLabel = String(v?.category?.label || "").trim()
+        if (disallowedPtCategoryRe.test(ptCatLabel)) continue
+        if (!uuid || !name || dur < 120 || !isCleanLearningCandidateTitle(name, creator)) continue
+
+        const strictCat = mapKeywordsToCategoryStrict(`${name} ${v?.description || ""}`)
+        if (!strictCat) continue
+
         const lessonId = `lbd_sync_pt_${uuid}`
         const watchUrl = `https://${host}/w/${uuid}`
         if (seenIds.has(lessonId) || seenUrls.has(normalizeUrlDedupeKey(watchUrl))) continue
@@ -984,15 +1036,18 @@ async function syncPeerTubeAndDailymotionSource(
         const thumbUrl = rawThumb.startsWith("/") ? `https://${host}${rawThumb}` : rawThumb
         if (!thumbUrl) continue
 
+        const embedCheck = await fetch(`https://${host}/videos/embed/${uuid}`, {
+          method: "HEAD",
+          signal: AbortSignal.timeout(2500),
+          cache: "no-store",
+        }).catch(() => null)
+        if (!embedCheck?.ok) continue
+
         seenIds.add(lessonId)
         seenUrls.add(normalizeUrlDedupeKey(watchUrl))
 
-        const cat = mapKeywordsToCategory(
-          `${name} ${v?.category?.label || ""}`,
-          host === "makertube.net" ? "Electrical Fundamentals" : "Cybersecurity & IT"
-        )
+        const cat = strictCat
         const defaults = buildCategoryMetadataDefaults(cat)
-        const creator = String(v?.channel?.displayName || "PeerTube Creator").trim()
         const lic = String(v?.licence?.label || "PeerTube Federated Embed")
 
         out.push({
@@ -1037,7 +1092,7 @@ async function syncPeerTubeAndDailymotionSource(
   const dmPick = dmQueries[daySlot]
   try {
     const dmRes = await fetch(
-      `https://api.dailymotion.com/videos?search=${encodeURIComponent(dmPick.q)}&fields=id,title,owner.screenname,thumbnail_480_url,duration&limit=8&sort=relevance`,
+      `https://api.dailymotion.com/videos?search=${encodeURIComponent(dmPick.q)}&fields=id,title,owner.screenname,thumbnail_480_url,duration,allow_embed,private&limit=10&sort=relevance`,
       { signal: AbortSignal.timeout(4500), cache: "no-store" }
     )
     if (dmRes.ok) {
@@ -1050,16 +1105,19 @@ async function syncPeerTubeAndDailymotionSource(
         const title = String(v?.title || "").trim()
         const dur = Number(v?.duration || 0)
         const thumb = String(v?.thumbnail_480_url || "").trim()
-        if (!id || !title || dur < 120 || !thumb || !isCleanLearningCandidateTitle(title)) continue
+        const creator = String(v?.["owner.screenname"] || "Dailymotion Creator").trim()
+        if (v?.allow_embed !== true || v?.private === true) continue
+        if (!id || !title || dur < 120 || !thumb || !isCleanLearningCandidateTitle(title, creator)) continue
+        const strictCat = mapKeywordsToCategoryStrict(title)
+        if (!strictCat) continue
         const lessonId = `lbd_sync_dm_${id}`
         const watchUrl = `https://www.dailymotion.com/video/${id}`
         if (seenIds.has(lessonId) || seenUrls.has(normalizeUrlDedupeKey(watchUrl))) continue
         seenIds.add(lessonId)
         seenUrls.add(normalizeUrlDedupeKey(watchUrl))
 
-        const cat = mapKeywordsToCategory(title, dmPick.cat)
+        const cat = strictCat
         const defaults = buildCategoryMetadataDefaults(cat)
-        const creator = String(v?.["owner.screenname"] || "Dailymotion Creator").trim()
 
         out.push({
           id: lessonId,
@@ -1166,11 +1224,40 @@ async function readExistingSyncedArchive(): Promise<{
   }
 }
 
-async function refreshAndPruneStaleYouTubeDocs(
+async function pruneBlockedAndOffTopicSyncedDocs(
   existingLessons: LearnByDoingLesson[]
 ): Promise<{ surviving: LearnByDoingLesson[]; prunedCount: number }> {
   const nowMs = Date.now()
-  const staleCandidates = existingLessons
+  const prunedIds = new Set<string>()
+  const refreshedMap = new Map<string, LearnByDoingLesson>()
+
+  // 1. Immediately flag off-topic external synced entries (never touch native creator uploads)
+  const survivingAfterTitleFilter: LearnByDoingLesson[] = []
+  for (const item of existingLessons) {
+    if (item.id.startsWith("lbd_native_") || item.sourceProvider === "connectln_native") {
+      survivingAfterTitleFilter.push(item)
+      continue
+    }
+    const prov = item.sourceProvider || (item.youtubeId ? "youtube" : undefined)
+    if (prov === "peertube" || prov === "vimeo" || prov === "dailymotion") {
+      if (!isCleanLearningCandidateTitle(item.title, item.originalCreator)) {
+        prunedIds.add(item.id)
+        continue
+      }
+      if (
+        (prov === "peertube" || prov === "vimeo") &&
+        !mapKeywordsToCategoryStrict(`${item.title} ${item.description || ""}`)
+      ) {
+        prunedIds.add(item.id)
+        continue
+      }
+    }
+    survivingAfterTitleFilter.push(item)
+  }
+
+  // 2. Verify all remaining Vimeo synced items actually embed cleanly on player.vimeo.com
+  const vimeoDocs = survivingAfterTitleFilter.filter((l) => l.sourceProvider === "vimeo")
+  const staleYouTubeCandidates = survivingAfterTitleFilter
     .filter((l) => {
       if (l.id.startsWith("lbd_native_") || l.sourceProvider === "connectln_native") return false
       const isYt = (l.sourceProvider || (l.youtubeId ? "youtube" : undefined)) === "youtube"
@@ -1179,15 +1266,16 @@ async function refreshAndPruneStaleYouTubeDocs(
     })
     .slice(0, 20)
 
-  if (staleCandidates.length === 0) {
-    return { surviving: existingLessons, prunedCount: 0 }
-  }
-
-  const prunedIds = new Set<string>()
-  const refreshedMap = new Map<string, LearnByDoingLesson>()
-
-  await Promise.all(
-    staleCandidates.map(async (item) => {
+  await Promise.all([
+    ...vimeoDocs.map(async (item) => {
+      const m = String(item.embedUrl || item.sourceVideoUrl || "").match(/\/(\d+)(?:$|[?#])/)
+      const vidId = m?.[1] || item.id.replace("lbd_sync_vimeo_", "")
+      const ok = await verifyVimeoPlayerEmbeddable(vidId)
+      if (!ok) {
+        prunedIds.add(item.id)
+      }
+    }),
+    ...staleYouTubeCandidates.map(async (item) => {
       const check = await verifyYoutubeEmbeddable(item.youtubeId || "")
       if (check.permanentlyUnavailable) {
         prunedIds.add(item.id)
@@ -1200,37 +1288,46 @@ async function refreshAndPruneStaleYouTubeDocs(
           lastVerifiedAtMs: nowMs,
         })
       }
-    })
-  )
+    }),
+  ])
 
-  if (isConnectLnMongoConfigured() && (prunedIds.size > 0 || refreshedMap.size > 0)) {
-    try {
-      const db = await getConnectLnMongoDb()
-      if (db) {
-        const col = db.collection<Record<string, any>>(MONGO_COLLECTION)
-        if (prunedIds.size > 0) {
-          await col.deleteMany({ _id: { $in: Array.from(prunedIds) as any[] } })
-        }
-        if (refreshedMap.size > 0) {
-          await col.bulkWrite(
-            Array.from(refreshedMap.values()).map((l) => ({
-              updateOne: {
-                filter: { _id: l.id as any },
-                update: {
-                  $set: {
-                    title: l.title,
-                    originalCreator: l.originalCreator,
-                    sourceProvider: "youtube",
-                    lastVerifiedAtMs: nowMs,
+  if (prunedIds.size > 0 || refreshedMap.size > 0) {
+    if (isConnectLnMongoConfigured()) {
+      try {
+        const db = await getConnectLnMongoDb()
+        if (db) {
+          const col = db.collection<Record<string, any>>(MONGO_COLLECTION)
+          if (prunedIds.size > 0) {
+            await col.deleteMany({ _id: { $in: Array.from(prunedIds) as any[] } })
+          }
+          if (refreshedMap.size > 0) {
+            await col.bulkWrite(
+              Array.from(refreshedMap.values()).map((l) => ({
+                updateOne: {
+                  filter: { _id: l.id as any },
+                  update: {
+                    $set: {
+                      title: l.title,
+                      originalCreator: l.originalCreator,
+                      sourceProvider: "youtube",
+                      lastVerifiedAtMs: nowMs,
+                    },
                   },
                 },
-              },
-            })),
-            { ordered: false }
-          )
+              })),
+              { ordered: false }
+            )
+          }
         }
-      }
-    } catch {}
+      } catch {}
+    } else if (prunedIds.size > 0) {
+      try {
+        const { firebaseKvDeleteItem } = await import("./connectin-firebase-kv")
+        for (const id of prunedIds) {
+          await firebaseKvDeleteItem(FB_LEARNING_KV_MAP, id)
+        }
+      } catch {}
+    }
   }
 
   const surviving = existingLessons
@@ -1371,9 +1468,9 @@ export async function getOrSync24HourLearningVideos(params?: {
     }
   }
 
-  // Enforce <30 day YouTube metadata freshness & drop deleted/unembeddable YouTube clips
+  // Enforce <30 day YouTube metadata freshness & prune blocked Vimeo / off-topic PeerTube clips
   const { surviving: existingSynced, prunedCount } =
-    await refreshAndPruneStaleYouTubeDocs(rawExisting)
+    await pruneBlockedAndOffTopicSyncedDocs(rawExisting)
 
   const seenIds = new Set<string>()
   const seenYtIds = new Set<string>()
