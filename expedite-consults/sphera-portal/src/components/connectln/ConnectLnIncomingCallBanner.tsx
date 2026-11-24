@@ -198,7 +198,14 @@ export function ConnectLnIncomingCallBanner({
   // Synchronously triggers ringtone, title flash, Always-On-Top PiP, and OS Notification without waiting
   // for React's deferred commit/useEffect cycle when the browser window is minimized (`document.hidden`).
   const triggerImmediateIncomingCallRinging = (call: IncomingCallSummary) => {
-    if (!call?.id || isLocalTabHostingOpenCall()) return
+    if (
+      !call?.id ||
+      isLocalTabHostingOpenCall() ||
+      isConnectLnCallHandled(call.id) ||
+      declinedIdsRef.current.has(call.id)
+    ) {
+      return
+    }
     setCallMediaSilenceActive(true, "incoming-call-banner")
 
     const cName =
@@ -977,6 +984,10 @@ export function ConnectLnIncomingCallBanner({
           <button
             type="button"
             data-connectln-call-action="answer"
+            onPointerDown={() => {
+              stopLoudPhoneRingtone(true)
+              stopOutgoingCallerRingbackTone()
+            }}
             onClick={(e) => {
               e.stopPropagation()
               acceptIncomingCallNow(
@@ -1003,6 +1014,10 @@ export function ConnectLnIncomingCallBanner({
           <button
             type="button"
             data-connectln-call-action="decline"
+            onPointerDown={() => {
+              stopLoudPhoneRingtone(true)
+              stopOutgoingCallerRingbackTone()
+            }}
             onClick={(e) => {
               e.stopPropagation()
               declineAndEndIncomingCall(incomingCall.id, true)

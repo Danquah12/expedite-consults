@@ -52,6 +52,8 @@ async function dispatchMinimizedWakeupPushForTargets(params: {
 export interface CommCallParticipant {
   call_id: string
   user_id: string
+  initiator_user_id?: string
+  is_answering_recipient?: boolean
   device_id: string
   peer_id?: string
   display_name: string
@@ -631,12 +633,15 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
       if (!record) {
         record = ensureCallRoom(
           data.call_id,
-          data.user_id,
+          data.initiator_user_id || data.user_id,
           data.display_name || "Meeting Participant",
           data.call_id
         )
       }
       if (record.state === "ENDED") continue
+      if (data.initiator_user_id) {
+        record.initiator_user_id = data.initiator_user_id
+      }
       if (data.call_type) record.call_type = data.call_type
       if (data.target_recipient_name && !record.target_recipient_name) {
         record.target_recipient_name = data.target_recipient_name
@@ -976,8 +981,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ice_servers: iceServers })
   }
   const callId = req.nextUrl.searchParams.get("call_id")
+  const hasIncomingQuery = Boolean(
+    req.nextUrl.searchParams.get("incoming_for") ||
+      req.nextUrl.searchParams.get("incoming_email") ||
+      req.nextUrl.searchParams.get("incoming_phone")
+  )
   loadPersistedCalls()
-  await pullCloudCallParticipants(undefined, Boolean(callId)).catch(() => {})
+  await pullCloudCallParticipants(undefined, Boolean(callId) || hasIncomingQuery).catch(() => {})
   const nowMs = Date.now()
   if (callId) {
     const call = ACTIVE_CALLS_STORE.get(callId)
@@ -1070,7 +1080,9 @@ export async function GET(req: NextRequest) {
       const viewerAlreadyJoined = (c.participants || []).some((p) => {
         if (!p || p.participant_state === "LEFT") return false
         if (viewerPeerId && p.user_id === viewerPeerId) return true
-        if (!c.initiator_user_id || p.user_id === c.initiator_user_id) return false
+        if (!p.is_answering_recipient && (!c.initiator_user_id || p.user_id === c.initiator_user_id)) {
+          return false
+        }
         const pDigits = String(p.phone || "").replace(/[^\d]/g, "")
         if (
           incomingPhoneDigits.length >= 7 &&
@@ -1102,9 +1114,18 @@ export async function GET(req: NextRequest) {
           targetDigits.length >= 7 &&
           (targetDigits === initiatorDigits || targetDigits.slice(-10) === initiatorDigits.slice(-10))
       )
-      const callAlreadyAnsweredByPeer = (c.participants || []).some(
-        (p) => p.participant_state !== "LEFT" && p.user_id && c.initiator_user_id && p.user_id !== c.initiator_user_id
-      )
+      const activeNonLeftCount = (c.participants || []).filter(
+        (p) => p && p.participant_state !== "LEFT"
+      ).length
+      const callAlreadyAnsweredByPeer =
+        activeNonLeftCount >= 2 ||
+        (c.participants || []).some(
+          (p) =>
+            p &&
+            p.participant_state !== "LEFT" &&
+            (p.is_answering_recipient === true ||
+              (p.user_id && c.initiator_user_id && p.user_id !== c.initiator_user_id))
+        )
       // In a 1-on-1 call, once the peer picks up, stop ringing on all of the callee's other tabs/devices
       if (callAlreadyAnsweredByPeer && (!c.invited_roster || c.invited_roster.length <= 1)) {
         return false
@@ -1727,7 +1748,7 @@ export async function POST(req: NextRequest) {
       const conversationId = body.conversation_id || "9b0bbf68-20c8-4416-b82c-0f0e81b8df80"
 
       // Always pull cloud state first so cross-lambda call-end tombstones (`e__`) are known immediately
-      await pullCloudCallParticipants(userId).catch(() => {})
+      await pullCloudCallParticipants(userId, action === "join" || action === "create").catch(() => {})
 
       if (action === "create" || (action === "join" && body.reopen && !body.is_answering_recipient)) {
         ENDED_CALL_TOMBSTONES.delete(callId)
@@ -1751,6 +1772,9 @@ export async function POST(req: NextRequest) {
       }
 
       const record = ensureCallRoom(callId, userId, displayName, conversationId)
+      if (action === "create") {
+        record.initiator_user_id = userId
+      }
 
       // Never reopen an ENDED room from any heartbeat or answering-recipient beat
       if (record.state === "ENDED") {
@@ -1921,6 +1945,12 @@ export async function POST(req: NextRequest) {
       const updatedParticipant: CommCallParticipant = {
         call_id: callId,
         user_id: userId,
+        initiator_user_id: record.initiator_user_id,
+        is_answering_recipient: Boolean(
+          body.is_answering_recipient ||
+            (existingIdx >= 0 && record.participants[existingIdx].is_answering_recipient) ||
+            (record.initiator_user_id && userId !== record.initiator_user_id)
+        ),
         device_id: deviceId,
         peer_id: body.peer_id || (existingIdx >= 0 ? record.participants[existingIdx].peer_id : undefined),
         display_name: displayName,
@@ -2047,6 +2077,9 @@ export async function POST(req: NextRequest) {
         if (record.target_recipient_phone) {
           phonesToSilenceOnAnswer.add(record.target_recipient_phone)
         }
+        if (record.initiator_phone) {
+          phonesToSilenceOnAnswer.add(record.initiator_phone)
+        }
       }
       if (existingIdx >= 0) {
         record.participants[existingIdx] = updatedParticipant
@@ -2105,7 +2138,7 @@ export async function POST(req: NextRequest) {
       ACTIVE_CALLS_STORE.set(callId, record)
       savePersistedCalls()
 
-      if (action === "create") {
+      if (action === "create" && !body.skip_push) {
         const pushTargets: Array<{ phone?: string; email?: string; name?: string }> = []
         if (record.target_recipient_phone || record.target_recipient_email || record.target_recipient_name) {
           pushTargets.push({

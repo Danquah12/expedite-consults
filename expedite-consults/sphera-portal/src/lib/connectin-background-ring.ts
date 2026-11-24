@@ -923,6 +923,10 @@ function startWebAudioRingBuffer(expectedSeq?: number): boolean {
 
 export function startLoudPhoneRingtone(): void {
   if (typeof window === "undefined") return
+  if (Number((window as any).__connectlnOpenCallModalCount || 0) > 0) {
+    stopLoudPhoneRingtoneLocalOnly()
+    return
+  }
   ensureCallStopControlListeners()
   const mySeq = ++ringSessionSeq
   isIncomingRingtoneActive = true
@@ -1030,8 +1034,15 @@ export function startLoudPhoneRingtone(): void {
   // If browser initially deferred audio before a user interaction, resume cleanly without ever layering two players
   if (!ringInteractionListenersBound) {
     ringInteractionListenersBound = true
-    const resumeRingOnInteraction = () => {
+    const resumeRingOnInteraction = (ev?: Event) => {
       if (!isIncomingRingtoneActive) return
+      if (Number((window as any).__connectlnOpenCallModalCount || 0) > 0) {
+        stopLoudPhoneRingtoneLocalOnly()
+        return
+      }
+      if (ev?.target instanceof Element && ev.target.closest("[data-connectln-call-action]")) {
+        return
+      }
       if (activeRingSource && liveAudioCtx?.state === "running") return
       if (fallbackWavRingAudio && !fallbackWavRingAudio.paused && !fallbackWavRingAudio.muted) return
       if (liveAudioCtx && liveAudioCtx.state === "suspended") {
@@ -1078,8 +1089,11 @@ export function stopLoudPhoneRingtone(broadcastToOtherTabs = false): void {
  * while waiting for the recipient to answer. Uses BOTH Web Audio (`AudioBufferSourceNode`)
  * AND a DOM-attached `<audio loop>` WAV element so it works reliably on every desktop & mobile browser.
  */
+let outgoingRingbackSeq = 0
+
 export function startOutgoingCallerRingbackTone(): void {
   if (typeof window === "undefined") return
+  const myRingbackSeq = ++outgoingRingbackSeq
   isOutgoingRingbackActive = true
   ensureLiveAudioPipelineStarted()
 
@@ -1118,15 +1132,28 @@ export function startOutgoingCallerRingbackTone(): void {
   }
 
   if (!startedWebAudio && outgoingRingbackAudio) {
-    outgoingRingbackAudio.muted = false
-    outgoingRingbackAudio.volume = 0.58
-    if (outgoingRingbackAudio.paused) {
-      outgoingRingbackAudio.play().catch(() => {})
+    const rbEl = outgoingRingbackAudio
+    rbEl.muted = false
+    rbEl.volume = 0.58
+    if (rbEl.paused) {
+      rbEl
+        .play()
+        .then(() => {
+          if (!isOutgoingRingbackActive || myRingbackSeq !== outgoingRingbackSeq) {
+            try {
+              rbEl.muted = true
+              rbEl.pause()
+              rbEl.currentTime = 0
+            } catch {}
+          }
+        })
+        .catch(() => {})
     }
   }
 }
 
 export function stopOutgoingCallerRingbackTone(): void {
+  outgoingRingbackSeq++
   isOutgoingRingbackActive = false
   if (activeOutgoingRingbackSource) {
     try {
@@ -1143,6 +1170,7 @@ export function stopOutgoingCallerRingbackTone(): void {
   }
   if (outgoingRingbackAudio) {
     try {
+      outgoingRingbackAudio.muted = true
       outgoingRingbackAudio.pause()
       outgoingRingbackAudio.currentTime = 0
     } catch {}
