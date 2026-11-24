@@ -202,10 +202,10 @@ export async function POST(req: NextRequest) {
         profile.professionId = profDef.id
         profile.professionCategory = profDef.categoryName
         profile.professionEnclave = profDef.enclaveId
-        if (profDef.defaultHeadline && (!profile.headline || profile.headline.includes("Professional"))) {
+        if (profDef.defaultHeadline) {
           profile.headline = profDef.defaultHeadline
         }
-        if (profDef.typicalSkills && profDef.typicalSkills.length > 0 && (!profile.skills || profile.skills.length === 0)) {
+        if (profDef.typicalSkills && profDef.typicalSkills.length > 0) {
           profile.skills = profDef.typicalSkills
         }
         if (enclaveDef?.securityClearanceTier && !isSuperAdmin) {

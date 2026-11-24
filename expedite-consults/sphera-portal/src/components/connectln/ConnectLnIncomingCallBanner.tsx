@@ -55,6 +55,7 @@ interface IncomingCallSummary {
   call_type: "audio" | "video" | "screenshare"
   initiator_name?: string
   initiator_phone?: string
+  initiator_avatar?: string
   invited_roster?: Array<{
     id: string
     name: string
@@ -63,6 +64,7 @@ interface IncomingCallSummary {
   participants?: Array<{
     user_id: string
     display_name: string
+    avatar?: string
     is_video_on?: boolean
   }>
 }
@@ -76,18 +78,21 @@ export function ConnectLnIncomingCallBanner({
   viewerName,
   viewerEmail,
   viewerPhone,
+  viewerAvatar,
   isAlreadyInCallStudio,
   onAcceptIncomingCall,
 }: {
   viewerName?: string
   viewerEmail?: string
   viewerPhone?: string
+  viewerAvatar?: string
   isAlreadyInCallStudio?: boolean
   onAcceptIncomingCall: (
     callId: string,
     callerName: string,
     mode: "audio" | "video",
-    callerPhone?: string
+    callerPhone?: string,
+    callerAvatar?: string
   ) => void
 }) {
   const [incomingCall, setIncomingCall] = useState<IncomingCallSummary | null>(null)
@@ -107,6 +112,26 @@ export function ConnectLnIncomingCallBanner({
   const [vapidKey, setVapidKey] = useState<string>("")
   const [isEnablingPush, setIsEnablingPush] = useState<boolean>(false)
   const [isDndActive, setIsDndActive] = useState<boolean>(() => isLocalUserDnd())
+  const [callerAvatarFailed, setCallerAvatarFailed] = useState<boolean>(false)
+
+  useEffect(() => {
+    setCallerAvatarFailed(false)
+  }, [incomingCall?.id, incomingCall?.initiator_avatar, incomingCall?.participants?.[0]?.avatar])
+
+  const getSafeRegisterAvatar = (): string | undefined => {
+    const raw = (viewerAvatarRef.current || "").trim()
+    if (!raw || raw.includes("api.dicebear.com")) return undefined
+    if (
+      (raw.startsWith("https://") || raw.startsWith("http://") || raw.startsWith("/")) &&
+      raw.length <= 1500
+    ) {
+      return raw
+    }
+    if (raw.startsWith("data:image/") && raw.length <= 65000) {
+      return raw
+    }
+    return undefined
+  }
 
   useEffect(() => {
     return subscribePresenceChange((rec) => {
@@ -128,6 +153,7 @@ export function ConnectLnIncomingCallBanner({
   const myPhoneRef = useRef<string>("")
   const viewerNameRef = useRef<string>(viewerName || "")
   const viewerEmailRef = useRef<string>(viewerEmail || "")
+  const viewerAvatarRef = useRef<string>(viewerAvatar || "")
   const autoPushAttemptedRef = useRef<boolean>(false)
   const onAcceptIncomingCallRef = useRef(onAcceptIncomingCall)
   const lastAcceptedCallRef = useRef<{ id: string; ts: number } | null>(null)
@@ -140,7 +166,8 @@ export function ConnectLnIncomingCallBanner({
     targetCallId: string,
     callerNameLabel: string,
     mode: "audio" | "video",
-    callerPhoneVal?: string
+    callerPhoneVal?: string,
+    callerAvatarVal?: string
   ) => {
     const cleanId = String(targetCallId || "").trim()
     if (!cleanId) return
@@ -174,7 +201,13 @@ export function ConnectLnIncomingCallBanner({
     stopTitleCallFlash()
     closeStandbyPipForLocalCall()
     setIncomingCall(null)
-    onAcceptIncomingCallRef.current(cleanId, callerNameLabel, mode, callerPhoneVal)
+    onAcceptIncomingCallRef.current(
+      cleanId,
+      callerNameLabel,
+      mode,
+      callerPhoneVal,
+      callerAvatarVal || undefined
+    )
   }
 
   const declineAndEndIncomingCall = (targetCallId: string, notifyServer = true) => {
@@ -234,6 +267,7 @@ export function ConnectLnIncomingCallBanner({
       call.participants?.[0]?.display_name ||
       call.initiator_name ||
       "ConnectLn Caller"
+    const cAvatar = call.participants?.[0]?.avatar || call.initiator_avatar || undefined
     const cPhone = call.initiator_phone ? prettyClientPhone(call.initiator_phone) : undefined
     const mode: "audio" | "video" = call.call_type === "audio" ? "audio" : "video"
 
@@ -263,9 +297,10 @@ export function ConnectLnIncomingCallBanner({
         callId: call.id,
         callerName: cName,
         callerPhone: cPhone,
+        callerAvatar: cAvatar,
         callMode: mode,
         onAnswer: () => {
-          acceptIncomingCallNow(call.id, cName, mode, call.initiator_phone)
+          acceptIncomingCallNow(call.id, cName, mode, call.initiator_phone, cAvatar)
         },
         onDecline: () => {
           declineAndEndIncomingCall(call.id, true)
@@ -285,7 +320,8 @@ export function ConnectLnIncomingCallBanner({
   useEffect(() => {
     viewerNameRef.current = viewerName || ""
     viewerEmailRef.current = viewerEmail || ""
-  }, [viewerName, viewerEmail])
+    viewerAvatarRef.current = viewerAvatar || ""
+  }, [viewerName, viewerEmail, viewerAvatar])
 
   useEffect(() => {
     if (viewerPhone && looksLikeClientPhone(viewerPhone)) {
@@ -332,6 +368,7 @@ export function ConnectLnIncomingCallBanner({
           phone,
           name: viewerNameRef.current || "ConnectLn Member",
           email: viewerEmailRef.current,
+          avatar: getSafeRegisterAvatar(),
           pushSubscription: sub,
           deviceLabel: isMob ? "Mobile Phone" : "Desktop Browser",
         }),
@@ -456,10 +493,15 @@ export function ConnectLnIncomingCallBanner({
             call_type: p.callMode === "audio" ? "audio" : "video",
             initiator_name: p.callerName,
             initiator_phone: p.callerPhone,
+            initiator_avatar: p.callerAvatar || undefined,
           }
           realtimeRingRef.current = { call: callObj, untilMs: Date.now() + 8000 }
           triggerImmediateIncomingCallRinging(callObj)
-          setIncomingCall(callObj)
+          setIncomingCall((prev) =>
+            prev && prev.id === callObj.id
+              ? { ...prev, initiator_avatar: callObj.initiator_avatar || prev.initiator_avatar }
+              : callObj
+          )
           void reportIncomingCallToNativeOS({
             callId: p.callId,
             callerName: p.callerName || "ConnectLn Caller",
@@ -473,7 +515,8 @@ export function ConnectLnIncomingCallBanner({
           p.callId,
           p.callerName || "ConnectLn Caller",
           p.callMode === "audio" ? "audio" : "video",
-          p.callerPhone
+          p.callerPhone,
+          p.callerAvatar || undefined
         )
       } else if (msg.type === "CONNECTLN_CALL_ANSWERED_ELSEWHERE" && msg.payload?.callId) {
         const cid = String(msg.payload.callId)
@@ -572,6 +615,7 @@ export function ConnectLnIncomingCallBanner({
                   phone: norm,
                   name: viewerName || "ConnectLn Member",
                   email: viewerEmail,
+                  avatar: getSafeRegisterAvatar(),
                   pushSubscription: sub,
                   deviceLabel: isMob ? "Mobile Phone" : "Desktop Browser",
                 }),
@@ -720,10 +764,13 @@ export function ConnectLnIncomingCallBanner({
         }
         setIncomingCall((prev) => {
           if (!active) return null
+          const prevAvatar = prev?.participants?.[0]?.avatar || prev?.initiator_avatar || ""
+          const nextAvatar = active.participants?.[0]?.avatar || active.initiator_avatar || ""
           if (
             prev &&
             prev.id === active.id &&
             prev.call_type === active.call_type &&
+            prevAvatar === nextAvatar &&
             (prev.invited_roster?.length || 0) === (active.invited_roster?.length || 0) &&
             (prev.participants?.[0]?.display_name || "") ===
               (active.participants?.[0]?.display_name || "")
@@ -766,10 +813,15 @@ export function ConnectLnIncomingCallBanner({
               call_type: d.callMode === "audio" ? "audio" : "video",
               initiator_name: d.callerName || "ConnectLn Caller",
               initiator_phone: d.callerPhone || "",
+              initiator_avatar: d.callerAvatar || undefined,
             }
             realtimeRingRef.current = { call, untilMs: Date.now() + 8000 }
             triggerImmediateIncomingCallRinging(call)
-            setIncomingCall((prev) => prev || call)
+            setIncomingCall((prev) =>
+              prev && prev.id === call.id
+                ? { ...prev, initiator_avatar: call.initiator_avatar || prev.initiator_avatar }
+                : prev || call
+            )
             void checkIncoming()
           })
           ch.bind("call-ended", (d: any) => {
@@ -850,7 +902,7 @@ export function ConnectLnIncomingCallBanner({
     }
 
     triggerImmediateIncomingCallRinging(incomingCall)
-  }, [incomingCall?.id, hasOpenModal])
+  }, [incomingCall?.id, incomingCall?.initiator_avatar, incomingCall?.participants?.[0]?.avatar, hasOpenModal])
 
   useEffect(() => {
     return () => {
@@ -875,11 +927,14 @@ export function ConnectLnIncomingCallBanner({
           incomingCall.participants?.[0]?.display_name ||
           incomingCall.initiator_name ||
           "ConnectLn Caller"
+        const cAvatar =
+          incomingCall.participants?.[0]?.avatar || incomingCall.initiator_avatar || undefined
         acceptIncomingCallNow(
           incomingCall.id,
           cName,
           incomingCall.call_type === "audio" ? "audio" : "video",
-          incomingCall.initiator_phone
+          incomingCall.initiator_phone,
+          cAvatar
         )
       }
     }
@@ -942,6 +997,8 @@ export function ConnectLnIncomingCallBanner({
     incomingCall.participants?.[0]?.display_name ||
     incomingCall.initiator_name ||
     "ConnectLn Caller"
+  const callerAvatar =
+    incomingCall.participants?.[0]?.avatar || incomingCall.initiator_avatar || ""
   const callerPhone = incomingCall.initiator_phone
     ? prettyClientPhone(incomingCall.initiator_phone)
     : ""
@@ -955,7 +1012,16 @@ export function ConnectLnIncomingCallBanner({
     return (
       <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[260] w-[94vw] max-w-md rounded-2xl bg-[#111B21]/95 border border-rose-500/50 px-3.5 py-2.5 text-white shadow-2xl flex items-center justify-between gap-2.5">
         <div className="flex items-center gap-2 min-w-0">
-          <BellOff className="h-4 w-4 text-rose-400 shrink-0" />
+          {callerAvatar && !callerAvatarFailed ? (
+            <img
+              src={callerAvatar}
+              alt={callerName}
+              onError={() => setCallerAvatarFailed(true)}
+              className="h-7 w-7 rounded-full object-cover border border-rose-400/70 shrink-0"
+            />
+          ) : (
+            <BellOff className="h-4 w-4 text-rose-400 shrink-0" />
+          )}
           <p className="text-xs font-bold truncate">
             <span className="text-rose-300">DND:</span> Call from {callerName}
           </p>
@@ -968,7 +1034,8 @@ export function ConnectLnIncomingCallBanner({
                 incomingCall.id,
                 callerName,
                 isVideo ? "video" : "audio",
-                incomingCall.initiator_phone
+                incomingCall.initiator_phone,
+                callerAvatar || undefined
               )
             }
             className="rounded-xl bg-[#25D366] hover:bg-[#2EE070] px-2.5 py-1 text-[11px] font-extrabold text-white cursor-pointer"
@@ -1025,14 +1092,25 @@ export function ConnectLnIncomingCallBanner({
           </p>
         </div>
 
-        {/* Center Hero Monogram Crest with Concentric Ripple Rings */}
+        {/* Center Hero Profile Picture / Monogram Crest with Concentric Ripple Rings */}
         <div className="relative flex items-center justify-center my-1">
           <span className="absolute -inset-6 rounded-full bg-[#25D366]/25 animate-ping" />
           <span className="absolute -inset-3 rounded-full border-2 border-[#25D366]/40" />
-          <div className="relative h-[120px] w-[120px] rounded-full bg-gradient-to-br from-[#128C7E] to-[#075E54] border-[3px] border-[#25D366]/85 shadow-[0_0_50px_rgba(37,211,102,0.4)] flex items-center justify-center">
-            <span className="text-4xl font-bold text-white select-none">
-              {callerInitials}
-            </span>
+          <div className="relative h-[120px] w-[120px]">
+            <div className="h-full w-full rounded-full overflow-hidden bg-gradient-to-br from-[#128C7E] to-[#075E54] border-[3px] border-[#25D366]/85 shadow-[0_0_50px_rgba(37,211,102,0.4)] flex items-center justify-center">
+              {callerAvatar && !callerAvatarFailed ? (
+                <img
+                  src={callerAvatar}
+                  alt={callerName}
+                  onError={() => setCallerAvatarFailed(true)}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-4xl font-bold text-white select-none">
+                  {callerInitials}
+                </span>
+              )}
+            </div>
             <span className="absolute -bottom-1 -right-1 h-9 w-9 rounded-full bg-[#25D366] border-[3px] border-[#0B141A] flex items-center justify-center shadow-lg">
               {isVideo ? (
                 <Video className="h-4 w-4 text-white" />
@@ -1058,7 +1136,8 @@ export function ConnectLnIncomingCallBanner({
                 incomingCall.id,
                 callerName,
                 isVideo ? "video" : "audio",
-                incomingCall.initiator_phone
+                incomingCall.initiator_phone,
+                callerAvatar || undefined
               )
             }}
             style={{ color: "#FFFFFF" }}

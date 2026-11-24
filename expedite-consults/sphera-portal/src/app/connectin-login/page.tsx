@@ -447,6 +447,38 @@ export default function ConnectInLoginPage() {
             professionId: signInProfessionId,
           })
 
+        const explicitSelectedProf =
+          signInProfessionId && signInProfessionId !== "auto_detect"
+            ? findProfessionById(signInProfessionId)
+            : undefined
+        const resolvedServerOrVaultProf =
+          explicitSelectedProf ||
+          (data.profile?.professionId ? findProfessionById(data.profile.professionId) : undefined) ||
+          (vaultProfile?.professionId ? findProfessionById(vaultProfile.professionId) : undefined)
+        const finalProfessionId =
+          explicitSelectedProf?.id ||
+          data.profile?.professionId ||
+          vaultProfile?.professionId ||
+          baseProfile.professionId
+        const finalProfession =
+          explicitSelectedProf?.title ||
+          data.profile?.profession ||
+          vaultProfile?.profession ||
+          baseProfile.profession
+        const finalProfessionCategory =
+          explicitSelectedProf?.categoryName ||
+          data.profile?.professionCategory ||
+          vaultProfile?.professionCategory ||
+          baseProfile.professionCategory
+        const finalProfessionEnclave =
+          explicitSelectedProf?.enclaveId ||
+          data.profile?.professionEnclave ||
+          vaultProfile?.professionEnclave ||
+          baseProfile.professionEnclave
+        const finalHeadline = explicitSelectedProf
+          ? explicitSelectedProf.defaultHeadline || `${explicitSelectedProf.title} · Verified ConnectLn Member`
+          : data.profile?.headline || vaultProfile?.headline || resolvedServerOrVaultProf?.defaultHeadline || baseProfile.headline
+
         const profileToSave = {
           ...baseProfile,
           ...(vaultProfile || {}),
@@ -458,6 +490,11 @@ export default function ConnectInLoginPage() {
           role: isAdminUser ? ("admin" as const) : ("personal" as const),
           roles: isAdminUser ? ["SUPER_ADMIN"] : ["NORMAL_USER"],
           id: data.profile?.userId || data.user?.id || baseProfile.id,
+          ...(finalProfessionId ? { professionId: finalProfessionId } : {}),
+          ...(finalProfession ? { profession: finalProfession } : {}),
+          ...(finalProfessionCategory ? { professionCategory: finalProfessionCategory } : {}),
+          ...(finalProfessionEnclave ? { professionEnclave: finalProfessionEnclave } : {}),
+          ...(finalHeadline ? { headline: finalHeadline } : {}),
         }
         if (inviteContext?.inviterName) {
           await connectWithInviterInStorage(
@@ -887,6 +924,7 @@ export default function ConnectInLoginPage() {
       saveStoredUser(richProfile)
       saveStoredSessionRoute(persona.defaultTab, persona.defaultWorkspace)
       if (typeof window !== "undefined") {
+        localStorage.removeItem("connectin_posts_v1")
         localStorage.removeItem("connectin_is_signed_out")
       }
 

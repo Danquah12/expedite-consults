@@ -401,7 +401,16 @@ export async function registerWhatsAppMemberNumber(params: {
       (!blockCorruptOverwrite && incomingEmailNorm) ||
       existing?.email ||
       (isProtectedEsther ? "esther.asiedu@connectin.com" : undefined),
-    avatar: blockCorruptOverwrite ? existing?.avatar : params.avatar || existing?.avatar,
+    avatar: blockCorruptOverwrite
+      ? existing?.avatar
+      : (typeof params.avatar === "string" &&
+          params.avatar.trim() &&
+          (params.avatar.trim().startsWith("https://") ||
+            params.avatar.trim().startsWith("http://") ||
+            params.avatar.trim().startsWith("/") ||
+            (params.avatar.trim().startsWith("data:image/") && params.avatar.trim().length <= 65000))
+          ? params.avatar.trim()
+          : existing?.avatar),
     headline: blockCorruptOverwrite ? existing?.headline : params.headline || existing?.headline,
     verifiedBy2FA: Boolean(params.verifiedBy2FA || existing?.verifiedBy2FA),
     pushSubscriptions: subs,
@@ -726,12 +735,22 @@ export async function sendIncomingCallWebPush(params: {
     new Set(matchedMembers.map((m) => m.phone).filter(Boolean))
   )
 
+  const safePushAvatar =
+    params.callerAvatar &&
+    (params.callerAvatar.startsWith("https://") ||
+      params.callerAvatar.startsWith("http://") ||
+      params.callerAvatar.startsWith("/")) &&
+    params.callerAvatar.length <= 1500
+      ? params.callerAvatar
+      : ""
+
   // Instant real-time ring to any open ConnectLn tab/app of this member across all owned numbers
   await publishToPhones(allTargetPhones, "incoming-call", {
     callId: params.callId,
     callMode: params.callMode,
     callerName: params.callerName,
     callerPhone: params.callerPhone || "",
+    callerAvatar: safePushAvatar,
   }).catch(() => {})
 
   const subByEndpoint = new Map<string, StoredPushSubscription>()
@@ -781,6 +800,7 @@ export async function sendIncomingCallWebPush(params: {
     callMode: params.callMode,
     callerName: params.callerName,
     callerPhone: params.callerPhone ? formatPrettyPhoneDisplay(params.callerPhone) : "",
+    callerAvatar: safePushAvatar,
     joinUrl: params.joinUrl,
   })
 
@@ -797,7 +817,7 @@ export async function sendIncomingCallWebPush(params: {
     callMode: params.callMode,
     callerName: params.callerName,
     callerPhone: params.callerPhone ? formatPrettyPhoneDisplay(params.callerPhone) : "",
-    callerAvatar: params.callerAvatar || "",
+    callerAvatar: safePushAvatar,
     joinUrl: params.joinUrl,
     ts: Date.now(),
   })

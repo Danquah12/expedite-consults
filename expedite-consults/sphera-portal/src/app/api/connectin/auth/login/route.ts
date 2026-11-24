@@ -235,6 +235,17 @@ export async function POST(req: NextRequest) {
       if (incomingName && incomingName.trim()) {
         activeProfile.name = incomingName.trim()
       }
+      if (profDef) {
+        activeProfile.profession = profDef.title
+        activeProfile.professionId = profDef.id
+        activeProfile.professionCategory = profDef.categoryName
+        activeProfile.professionEnclave = profDef.enclaveId
+        activeProfile.headline =
+          profDef.defaultHeadline || `${profDef.title} · Verified ConnectLn Member`
+        if (profDef.typicalSkills && profDef.typicalSkills.length > 0) {
+          activeProfile.skills = profDef.typicalSkills
+        }
+      }
       connectinDb.touchUserLogin(user.id, "Verified Phone Session")
       const session = connectinDb.createSession(user.id, {
         ipAddress: geo.ipAddress,
@@ -338,6 +349,17 @@ export async function POST(req: NextRequest) {
             : "all"
 
     if (activeProfile) {
+      if (profDef) {
+        activeProfile.profession = profDef.title
+        activeProfile.professionId = profDef.id
+        activeProfile.professionCategory = profDef.categoryName
+        activeProfile.professionEnclave = profDef.enclaveId
+        activeProfile.headline =
+          profDef.defaultHeadline || `${profDef.title} · Verified ConnectLn Member`
+        if (profDef.typicalSkills && profDef.typicalSkills.length > 0) {
+          activeProfile.skills = profDef.typicalSkills
+        }
+      }
       connectinDb.touchUserLogin(user.id, `${effectiveChannel.toUpperCase()} 2FA`)
       const nowIso = new Date().toISOString()
       const timeStr = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })

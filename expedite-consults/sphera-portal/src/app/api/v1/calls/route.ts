@@ -20,14 +20,51 @@ import {
 
 export const dynamic = "force-dynamic"
 
+export function sanitizeCallAvatar(raw: unknown, maxDataUriLen = 90000): string | undefined {
+  if (typeof raw !== "string") return undefined
+  const v = raw.trim()
+  if (!v) return undefined
+  if ((v.startsWith("https://") || v.startsWith("http://") || v.startsWith("/")) && v.length <= 1500) {
+    return v
+  }
+  if (v.startsWith("data:image/") && v.length <= maxDataUriLen) {
+    return v
+  }
+  return undefined
+}
+
+async function resolveDirectoryAvatarFallback(params: {
+  phone?: string
+  email?: string
+  name?: string
+}): Promise<string | undefined> {
+  if (!params.phone && !params.email && !params.name) return undefined
+  try {
+    const found = await Promise.race([
+      lookupWhatsAppRecipient({
+        targetPhone: params.phone,
+        targetEmail: params.email,
+        targetName: params.name,
+      }),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 500)),
+    ])
+    return sanitizeCallAvatar(found?.member?.avatar)
+  } catch {
+    return undefined
+  }
+}
+
 async function dispatchMinimizedWakeupPushForTargets(params: {
   callId: string
   callMode: "audio" | "video"
   callerName: string
   callerPhone?: string
+  callerAvatar?: string
   targets: Array<{ phone?: string; email?: string; name?: string }>
 }): Promise<void> {
   if (!params.targets.length) return
+  const safeUrlAvatar =
+    params.callerAvatar && !params.callerAvatar.startsWith("data:") ? params.callerAvatar : undefined
   const joinUrl = `https://conectln.com/connectin?waCall=${encodeURIComponent(
     params.callId
   )}&mode=${params.callMode}&callerName=${encodeURIComponent(params.callerName)}&autoAnswer=1`
@@ -47,6 +84,7 @@ async function dispatchMinimizedWakeupPushForTargets(params: {
             callMode: params.callMode,
             callerName: params.callerName,
             callerPhone: params.callerPhone,
+            callerAvatar: safeUrlAvatar,
             joinUrl,
           }).catch(() => {})
         }
@@ -60,10 +98,12 @@ export interface CommCallParticipant {
   call_id: string
   user_id: string
   initiator_user_id?: string
+  initiator_avatar?: string
   is_answering_recipient?: boolean
   device_id: string
   peer_id?: string
   display_name: string
+  avatar?: string
   role: string
   device_label?: string
   phone?: string
@@ -213,6 +253,7 @@ export interface CommCallRecord {
   initiator_user_id: string
   initiator_name?: string
   initiator_phone?: string
+  initiator_avatar?: string
   target_recipient_name?: string
   target_recipient_email?: string
   target_recipient_phone?: string
@@ -559,10 +600,7 @@ function mergeInvitedEntriesIntoRecord(
         ? raw.status
         : "ringing"
 
-    const avatarVal =
-      typeof raw.avatar === "string" && raw.avatar.length < 400
-        ? raw.avatar
-        : prev?.avatar
+    const avatarVal = sanitizeCallAvatar(raw.avatar, 8000) || prev?.avatar
 
     byId.set(key, {
       id: key,
@@ -648,7 +686,7 @@ async function pushCloudInvitedRoster(
     name: m.name,
     phone: m.phone || "",
     email: m.email || "",
-    avatar: m.avatar && m.avatar.length < 320 ? m.avatar : undefined,
+    avatar: sanitizeCallAvatar(m.avatar, 8000),
     status: m.status,
     callSid: m.callSid,
     is_cohost: Boolean(m.is_cohost),
@@ -666,6 +704,7 @@ async function pushCloudInvitedRoster(
     if (liveRec.initiator_user_id) payloadObj.initiator_user_id = liveRec.initiator_user_id
     if (liveRec.initiator_name) payloadObj.initiator_name = liveRec.initiator_name
     if (liveRec.initiator_phone) payloadObj.initiator_phone = liveRec.initiator_phone
+    if (liveRec.initiator_avatar) payloadObj.initiator_avatar = liveRec.initiator_avatar
     if (liveRec.target_recipient_name) payloadObj.target_recipient_name = liveRec.target_recipient_name
     if (liveRec.target_recipient_email) payloadObj.target_recipient_email = liveRec.target_recipient_email
     if (liveRec.target_recipient_phone) payloadObj.target_recipient_phone = liveRec.target_recipient_phone
@@ -875,6 +914,16 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
       if (data.initiator_phone && !record.initiator_phone) {
         record.initiator_phone = data.initiator_phone
       }
+      if (data.initiator_avatar && !record.initiator_avatar) {
+        record.initiator_avatar = data.initiator_avatar
+      } else if (
+        data.avatar &&
+        !record.initiator_avatar &&
+        (!record.initiator_user_id || data.user_id === record.initiator_user_id) &&
+        !data.is_answering_recipient
+      ) {
+        record.initiator_avatar = data.avatar
+      }
       if (!record.initiator_name && data.display_name) {
         record.initiator_name = data.display_name
       }
@@ -888,6 +937,8 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
           record.participants[existingIdx] = {
             ...localP,
             ...data,
+            avatar: data.avatar || localP.avatar,
+            initiator_avatar: data.initiator_avatar || localP.initiator_avatar,
             live_frame: data.live_frame || localP.live_frame || null,
             live_audio_chunk: data.live_audio_chunk || localP.live_audio_chunk || null,
             recent_audio_chunks: data.recent_audio_chunks || localP.recent_audio_chunks || null,
@@ -943,6 +994,9 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
           if (rData.initiator_user_id) record.initiator_user_id = rData.initiator_user_id
           if (rData.initiator_name && !record.initiator_name) record.initiator_name = rData.initiator_name
           if (rData.initiator_phone && !record.initiator_phone) record.initiator_phone = rData.initiator_phone
+          if (rData.initiator_avatar && !record.initiator_avatar) {
+            record.initiator_avatar = rData.initiator_avatar
+          }
           if (rData.target_recipient_name && !record.target_recipient_name) {
             record.target_recipient_name = rData.target_recipient_name
           }
@@ -2088,6 +2142,7 @@ export async function POST(req: NextRequest) {
                 callMode: record.call_type === "audio" ? "audio" : "video",
                 callerName: displayName,
                 callerPhone: record.initiator_phone,
+                callerAvatar: record.initiator_avatar,
                 targets: [{ phone: targetPhone, email: targetEmail, name: targetName }],
               }).catch(() => {})
             : Promise.resolve(),
@@ -2163,6 +2218,18 @@ export async function POST(req: NextRequest) {
       if (!record.initiator_name && displayName) {
         record.initiator_name = displayName
       }
+      const incomingUpsertAvatar = sanitizeCallAvatar(
+        body.initiator_avatar || body.caller_avatar || body.avatar
+      )
+      if (incomingUpsertAvatar) {
+        record.initiator_avatar = incomingUpsertAvatar
+      } else if (!record.initiator_avatar) {
+        const dirFallbackAvatar = await resolveDirectoryAvatarFallback({
+          phone: record.initiator_phone,
+          name: displayName,
+        })
+        if (dirFallbackAvatar) record.initiator_avatar = dirFallbackAvatar
+      }
 
       const updates: any[] = []
       if (body.invited_member) updates.push(body.invited_member)
@@ -2177,8 +2244,11 @@ export async function POST(req: NextRequest) {
         hostParticipantToPush = {
           call_id: callId,
           user_id: userId,
+          initiator_user_id: record.initiator_user_id,
+          initiator_avatar: record.initiator_avatar,
           device_id: "host-signaling",
           display_name: displayName,
+          avatar: incomingUpsertAvatar || record.initiator_avatar,
           role: "Host · Calling",
           device_label: "ConnectLn WebRTC",
           phone: record.initiator_phone,
@@ -2198,6 +2268,10 @@ export async function POST(req: NextRequest) {
           e2ee_media_fingerprint: "7749 2210 8841 3390",
         }
         record.participants.push(hostParticipantToPush)
+      } else if (incomingUpsertAvatar && !record.participants[hostIdx].avatar) {
+        record.participants[hostIdx].avatar = incomingUpsertAvatar
+        record.participants[hostIdx].initiator_avatar = record.initiator_avatar
+        hostParticipantToPush = record.participants[hostIdx]
       }
 
       if (changed || hostParticipantToPush) {
@@ -2222,6 +2296,7 @@ export async function POST(req: NextRequest) {
                 callMode: record.call_type === "audio" ? "audio" : "video",
                 callerName: record.initiator_name || displayName,
                 callerPhone: record.initiator_phone,
+                callerAvatar: record.initiator_avatar,
                 targets: updates.map((u) => ({ phone: u?.phone, email: u?.email, name: u?.name })),
               }).catch(() => {})
             : Promise.resolve(),
@@ -2411,6 +2486,37 @@ export async function POST(req: NextRequest) {
           ? record.participants[existingIdx].phone
           : undefined
 
+      const participantAvatarFromBody = sanitizeCallAvatar(body.avatar || body.caller_avatar)
+      const isInitiatorActor =
+        !body.is_answering_recipient &&
+        (action === "create" || !record.initiator_user_id || userId === record.initiator_user_id)
+      const explicitInitAvatar = sanitizeCallAvatar(
+        body.initiator_avatar || (isInitiatorActor ? participantAvatarFromBody : undefined)
+      )
+      if (explicitInitAvatar) {
+        record.initiator_avatar = explicitInitAvatar
+      } else if (
+        !record.initiator_avatar &&
+        (action === "create" || (isInitiatorActor && existingIdx < 0))
+      ) {
+        const dirFallback = await resolveDirectoryAvatarFallback({
+          phone: record.initiator_phone || participantPhone,
+          name: record.initiator_name || displayName,
+        })
+        if (dirFallback) record.initiator_avatar = dirFallback
+      }
+
+      const resolvedParticipantAvatar =
+        participantAvatarFromBody ||
+        (existingIdx >= 0 ? record.participants[existingIdx].avatar : undefined) ||
+        (isInitiatorActor ? record.initiator_avatar : undefined) ||
+        (existingIdx < 0
+          ? await resolveDirectoryAvatarFallback({
+              phone: participantPhone,
+              name: displayName,
+            })
+          : undefined)
+
       if (body.clear_host_mute === true && Array.isArray(record.muted_keys)) {
         const selfKeys = new Set(
           buildModerationIdentityKeys({
@@ -2443,6 +2549,7 @@ export async function POST(req: NextRequest) {
         call_id: callId,
         user_id: userId,
         initiator_user_id: record.initiator_user_id,
+        initiator_avatar: record.initiator_avatar,
         is_answering_recipient: Boolean(
           body.is_answering_recipient ||
             (existingIdx >= 0 && record.participants[existingIdx].is_answering_recipient) ||
@@ -2451,6 +2558,7 @@ export async function POST(req: NextRequest) {
         device_id: deviceId,
         peer_id: body.peer_id || (existingIdx >= 0 ? record.participants[existingIdx].peer_id : undefined),
         display_name: displayName,
+        avatar: resolvedParticipantAvatar,
         role: body.role || (existingIdx === 0 ? "Host · Local Camera & Mic" : "Invited Friend · Live Video"),
         device_label: body.device_label || "Live WebRTC Camera",
         phone: participantPhone,
@@ -2661,6 +2769,7 @@ export async function POST(req: NextRequest) {
             callMode: record.call_type === "audio" ? "audio" : "video",
             callerName: record.initiator_name || displayName,
             callerPhone: record.initiator_phone,
+            callerAvatar: record.initiator_avatar,
             targets: pushTargets,
           }).catch(() => {})
         }

@@ -1,7 +1,7 @@
 import { Post, UserProfile } from './connectln-data'
 import { ALL_PROFESSIONS, PROFESSION_ENCLAVES } from './connectin-professions'
 import {
-  getHomeFeedAllProfessionsVideoTalks,
+  getProfessionScopedVideoTalks,
   getStrictProfessionVideosForUser,
   mapHandyman250IdToProfessionVideoKey,
   resolveProfessionForUser
@@ -619,7 +619,7 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     comments: []
   }
 
-  const allProfessionTalks = getHomeFeedAllProfessionsVideoTalks({
+  const scopedProfessionTalks = getProfessionScopedVideoTalks({
     professionId: resolvedProf.id,
     profession: user?.profession || resolvedProf.title,
     professionEnclave: enclave.id,
@@ -632,9 +632,9 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     secondaryVideo.youtubeId
   ].filter(Boolean))
 
-  const expandedProfessionVideoPosts: Post[] = allProfessionTalks
+  const expandedProfessionVideoPosts: Post[] = scopedProfessionTalks
     .filter(talk => talk.youtubeId && !usedVideoIds.has(talk.youtubeId))
-    .slice(0, 64)
+    .slice(0, 18)
     .map((talk, idx) => {
       usedVideoIds.add(talk.youtubeId)
       const talkEnclave =

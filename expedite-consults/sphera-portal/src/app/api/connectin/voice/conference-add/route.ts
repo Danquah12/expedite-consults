@@ -107,6 +107,8 @@ export async function POST(req: NextRequest) {
         skip_push: true,
         user_id: hostUserId,
         display_name: callerName,
+        avatar: callerAvatar || undefined,
+        initiator_avatar: callerAvatar || undefined,
         initiator_phone: callerPhone || undefined,
         target_recipient_name: recipientName,
         target_recipient_phone: recipientPhone || undefined,

@@ -202,6 +202,7 @@ export default function ConnectLnPage() {
     callId: string
     callerName: string
     callerPhone?: string
+    callerAvatar?: string
     mode: 'audio' | 'video'
   } | null>(null)
   const [studioHandoff, setStudioHandoff] = useState<{
@@ -862,6 +863,14 @@ export default function ConnectLnPage() {
       const waCallModeParam = urlParams.get("mode") === "audio" ? "audio" : "video"
       const waCallerNameParam = (urlParams.get("callerName") || "ConnectLn Caller").trim()
       const waCallerPhoneParam = (urlParams.get("callerPhone") || "").trim()
+      const rawWaCallerAvatar = (urlParams.get("callerAvatar") || "").trim()
+      const waCallerAvatarParam =
+        rawWaCallerAvatar &&
+        (rawWaCallerAvatar.startsWith("https://") ||
+          rawWaCallerAvatar.startsWith("http://") ||
+          rawWaCallerAvatar.startsWith("/"))
+          ? rawWaCallerAvatar
+          : undefined
       const joinCallParam = urlParams.get("joinCall") || urlParams.get("call")
       const inviteParam = urlParams.get("invite")
       const invitedEmailParam = (urlParams.get("invitedEmail") || "").trim()
@@ -940,6 +949,7 @@ export default function ConnectLnPage() {
           callId: waCallParam,
           callerName: waCallerNameParam,
           callerPhone: waCallerPhoneParam || undefined,
+          callerAvatar: waCallerAvatarParam,
           mode: waCallModeParam,
         })
       }
@@ -1059,6 +1069,10 @@ export default function ConnectLnPage() {
                   name: latestExplicit.name || meData.profile.name,
                   email: (latestExplicit as any)?.email || meData.profile.email || meData.user?.email,
                   id: (latestExplicit as any)?.id || meData.profile.userId || meData.user?.id || explicitUser.id,
+                  professionId: latestExplicit.professionId || meData.profile.professionId,
+                  profession: latestExplicit.profession || meData.profile.profession,
+                  professionCategory: latestExplicit.professionCategory || meData.profile.professionCategory,
+                  professionEnclave: latestExplicit.professionEnclave || meData.profile.professionEnclave,
                   role: isAdmin ? "admin" : "personal",
                   roles: isAdmin ? ["SUPER_ADMIN"] : ["NORMAL_USER"],
                   avatar: preferredAvatar,
@@ -1301,7 +1315,15 @@ export default function ConnectLnPage() {
 
     setPosts(prev => {
       const firstExisting = prev.find(p => p.id === 'post_dstrike_wheel_masterclass')
+      const hasWrongEnclaveCatalog = prev.some(
+        p =>
+          p.id?.startsWith('post_prof_video_catalog_') &&
+          targetEnclave &&
+          p.professionEnclave &&
+          p.professionEnclave !== targetEnclave
+      )
       if (
+        !hasWrongEnclaveCatalog &&
         firstExisting &&
         firstExisting.professionId === tieredPosts[0].professionId &&
         firstExisting.media?.youtubeId === tieredPosts[0].media?.youtubeId &&
@@ -2439,11 +2461,16 @@ export default function ConnectLnPage() {
     const seenMediaSigs = new Set<string>()
     const merged: Post[] = []
     const activeEnclavePref = userData?.professionEnclave || "trades_construction"
-    const orderedLiveHomeItems = [
-      ...harvestedHomeItems.filter((i) => i.enclaveId === activeEnclavePref),
-      ...harvestedHomeItems.filter((i) => i.enclaveId !== activeEnclavePref),
-    ]
-    const liveHarvestedPosts = orderedLiveHomeItems
+    const isAllEnclavesSelected =
+      selectedEnclaves.includes('all') || selectedEnclaves.length >= PROFESSION_ENCLAVES.length
+    const enclaveMatchedHarvest = harvestedHomeItems.filter((i) =>
+      isAllEnclavesSelected
+        ? true
+        : selectedEnclaves.length > 0
+        ? selectedEnclaves.includes(i.enclaveId)
+        : i.enclaveId === activeEnclavePref
+    )
+    const liveHarvestedPosts = enclaveMatchedHarvest
       .slice(0, 6)
       .map((item) => buildFeedPostFromHarvestedItem(item))
     const userCreatedPosts = posts.filter(
@@ -2480,7 +2507,15 @@ export default function ConnectLnPage() {
       )
     }
     return merged
-  }, [harvestedHomeItems, followedMemberSyntheticPosts, posts, followedNamesSet])
+  }, [
+    harvestedHomeItems,
+    followedMemberSyntheticPosts,
+    posts,
+    followedNamesSet,
+    userData?.professionEnclave,
+    activeProfId,
+    selectedEnclaves,
+  ])
 
   const handleSwitchActiveProfession = (profId: string) => {
     const prof = findProfessionById(profId)
@@ -2515,21 +2550,26 @@ export default function ConnectLnPage() {
         return false
       }
 
-      // 0. Home Screen houses ~99% playable profession videos: keep user's own/followed posts + ALL profession video posts
+      // 0. Home Screen houses playable profession videos scoped strictly to the logged-in user's profession & active enclave
       const isActiveProfTiered = Boolean(
         activeProfId &&
         (post.professionId === activeProfId || post.targetProfessions?.includes(activeProfId))
       )
       const isPlayableVideoPost = post.media?.type === 'video'
-      const isProfessionCatalogVideo = Boolean(post.isProfessionTiered && isPlayableVideoPost)
+      const postEnclave = post.professionEnclave || 'tech_software'
       const isAllSelected = selectedEnclaves.includes('all') || selectedEnclaves.length >= PROFESSION_ENCLAVES.length
+      const matchesSelectedEnclave = postEnclave === 'all' || selectedEnclaves.includes(postEnclave)
+      const isProfessionCatalogVideo = Boolean(
+        post.isProfessionTiered &&
+          isPlayableVideoPost &&
+          (isAllSelected || isActiveProfTiered || matchesSelectedEnclave)
+      )
       if (!isAllSelected && activeFeedCategory === 'for_you' && !searchQuery && !selectedTagFilter) {
         if (!isUserOwnPost && !isFollowedAuthor && !isActiveProfTiered && !isProfessionCatalogVideo) {
           return false
         }
       } else if (!isAllSelected && !isUserOwnPost && !isFollowedAuthor && !isActiveProfTiered && !isProfessionCatalogVideo) {
-        const postEnclave = post.professionEnclave || 'tech_software'
-        if (postEnclave !== 'all' && !selectedEnclaves.includes(postEnclave)) {
+        if (!matchesSelectedEnclave) {
           return false
         }
       }
@@ -2716,12 +2756,14 @@ export default function ConnectLnPage() {
         viewerName={userData?.name}
         viewerEmail={userData?.email}
         viewerPhone={userData?.phone}
+        viewerAvatar={userData?.avatar}
         isAlreadyInCallStudio={Boolean(activeGlobalWhatsAppCall)}
-        onAcceptIncomingCall={(callId, callerName, mode, callerPhone) => {
+        onAcceptIncomingCall={(callId, callerName, mode, callerPhone, callerAvatar) => {
           setActiveGlobalWhatsAppCall({
             callId,
             callerName,
             callerPhone,
+            callerAvatar,
             mode,
           })
         }}
@@ -2743,6 +2785,7 @@ export default function ConnectLnPage() {
           isIncomingAnswer={true}
           targetLabel={activeGlobalWhatsAppCall.callerName || 'ConnectLn Caller'}
           targetPhone={activeGlobalWhatsAppCall.callerPhone}
+          targetAvatar={activeGlobalWhatsAppCall.callerAvatar}
           callerName={userData?.name || 'ConnectLn Member'}
           callerEmail={userData?.email}
           callerAvatar={userData?.avatar}
@@ -4180,6 +4223,10 @@ export default function ConnectLnPage() {
           onClose={() => setIsAuthModalOpen(false)}
           onLoginSuccess={(authenticatedUser, targetTab, targetWorkspace) => {
             setUserData(authenticatedUser)
+            if (authenticatedUser.professionEnclave) {
+              setSelectedEnclaves([authenticatedUser.professionEnclave])
+            }
+            setPosts(loadStoredPosts(authenticatedUser))
             setActiveWorkspace(targetWorkspace)
             setActiveTab(targetTab as any)
             setIsAuthenticated(true)

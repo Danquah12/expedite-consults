@@ -536,7 +536,17 @@ export async function POST(req: NextRequest) {
       const callerName = String(body?.callerName || "ConnectLn Caller").trim()
       const callerPhone = body?.callerPhone ? normalizeDialablePhone(String(body.callerPhone)) : ""
       const callerEmail = String(body?.callerEmail || "").trim()
-      const callerAvatar = String(body?.callerAvatar || "").trim()
+      let callerAvatar = String(body?.callerAvatar || "").trim()
+      if (!callerAvatar && (callerPhone || callerEmail || callerName)) {
+        const callerLookup = await lookupWhatsAppRecipient({
+          targetPhone: callerPhone || undefined,
+          targetEmail: callerEmail || undefined,
+          targetName: callerName,
+        }).catch(() => null)
+        if (callerLookup?.member?.avatar) {
+          callerAvatar = callerLookup.member.avatar
+        }
+      }
 
       const recipientLookup = await lookupWhatsAppRecipient({
         targetPhone: body?.targetPhone,

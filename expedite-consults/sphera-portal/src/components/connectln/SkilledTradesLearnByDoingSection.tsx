@@ -78,6 +78,125 @@ interface SkilledTradesLearnByDoingSectionProps {
 
 type CategoryFilter = 'All' | 'Global Interpreted' | SkilledTradesCategory | 'Saved' | 'Learning Journey'
 
+export function resolveLearnCategoryForUser(user?: UserProfile | null): CategoryFilter {
+  const raw = `${user?.professionId || ''} ${user?.profession || ''} ${user?.headline || ''}`
+    .toLowerCase()
+    .trim()
+  const enclaveRaw = String(user?.professionEnclave || '').toLowerCase().trim()
+  if (!raw && !enclaveRaw) return 'All'
+
+  const numMatch = (user?.professionId || '').match(/^h250_(\d+)_/)
+  const folderNum = numMatch ? Number(numMatch[1]) : 0
+
+  if (
+    (folderNum >= 16 && folderNum <= 29) ||
+    /plumb|drain|sewer|water_heater|pipefitter|septic|sump|irrigation_pipe|backflow/.test(raw)
+  ) {
+    return 'Plumbing'
+  }
+  if (/solar|photovoltaic|pv_install|renewable|wind_turb|water_treatment|utility|mining/.test(raw)) {
+    return 'Solar & Energy'
+  }
+  if (
+    (folderNum >= 30 && folderNum <= 43) ||
+    /electri|lighting|ceiling_fan|generator|ev_charg|low_voltage|smart_home/.test(raw)
+  ) {
+    return 'Electrical Fundamentals'
+  }
+  if (
+    (folderNum >= 44 && folderNum <= 56) ||
+    /hvac|air_conditioning|heating|furnace|boiler|heat_pump|refrigeration|duct|thermostat|ventilation/.test(raw)
+  ) {
+    return 'HVAC'
+  }
+  if (/masonry|brick|stone_mason|tile|terrazzo|grout/.test(raw)) {
+    return 'Masonry & Tile'
+  }
+  if (/roofer|roofing|drywall|sheetrock|shingle|stucco/.test(raw)) {
+    return 'Roofing & Drywall'
+  }
+  if (
+    (folderNum >= 71 && folderNum <= 82) ||
+    /paint|wallpaper|plaster|texture|pressure_wash/.test(raw)
+  ) {
+    return 'Painting & Decorating'
+  }
+  if (
+    (folderNum >= 193 && folderNum <= 204) ||
+    /auto|mechanic|tire|brake|oil_change|windshield|roadside|small_engine|motorcycle/.test(raw)
+  ) {
+    return 'Auto Mechanics'
+  }
+  if (
+    (folderNum >= 205 && folderNum <= 214) ||
+    /weld|ironworker|metal_fab|steel|sheet_metal/.test(raw)
+  ) {
+    return 'Welding'
+  }
+  if (/cnc|machin|tool_and_die|appliance|repair_technician|lathe|milling/.test(raw)) {
+    return 'Machining & Repair'
+  }
+  if (/tailor|seamstress|sew|apparel|fashion|textile|garment/.test(raw)) {
+    return 'Tailoring & Sewing'
+  }
+  if (
+    (folderNum >= 1 && folderNum <= 15) ||
+    (folderNum >= 57 && folderNum <= 70) ||
+    /carpent|handyman|cabinet|furniture|deck|fence|door|trim|stair|wood|framing/.test(raw)
+  ) {
+    return 'Carpentry'
+  }
+  if (/farm|agri|landscape|garden|forest|agronom|crop|fish|horticult/.test(raw)) {
+    return 'Agriculture & Landscaping'
+  }
+  if (/chef|cook|culinary|hospitality|cater|baker|pastry|hotel|restaurant/.test(raw)) {
+    return 'Culinary & Hospitality'
+  }
+  if (/barber|hair|beauty|salon|esthetic|cosmetol|wellness|fitness|massage/.test(raw)) {
+    return 'Barbering & Beauty'
+  }
+  if (/nurse|doctor|health|medic|pharm|dental|clinical|emt|paramedic|surgeon|physician|\brn\b|\bbsn\b|\bmd\b|aprn/.test(raw)) {
+    return 'Healthcare & Nursing'
+  }
+  if (/cyber|security|soc|pentest|penetration|red_team|infosec|ot_sec|threat|ciso|grc|incident_responder/.test(raw)) {
+    return 'Cybersecurity & IT'
+  }
+  if (/software|developer|ai_eng|ml_eng|machine_learning|cloud|data_sci|python|devops|no-code|frontend|backend|fullstack/.test(raw)) {
+    return 'Software & AI'
+  }
+  if (/account|finance|bookkeep|tax|insur|business|real_estate|franchise|broker|realtor|commerce/.test(raw)) {
+    return 'Finance & Business'
+  }
+  if (/law|legal|attorney|lawyer|judge|paralegal|court|counsel/.test(raw)) {
+    return 'Law & Legal'
+  }
+  if (/photo|video|graphic|design|media|journal|writer|music|artist/.test(raw)) {
+    return 'Creative Media & Design'
+  }
+  if (/fiber|telecom|satellite|directv|broadband|network_tech|cabling|pro-av|av_tech/.test(raw)) {
+    return 'Telecom & Fiber Optics'
+  }
+  if (/pilot|aviation|aerospace|aircraft|marine|maritime|boat|ship/.test(raw)) {
+    return 'Aviation & Maritime'
+  }
+  if (/science|lab_|laboratory|biotech|chem|biologist|research_sci|metrology/.test(raw)) {
+    return 'Science & Lab Tech'
+  }
+  if (/teach|educat|professor|instructor|coach|trainer|curriculum/.test(raw)) {
+    return 'Education & Training'
+  }
+  if (/osha|safety|security_guard|veteran|military|police|firefighter|emergency|civic/.test(raw)) {
+    return 'Safety & Civic Ops'
+  }
+  if (enclaveRaw) {
+    const enclaveMatch = SKILLED_TRADES_COLLECTION_META.categories.find((cat) =>
+      LEARN_CATEGORY_META[cat]?.enclaveIds.includes(enclaveRaw)
+    )
+    if (enclaveMatch) return enclaveMatch
+  }
+  return 'All'
+}
+
 export function SkilledTradesLearnByDoingSection({
   user,
   mode = 'full_academy',
@@ -93,15 +212,28 @@ export function SkilledTradesLearnByDoingSection({
   const isHomeVideos = mode === 'home_videos_only'
   const autoplayPrefRef = useRef(autoplayPref)
   autoplayPrefRef.current = autoplayPref
+  const initialMatchedCat =
+    initialCategory || (mode === 'home_videos_only' ? resolveLearnCategoryForUser(user) : 'All')
   const [selectedIndustryGroup, setSelectedIndustryGroup] = useState<LearnIndustryGroupId>(() =>
-    initialCategory ? getIndustryGroupForCategory(initialCategory) : 'all'
+    initialMatchedCat !== 'All' &&
+    initialMatchedCat !== 'Global Interpreted' &&
+    initialMatchedCat !== 'Saved' &&
+    initialMatchedCat !== 'Learning Journey'
+      ? getIndustryGroupForCategory(initialMatchedCat as SkilledTradesCategory)
+      : 'all'
   )
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(
-    initialCategory || 'All'
+    initialMatchedCat
   )
-  const [recommendedCategory, setRecommendedCategory] = useState<SkilledTradesCategory | 'All'>(
-    initialCategory || 'All'
-  )
+  const [recommendedCategory, setRecommendedCategory] = useState<SkilledTradesCategory | 'All'>(() => {
+    const matched = initialCategory || resolveLearnCategoryForUser(user)
+    return matched !== 'All' &&
+      matched !== 'Global Interpreted' &&
+      matched !== 'Saved' &&
+      matched !== 'Learning Journey'
+      ? (matched as SkilledTradesCategory)
+      : 'All'
+  })
   const [searchQuery, setSearchQuery] = useState<string>('')
 
   useEffect(() => {
@@ -368,97 +500,7 @@ export function SkilledTradesLearnByDoingSection({
   // Auto-sync the Learn a Trade or Profession video filter to the user's selected Logged-In Profession or Enclave
   useEffect(() => {
     if (initialCategory) return
-    const raw = `${user?.professionId || ''} ${user?.profession || ''} ${user?.headline || ''}`.toLowerCase().trim()
-    const enclaveRaw = String(user?.professionEnclave || '').toLowerCase().trim()
-    if (!raw && !enclaveRaw) return
-    const numMatch = (user?.professionId || '').match(/^h250_(\d+)_/)
-    const folderNum = numMatch ? Number(numMatch[1]) : 0
-
-    let resolvedCat: CategoryFilter | null = null
-    if (
-      (folderNum >= 16 && folderNum <= 29) ||
-      /plumb|drain|sewer|water_heater|pipefitter|septic|sump|irrigation_pipe|backflow/.test(raw)
-    ) {
-      resolvedCat = 'Plumbing'
-    } else if (/solar|photovoltaic|pv_install|renewable|wind_turb|water_treatment|utility|mining/.test(raw)) {
-      resolvedCat = 'Solar & Energy'
-    } else if (
-      (folderNum >= 30 && folderNum <= 43) ||
-      /electri|lighting|ceiling_fan|generator|ev_charg|low_voltage|smart_home/.test(raw)
-    ) {
-      resolvedCat = 'Electrical Fundamentals'
-    } else if (
-      (folderNum >= 44 && folderNum <= 56) ||
-      /hvac|air_conditioning|heating|furnace|boiler|heat_pump|refrigeration|duct|thermostat|ventilation/.test(raw)
-    ) {
-      resolvedCat = 'HVAC'
-    } else if (/masonry|brick|stone_mason|tile|terrazzo|grout/.test(raw)) {
-      resolvedCat = 'Masonry & Tile'
-    } else if (/roofer|roofing|drywall|sheetrock|shingle|stucco/.test(raw)) {
-      resolvedCat = 'Roofing & Drywall'
-    } else if (
-      (folderNum >= 71 && folderNum <= 82) ||
-      /paint|wallpaper|plaster|texture|pressure_wash/.test(raw)
-    ) {
-      resolvedCat = 'Painting & Decorating'
-    } else if (
-      (folderNum >= 193 && folderNum <= 204) ||
-      /auto|mechanic|tire|brake|oil_change|windshield|roadside|small_engine|motorcycle/.test(raw)
-    ) {
-      resolvedCat = 'Auto Mechanics'
-    } else if (
-      (folderNum >= 205 && folderNum <= 214) ||
-      /weld|ironworker|metal_fab|steel|sheet_metal/.test(raw)
-    ) {
-      resolvedCat = 'Welding'
-    } else if (/cnc|machin|tool_and_die|appliance|repair_technician|lathe|milling/.test(raw)) {
-      resolvedCat = 'Machining & Repair'
-    } else if (/tailor|seamstress|sew|apparel|fashion|textile|garment/.test(raw)) {
-      resolvedCat = 'Tailoring & Sewing'
-    } else if (
-      (folderNum >= 1 && folderNum <= 15) ||
-      (folderNum >= 57 && folderNum <= 70) ||
-      /carpent|handyman|cabinet|furniture|deck|fence|door|trim|stair|wood|framing/.test(raw)
-    ) {
-      resolvedCat = 'Carpentry'
-    } else if (/farm|agri|landscape|garden|forest|agronom|crop|fish|horticult/.test(raw)) {
-      resolvedCat = 'Agriculture & Landscaping'
-    } else if (/chef|cook|culinary|hospitality|cater|baker|pastry|hotel|restaurant/.test(raw)) {
-      resolvedCat = 'Culinary & Hospitality'
-    } else if (/barber|hair|beauty|salon|esthetic|cosmetol|wellness|fitness|massage/.test(raw)) {
-      resolvedCat = 'Barbering & Beauty'
-    } else if (/nurse|doctor|health|medic|pharm|dental|clinical|emt|paramedic|surgeon|physician/.test(raw)) {
-      resolvedCat = 'Healthcare & Nursing'
-    } else if (/cyber|security|soc|pentest|infosec|ot_sec|threat|ciso/.test(raw)) {
-      resolvedCat = 'Cybersecurity & IT'
-    } else if (/software|developer|ai_eng|ml_eng|machine_learning|cloud|data_sci|python|devops|no-code/.test(raw)) {
-      resolvedCat = 'Software & AI'
-    } else if (/account|finance|bookkeep|tax|insur|business|real_estate|franchise|broker|realtor|commerce/.test(raw)) {
-      resolvedCat = 'Finance & Business'
-    } else if (/law|legal|attorney|lawyer|judge|paralegal|court/.test(raw)) {
-      resolvedCat = 'Law & Legal'
-    } else if (/photo|video|graphic|design|media|journal|writer|music|artist/.test(raw)) {
-      resolvedCat = 'Creative Media & Design'
-    } else if (/fiber|telecom|satellite|directv|broadband|network_tech|cabling|pro-av|av_tech/.test(raw)) {
-      resolvedCat = 'Telecom & Fiber Optics'
-    } else if (/pilot|aviation|aerospace|aircraft|marine|maritime|boat|ship/.test(raw)) {
-      resolvedCat = 'Aviation & Maritime'
-    } else if (/science|lab_|laboratory|biotech|chem|biologist|research_sci|metrology/.test(raw)) {
-      resolvedCat = 'Science & Lab Tech'
-    } else if (/teach|educat|professor|instructor|coach|trainer|curriculum/.test(raw)) {
-      resolvedCat = 'Education & Training'
-    } else if (/osha|safety|security_guard|veteran|military|police|firefighter|emergency|civic/.test(raw)) {
-      resolvedCat = 'Safety & Civic Ops'
-    }
-
-    if (!resolvedCat && enclaveRaw) {
-      const enclaveMatch = SKILLED_TRADES_COLLECTION_META.categories.find((cat) =>
-        LEARN_CATEGORY_META[cat]?.enclaveIds.includes(enclaveRaw)
-      )
-      resolvedCat = enclaveMatch || 'All'
-    }
-
-    const nextCat = resolvedCat || 'All'
+    const nextCat = resolveLearnCategoryForUser(user)
     const resolvedTradeRec =
       nextCat !== 'All' &&
       nextCat !== 'Global Interpreted' &&
@@ -1059,19 +1101,42 @@ export function SkilledTradesLearnByDoingSection({
         {/* Clean, Unobtrusive LinkedIn Feed Category Filter Strip */}
         <div className="rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 shadow-2xs flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {(
-              [
+            {(() => {
+              const otherCats = SKILLED_TRADES_COLLECTION_META.categories.filter(
+                (cat) => cat !== recommendedCategory
+              )
+              const orderedCats =
+                recommendedCategory !== 'All'
+                  ? [recommendedCategory, ...otherCats]
+                  : SKILLED_TRADES_COLLECTION_META.categories
+              const tabs: { id: CategoryFilter; label: string }[] = [
+                ...(recommendedCategory !== 'All'
+                  ? [
+                      {
+                        id: recommendedCategory as CategoryFilter,
+                        label: `${LEARN_CATEGORY_META[recommendedCategory]?.emoji || '🎯'} ${
+                          LEARN_CATEGORY_META[recommendedCategory]?.shortLabel || recommendedCategory
+                        } · For You`,
+                      },
+                    ]
+                  : []),
                 { id: 'All', label: `All Videos (${totalLessonsCount})` },
-                { id: 'Global Interpreted', label: `🌍 Global → ${currentLanguage.flag} ${currentLanguage.localName} (${globalInterpretedCount})` },
-                ...SKILLED_TRADES_COLLECTION_META.categories.map((cat) => {
-                  const meta = LEARN_CATEGORY_META[cat]
-                  return {
-                    id: cat,
-                    label: `${meta?.emoji || '📚'} ${meta?.shortLabel || cat}`
-                  }
-                })
-              ] as { id: CategoryFilter; label: string }[]
-            ).map(tab => {
+                {
+                  id: 'Global Interpreted',
+                  label: `🌍 Global → ${currentLanguage.flag} ${currentLanguage.localName} (${globalInterpretedCount})`,
+                },
+                ...orderedCats
+                  .filter((c) => c !== recommendedCategory)
+                  .map((cat) => {
+                    const meta = LEARN_CATEGORY_META[cat]
+                    return {
+                      id: cat as CategoryFilter,
+                      label: `${meta?.emoji || '📚'} ${meta?.shortLabel || cat}`,
+                    }
+                  }),
+              ]
+              return tabs
+            })().map(tab => {
               const isSelected = selectedCategory === tab.id
               return (
                 <button
@@ -1573,7 +1638,7 @@ export function SkilledTradesLearnByDoingSection({
                 onClick={() => setHomeVisibleLimit((prev) => prev + 6)}
                 className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 px-4 py-2 text-xs font-bold text-zinc-800 dark:text-zinc-200 shadow-2xs transition-colors cursor-pointer"
               >
-                Show more trade video lessons ({visibleHomeLessons.length - homeVisibleLimit} remaining)
+                Show more {selectedCategory !== 'All' ? selectedCategory : 'profession'} video lessons ({visibleHomeLessons.length - homeVisibleLimit} remaining)
               </button>
               {onOpenInLearnTab && (
                 <button

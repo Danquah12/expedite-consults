@@ -2480,6 +2480,44 @@ export function getStrictProfessionVideosForUser(user?: {
 }
 
 /**
+ * Returns verified profession videos strictly scoped to the logged-in user's profession
+ * and direct profession enclave (no unrelated trades/industries mixed into Home feed on login).
+ */
+export function getProfessionScopedVideoTalks(user?: {
+  professionId?: string
+  profession?: string
+  professionEnclave?: string
+  headline?: string
+  name?: string
+} | null): WheelVideoTalk[] {
+  const strictFirst = getStrictProfessionVideosForUser(user)
+  const resolvedProf = resolveProfessionForUser(user)
+  const activeEnclave = resolvedProf?.enclaveId || user?.professionEnclave
+
+  const seenYt = new Set<string>()
+  const scoped: WheelVideoTalk[] = []
+
+  const pushIfUniqueVideo = (talk?: WheelVideoTalk) => {
+    if (!talk || !talk.youtubeId || seenYt.has(talk.youtubeId)) return
+    seenYt.add(talk.youtubeId)
+    scoped.push(talk)
+  }
+
+  for (const talk of strictFirst) pushIfUniqueVideo(talk)
+
+  if (activeEnclave) {
+    for (const talk of CORE_EDUCATIONAL_WHEEL_TALKS) {
+      if (talk.enclaveId === activeEnclave) pushIfUniqueVideo(talk)
+    }
+    for (const talk of EDUCATIONAL_WHEEL_TALKS) {
+      if (talk.enclaveId === activeEnclave) pushIfUniqueVideo(talk)
+    }
+  }
+
+  return scoped.length > 0 ? scoped : strictFirst
+}
+
+/**
  * Returns ALL unique verified profession videos for the Home Tab (~99% profession video coverage),
  * ordered with the active user's matched profession videos first, then same-enclave videos,
  * then every unique verified profession video across all 20 Trade Folders & 20 Enclaves.

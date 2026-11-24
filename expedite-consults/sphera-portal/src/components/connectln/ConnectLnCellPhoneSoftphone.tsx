@@ -83,6 +83,7 @@ export interface ConnectLnCellPhoneSoftphoneModalProps {
   targetAvatar?: string
   callerName?: string
   callerEmail?: string
+  callerAvatar?: string
   roomJoinUrl?: string
   onUpgradeToVideoHuddle?: (targetLabel: string) => void
 }
@@ -102,6 +103,7 @@ export function ConnectLnCellPhoneSoftphoneModal({
   targetAvatar,
   callerName = "ConnectLn Member",
   callerEmail,
+  callerAvatar,
   roomJoinUrl,
   onUpgradeToVideoHuddle,
 }: ConnectLnCellPhoneSoftphoneModalProps) {
@@ -212,6 +214,7 @@ export function ConnectLnCellPhoneSoftphoneModal({
           callMode: "video",
           callerName,
           callerEmail,
+          callerAvatar: callerAvatar || undefined,
           targetPhone: effectiveE164 || undefined,
           targetName: displayName,
           targetEmail,

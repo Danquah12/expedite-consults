@@ -5137,6 +5137,7 @@ export function WhatsAppModeWorkspace({
                         targetAvatar={activeSoftphoneTarget?.avatar}
                         callerName={userName}
                         callerEmail={currentUser?.email}
+                        callerAvatar={userAvatar}
                         roomJoinUrl={generatedCallLink || undefined}
                         onUpgradeToVideoHuddle={(label) => {
                             const targetAvatar = activeSoftphoneTarget?.avatar;

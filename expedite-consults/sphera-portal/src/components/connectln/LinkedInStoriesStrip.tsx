@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import { UserProfile } from "@/lib/connectln-data"
 import { resolveUserProfilePicture } from "@/lib/connectin-storage"
+import { getProfessionScopedVideoTalks, resolveProfessionForUser } from "@/lib/connectin-videos"
 import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
 
 export interface LinkedInStoryItem {
@@ -36,7 +37,7 @@ export interface LinkedInStoryItem {
   comments: number
   submitsText?: string
   sealText?: string
-  reelCategory?: 'cyber' | 'ignored' | 'veterans' | 'clinical_trades'
+  reelCategory?: 'my_profession' | 'cyber' | 'ignored' | 'veterans' | 'clinical_trades'
 }
 
 const INITIAL_LINKEDIN_STORIES: LinkedInStoryItem[] = [
@@ -249,11 +250,48 @@ interface LinkedInStoriesStripProps {
   onShareStoryToFeed?: (story: LinkedInStoryItem, mode: 'photo' | 'video') => void
 }
 
+function buildProfessionStoriesForUser(user?: UserProfile | null): {
+  profLabel: string
+  items: LinkedInStoryItem[]
+} {
+  const resolvedProf = resolveProfessionForUser(user)
+  const talks = getProfessionScopedVideoTalks(user).slice(0, 6)
+  const profLabel =
+    resolvedProf?.title?.split("(")[0]?.split("-")[0]?.trim() ||
+    user?.profession?.split("(")[0]?.trim() ||
+    "Your Profession"
+  const userAvatar = resolveUserProfilePicture(user as any)
+  const items: LinkedInStoryItem[] = talks.map((talk, idx) => ({
+    id: `story_prof_${resolvedProf?.id || "user"}_${talk.id}`,
+    authorName: talk.speaker || `${profLabel} Guild`,
+    authorHeadline: talk.speakerTitle || `${profLabel} Briefing`,
+    authorAvatar: userAvatar,
+    badgeText: idx === 0 ? `${profLabel.toUpperCase().slice(0, 14)}` : `PRO #${idx + 1}`,
+    cardStyle: idx % 2 === 0 ? "field_action" : "podium",
+    title: talk.title,
+    subtitle: talk.summary || `Verified ${profLabel} Video Briefing`,
+    imageUrl:
+      talk.thumbnailUrl || `https://i.ytimg.com/vi/${talk.youtubeId}/hqdefault.jpg`,
+    youtubeId: talk.youtubeId,
+    duration: talk.duration || "4:30",
+    likes: 420 + idx * 55,
+    comments: 36 + idx * 9,
+    sealText: (talk.serialPlate || "PRO").slice(0, 4),
+    reelCategory: "my_profession",
+  }))
+  return { profLabel, items }
+}
+
 export function LinkedInStoriesStrip({
   currentUser,
   onShareStoryToFeed
 }: LinkedInStoriesStripProps) {
-  const [stories, setStories] = useState<LinkedInStoryItem[]>(INITIAL_LINKEDIN_STORIES)
+  const initialProfBundle = buildProfessionStoriesForUser(currentUser)
+  const [profLabel, setProfLabel] = useState<string>(initialProfBundle.profLabel)
+  const [stories, setStories] = useState<LinkedInStoryItem[]>(() => [
+    ...initialProfBundle.items,
+    ...INITIAL_LINKEDIN_STORIES,
+  ])
   const [activeStory, setActiveStory] = useState<LinkedInStoryItem | null>(null)
   const [viewMode, setViewMode] = useState<'photo' | 'video'>('photo')
   const [likedIds, setLikedIds] = useState<Record<string, boolean>>({})
@@ -266,7 +304,24 @@ export function LinkedInStoriesStrip({
   const [clockwiseSlot, setClockwiseSlot] = useState<number>(0)
   const [isRotatingClockwise, setIsRotatingClockwise] = useState<boolean>(true)
   const [isHoverPaused, setIsHoverPaused] = useState<boolean>(false)
-  const [reelFilter, setReelFilter] = useState<'all' | 'cyber' | 'ignored' | 'veterans' | 'clinical_trades'>('all')
+  const [reelFilter, setReelFilter] = useState<
+    'my_profession' | 'all' | 'cyber' | 'ignored' | 'veterans' | 'clinical_trades'
+  >(() => (initialProfBundle.items.length > 0 ? 'my_profession' : 'all'))
+
+  useEffect(() => {
+    const nextBundle = buildProfessionStoriesForUser(currentUser)
+    setProfLabel(nextBundle.profLabel)
+    setStories([...nextBundle.items, ...INITIAL_LINKEDIN_STORIES])
+    if (nextBundle.items.length > 0) {
+      setReelFilter('my_profession')
+      setClockwiseSlot(0)
+    }
+  }, [
+    currentUser?.professionId,
+    currentUser?.profession,
+    currentUser?.professionEnclave,
+    currentUser?.headline,
+  ])
 
   const displayedStories = reelFilter === 'all'
     ? stories
@@ -381,7 +436,8 @@ export function LinkedInStoriesStrip({
       {/* Category Filter Pills for Reels */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
         {[
-          { id: 'all', label: '🌐 All Live Reels (9)' },
+          { id: 'my_profession', label: `🎯 ${profLabel} Reels` },
+          { id: 'all', label: '🌐 All Live Reels' },
           { id: 'cyber', label: '🛡️ Cybersecurity & Red Team' },
           { id: 'ignored', label: '🛠️ Professions LinkedIn Ignored' },
           { id: 'veterans', label: '🎖️ Veterans & SkillBridge' },

@@ -88,6 +88,7 @@ export interface PopupIncomingCallSpec {
   callId: string
   callerName: string
   callerPhone?: string
+  callerAvatar?: string
   callMode: "audio" | "video"
   onAnswer: () => void
   onDecline: () => void
@@ -1391,7 +1392,12 @@ function renderIncomingCallDomIntoWindow(
     const doc = win.document
     if (!doc || !doc.body) return
 
-    if (spec && doc.body.dataset.renderedCallId === spec.callId && doc.getElementById("btn-answer")) {
+    if (
+      spec &&
+      doc.body.dataset.renderedCallId === spec.callId &&
+      doc.body.dataset.renderedAvatar === (spec.callerAvatar || "") &&
+      doc.getElementById("btn-answer")
+    ) {
       return
     }
 
@@ -1399,6 +1405,7 @@ function renderIncomingCallDomIntoWindow(
 
     if (!spec) {
       doc.body.dataset.renderedCallId = ""
+      doc.body.dataset.renderedAvatar = ""
       if (!isStandbyPiP) {
         win.close()
         return
@@ -1421,6 +1428,7 @@ function renderIncomingCallDomIntoWindow(
     }
 
     doc.body.dataset.renderedCallId = spec.callId
+    doc.body.dataset.renderedAvatar = spec.callerAvatar || ""
 
     try {
       win.resizeTo?.(460, 440)
@@ -1429,6 +1437,15 @@ function renderIncomingCallDomIntoWindow(
 
     const safeName = String(spec.callerName || "ConnectLn Caller").replace(/[<>&"]/g, "")
     const safePhone = String(spec.callerPhone || "").replace(/[<>&"]/g, "")
+    const rawAvatar = String(spec.callerAvatar || "").trim()
+    const safeAvatar =
+      rawAvatar &&
+      (rawAvatar.startsWith("https://") ||
+        rawAvatar.startsWith("http://") ||
+        rawAvatar.startsWith("/") ||
+        rawAvatar.startsWith("data:image/"))
+        ? rawAvatar.replace(/[<>"']/g, "")
+        : ""
     const isVideo = spec.callMode === "video"
     const nameParts = safeName.trim().split(/\s+/).filter(Boolean)
     const safeInitials = (
@@ -1465,8 +1482,12 @@ function renderIncomingCallDomIntoWindow(
         <div style="display:flex;align-items:center;justify-content:center;gap:14px;padding:4px 0;">
           <div style="position:relative;width:72px;height:72px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
             <span style="position:absolute;inset:-8px;border-radius:999px;border:2px solid rgba(37,211,102,0.55);animation:waRipple 1.5s ease-out infinite;"></span>
-            <div style="position:relative;width:72px;height:72px;border-radius:999px;background:linear-gradient(135deg,#128C7E 0%,#075E54 100%);border:3px solid #25D366;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#FFFFFF;box-shadow:0 0 28px rgba(37,211,102,0.45);">
-              ${safeInitials}
+            <div style="position:relative;width:72px;height:72px;border-radius:999px;overflow:hidden;background:linear-gradient(135deg,#128C7E 0%,#075E54 100%);border:3px solid #25D366;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#FFFFFF;box-shadow:0 0 28px rgba(37,211,102,0.45);">
+              ${
+                safeAvatar
+                  ? `<img src="${safeAvatar}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:999px;display:block;" onerror="this.style.display='none';var s=this.nextElementSibling;if(s)s.style.display='flex';" /><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">${safeInitials}</span>`
+                  : safeInitials
+              }
             </div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-width:0;max-width:290px;">
@@ -1668,6 +1689,13 @@ export async function triggerSystemIncomingCallAlert(
 ): Promise<void> {
   if (typeof window === "undefined") return
   currentRingingSpec = spec
+  const notifIconSrc =
+    spec.callerAvatar &&
+    (spec.callerAvatar.startsWith("https://") ||
+      spec.callerAvatar.startsWith("http://") ||
+      spec.callerAvatar.startsWith("/"))
+      ? spec.callerAvatar
+      : "/brand/connectln-icon-256.png"
 
   try {
     if ("mediaSession" in navigator) {
@@ -1677,7 +1705,7 @@ export async function triggerSystemIncomingCallAlert(
           title: "Incoming ConnectLn Call",
           artist: spec.callerName || "ConnectLn Caller",
           album: "Tap Answer to pick up",
-          artwork: [{ src: "/brand/connectln-icon-256.png", sizes: "256x256", type: "image/png" }],
+          artwork: [{ src: notifIconSrc, sizes: "256x256", type: "image/png" }],
         })
       }
       ms.playbackState = "playing"
@@ -1754,7 +1782,7 @@ export async function triggerSystemIncomingCallAlert(
         const isAnyAudioActivelyPlaying = isIncomingRingtoneAudiblyPlaying()
         await reg.showNotification(title, {
           body,
-          icon: "/brand/connectln-icon-256.png",
+          icon: notifIconSrc,
           badge: "/brand/connectln-icon.png",
           image: bannerImageUrl,
           tag: `connectln-call-${spec.callId}`,
@@ -1790,7 +1818,7 @@ export async function triggerSystemIncomingCallAlert(
     if (typeof Notification !== "undefined" && Notification.permission === "granted") {
       const n = new Notification(title, {
         body,
-        icon: "/brand/connectln-icon-256.png",
+        icon: notifIconSrc,
         tag: `connectln-call-${spec.callId}`,
         requireInteraction: true,
       })
