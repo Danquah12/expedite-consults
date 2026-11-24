@@ -61,6 +61,7 @@ export interface StudioCallHandoffPayload {
 export interface VibeUnifiedCommunicationsViewProps {
   currentUser?: {
     name?: string
+    email?: string
     headline?: string
     avatar?: string
     profession?: string
@@ -1129,6 +1130,8 @@ export function VibeUnifiedCommunicationsView({
           conversationName={effectiveHandoff?.conversationName || selectedConversation.name}
           initialMode={effectiveHandoff?.mode || callMode}
           currentUserName={currentUser?.name || "You (Verified Device)"}
+          currentUserAvatar={currentUser?.avatar}
+          currentUserEmail={currentUser?.email}
           initialCallRoomId={effectiveHandoff?.callId || joinedCallRoomId}
           canReturnToMessaging={Boolean(effectiveHandoff?.returnToMessaging && onReturnToMessaging)}
           onReturnToMessagingHuddle={
@@ -1235,6 +1238,8 @@ export function VibeUnifiedCommunicationsView({
               conversationName={selectedConversation.name}
               initialMode={callMode}
               currentUserName={currentUser?.name || "You (Verified Device)"}
+              currentUserAvatar={currentUser?.avatar}
+              currentUserEmail={currentUser?.email}
               onCreateWorkflowFromCall={(title, owner, evidence) => {
                 setWorkflows((prev) => [
                   {

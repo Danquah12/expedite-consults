@@ -2,6 +2,10 @@ import * as webPush from "web-push"
 import { connectinDb } from "./connectin-db"
 import { publishToPhones } from "./connectin-realtime"
 import {
+  isPlaceholderCallAvatar,
+  sanitizeSignalAvatar,
+} from "./connectin-avatar-signal"
+import {
   firebaseKvGetItem,
   firebaseKvSetItem,
   firebaseKvListItems,
@@ -401,16 +405,14 @@ export async function registerWhatsAppMemberNumber(params: {
       (!blockCorruptOverwrite && incomingEmailNorm) ||
       existing?.email ||
       (isProtectedEsther ? "esther.asiedu@connectin.com" : undefined),
-    avatar: blockCorruptOverwrite
-      ? existing?.avatar
-      : (typeof params.avatar === "string" &&
-          params.avatar.trim() &&
-          (params.avatar.trim().startsWith("https://") ||
-            params.avatar.trim().startsWith("http://") ||
-            params.avatar.trim().startsWith("/") ||
-            (params.avatar.trim().startsWith("data:image/") && params.avatar.trim().length <= 65000))
-          ? params.avatar.trim()
-          : existing?.avatar),
+    avatar: (() => {
+      if (blockCorruptOverwrite) return existing?.avatar
+      const incoming = sanitizeSignalAvatar(params.avatar, 65000)
+      const existingValid = sanitizeSignalAvatar(existing?.avatar, 65000)
+      if (incoming && !isPlaceholderCallAvatar(incoming)) return incoming
+      if (existingValid && !isPlaceholderCallAvatar(existingValid)) return existingValid
+      return incoming || existing?.avatar
+    })(),
     headline: blockCorruptOverwrite ? existing?.headline : params.headline || existing?.headline,
     verifiedBy2FA: Boolean(params.verifiedBy2FA || existing?.verifiedBy2FA),
     pushSubscriptions: subs,
@@ -735,14 +737,24 @@ export async function sendIncomingCallWebPush(params: {
     new Set(matchedMembers.map((m) => m.phone).filter(Boolean))
   )
 
-  const safePushAvatar =
-    params.callerAvatar &&
-    (params.callerAvatar.startsWith("https://") ||
-      params.callerAvatar.startsWith("http://") ||
-      params.callerAvatar.startsWith("/")) &&
-    params.callerAvatar.length <= 1500
-      ? params.callerAvatar
-      : ""
+  const rawPushAvatar = typeof params.callerAvatar === "string" ? params.callerAvatar.trim() : ""
+  const endpointParams = new URLSearchParams()
+  if (params.callId) endpointParams.set("callId", params.callId)
+  if (params.callerPhone) endpointParams.set("phone", params.callerPhone)
+  if (params.callerName) endpointParams.set("name", params.callerName)
+  const fallbackEndpointAvatar = `https://conectln.com/api/connectin/avatar?${endpointParams.toString()}`
+
+  let safePushAvatar = fallbackEndpointAvatar
+  if (rawPushAvatar && !isPlaceholderCallAvatar(rawPushAvatar)) {
+    if (
+      (rawPushAvatar.startsWith("https://") || rawPushAvatar.startsWith("http://")) &&
+      rawPushAvatar.length <= 1500
+    ) {
+      safePushAvatar = rawPushAvatar
+    } else if (rawPushAvatar.startsWith("/") && rawPushAvatar.length <= 1500) {
+      safePushAvatar = `https://conectln.com${rawPushAvatar}`
+    }
+  }
 
   // Instant real-time ring to any open ConnectLn tab/app of this member across all owned numbers
   await publishToPhones(allTargetPhones, "incoming-call", {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb, UserRecord } from "@/lib/connectin-db"
+import { isPlaceholderCallAvatar } from "@/lib/connectin-avatar-signal"
 import {
   pullCloudUsersIntoDb,
   upsertCloudUser,
@@ -71,10 +72,36 @@ export async function PUT(req: NextRequest) {
       ? skills.map((s: any) => (typeof s === "string" ? s : s?.name)).filter(Boolean)
       : undefined
 
+    const incomingAvatar =
+      avatar && typeof avatar === "string" && avatar.trim() && avatar.length < 250000
+        ? avatar.trim()
+        : undefined
+    if (!incomingAvatar || isPlaceholderCallAvatar(incomingAvatar)) {
+      await Promise.race([
+        pullCloudUsersIntoDb().catch(() => {}),
+        new Promise<void>((r) => setTimeout(r, 1200)),
+      ])
+    }
+    const existingMatch = connectinDb.getAllUsersWithProfiles().find((u) => {
+      if ((userId || id) && u.id === (userId || id)) return true
+      if (email && (u.email || "").toLowerCase().trim() === String(email).toLowerCase().trim()) {
+        return true
+      }
+      if (name && (u.name || "").toLowerCase().trim() === String(name).toLowerCase().trim()) {
+        return true
+      }
+      return false
+    })
+    const existingRealAvatar =
+      existingMatch?.avatar && !isPlaceholderCallAvatar(existingMatch.avatar)
+        ? existingMatch.avatar
+        : undefined
     const cleanAvatar =
-      avatar && typeof avatar === "string" && avatar.length < 250000
-        ? avatar
-        : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name || "Member")}&backgroundColor=0a66c2`
+      incomingAvatar && !isPlaceholderCallAvatar(incomingAvatar)
+        ? incomingAvatar
+        : existingRealAvatar ||
+          incomingAvatar ||
+          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name || "Member")}&backgroundColor=0a66c2`
     const cleanCoverImage =
       coverImage && typeof coverImage === "string" && coverImage.length < 250000
         ? coverImage
@@ -201,7 +228,13 @@ export async function PUT(req: NextRequest) {
             role: "personal",
             status: (bu.enforcementStatus || "Active") as any,
             headline: bu.headline || "Verified ConnectIn Member",
-            avatar: bu.avatar && typeof bu.avatar === "string" && !bu.avatar.startsWith("data:") ? bu.avatar : "",
+            avatar:
+              bu.avatar &&
+              typeof bu.avatar === "string" &&
+              bu.avatar.length < 90000 &&
+              !isPlaceholderCallAvatar(bu.avatar)
+                ? bu.avatar
+                : "",
             location: bu.location && !bu.location.includes("United States") ? bu.location : effectiveLocation,
             countryName: geo.countryName,
             countryCode: geo.countryCode,

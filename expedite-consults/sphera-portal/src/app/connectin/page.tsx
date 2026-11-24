@@ -8,7 +8,10 @@ import { ConnectLnNavbar } from "@/components/connectln/ConnectLnNavbar"
 import { MeetingReminders } from "@/components/connectln/MeetingReminders"
 import { ConnectLnIncomingCallBanner } from "@/components/connectln/ConnectLnIncomingCallBanner"
 import { ConnectLnPhoneVerificationGate } from "@/components/connectln/ConnectLnPhoneVerificationGate"
-import { ConnectLnWhatsAppCallModal } from "@/components/connectln/ConnectLnWhatsAppCallModal"
+import {
+  ConnectLnWhatsAppCallModal,
+  getMyLinkedConnectLnPhone,
+} from "@/components/connectln/ConnectLnWhatsAppCallModal"
 import { LeftSidebarProfile } from "@/components/connectln/LeftSidebarProfile"
 import { ConnectLnSovereignSuiteHub } from "@/components/connectln/ConnectLnSovereignSuiteHub"
 import { PostCreator } from "@/components/connectln/PostCreator"
@@ -96,6 +99,11 @@ import {
   loadStoredUserActivityLogs
 } from "@/lib/connectin-storage"
 import { isSuperAdminUser, createUniqueUserProfile, createFreshInvitedUserProfile, generatePersonalSignatureAvatar, isForeignPersonaAvatar } from "@/lib/connectin-profile"
+import {
+  compressAvatarForCallSignal,
+  isPlaceholderCallAvatar,
+  resolveAndCompressLocalCallerAvatar,
+} from "@/lib/connectin-avatar-signal"
 import {
   recordLiveProfileView,
   recordLiveContentReach,
@@ -1380,20 +1388,52 @@ export default function ConnectLnPage() {
 
     const syncLiveUsers = async () => {
       try {
-        // 1. Fire non-blocking heartbeat push of current user + local accounts (stripping heavy data:image avatars)
+        // 1. Fire non-blocking heartbeat push of current user + local accounts (preserving compact real avatars)
         if (userData && userData.name) {
           const clientTimezone =
             typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined
+          const crispAvatar = await resolveAndCompressLocalCallerAvatar(userData, 60000).catch(
+            () => undefined
+          )
+          const cloudCompactAvatar =
+            crispAvatar && crispAvatar.startsWith("data:") && crispAvatar.length > 6500
+              ? (await compressAvatarForCallSignal(crispAvatar, 6500).catch(() => undefined)) ||
+                undefined
+              : crispAvatar
           const localDir = loadStoredAdminUsers()
             .slice(0, 8)
-            .map(bu => ({
+            .map((bu) => ({
               ...bu,
-              avatar: bu.avatar && !bu.avatar.startsWith("data:") ? bu.avatar : undefined
+              avatar:
+                bu.avatar &&
+                !isPlaceholderCallAvatar(bu.avatar) &&
+                (!bu.avatar.startsWith("data:") || bu.avatar.length <= 6500)
+                  ? bu.avatar
+                  : undefined,
             }))
           const safeAvatar =
-            userData.avatar && !userData.avatar.startsWith("data:")
+            cloudCompactAvatar ||
+            (userData.avatar &&
+            !isPlaceholderCallAvatar(userData.avatar) &&
+            (!userData.avatar.startsWith("data:") || userData.avatar.length <= 6500)
               ? userData.avatar
-              : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=0a66c2`
+              : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=0a66c2`)
+
+          const linkedPhone = (userData as any).phone || getMyLinkedConnectLnPhone()
+          if (crispAvatar && linkedPhone) {
+            fetch("/api/connectin/calls/whatsapp", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "register",
+                phone: linkedPhone,
+                name: userData.name,
+                email: userData.email,
+                avatar: crispAvatar,
+                headline: userData.headline,
+              }),
+            }).catch(() => {})
+          }
 
           const localActs = loadStoredUserActivityLogs()
             .slice(0, 12)
@@ -1547,7 +1587,7 @@ export default function ConnectLnPage() {
 
     syncLiveUsers()
     return () => { isMounted = false }
-  }, [userData?.id, userData?.email, userData?.name])
+  }, [userData?.id, userData?.email, userData?.name, userData?.avatar])
 
   // Open any clicked member's full Workspace & Identity
   const handleInspectMember = (memberInput: any) => {

@@ -89,54 +89,12 @@ import {
   GaplessRemoteVoicePlayer,
   EncodedVoiceChunk,
 } from "@/lib/vibe-voice-codec"
-import { resolveUserProfilePicture, loadPersistentAvatar } from "@/lib/connectin-storage"
-
-async function compressAvatarForCallSignal(rawSrc?: string | null): Promise<string | undefined> {
-  const src = String(rawSrc || "").trim()
-  if (!src) return undefined
-  if (src.startsWith("https://") || src.startsWith("http://") || src.startsWith("/")) {
-    return src.length <= 1500 ? src : undefined
-  }
-  if (!src.startsWith("data:image/")) return undefined
-  if (src.length <= 18000) return src
-  if (typeof window === "undefined" || typeof document === "undefined") return undefined
-  try {
-    return await new Promise<string | undefined>((resolve) => {
-      const img = new Image()
-      img.crossOrigin = "anonymous"
-      const timer = window.setTimeout(() => resolve(undefined), 1200)
-      img.onload = () => {
-        window.clearTimeout(timer)
-        try {
-          const size = 160
-          const canvas = document.createElement("canvas")
-          canvas.width = size
-          canvas.height = size
-          const ctx = canvas.getContext("2d")
-          if (!ctx) return resolve(undefined)
-          const minSide = Math.min(img.width || size, img.height || size)
-          const sx = Math.max(0, ((img.width || size) - minSide) / 2)
-          const sy = Math.max(0, ((img.height || size) - minSide) / 2)
-          ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size)
-          let out = canvas.toDataURL("image/jpeg", 0.72)
-          if (out.length > 48000) {
-            out = canvas.toDataURL("image/jpeg", 0.5)
-          }
-          resolve(out.length <= 80000 ? out : undefined)
-        } catch {
-          resolve(undefined)
-        }
-      }
-      img.onerror = () => {
-        window.clearTimeout(timer)
-        resolve(undefined)
-      }
-      img.src = src
-    })
-  } catch {
-    return undefined
-  }
-}
+import {
+  isPlaceholderCallAvatar,
+  pickBestCallAvatar,
+  pickRealCallAvatar,
+  resolveAndCompressLocalCallerAvatar,
+} from "@/lib/connectin-avatar-signal"
 
 export const MY_LINKED_PHONE_STORAGE_KEY = "connectln_my_whatsapp_phone_v1"
 const HANDLED_CALL_IDS_STORAGE_KEY = "connectln_handled_call_ids_v1"
@@ -1365,43 +1323,24 @@ export function ConnectLnWhatsAppCallModal({
   const cellLegsRef = useRef<ConferenceCellLeg[]>([])
   const remoteWebRtcPeersRef = useRef<RemoteWebRtcParticipant[]>([])
   const signalCallerAvatarRef = useRef<string | undefined>(
-    callerAvatar &&
-      ((callerAvatar.startsWith("https://") ||
-        callerAvatar.startsWith("http://") ||
-        callerAvatar.startsWith("/")) ||
-        (callerAvatar.startsWith("data:image/") && callerAvatar.length <= 65000))
-      ? callerAvatar
-      : undefined
+    (() => {
+      const real = pickRealCallAvatar(callerAvatar)
+      if (!real) return undefined
+      if (!real.startsWith("data:") || real.length <= 65000) return real
+      return undefined
+    })()
   )
 
   useEffect(() => {
     let active = true
-    const resolveLocalAvatar = () => {
-      if (callerAvatar && !callerAvatar.includes("api.dicebear.com")) {
-        return callerAvatar
-      }
-      if (typeof window === "undefined") return callerAvatar
-      return (
-        loadPersistentAvatar({ name: callerName, email: callerEmail }) ||
-        resolveUserProfilePicture({
-          name: callerName,
-          email: callerEmail,
-          avatar: callerAvatar,
-        } as any) ||
-        callerAvatar
-      )
+    const immediateReal = pickRealCallAvatar(callerAvatar)
+    if (immediateReal && (!immediateReal.startsWith("data:") || immediateReal.length <= 65000)) {
+      signalCallerAvatarRef.current = immediateReal
     }
-    const candidate = resolveLocalAvatar()
-    if (
-      candidate &&
-      ((candidate.startsWith("https://") ||
-        candidate.startsWith("http://") ||
-        candidate.startsWith("/")) ||
-        (candidate.startsWith("data:image/") && candidate.length <= 18000))
-    ) {
-      signalCallerAvatarRef.current = candidate
-    }
-    void compressAvatarForCallSignal(candidate).then((compressed) => {
+    void resolveAndCompressLocalCallerAvatar(
+      { name: callerName, email: callerEmail, avatar: callerAvatar },
+      60000
+    ).then((compressed) => {
       if (active && compressed) {
         signalCallerAvatarRef.current = compressed
       }
@@ -1766,18 +1705,15 @@ export function ConnectLnWhatsAppCallModal({
       setAddFeedbackMsg("")
       try {
         const myPhone = getMyLinkedConnectLnPhone()
-        const rawCandidateAvatar =
-          signalCallerAvatarRef.current ||
-          (callerAvatar && !callerAvatar.includes("api.dicebear.com") ? callerAvatar : undefined) ||
-          loadPersistentAvatar({ name: callerName, email: callerEmail }) ||
-          resolveUserProfilePicture({
-            name: callerName,
-            email: callerEmail,
-            avatar: callerAvatar,
-          } as any) ||
-          callerAvatar
         const readyCallerAvatar =
-          (await compressAvatarForCallSignal(rawCandidateAvatar)) || signalCallerAvatarRef.current
+          (signalCallerAvatarRef.current && !isPlaceholderCallAvatar(signalCallerAvatarRef.current)
+            ? signalCallerAvatarRef.current
+            : undefined) ||
+          (await resolveAndCompressLocalCallerAvatar(
+            { name: callerName, email: callerEmail, avatar: callerAvatar },
+            60000
+          )) ||
+          signalCallerAvatarRef.current
         if (readyCallerAvatar) signalCallerAvatarRef.current = readyCallerAvatar
         const res = await fetch("/api/connectin/voice/conference-add", {
           method: "POST",
@@ -2928,6 +2864,16 @@ export function ConnectLnWhatsAppCallModal({
       hasSentInitialReopenRef.current = true
       isFirst = false
       try {
+        if (
+          reopenFlag &&
+          (!signalCallerAvatarRef.current || isPlaceholderCallAvatar(signalCallerAvatarRef.current))
+        ) {
+          const awaitedAvatar = await resolveAndCompressLocalCallerAvatar(
+            { name: callerName, email: callerEmail, avatar: callerAvatar },
+            60000
+          ).catch(() => undefined)
+          if (awaitedAvatar) signalCallerAvatarRef.current = awaitedAvatar
+        }
         const myLinkedPhone = getMyLinkedConnectLnPhone()
         const shouldClearHostMute = clearHostMuteFlagRef.current
         clearHostMuteFlagRef.current = false
@@ -2951,8 +2897,10 @@ export function ConnectLnWhatsAppCallModal({
             target_recipient_email: !isIncomingAnswer ? targetEmailRef.current : undefined,
             target_recipient_phone: !isIncomingAnswer ? recipientPhoneRef.current : undefined,
             initiator_phone: !isIncomingAnswer ? myLinkedPhone || undefined : undefined,
+            initiator_email: !isIncomingAnswer ? callerEmail || undefined : undefined,
             initiator_avatar: !isIncomingAnswer ? signalCallerAvatarRef.current || undefined : undefined,
             participant_phone: myLinkedPhone || undefined,
+            email: callerEmail || undefined,
             display_name: callerName,
             avatar: signalCallerAvatarRef.current || undefined,
             is_muted: micMutedNow,
@@ -3192,13 +3140,16 @@ export function ConnectLnWhatsAppCallModal({
             !prevEntry ||
             (mapped.liveFrame && !prevEntry.mapped.liveFrame) ||
             (mapped.isVideoOn && !prevEntry.mapped.isVideoOn) ||
-            (mapped.avatar && !prevEntry.mapped.avatar)
+            (mapped.avatar &&
+              (!prevEntry.mapped.avatar ||
+                (isPlaceholderCallAvatar(prevEntry.mapped.avatar) &&
+                  !isPlaceholderCallAvatar(mapped.avatar))))
           ) {
             dedupedPeersMap.set(identityKey, {
               raw: rp,
               mapped: {
                 ...mapped,
-                avatar: mapped.avatar || prevEntry?.mapped.avatar,
+                avatar: pickBestCallAvatar(mapped.avatar, prevEntry?.mapped.avatar),
               },
             })
           }
@@ -3209,13 +3160,24 @@ export function ConnectLnWhatsAppCallModal({
           (x) => x.mapped
         )
         const resolvedRemoteAvatar =
+          pickRealCallAvatar(
+            mappedPeers[0]?.avatar,
+            isIncomingAnswer ? data?.call?.initiator_avatar : undefined,
+            ...(Array.isArray(data?.call?.invited_roster)
+              ? data.call.invited_roster.map((m: any) => m?.avatar)
+              : [])
+          ) ||
           mappedPeers[0]?.avatar ||
           (isIncomingAnswer && typeof data?.call?.initiator_avatar === "string"
             ? data.call.initiator_avatar
             : undefined)
         if (resolvedRemoteAvatar) {
           setRecipientAvatar((prevAv) =>
-            !prevAv || prevAv.includes("api.dicebear.com") ? resolvedRemoteAvatar : prevAv
+            !prevAv ||
+            isPlaceholderCallAvatar(prevAv) ||
+            (!isPlaceholderCallAvatar(resolvedRemoteAvatar) && prevAv !== resolvedRemoteAvatar)
+              ? resolvedRemoteAvatar
+              : prevAv
           )
         }
 
@@ -4327,9 +4289,11 @@ export function ConnectLnWhatsAppCallModal({
   const primaryName =
     primaryPeer?.name || cellLegs[0]?.name || recipientName || "ConnectLn Call"
   const primaryAvatarSrc =
-    primaryPeer?.avatar ||
-    recipientAvatar ||
-    cellLegs[0]?.avatar ||
+    pickBestCallAvatar(
+      primaryPeer?.avatar,
+      recipientAvatar,
+      cellLegs[0]?.avatar
+    ) ||
     `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
       primaryName || "CL"
     )}&backgroundColor=075e54`

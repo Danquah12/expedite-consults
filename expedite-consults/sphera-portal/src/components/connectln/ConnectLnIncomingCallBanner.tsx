@@ -49,10 +49,16 @@ import {
   setCallMediaSilenceActive,
   isIncomingRingtoneAudiblyPlaying,
 } from "@/lib/connectin-background-ring"
+import {
+  compressAvatarForCallSignal,
+  pickRealCallAvatar,
+  resolveAndCompressLocalCallerAvatar,
+} from "@/lib/connectin-avatar-signal"
 
 interface IncomingCallSummary {
   id: string
   call_type: "audio" | "video" | "screenshare"
+  initiator_user_id?: string
   initiator_name?: string
   initiator_phone?: string
   initiator_avatar?: string
@@ -66,12 +72,39 @@ interface IncomingCallSummary {
     display_name: string
     avatar?: string
     is_video_on?: boolean
+    is_answering_recipient?: boolean
   }>
 }
 
 function isLocalTabHostingOpenCall(): boolean {
   if (typeof window === "undefined") return false
   return Number((window as any).__connectlnOpenCallModalCount || 0) > 0
+}
+
+function resolveIncomingCallerInfo(call: IncomingCallSummary): {
+  callerName: string
+  callerAvatar: string
+} {
+  const initiatorParticipant =
+    call.participants?.find(
+      (p) =>
+        (call.initiator_user_id && p.user_id === call.initiator_user_id) ||
+        !p.is_answering_recipient
+    ) || call.participants?.[0]
+  const callerName =
+    initiatorParticipant?.display_name || call.initiator_name || "ConnectLn Caller"
+  const qs = new URLSearchParams()
+  if (call.id) qs.set("callId", call.id)
+  if (call.initiator_phone) qs.set("phone", call.initiator_phone)
+  if (callerName) qs.set("name", callerName)
+  const endpointFallback = `/api/connectin/avatar?${qs.toString()}`
+  const callerAvatar =
+    pickRealCallAvatar(initiatorParticipant?.avatar, call.initiator_avatar) ||
+    (call.initiator_avatar && call.initiator_avatar.includes("/api/connectin/avatar")
+      ? call.initiator_avatar
+      : undefined) ||
+    endpointFallback
+  return { callerName, callerAvatar }
 }
 
 export function ConnectLnIncomingCallBanner({
@@ -114,23 +147,25 @@ export function ConnectLnIncomingCallBanner({
   const [isDndActive, setIsDndActive] = useState<boolean>(() => isLocalUserDnd())
   const [callerAvatarFailed, setCallerAvatarFailed] = useState<boolean>(false)
 
+  const resolvedIncomingCaller = incomingCall ? resolveIncomingCallerInfo(incomingCall) : null
+
   useEffect(() => {
     setCallerAvatarFailed(false)
-  }, [incomingCall?.id, incomingCall?.initiator_avatar, incomingCall?.participants?.[0]?.avatar])
+  }, [incomingCall?.id, resolvedIncomingCaller?.callerAvatar])
 
-  const getSafeRegisterAvatar = (): string | undefined => {
-    const raw = (viewerAvatarRef.current || "").trim()
-    if (!raw || raw.includes("api.dicebear.com")) return undefined
-    if (
-      (raw.startsWith("https://") || raw.startsWith("http://") || raw.startsWith("/")) &&
-      raw.length <= 1500
-    ) {
-      return raw
-    }
-    if (raw.startsWith("data:image/") && raw.length <= 65000) {
-      return raw
-    }
-    return undefined
+  const getSafeRegisterAvatarAsync = async (): Promise<string | undefined> => {
+    const compressed = await resolveAndCompressLocalCallerAvatar(
+      {
+        name: viewerNameRef.current,
+        email: viewerEmailRef.current,
+        avatar: viewerAvatarRef.current,
+      },
+      60000
+    ).catch(() => undefined)
+    if (compressed) return compressed
+    return compressAvatarForCallSignal(viewerAvatarRef.current, 60000).catch(
+      () => undefined
+    )
   }
 
   useEffect(() => {
@@ -263,11 +298,9 @@ export function ConnectLnIncomingCallBanner({
     }
     setCallMediaSilenceActive(true, "incoming-call-banner")
 
-    const cName =
-      call.participants?.[0]?.display_name ||
-      call.initiator_name ||
-      "ConnectLn Caller"
-    const cAvatar = call.participants?.[0]?.avatar || call.initiator_avatar || undefined
+    const { callerName: cName, callerAvatar: resolvedCAvatar } =
+      resolveIncomingCallerInfo(call)
+    const cAvatar = resolvedCAvatar || undefined
     const cPhone = call.initiator_phone ? prettyClientPhone(call.initiator_phone) : undefined
     const mode: "audio" | "video" = call.call_type === "audio" ? "audio" : "video"
 
@@ -360,6 +393,7 @@ export function ConnectLnIncomingCallBanner({
       const sub = await registerConnectLnPushSubscription(key)
       if (!sub) return
       const isMob = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "")
+      const safeAvatar = await getSafeRegisterAvatarAsync()
       await fetch("/api/connectin/calls/whatsapp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -368,7 +402,7 @@ export function ConnectLnIncomingCallBanner({
           phone,
           name: viewerNameRef.current || "ConnectLn Member",
           email: viewerEmailRef.current,
-          avatar: getSafeRegisterAvatar(),
+          avatar: safeAvatar,
           pushSubscription: sub,
           deviceLabel: isMob ? "Mobile Phone" : "Desktop Browser",
         }),
@@ -607,6 +641,7 @@ export function ConnectLnIncomingCallBanner({
               () => null
             )
             if (sub) {
+              const safeAvatar = await getSafeRegisterAvatarAsync()
               fetch("/api/connectin/calls/whatsapp", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -615,7 +650,7 @@ export function ConnectLnIncomingCallBanner({
                   phone: norm,
                   name: viewerName || "ConnectLn Member",
                   email: viewerEmail,
-                  avatar: getSafeRegisterAvatar(),
+                  avatar: safeAvatar,
                   pushSubscription: sub,
                   deviceLabel: isMob ? "Mobile Phone" : "Desktop Browser",
                 }),
@@ -764,20 +799,30 @@ export function ConnectLnIncomingCallBanner({
         }
         setIncomingCall((prev) => {
           if (!active) return null
-          const prevAvatar = prev?.participants?.[0]?.avatar || prev?.initiator_avatar || ""
-          const nextAvatar = active.participants?.[0]?.avatar || active.initiator_avatar || ""
+          const nextWithMergedAvatar: IncomingCallSummary =
+            prev && prev.id === active.id
+              ? {
+                  ...active,
+                  initiator_avatar:
+                    pickRealCallAvatar(active.initiator_avatar, prev.initiator_avatar) ||
+                    active.initiator_avatar ||
+                    prev.initiator_avatar,
+                }
+              : active
+          const prevInfo = prev ? resolveIncomingCallerInfo(prev) : null
+          const nextInfo = resolveIncomingCallerInfo(nextWithMergedAvatar)
           if (
             prev &&
-            prev.id === active.id &&
-            prev.call_type === active.call_type &&
-            prevAvatar === nextAvatar &&
-            (prev.invited_roster?.length || 0) === (active.invited_roster?.length || 0) &&
-            (prev.participants?.[0]?.display_name || "") ===
-              (active.participants?.[0]?.display_name || "")
+            prev.id === nextWithMergedAvatar.id &&
+            prev.call_type === nextWithMergedAvatar.call_type &&
+            prevInfo?.callerAvatar === nextInfo.callerAvatar &&
+            prevInfo?.callerName === nextInfo.callerName &&
+            (prev.invited_roster?.length || 0) ===
+              (nextWithMergedAvatar.invited_roster?.length || 0)
           ) {
             return prev
           }
-          return active
+          return nextWithMergedAvatar
         })
       } catch {
         // ignore transient network errors
@@ -817,11 +862,16 @@ export function ConnectLnIncomingCallBanner({
             }
             realtimeRingRef.current = { call, untilMs: Date.now() + 8000 }
             triggerImmediateIncomingCallRinging(call)
-            setIncomingCall((prev) =>
-              prev && prev.id === call.id
-                ? { ...prev, initiator_avatar: call.initiator_avatar || prev.initiator_avatar }
-                : prev || call
-            )
+            setIncomingCall((prev) => {
+              if (prev && prev.id === call.id) {
+                const mergedAvatar =
+                  pickRealCallAvatar(call.initiator_avatar, prev.initiator_avatar) ||
+                  call.initiator_avatar ||
+                  prev.initiator_avatar
+                return { ...prev, initiator_avatar: mergedAvatar }
+              }
+              return prev || call
+            })
             void checkIncoming()
           })
           ch.bind("call-ended", (d: any) => {
@@ -993,12 +1043,8 @@ export function ConnectLnIncomingCallBanner({
     )
   }
 
-  const callerName =
-    incomingCall.participants?.[0]?.display_name ||
-    incomingCall.initiator_name ||
-    "ConnectLn Caller"
-  const callerAvatar =
-    incomingCall.participants?.[0]?.avatar || incomingCall.initiator_avatar || ""
+  const callerName = resolvedIncomingCaller?.callerName || "ConnectLn Caller"
+  const callerAvatar = resolvedIncomingCaller?.callerAvatar || ""
   const callerPhone = incomingCall.initiator_phone
     ? prettyClientPhone(incomingCall.initiator_phone)
     : ""

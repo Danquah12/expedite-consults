@@ -28,6 +28,11 @@ import {
 import { MessageActionBar, ReactionBadges, loadMembers, ShareTarget, MessageReactionKind } from './MessageActionBar';
 import { resolveUserProfilePicture, trackUserActivity } from '@/lib/connectin-storage';
 import {
+    isPlaceholderCallAvatar,
+    pickBestCallAvatar,
+    resolveAndCompressLocalCallerAvatar,
+} from '@/lib/connectin-avatar-signal';
+import {
     getLocalBilateralThreadsForViewer,
     mergeBilateralAndServerThreads,
     recordLocalBilateralDirectMessage,
@@ -780,6 +785,18 @@ export function MessagingView({
         };
     }, [activeCallMode]);
     const callStartMsRef = useRef<number>(0);
+    const huddleCallerAvatarRef = useRef<string | undefined>(undefined);
+    useEffect(() => {
+        let active = true;
+        void resolveAndCompressLocalCallerAvatar(currentUser, 60000).then((compressed) => {
+            if (active && compressed) {
+                huddleCallerAvatarRef.current = compressed;
+            }
+        });
+        return () => {
+            active = false;
+        };
+    }, [activeCallMode, currentUser?.avatar, currentUser?.name, currentUser?.email]);
     const isHandingOffToStudioRef = useRef<boolean>(false);
     const [isMicMuted, setIsMicMuted] = useState(false);
     const [isCameraOn, setIsCameraOn] = useState(true);
@@ -1132,6 +1149,7 @@ export function MessagingView({
             user_id: string;
             peer_id?: string;
             display_name: string;
+            avatar?: string;
             role?: string;
             device_label?: string;
             is_muted?: boolean;
@@ -2545,6 +2563,24 @@ export function MessagingView({
             isFirstHuddleHeartbeatRef.current = false;
 
             try {
+                if (
+                    isFirst &&
+                    (!huddleCallerAvatarRef.current ||
+                        isPlaceholderCallAvatar(huddleCallerAvatarRef.current))
+                ) {
+                    const awaitedAvatar = await resolveAndCompressLocalCallerAvatar(
+                        currentUser,
+                        60000
+                    ).catch(() => undefined);
+                    if (awaitedAvatar) {
+                        huddleCallerAvatarRef.current = awaitedAvatar;
+                    }
+                }
+                const huddleLinkedPhone =
+                    (currentUser as any)?.phone ||
+                    (typeof window !== 'undefined'
+                        ? window.localStorage.getItem('connectln_my_whatsapp_phone_v1') || ''
+                        : '');
                 const res = await fetch('/api/v1/calls', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -2560,6 +2596,12 @@ export function MessagingView({
                         target_recipient_name: activeThread.title,
                         target_recipient_email: activeThread.recipientEmail,
                         display_name: currentUser?.name || 'You',
+                        avatar: huddleCallerAvatarRef.current || undefined,
+                        initiator_avatar: huddleCallerAvatarRef.current || undefined,
+                        initiator_phone: huddleLinkedPhone || undefined,
+                        participant_phone: huddleLinkedPhone || undefined,
+                        email: currentUser?.email || undefined,
+                        initiator_email: currentUser?.email || undefined,
                         role: currentUser?.headline || 'Verified ConnectLn Member',
                         is_muted: isMicMuted,
                         is_video_on: isCameraOn || isScreenSharing,
@@ -2650,6 +2692,10 @@ export function MessagingView({
                             user_id: p.user_id,
                             peer_id: p.peer_id,
                             display_name: p.display_name || 'Connected Participant',
+                            avatar:
+                                typeof p.avatar === 'string' && p.avatar.trim()
+                                    ? p.avatar.trim()
+                                    : undefined,
                             role: p.role,
                             device_label: p.device_label,
                             is_muted: Boolean(p.is_muted),
@@ -2668,6 +2714,7 @@ export function MessagingView({
                                     oldP.user_id === mapped[i].user_id &&
                                     oldP.peer_id === mapped[i].peer_id &&
                                     oldP.display_name === mapped[i].display_name &&
+                                    oldP.avatar === mapped[i].avatar &&
                                     oldP.is_muted === mapped[i].is_muted &&
                                     oldP.is_video_on === mapped[i].is_video_on &&
                                     oldP.is_screen_sharing === mapped[i].is_screen_sharing &&
@@ -6340,7 +6387,12 @@ export function MessagingView({
                                                 <>
                                                     <HuddleFallbackFrameImg
                                                         userId={peer.user_id}
-                                                        fallbackAvatar={activeThread.avatar}
+                                                        fallbackAvatar={
+                                                            pickBestCallAvatar(
+                                                                peer.avatar,
+                                                                activeThread.avatar
+                                                            ) || activeThread.avatar
+                                                        }
                                                         alt={peerTitle}
                                                         isScreenShare={peer.is_screen_sharing}
                                                     />
@@ -6385,7 +6437,12 @@ export function MessagingView({
                                                 <div className="relative z-20 flex flex-col items-center">
                                                     <div className="relative mb-3">
                                                         <img
-                                                            src={activeThread.avatar}
+                                                            src={
+                                                                pickBestCallAvatar(
+                                                                    peer.avatar,
+                                                                    activeThread.avatar
+                                                                ) || activeThread.avatar
+                                                            }
                                                             alt={peerTitle}
                                                             className="w-20 h-20 rounded-full object-cover border-4 border-emerald-500 shadow-lg"
                                                         />

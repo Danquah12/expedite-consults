@@ -3,7 +3,13 @@ import crypto from "crypto"
 import fs from "fs"
 import path from "path"
 import os from "os"
-import { recordGlobalUserActivity } from "@/lib/connectin-cloud-sync"
+import { connectinDb } from "@/lib/connectin-db"
+import { pullCloudUsersIntoDb, recordGlobalUserActivity } from "@/lib/connectin-cloud-sync"
+import {
+  isPlaceholderCallAvatar,
+  pickRealCallAvatar,
+  sanitizeSignalAvatar,
+} from "@/lib/connectin-avatar-signal"
 import { publishToPhones } from "@/lib/connectin-realtime"
 import {
   firebaseKvGetItem,
@@ -21,16 +27,7 @@ import {
 export const dynamic = "force-dynamic"
 
 export function sanitizeCallAvatar(raw: unknown, maxDataUriLen = 90000): string | undefined {
-  if (typeof raw !== "string") return undefined
-  const v = raw.trim()
-  if (!v) return undefined
-  if ((v.startsWith("https://") || v.startsWith("http://") || v.startsWith("/")) && v.length <= 1500) {
-    return v
-  }
-  if (v.startsWith("data:image/") && v.length <= maxDataUriLen) {
-    return v
-  }
-  return undefined
+  return sanitizeSignalAvatar(raw, maxDataUriLen)
 }
 
 async function resolveDirectoryAvatarFallback(params: {
@@ -48,7 +45,35 @@ async function resolveDirectoryAvatarFallback(params: {
       }),
       new Promise<null>((resolve) => setTimeout(() => resolve(null), 500)),
     ])
-    return sanitizeCallAvatar(found?.member?.avatar)
+    const dirReal = pickRealCallAvatar(found?.member?.avatar)
+    if (dirReal) return dirReal
+  } catch {
+    // Continue to cloud/user profile lookup
+  }
+
+  try {
+    await Promise.race([
+      pullCloudUsersIntoDb().catch(() => {}),
+      new Promise<void>((resolve) => setTimeout(resolve, 600)),
+    ])
+    const users = connectinDb.getAllUsersWithProfiles()
+    const cleanEmail = (params.email || "").trim().toLowerCase()
+    const cleanName = (params.name || "").trim().toLowerCase()
+    const targetDigits = String(params.phone || "").replace(/\D/g, "")
+    const matched = users.find((u) => {
+      if (cleanEmail && (u.email || "").trim().toLowerCase() === cleanEmail) return true
+      const userDigits = String(u.phone || "").replace(/\D/g, "")
+      if (
+        targetDigits.length >= 7 &&
+        userDigits.length >= 7 &&
+        targetDigits.slice(-7) === userDigits.slice(-7)
+      ) {
+        return true
+      }
+      if (cleanName && (u.name || "").trim().toLowerCase() === cleanName) return true
+      return false
+    })
+    return pickRealCallAvatar(matched?.avatar)
   } catch {
     return undefined
   }
@@ -63,8 +88,24 @@ async function dispatchMinimizedWakeupPushForTargets(params: {
   targets: Array<{ phone?: string; email?: string; name?: string }>
 }): Promise<void> {
   if (!params.targets.length) return
-  const safeUrlAvatar =
-    params.callerAvatar && !params.callerAvatar.startsWith("data:") ? params.callerAvatar : undefined
+  const rawAvatar = typeof params.callerAvatar === "string" ? params.callerAvatar.trim() : ""
+  const endpointParams = new URLSearchParams()
+  if (params.callId) endpointParams.set("callId", params.callId)
+  if (params.callerPhone) endpointParams.set("phone", params.callerPhone)
+  if (params.callerName) endpointParams.set("name", params.callerName)
+  const fallbackEndpointAvatar = `https://conectln.com/api/connectin/avatar?${endpointParams.toString()}`
+
+  let safeUrlAvatar = fallbackEndpointAvatar
+  if (rawAvatar && !isPlaceholderCallAvatar(rawAvatar)) {
+    if (
+      (rawAvatar.startsWith("https://") || rawAvatar.startsWith("http://")) &&
+      rawAvatar.length <= 1500
+    ) {
+      safeUrlAvatar = rawAvatar
+    } else if (rawAvatar.startsWith("/") && rawAvatar.length <= 1500) {
+      safeUrlAvatar = `https://conectln.com${rawAvatar}`
+    }
+  }
   const joinUrl = `https://conectln.com/connectin?waCall=${encodeURIComponent(
     params.callId
   )}&mode=${params.callMode}&callerName=${encodeURIComponent(params.callerName)}&autoAnswer=1`
@@ -914,11 +955,18 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
       if (data.initiator_phone && !record.initiator_phone) {
         record.initiator_phone = data.initiator_phone
       }
-      if (data.initiator_avatar && !record.initiator_avatar) {
+      if (
+        data.initiator_avatar &&
+        (!record.initiator_avatar ||
+          (isPlaceholderCallAvatar(record.initiator_avatar) &&
+            !isPlaceholderCallAvatar(data.initiator_avatar)))
+      ) {
         record.initiator_avatar = data.initiator_avatar
       } else if (
         data.avatar &&
-        !record.initiator_avatar &&
+        (!record.initiator_avatar ||
+          (isPlaceholderCallAvatar(record.initiator_avatar) &&
+            !isPlaceholderCallAvatar(data.avatar))) &&
         (!record.initiator_user_id || data.user_id === record.initiator_user_id) &&
         !data.is_answering_recipient
       ) {
@@ -937,8 +985,11 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
           record.participants[existingIdx] = {
             ...localP,
             ...data,
-            avatar: data.avatar || localP.avatar,
-            initiator_avatar: data.initiator_avatar || localP.initiator_avatar,
+            avatar: pickRealCallAvatar(data.avatar, localP.avatar) || data.avatar || localP.avatar,
+            initiator_avatar:
+              pickRealCallAvatar(data.initiator_avatar, localP.initiator_avatar) ||
+              data.initiator_avatar ||
+              localP.initiator_avatar,
             live_frame: data.live_frame || localP.live_frame || null,
             live_audio_chunk: data.live_audio_chunk || localP.live_audio_chunk || null,
             recent_audio_chunks: data.recent_audio_chunks || localP.recent_audio_chunks || null,
@@ -994,7 +1045,12 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
           if (rData.initiator_user_id) record.initiator_user_id = rData.initiator_user_id
           if (rData.initiator_name && !record.initiator_name) record.initiator_name = rData.initiator_name
           if (rData.initiator_phone && !record.initiator_phone) record.initiator_phone = rData.initiator_phone
-          if (rData.initiator_avatar && !record.initiator_avatar) {
+          if (
+            rData.initiator_avatar &&
+            (!record.initiator_avatar ||
+              (isPlaceholderCallAvatar(record.initiator_avatar) &&
+                !isPlaceholderCallAvatar(rData.initiator_avatar)))
+          ) {
             record.initiator_avatar = rData.initiator_avatar
           }
           if (rData.target_recipient_name && !record.target_recipient_name) {
@@ -2218,18 +2274,26 @@ export async function POST(req: NextRequest) {
       if (!record.initiator_name && displayName) {
         record.initiator_name = displayName
       }
+      const prevUpsertInitAvatar = record.initiator_avatar
       const incomingUpsertAvatar = sanitizeCallAvatar(
         body.initiator_avatar || body.caller_avatar || body.avatar
       )
-      if (incomingUpsertAvatar) {
+      if (
+        incomingUpsertAvatar &&
+        (!record.initiator_avatar || !isPlaceholderCallAvatar(incomingUpsertAvatar))
+      ) {
         record.initiator_avatar = incomingUpsertAvatar
-      } else if (!record.initiator_avatar) {
+      } else if (!record.initiator_avatar || isPlaceholderCallAvatar(record.initiator_avatar)) {
         const dirFallbackAvatar = await resolveDirectoryAvatarFallback({
           phone: record.initiator_phone,
+          email: body.initiator_email || body.email,
           name: displayName,
         })
         if (dirFallbackAvatar) record.initiator_avatar = dirFallbackAvatar
       }
+      const upsertInitAvatarChanged = Boolean(
+        record.initiator_avatar && record.initiator_avatar !== prevUpsertInitAvatar
+      )
 
       const updates: any[] = []
       if (body.invited_member) updates.push(body.invited_member)
@@ -2248,7 +2312,10 @@ export async function POST(req: NextRequest) {
           initiator_avatar: record.initiator_avatar,
           device_id: "host-signaling",
           display_name: displayName,
-          avatar: incomingUpsertAvatar || record.initiator_avatar,
+          avatar:
+            pickRealCallAvatar(incomingUpsertAvatar, record.initiator_avatar) ||
+            incomingUpsertAvatar ||
+            record.initiator_avatar,
           role: "Host · Calling",
           device_label: "ConnectLn WebRTC",
           phone: record.initiator_phone,
@@ -2268,16 +2335,22 @@ export async function POST(req: NextRequest) {
           e2ee_media_fingerprint: "7749 2210 8841 3390",
         }
         record.participants.push(hostParticipantToPush)
-      } else if (incomingUpsertAvatar && !record.participants[hostIdx].avatar) {
-        record.participants[hostIdx].avatar = incomingUpsertAvatar
-        record.participants[hostIdx].initiator_avatar = record.initiator_avatar
-        hostParticipantToPush = record.participants[hostIdx]
+      } else {
+        const bestHostAvatar = pickRealCallAvatar(incomingUpsertAvatar, record.initiator_avatar)
+        if (bestHostAvatar && bestHostAvatar !== record.participants[hostIdx].avatar) {
+          record.participants[hostIdx].avatar = bestHostAvatar
+          record.participants[hostIdx].initiator_avatar = record.initiator_avatar || bestHostAvatar
+          hostParticipantToPush = record.participants[hostIdx]
+        } else if (upsertInitAvatarChanged) {
+          record.participants[hostIdx].initiator_avatar = record.initiator_avatar
+          hostParticipantToPush = record.participants[hostIdx]
+        }
       }
 
-      if (changed || hostParticipantToPush) {
+      if (changed || hostParticipantToPush || upsertInitAvatarChanged) {
         record.state_version += 1
         await Promise.all([
-          changed
+          changed || upsertInitAvatarChanged
             ? pushCloudInvitedRoster(
                 callId,
                 record.invited_roster,
@@ -2486,6 +2559,10 @@ export async function POST(req: NextRequest) {
           ? record.participants[existingIdx].phone
           : undefined
 
+      const prevInitAvatar = record.initiator_avatar
+      const prevParticipantAvatar =
+        existingIdx >= 0 ? record.participants[existingIdx].avatar : undefined
+
       const participantAvatarFromBody = sanitizeCallAvatar(body.avatar || body.caller_avatar)
       const isInitiatorActor =
         !body.is_answering_recipient &&
@@ -2493,29 +2570,46 @@ export async function POST(req: NextRequest) {
       const explicitInitAvatar = sanitizeCallAvatar(
         body.initiator_avatar || (isInitiatorActor ? participantAvatarFromBody : undefined)
       )
-      if (explicitInitAvatar) {
+      if (
+        explicitInitAvatar &&
+        (!record.initiator_avatar || !isPlaceholderCallAvatar(explicitInitAvatar))
+      ) {
         record.initiator_avatar = explicitInitAvatar
       } else if (
-        !record.initiator_avatar &&
-        (action === "create" || (isInitiatorActor && existingIdx < 0))
+        (!record.initiator_avatar || isPlaceholderCallAvatar(record.initiator_avatar)) &&
+        (action === "create" || action === "join" || Boolean(body.reopen) || (isInitiatorActor && existingIdx < 0))
       ) {
         const dirFallback = await resolveDirectoryAvatarFallback({
           phone: record.initiator_phone || participantPhone,
+          email: body.initiator_email || body.email,
           name: record.initiator_name || displayName,
         })
         if (dirFallback) record.initiator_avatar = dirFallback
       }
 
       const resolvedParticipantAvatar =
-        participantAvatarFromBody ||
-        (existingIdx >= 0 ? record.participants[existingIdx].avatar : undefined) ||
-        (isInitiatorActor ? record.initiator_avatar : undefined) ||
-        (existingIdx < 0
+        pickRealCallAvatar(
+          participantAvatarFromBody,
+          prevParticipantAvatar,
+          isInitiatorActor ? record.initiator_avatar : undefined
+        ) ||
+        (existingIdx < 0 || action === "create" || action === "join" || Boolean(body.reopen)
           ? await resolveDirectoryAvatarFallback({
               phone: participantPhone,
+              email: body.email,
               name: displayName,
             })
-          : undefined)
+          : undefined) ||
+        participantAvatarFromBody ||
+        prevParticipantAvatar ||
+        (isInitiatorActor ? record.initiator_avatar : undefined)
+
+      const initAvatarChanged = Boolean(
+        record.initiator_avatar && record.initiator_avatar !== prevInitAvatar
+      )
+      const avatarChanged = Boolean(
+        resolvedParticipantAvatar && resolvedParticipantAvatar !== prevParticipantAvatar
+      )
 
       if (body.clear_host_mute === true && Array.isArray(record.muted_keys)) {
         const selfKeys = new Set(
@@ -2714,7 +2808,13 @@ export async function POST(req: NextRequest) {
         pushCloudCallParticipant(
           callId,
           updatedParticipant,
-          existingIdx < 0 || action === "join" || action === "create" || rosterChanged || peerIdChanged
+          existingIdx < 0 ||
+            action === "join" ||
+            action === "create" ||
+            rosterChanged ||
+            peerIdChanged ||
+            avatarChanged ||
+            initAvatarChanged
         ).catch(() => {}),
         stageChanged
           ? pushCloudSharedStage(callId, record.shared_stage || null, action === "share_stage").catch(() => {})
@@ -2722,7 +2822,7 @@ export async function POST(req: NextRequest) {
         chatChanged
           ? pushCloudSharedMessages(callId, record.shared_messages, true).catch(() => {})
           : Promise.resolve(),
-        rosterChanged
+        rosterChanged || initAvatarChanged
           ? pushCloudInvitedRoster(
               callId,
               record.invited_roster,

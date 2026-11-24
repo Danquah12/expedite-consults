@@ -6,6 +6,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -13,10 +15,14 @@ import android.os.Build;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.Person;
+import androidx.core.graphics.drawable.IconCompat;
 
 import com.capacitorjs.plugins.pushnotifications.MessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Map;
 
 /**
@@ -35,6 +41,45 @@ public class ConnectLnMessagingService extends MessagingService {
             return;
         }
         super.onMessageReceived(message);
+    }
+
+    private Bitmap fetchCallerAvatarBitmap(String avatarUrl) {
+        if (avatarUrl == null) return null;
+        String cleanUrl = avatarUrl.trim();
+        if (cleanUrl.isEmpty()) return null;
+        if (cleanUrl.startsWith("/")) {
+            cleanUrl = "https://conectln.com" + cleanUrl;
+        }
+        if (!cleanUrl.startsWith("https://") && !cleanUrl.startsWith("http://")) {
+            return null;
+        }
+        HttpURLConnection conn = null;
+        InputStream in = null;
+        try {
+            URL url = new URL(cleanUrl);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setInstanceFollowRedirects(true);
+            conn.setConnectTimeout(1500);
+            conn.setReadTimeout(1500);
+            conn.connect();
+            if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                return null;
+            }
+            in = conn.getInputStream();
+            return BitmapFactory.decodeStream(in);
+        } catch (Exception ignored) {
+            return null;
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (Exception ignored) {
+                }
+            }
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
     }
 
     private void showIncomingCall(Map<String, String> data) {
@@ -78,10 +123,15 @@ public class ConnectLnMessagingService extends MessagingService {
         decline.putExtra("callId", callId);
         PendingIntent declinePi = PendingIntent.getBroadcast(ctx, id + 1, decline, flags);
 
-        Person callerPerson = new Person.Builder()
+        Bitmap callerBitmap = fetchCallerAvatarBitmap(data.get("callerAvatar"));
+
+        Person.Builder personBuilder = new Person.Builder()
                 .setName(caller)
-                .setImportant(true)
-                .build();
+                .setImportant(true);
+        if (callerBitmap != null) {
+            personBuilder.setIcon(IconCompat.createWithBitmap(callerBitmap));
+        }
+        Person callerPerson = personBuilder.build();
 
         NotificationCompat.CallStyle callStyle = NotificationCompat.CallStyle
                 .forIncomingCall(callerPerson, declinePi, answerPi)
@@ -105,6 +155,9 @@ public class ConnectLnMessagingService extends MessagingService {
                 .setSound(ringtone)
                 .setFullScreenIntent(answerPi, true)
                 .setContentIntent(answerPi);
+        if (callerBitmap != null) {
+            b.setLargeIcon(callerBitmap);
+        }
 
         Notification n = b.build();
         n.flags |= Notification.FLAG_INSISTENT; // keep ringing until answered/declined/timeout

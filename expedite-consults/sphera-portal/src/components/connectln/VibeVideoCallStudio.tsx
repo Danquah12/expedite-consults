@@ -47,12 +47,19 @@ import {
   startOutgoingCallerRingbackTone,
   stopOutgoingCallerRingbackTone,
 } from "@/lib/connectin-background-ring"
+import {
+  isPlaceholderCallAvatar,
+  pickBestCallAvatar,
+  pickRealCallAvatar,
+  resolveAndCompressLocalCallerAvatar,
+} from "@/lib/connectin-avatar-signal"
 
 export interface CallParticipantTile {
   id: string
   name: string
   role: string
   device: string
+  avatar?: string
   isLocal?: boolean
   isRealRemotePeer?: boolean
   remotePeerId?: string
@@ -674,6 +681,8 @@ export interface VibeVideoCallStudioProps {
   initialMode?: "audio" | "video" | "screenshare"
   callTriggerNonce?: number
   currentUserName?: string
+  currentUserAvatar?: string
+  currentUserEmail?: string
   initialCallRoomId?: string | null
   canReturnToMessaging?: boolean
   onReturnToMessagingHuddle?: (activeMode: "audio" | "video" | "screenshare") => void
@@ -813,6 +822,8 @@ export function VibeVideoCallStudio({
   initialMode = "video",
   callTriggerNonce = 0,
   currentUserName = "You (Verified Device)",
+  currentUserAvatar,
+  currentUserEmail,
   initialCallRoomId = null,
   canReturnToMessaging = false,
   onReturnToMessagingHuddle,
@@ -833,6 +844,17 @@ export function VibeVideoCallStudio({
   const isHandingOffRef = useRef<boolean>(false)
   const liveStreamPeersCountRef = useRef<number>(0)
   const studioMountedAtMsRef = useRef<number>(Date.now())
+  const studioCallerAvatarRef = useRef<string | undefined>(
+    (() => {
+      const real = pickRealCallAvatar(currentUserAvatar)
+      if (!real) return undefined
+      if (!real.startsWith("data:") || real.length <= 65000) return real
+      return undefined
+    })()
+  )
+  const [resolvedLocalAvatar, setResolvedLocalAvatar] = useState<string | undefined>(() =>
+    pickRealCallAvatar(currentUserAvatar)
+  )
 
   // Unique per-tab participant ID so Host and Friend on different devices or tabs never collide
   const [localParticipantId] = useState<string>(() => {
@@ -1069,6 +1091,7 @@ export function VibeVideoCallStudio({
       name: currentUserName,
       role: "Host · Local Camera & Mic",
       device: "Computer Webcam",
+      avatar: pickRealCallAvatar(currentUserAvatar),
       isLocal: true,
       isMuted: false,
       isVideoOn: true,
@@ -1080,6 +1103,34 @@ export function VibeVideoCallStudio({
       avatarGradient: "from-emerald-600 to-teal-700",
     },
   ])
+
+  useEffect(() => {
+    let active = true
+    const immediateReal = pickRealCallAvatar(currentUserAvatar)
+    if (immediateReal) {
+      setResolvedLocalAvatar(immediateReal)
+      if (!immediateReal.startsWith("data:") || immediateReal.length <= 65000) {
+        studioCallerAvatarRef.current = immediateReal
+      }
+      setParticipants((prev) =>
+        prev.map((p) => (p.isLocal ? { ...p, avatar: pickBestCallAvatar(immediateReal, p.avatar) } : p))
+      )
+    }
+    void resolveAndCompressLocalCallerAvatar(
+      { name: currentUserName, email: currentUserEmail, avatar: currentUserAvatar },
+      60000
+    ).then((compressed) => {
+      if (!active || !compressed) return
+      studioCallerAvatarRef.current = compressed
+      setResolvedLocalAvatar(compressed)
+      setParticipants((prev) =>
+        prev.map((p) => (p.isLocal ? { ...p, avatar: compressed } : p))
+      )
+    })
+    return () => {
+      active = false
+    }
+  }, [currentUserAvatar, currentUserName, currentUserEmail])
 
   const [waitingGuests, setWaitingGuests] = useState<WaitingRoomGuest[]>([])
 
@@ -2631,6 +2682,7 @@ export function VibeVideoCallStudio({
       participantId: string
       peerId?: string
       name: string
+      avatar?: string
       role?: string
       device?: string
       isMuted?: boolean
@@ -2698,6 +2750,7 @@ export function VibeVideoCallStudio({
           info.role ||
           (existingTile?.isRealRemotePeer ? existingTile.role : "Connected Participant · Live Video")
         const nextDevice = info.device || existingTile?.device || "Remote WebRTC Camera"
+        const nextAvatar = pickBestCallAvatar(info.avatar, existingTile?.avatar)
         const nextPeerId = info.peerId || existingTile?.remotePeerId
         const nextVirtualBgId =
           info.virtualBgId !== undefined
@@ -2721,6 +2774,7 @@ export function VibeVideoCallStudio({
           existingTile.isRealRemotePeer &&
           existingTile.id === info.participantId &&
           existingTile.name === finalDisplayName &&
+          existingTile.avatar === nextAvatar &&
           existingTile.role === nextRole &&
           existingTile.device === nextDevice &&
           existingTile.remotePeerId === nextPeerId &&
@@ -2739,6 +2793,7 @@ export function VibeVideoCallStudio({
           name: finalDisplayName,
           role: nextRole,
           device: nextDevice,
+          avatar: nextAvatar,
           isLocal: false,
           isRealRemotePeer: true,
           remotePeerId: nextPeerId,
@@ -3502,7 +3557,7 @@ export function VibeVideoCallStudio({
       heartbeatTimer = setTimeout(sendHeartbeat, delayMs)
     }
 
-    const sendHeartbeat = () => {
+    const sendHeartbeat = async () => {
       if (!mounted) return
       if (inFlightHeartbeatRef.current) {
         scheduleNextHeartbeat()
@@ -3518,6 +3573,30 @@ export function VibeVideoCallStudio({
       const controller = new AbortController()
       const abortTimer = setTimeout(() => controller.abort(), 4500)
 
+      if (
+        shouldReopen &&
+        (!studioCallerAvatarRef.current || isPlaceholderCallAvatar(studioCallerAvatarRef.current))
+      ) {
+        const awaitedAvatar = await resolveAndCompressLocalCallerAvatar(
+          { name: currentUserName, email: currentUserEmail, avatar: currentUserAvatar },
+          60000
+        ).catch(() => undefined)
+        if (!mounted) {
+          clearTimeout(abortTimer)
+          inFlightHeartbeatRef.current = false
+          return
+        }
+        if (awaitedAvatar) {
+          studioCallerAvatarRef.current = awaitedAvatar
+          setResolvedLocalAvatar((prev) => prev || awaitedAvatar)
+        }
+      }
+
+      const studioLinkedPhone =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("connectln_my_whatsapp_phone_v1") || ""
+          : ""
+
       fetch("/api/v1/calls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3532,6 +3611,14 @@ export function VibeVideoCallStudio({
           call_type: initialMode,
           target_recipient_name: !isInvitedGuestLink ? conversationName : undefined,
           display_name: st.localDisplayName,
+          avatar: studioCallerAvatarRef.current || undefined,
+          initiator_avatar: !isInvitedGuestLink
+            ? studioCallerAvatarRef.current || undefined
+            : undefined,
+          email: currentUserEmail || undefined,
+          initiator_email: !isInvitedGuestLink ? currentUserEmail || undefined : undefined,
+          participant_phone: studioLinkedPhone || undefined,
+          initiator_phone: !isInvitedGuestLink ? studioLinkedPhone || undefined : undefined,
           role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
           device_label: st.activeCameraLabel,
           is_muted: st.isMicMuted,
@@ -3602,6 +3689,12 @@ export function VibeVideoCallStudio({
                   participantId: p.user_id,
                   peerId: p.peer_id,
                   name: p.display_name,
+                  avatar:
+                    typeof p.avatar === "string" && p.avatar.trim()
+                      ? p.avatar.trim()
+                      : !p.is_answering_recipient && typeof data.call.initiator_avatar === "string"
+                      ? data.call.initiator_avatar
+                      : undefined,
                   role: p.role,
                   device: p.device_label || "Remote WebRTC Device",
                   isMuted: p.is_muted,
@@ -5545,17 +5638,36 @@ export function VibeVideoCallStudio({
                   <div className="flex-1 flex items-center justify-center relative z-10 px-4 py-2">
                     {!showLiveVideoInTile && !showRemoteFriendLiveVideo && (
                       <div className="flex flex-col items-center justify-center text-center space-y-2.5">
-                        <div
-                          className={`h-16 w-16 rounded-3xl bg-gradient-to-br ${part.avatarGradient} flex items-center justify-center text-lg font-extrabold text-white shadow-lg ring-2 ${
-                            part.isSpeaking && !part.isMuted ? "ring-emerald-400" : "ring-white/20"
-                          }`}
-                        >
-                          {part.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .slice(0, 2)}
-                        </div>
+                        {(() => {
+                          const tileAvatarSrc = isLocalTile
+                            ? pickBestCallAvatar(resolvedLocalAvatar, part.avatar)
+                            : part.avatar
+                          return (
+                            <div
+                              className={`relative h-16 w-16 overflow-hidden rounded-3xl bg-gradient-to-br ${part.avatarGradient} flex items-center justify-center text-lg font-extrabold text-white shadow-lg ring-2 ${
+                                part.isSpeaking && !part.isMuted ? "ring-emerald-400" : "ring-white/20"
+                              }`}
+                            >
+                              {tileAvatarSrc ? (
+                                <img
+                                  src={tileAvatarSrc}
+                                  alt={part.name}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none"
+                                  }}
+                                  className="absolute inset-0 h-full w-full object-cover z-10"
+                                />
+                              ) : null}
+                              <span className="select-none">
+                                {part.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .slice(0, 2)}
+                              </span>
+                            </div>
+                          )
+                        })()}
 
                         {isLocalTile ? (
                           <button
