@@ -42,6 +42,7 @@ import {
 } from "@/lib/skilled-trades-learn-by-doing-data"
 import { UserProfile } from "@/lib/connectln-data"
 import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
+import { ClassroomValueWorkspace } from "./ClassroomValueWorkspace"
 
 export type ShelfCategoryFilter =
   | "All"
@@ -525,9 +526,11 @@ export function LinkedInLearningShelfHub({
   const [focusedLessonId, setFocusedLessonId] = useState<string | null>(
     initialLessonId || null
   )
-  const [modalTab, setModalTab] = useState<"overview" | "practice" | "quiz" | "upnext">(
-    "overview"
-  )
+  const [modalPlaybackSeconds, setModalPlaybackSeconds] = useState<number>(0)
+  const [seekRequest, setSeekRequest] = useState<{
+    seconds: number
+    nonce: number
+  } | null>(null)
   const [showBusinessPath, setShowBusinessPath] = useState<boolean>(false)
   const [showRoadmap, setShowRoadmap] = useState<boolean>(false)
   const [sourceFilter, setSourceFilter] = useState<
@@ -546,15 +549,18 @@ export function LinkedInLearningShelfHub({
   const [uploadProgressPct, setUploadProgressPct] = useState<number>(0)
   const [isPublishingLesson, setIsPublishingLesson] = useState<boolean>(false)
   const [uploadStatusMsg, setUploadStatusMsg] = useState<string | null>(null)
-  const modalPhotoInputRef = useRef<HTMLInputElement | null>(null)
   const hubTopRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (initialLessonId) {
       setFocusedLessonId(initialLessonId)
-      setModalTab("overview")
     }
   }, [initialLessonId])
+
+  useEffect(() => {
+    setModalPlaybackSeconds(0)
+    setSeekRequest(null)
+  }, [focusedLessonId])
 
   useEffect(() => {
     if (recommendedCategory !== "All") {
@@ -725,7 +731,6 @@ export function LinkedInLearningShelfHub({
 
   const handleOpenClassroomModal = (lesson: LearnByDoingLesson) => {
     setFocusedLessonId(lesson.id)
-    setModalTab("overview")
     onWatchLesson(lesson)
   }
 
@@ -1674,6 +1679,8 @@ export function LinkedInLearningShelfHub({
                         autoPlay={true}
                         initialMuted={false}
                         playerId={`lbd-player-${focusedLesson.id}`}
+                        onPlaybackTimeChange={(sec) => setModalPlaybackSeconds(sec)}
+                        seekRequest={seekRequest}
                         className="w-full"
                       />
                     </div>
@@ -1771,290 +1778,48 @@ export function LinkedInLearningShelfHub({
                   )}
                 </div>
 
-                {/* Right Column: 4-Tab Classroom Study Panel */}
-                <div className="lg:col-span-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/40 flex flex-col overflow-hidden">
-                  {/* Tab Switcher */}
-                  <div className="grid grid-cols-4 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-[11px] font-bold">
-                    {(
-                      [
-                        { id: "overview", label: "Overview" },
-                        { id: "practice", label: "Practice" },
-                        { id: "quiz", label: "Quiz" },
-                        { id: "upnext", label: "Up Next" },
-                      ] as const
-                    ).map((tb) => (
-                      <button
-                        key={tb.id}
-                        type="button"
-                        onClick={() => setModalTab(tb.id)}
-                        className={`py-2.5 px-2 text-center border-b-2 transition-colors cursor-pointer ${
-                          modalTab === tb.id
-                            ? "border-[#01754F] text-[#01754F] dark:text-emerald-400 bg-emerald-50/30 dark:bg-emerald-950/20"
-                            : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-                        }`}
-                      >
-                        {tb.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Active Tab Content */}
-                  <div className="p-4 space-y-4 overflow-y-auto max-h-[520px] flex-1">
-                    {modalTab === "overview" && (
-                      <div className="space-y-4">
-                        <div className="space-y-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                            Lesson Overview
-                          </span>
-                          <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">
-                            {view.description}
-                          </p>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
-                            Skills Covered
-                          </span>
-                          <div className="flex flex-wrap gap-1.5">
-                            {view.skills.map((sk) => (
-                              <span
-                                key={sk}
-                                className="rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800 px-2.5 py-0.5 text-[11px] font-semibold text-[#0A66C2] dark:text-sky-300 inline-flex items-center gap-1"
-                              >
-                                <CheckCircle2 className="h-3 w-3 text-[#01754F] dark:text-emerald-400" />
-                                <span>{sk}</span>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        {focusedLesson.detailedStudyNotes &&
-                          focusedLesson.detailedStudyNotes.length > 0 && (
-                            <div className="space-y-2">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1">
-                                <BookOpen className="h-3 w-3 text-[#0A66C2]" />
-                                <span>Detailed Study Notes</span>
-                              </span>
-                              <div className="space-y-1.5">
-                                {focusedLesson.detailedStudyNotes.map((note, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-2.5 text-[11.5px] text-zinc-700 dark:text-zinc-300 leading-relaxed flex gap-2"
-                                  >
-                                    <span className="h-4 w-4 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
-                                      {idx + 1}
-                                    </span>
-                                    <span>{note}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                        {focusedLesson.fieldTip && (
-                          <div className="rounded-lg bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-3 text-[11.5px] text-emerald-950 dark:text-emerald-200">
-                            <strong className="block mb-0.5">💡 Pro Field Tip</strong>
-                            {focusedLesson.fieldTip}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {modalTab === "practice" && (
-                      <div className="space-y-3">
-                        <div className="rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3 space-y-1.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-bold text-amber-950 dark:text-amber-200 inline-flex items-center gap-1">
-                              <FileText className="h-3.5 w-3.5" />
-                              <span>Guided Practice Activity</span>
-                            </span>
-                            {t.practiceCompletedAt && (
-                              <span className="rounded-full bg-[#01754F] text-white px-2 py-0.5 text-[10px] font-bold">
-                                Logged ✓
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">
-                            {view.practice}
-                          </p>
-                          <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
-                            {view.deliverablePrompt}
-                          </p>
-                        </div>
-
-                        <textarea
-                          rows={4}
-                          value={practiceDrafts[focusedLesson.id] ?? t.practiceNotes ?? ""}
-                          onChange={(e) =>
-                            setPracticeDrafts((prev) => ({
-                              ...prev,
-                              [focusedLesson.id]: e.target.value,
-                            }))
-                          }
-                          placeholder="Write your hands-on practice deliverable notes here..."
-                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-2.5 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-[#0A66C2]"
-                        />
-
-                        {t.practicePhotoDataUrl && (
-                          <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-900 p-2 space-y-1">
-                            <p className="text-[10px] font-semibold text-zinc-500 truncate">
-                              Attached photo: {t.practicePhotoName}
-                            </p>
-                            <img
-                              src={t.practicePhotoDataUrl}
-                              alt="Practice deliverable"
-                              className="w-full max-h-36 object-cover rounded"
-                            />
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <input
-                            ref={modalPhotoInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => onPracticePhotoUpload(focusedLesson.id, e)}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => modalPhotoInputRef.current?.click()}
-                            className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 hover:border-[#0A66C2] inline-flex items-center gap-1 cursor-pointer"
-                          >
-                            <Camera className="h-3.5 w-3.5" />
-                            <span>Attach Photo</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => onSavePractice(focusedLesson.id)}
-                            className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-1.5 text-[11px] font-bold cursor-pointer"
-                          >
-                            Save Practice Deliverable
-                          </button>
-                        </div>
-
-                        {practiceSavedBanner[focusedLesson.id] && (
-                          <p className="text-[11px] font-bold text-[#01754F] dark:text-emerald-400">
-                            ✓ Practice deliverable saved cleanly (+33% progress)
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {modalTab === "quiz" && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                          <HelpCircle className="h-4 w-4 text-[#0A66C2]" />
-                          <span>Mastery Knowledge Check</span>
-                        </div>
-                        <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 leading-relaxed">
-                          {view.knowledgeCheck.question}
-                        </p>
-
-                        <div className="space-y-2">
-                          {view.knowledgeCheck.options.map((opt, idx) => {
-                            const selected = t.knowledgeCheckSelectedOption === idx
-                            const isCorrect = idx === view.knowledgeCheck.correctIndex
-                            return (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() =>
-                                  onSelectKnowledgeAnswer(
-                                    focusedLesson,
-                                    idx,
-                                    view.knowledgeCheck.correctIndex
-                                  )
-                                }
-                                className={`w-full text-left rounded-xl p-2.5 text-xs border transition-colors cursor-pointer ${
-                                  selected && isCorrect
-                                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-200 font-bold"
-                                    : selected
-                                      ? "border-rose-400 bg-rose-50 dark:bg-rose-950/50 text-rose-900 dark:text-rose-200"
-                                      : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#0A66C2] text-zinc-800 dark:text-zinc-200"
-                                }`}
-                              >
-                                {opt}
-                              </button>
-                            )
-                          })}
-                        </div>
-
-                        {t.knowledgeCheckSelectedOption !== undefined && (
-                          <div
-                            className={`rounded-xl p-3 text-[11.5px] border ${
-                              t.knowledgeCheckPassed
-                                ? "bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-300 text-emerald-900 dark:text-emerald-200"
-                                : "bg-amber-50/80 dark:bg-amber-950/30 border-amber-300 text-amber-900 dark:text-amber-200"
-                            }`}
-                          >
-                            <strong className="block mb-0.5">
-                              {t.knowledgeCheckPassed
-                                ? "✓ Correct! (+33% Knowledge Check complete)"
-                                : "Try again — review the reasoning below:"}
-                            </strong>
-                            {view.knowledgeCheck.explanation}
-                          </div>
-                        )}
-
-                        {t.isCompleted && onClaimCertificate && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onClaimCertificate(
-                                `${view.title} (${SKILLED_TRADES_COLLECTION_META.title})`
-                              )
-                            }
-                            className="w-full rounded-full bg-[#01754F] hover:bg-[#015e3f] text-white py-2 px-4 text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
-                          >
-                            <Award className="h-4 w-4" />
-                            <span>Claim Verified Completion Certificate</span>
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {modalTab === "upnext" && (
-                      <div className="space-y-2.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
-                          Up Next in {focusedLesson.category} &amp; Related Fields
-                        </span>
-                        {upNextLessons.length === 0 ? (
-                          <p className="text-xs text-zinc-500">
-                            No additional lessons queued in this track.
-                          </p>
-                        ) : (
-                          upNextLessons.map((nextL) => {
-                            const nv = getLessonVariantView(nextL, lesson6Variant)
-                            return (
-                              <button
-                                key={nextL.id}
-                                type="button"
-                                onClick={() => handleOpenClassroomModal(nextL)}
-                                className="w-full flex items-center gap-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-[#0A66C2] p-2 text-left transition-colors cursor-pointer"
-                              >
-                                <img
-                                  src={nv.thumbnailUrl}
-                                  alt={nv.title}
-                                  className="w-20 h-12 rounded-md object-cover shrink-0 bg-zinc-100"
-                                />
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-[10px] font-semibold text-zinc-500 truncate">
-                                    {nextL.category} · {formatDurationPill(nv.duration)}
-                                  </p>
-                                  <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 line-clamp-2">
-                                    {nv.title}
-                                  </p>
-                                </div>
-                              </button>
-                            )
-                          })
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                {/* Right Column: Clutter-Free 5-Tab Classroom Value Workspace */}
+                <ClassroomValueWorkspace
+                  key={focusedLesson.id}
+                  lesson={focusedLesson}
+                  view={view}
+                  telemetry={t}
+                  user={user}
+                  currentLanguage={currentLanguage}
+                  currentPlaybackSeconds={modalPlaybackSeconds}
+                  onSeekToSeconds={(seconds) =>
+                    setSeekRequest((prev) => ({
+                      seconds,
+                      nonce: (prev?.nonce || 0) + 1,
+                    }))
+                  }
+                  practiceDraft={practiceDrafts[focusedLesson.id] ?? t.practiceNotes ?? ""}
+                  onChangePracticeDraft={(val) =>
+                    setPracticeDrafts((prev) => ({
+                      ...prev,
+                      [focusedLesson.id]: val,
+                    }))
+                  }
+                  practiceSavedBanner={Boolean(practiceSavedBanner[focusedLesson.id])}
+                  onPracticePhotoUpload={(e) => onPracticePhotoUpload(focusedLesson.id, e)}
+                  onSavePractice={() => onSavePractice(focusedLesson.id)}
+                  onSelectKnowledgeAnswer={(optionIdx, correctIdx) =>
+                    onSelectKnowledgeAnswer(focusedLesson, optionIdx, correctIdx)
+                  }
+                  onClaimCertificate={onClaimCertificate}
+                  allLessons={lessons}
+                  telemetryMap={telemetryMap}
+                  upNextLessons={upNextLessons}
+                  onOpenLesson={handleOpenClassroomModal}
+                  getUpNextPreview={(nextL) => {
+                    const nv = getLessonVariantView(nextL, lesson6Variant)
+                    return {
+                      title: nv.title,
+                      duration: nv.duration,
+                      thumbnailUrl: nv.thumbnailUrl,
+                    }
+                  }}
+                />
               </div>
             </div>
           </div>

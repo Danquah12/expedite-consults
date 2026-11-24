@@ -89,6 +89,8 @@ interface ConnectLnStudioPlayerProps {
   className?: string
   playerId?: string
   onExclusiveStop?: () => void
+  onPlaybackTimeChange?: (seconds: number, durationSeconds: number) => void
+  seekRequest?: { seconds: number; nonce: number } | null
 }
 
 function inferProviderFromUrls(
@@ -191,6 +193,8 @@ export function ConnectLnStudioPlayer({
   className = "w-full",
   playerId,
   onExclusiveStop,
+  onPlaybackTimeChange,
+  seekRequest = null,
 }: ConnectLnStudioPlayerProps) {
   const { language } = useLanguage()
   const effectiveProvider = inferProviderFromUrls(sourceProvider, directVideoUrl, embedUrl, youtubeId)
@@ -218,6 +222,9 @@ export function ConnectLnStudioPlayer({
   const effectivePlayerId = playerId || generatedIdRef.current
   const onExclusiveStopRef = useRef(onExclusiveStop)
   onExclusiveStopRef.current = onExclusiveStop
+  const onPlaybackTimeChangeRef = useRef(onPlaybackTimeChange)
+  onPlaybackTimeChangeRef.current = onPlaybackTimeChange
+  const lastReportedSecRef = useRef<number>(-1)
 
   const [isPlaying, setIsPlaying] = useState<boolean>(autoPlay)
   const [isStoppedByOther, setIsStoppedByOther] = useState<boolean>(false)
@@ -408,6 +415,37 @@ export function ConnectLnStudioPlayer({
     }, 1000)
     return () => clearInterval(timer)
   }, [isPlaying, isStoppedByOther, effectiveProvider, isHtml5Direct, duration])
+
+  // Notify parent classroom workspace only when the integer second changes
+  useEffect(() => {
+    const wholeSec = Math.max(0, Math.floor(currentTime))
+    const wholeDur = Math.max(0, Math.floor(duration))
+    if (wholeSec !== lastReportedSecRef.current) {
+      lastReportedSecRef.current = wholeSec
+      onPlaybackTimeChangeRef.current?.(wholeSec, wholeDur)
+    }
+  }, [currentTime, duration])
+
+  // Seek playback on external timestamp note click using official APIs only
+  useEffect(() => {
+    if (!seekRequest) return
+    const targetSec = Math.max(0, Math.floor(seekRequest.seconds))
+    notifyExclusiveVideoPlay(effectivePlayerId)
+    setIsStoppedByOther(false)
+    if (isHtml5Direct && html5VideoRef.current) {
+      try {
+        html5VideoRef.current.currentTime = targetSec
+        html5VideoRef.current.play().catch(() => {})
+      } catch {
+        // ignore seek error before metadata load
+      }
+    } else if (effectiveProvider === "youtube") {
+      sendYtCommand("seekTo", [targetSec, true])
+      sendYtCommand("playVideo")
+    }
+    setCurrentTime(targetSec)
+    setIsPlaying(true)
+  }, [seekRequest?.nonce, seekRequest?.seconds, effectivePlayerId, effectiveProvider, isHtml5Direct, sendYtCommand])
 
   // Computed official embed URL for iframe-based non-YouTube providers
   const resolvedExternalEmbedSrc = useMemo(() => {
