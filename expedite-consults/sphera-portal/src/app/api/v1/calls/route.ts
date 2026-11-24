@@ -5,7 +5,12 @@ import path from "path"
 import os from "os"
 import { recordGlobalUserActivity } from "@/lib/connectin-cloud-sync"
 import { publishToPhones } from "@/lib/connectin-realtime"
-import { firebaseKvSetItem, firebaseKvListItems, firebaseKvDeleteItem } from "@/lib/connectin-firebase-kv"
+import {
+  firebaseKvGetItem,
+  firebaseKvSetItem,
+  firebaseKvListItems,
+  firebaseKvDeleteItem,
+} from "@/lib/connectin-firebase-kv"
 import {
   lookupWhatsAppRecipient,
   sendIncomingCallWebPush,
@@ -402,6 +407,42 @@ function ensureTeamsState(record: CommCallRecord, nowMs = Date.now()): CommTeams
     record.teams_state = createDefaultTeamsState(nowMs)
   }
   return record.teams_state
+}
+
+function mergeTeamsStateSnapshot(
+  record: CommCallRecord,
+  incoming: Partial<CommTeamsState> | undefined,
+  nowMs = Date.now()
+): void {
+  if (!incoming) return
+  const remoteTs = Number(incoming.updated_at_ms) || 0
+  const localTs = record.teams_state?.updated_at_ms || 0
+  if (record.teams_state && remoteTs < localTs) return
+
+  const attMap = new Map<string, CommTeamsState["attendance_log"][number]>()
+  for (const a of [...(record.teams_state?.attendance_log || []), ...(incoming.attendance_log || [])]) {
+    if (!a || !a.user_id) continue
+    const prev = attMap.get(a.user_id)
+    if (!prev) {
+      attMap.set(a.user_id, { ...a })
+    } else {
+      const newer = (a.last_seen_ms || 0) >= (prev.last_seen_ms || 0) ? a : prev
+      attMap.set(a.user_id, {
+        user_id: a.user_id,
+        name: newer.name || prev.name || a.name,
+        joined_at_ms: Math.min(prev.joined_at_ms || nowMs, a.joined_at_ms || nowMs),
+        last_seen_ms: Math.max(prev.last_seen_ms || 0, a.last_seen_ms || 0),
+        left_at_ms: newer.left_at_ms,
+      })
+    }
+  }
+
+  record.teams_state = {
+    ...createDefaultTeamsState(remoteTs || nowMs),
+    ...incoming,
+    reactions: (incoming.reactions || []).filter((r: any) => nowMs - (r?.ts || 0) < 8000),
+    attendance_log: Array.from(attMap.values()).slice(-64),
+  }
 }
 
 function upsertAttendanceEntry(
@@ -988,16 +1029,13 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
       for (const tData of teamsItems) {
         const remoteTs = Number(tData.updated_at_ms || tData.teams_state?.updated_at_ms) || 0
         if (nowMs - remoteTs > 3600000) continue
-        const record = ACTIVE_CALLS_STORE.get(tData.call_id)
+        if (isCallTombstoned(tData.call_id, nowMs)) continue
+        let record = ACTIVE_CALLS_STORE.get(tData.call_id)
+        if (!record) {
+          record = ensureCallRoom(tData.call_id, "host", "ConnectLn Call", tData.call_id)
+        }
         if (record && record.state !== "ENDED" && tData.teams_state) {
-          const localTs = record.teams_state?.updated_at_ms || 0
-          if (remoteTs >= localTs) {
-            record.teams_state = {
-              ...createDefaultTeamsState(remoteTs),
-              ...tData.teams_state,
-              reactions: (tData.teams_state.reactions || []).filter((r: any) => nowMs - (r?.ts || 0) < 8000),
-            }
-          }
+          mergeTeamsStateSnapshot(record, tData.teams_state, nowMs)
         }
       }
     } catch {
@@ -1114,7 +1152,13 @@ function savePersistedCalls(force = false) {
       const recentInvite = (v.invited_roster || []).some(
         (m) => m.updated_at_ms && nowMs - m.updated_at_ms < 180000
       )
-      if (activeParts.length > 0 || recentInvite) {
+      const recentTeams = Boolean(
+        v.teams_state?.updated_at_ms && nowMs - v.teams_state.updated_at_ms < 180000
+      )
+      const justCreated = Boolean(
+        v.started_at && nowMs - new Date(v.started_at).getTime() < 10000
+      )
+      if (activeParts.length > 0 || recentInvite || recentTeams || justCreated) {
         obj[k] = { ...v, participants: activeParts }
       } else {
         ACTIVE_CALLS_STORE.delete(k)
@@ -1174,7 +1218,6 @@ function ensureCallRoom(callId: string, initiatorId: string, displayName: string
       shared_messages: [],
     }
     ACTIVE_CALLS_STORE.set(callId, record)
-    savePersistedCalls()
   }
   return record
 }
@@ -1850,6 +1893,13 @@ export async function POST(req: NextRequest) {
         })
       }
       const record = ensureCallRoom(sigCallId, userId, displayName, sigCallId)
+      const directTeams = await firebaseKvGetItem<any>(
+        CALLS_SYNC_MAP_NAME,
+        makeCloudTeamsKey(sigCallId)
+      ).catch(() => null)
+      if (directTeams?.teams_state) {
+        mergeTeamsStateSnapshot(record, directTeams.teams_state, nowMs)
+      }
       const ts = ensureTeamsState(record, nowMs)
       ts.reactions = (ts.reactions || []).filter((r) => nowMs - r.ts < 8000)
 
