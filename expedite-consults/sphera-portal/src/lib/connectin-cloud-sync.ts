@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import crypto from "crypto"
 import { connectinDb, UserRecord, UserProfileRecord } from "./connectin-db"
+import { firebaseKvGetItem, firebaseKvListItems, firebaseKvSetItem } from "./connectin-firebase-kv"
 
 const SYNC_MAP_NAME = "connectin_users_map_v1"
 const SYNC_DOC_NAME = "connectin_cloud_db_v1"
@@ -650,113 +651,185 @@ export function makeDmPairKey(userA: string, userB: string): string {
   return `dm_pair__${sorted[0].slice(0, 22)}__${sorted[1].slice(0, 22)}_${hash}`
 }
 
+function mergeCloudDirectMessageArrays(
+  baseMsgs: CloudDirectMessage[],
+  incomingMsgs: CloudDirectMessage[]
+): CloudDirectMessage[] {
+  const byId = new Map<string, CloudDirectMessage>()
+  for (const m of [...(baseMsgs || []), ...(incomingMsgs || [])]) {
+    if (!m || !m.id) continue
+    const prev = byId.get(m.id)
+    if (!prev) {
+      byId.set(m.id, m)
+      continue
+    }
+    const isDeleted = Boolean(prev.isDeleted || m.isDeleted)
+    const prevEdit = prev.editedAtIso || ""
+    const nextEdit = m.editedAtIso || ""
+    const usePrevEdit = !isDeleted && prevEdit && (!nextEdit || prevEdit > nextEdit)
+    byId.set(m.id, {
+      ...prev,
+      ...m,
+      isDeleted,
+      text: isDeleted ? "This message was deleted" : usePrevEdit ? prev.text : m.text,
+      editedAtIso: usePrevEdit ? prevEdit : m.editedAtIso || prev.editedAtIso,
+      readBy: Array.from(new Set([...(prev.readBy || []), ...(m.readBy || [])])),
+    })
+  }
+  return Array.from(byId.values()).sort((a, b) =>
+    (a.createdAtIso || "").localeCompare(b.createdAtIso || "")
+  )
+}
+
 /**
- * Upserts a bilateral direct message conversation into the global Twilio Sync Map (`connectin_dm_conversations_v1`)
- * so that whenever User A sends a message to User B, User B immediately receives it on any device or session.
+ * Upserts a bilateral direct message conversation into MongoDB KV (`connectin_dm_conversations_v1`)
+ * and mirrors to Twilio Sync when configured so every serverless worker and device sees edits/deletes/messages immediately.
  */
 export async function upsertCloudDirectConversation(convo: CloudDirectConversation): Promise<boolean> {
+  const key = convo.pairKey
+  const sanitizeAvatar = (av: string, fallbackName: string) =>
+    av && av.startsWith("data:") && av.length > 4000
+      ? `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fallbackName)}&backgroundColor=0a66c2`
+      : av || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fallbackName)}&backgroundColor=0a66c2`
+
+  const buildCompactConvo = (msgLimit: number, textLimit: number): CloudDirectConversation => ({
+    ...convo,
+    participantA: {
+      ...convo.participantA,
+      avatar: sanitizeAvatar(convo.participantA.avatar, convo.participantA.name),
+      headline: (convo.participantA.headline || "").slice(0, 160),
+    },
+    participantB: {
+      ...convo.participantB,
+      avatar: sanitizeAvatar(convo.participantB.avatar, convo.participantB.name),
+      headline: (convo.participantB.headline || "").slice(0, 160),
+    },
+    messages: (convo.messages || []).slice(-msgLimit).map(m => ({
+      ...m,
+      senderAvatar: sanitizeAvatar(m.senderAvatar, m.senderName),
+      senderRole: (m.senderRole || "").slice(0, 120),
+      text: (m.text || "").slice(0, textLimit),
+    })),
+  })
+
+  const compactForKv = buildCompactConvo(40, 2000)
+  const kvPromise = firebaseKvSetItem(SYNC_DM_MAP_NAME, key, compactForKv).catch(() => false)
+
   const auth = getTwilioAuthHeader()
-  if (!auth) return false
+  const twilioPromise = auth
+    ? (async (): Promise<boolean> => {
+        try {
+          const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${SYNC_DM_MAP_NAME}`
+          const serialized = JSON.stringify(buildCompactConvo(25, 600))
+          const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
+            method: "POST",
+            headers: {
+              Authorization: auth,
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({ Data: serialized }).toString(),
+          })
+          if (updateRes.ok) return true
+          if (updateRes.status === 404) {
+            await fetch("https://sync.twilio.com/v1/Services/default/Maps", {
+              method: "POST",
+              headers: {
+                Authorization: auth,
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({ UniqueName: SYNC_DM_MAP_NAME }).toString(),
+            }).catch(() => {})
 
+            const createRes = await fetch(`${baseUrl}/Items`, {
+              method: "POST",
+              headers: {
+                Authorization: auth,
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({ Key: key, Data: serialized }).toString(),
+            })
+            return createRes.ok
+          }
+          return false
+        } catch (err) {
+          console.warn("[connectin-cloud-sync] upsertCloudDirectConversation notice:", err)
+          return false
+        }
+      })()
+    : Promise.resolve(false)
+
+  const [kvOk, twilioOk] = await Promise.all([kvPromise, twilioPromise])
+  return kvOk || twilioOk
+}
+
+/**
+ * Fetches a single bilateral conversation directly by pairKey from MongoDB KV.
+ */
+export async function pullCloudDirectConversationByPairKey(
+  pairKey: string
+): Promise<CloudDirectConversation | null> {
+  const cleanKey = String(pairKey || "").trim()
+  if (!cleanKey) return null
   try {
-    const key = convo.pairKey
-    const sanitizeAvatar = (av: string, fallbackName: string) =>
-      av && av.startsWith("data:") && av.length > 4000
-        ? `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fallbackName)}&backgroundColor=0a66c2`
-        : av || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fallbackName)}&backgroundColor=0a66c2`
-
-    const compactConvo: CloudDirectConversation = {
-      ...convo,
-      participantA: {
-        ...convo.participantA,
-        avatar: sanitizeAvatar(convo.participantA.avatar, convo.participantA.name),
-        headline: (convo.participantA.headline || "").slice(0, 160)
-      },
-      participantB: {
-        ...convo.participantB,
-        avatar: sanitizeAvatar(convo.participantB.avatar, convo.participantB.name),
-        headline: (convo.participantB.headline || "").slice(0, 160)
-      },
-      // Keep last 25 messages to stay well within Twilio Sync 16KB item limit
-      messages: (convo.messages || []).slice(-25).map(m => ({
-        ...m,
-        senderAvatar: sanitizeAvatar(m.senderAvatar, m.senderName),
-        senderRole: (m.senderRole || "").slice(0, 120),
-        text: (m.text || "").slice(0, 600)
-      }))
-    }
-
-    const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${SYNC_DM_MAP_NAME}`
-    const serialized = JSON.stringify(compactConvo)
-
-    const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
-      method: "POST",
-      headers: {
-        Authorization: auth,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: new URLSearchParams({ Data: serialized }).toString()
-    })
-
-    if (updateRes.ok) return true
-
-    if (updateRes.status === 404) {
-      await fetch("https://sync.twilio.com/v1/Services/default/Maps", {
-        method: "POST",
-        headers: {
-          Authorization: auth,
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: new URLSearchParams({ UniqueName: SYNC_DM_MAP_NAME }).toString()
-      }).catch(() => {})
-
-      const createRes = await fetch(`${baseUrl}/Items`, {
-        method: "POST",
-        headers: {
-          Authorization: auth,
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: new URLSearchParams({
-          Key: key,
-          Data: serialized
-        }).toString()
-      })
-      return createRes.ok
-    }
-
-    return false
-  } catch (err) {
-    console.warn("[connectin-cloud-sync] upsertCloudDirectConversation notice:", err)
-    return false
+    const item = await firebaseKvGetItem<CloudDirectConversation>(SYNC_DM_MAP_NAME, cleanKey)
+    return item && item.pairKey && Array.isArray(item.messages) ? item : null
+  } catch {
+    return null
   }
 }
 
 /**
- * Fetches all bilateral direct message conversations from the global Twilio Sync Map (`connectin_dm_conversations_v1`).
+ * Fetches all bilateral direct message conversations from MongoDB KV and Twilio Sync (`connectin_dm_conversations_v1`).
  */
 export async function pullCloudDirectConversations(): Promise<CloudDirectConversation[]> {
   const auth = getTwilioAuthHeader()
-  if (!auth) return []
 
-  try {
-    const url = `https://sync.twilio.com/v1/Services/default/Maps/${SYNC_DM_MAP_NAME}/Items?PageSize=100`
-    const res = await fetch(url, {
-      method: "GET",
-      headers: { Authorization: auth },
-      cache: "no-store"
-    })
-    if (!res.ok) return []
+  const kvListPromise = firebaseKvListItems<CloudDirectConversation>(SYNC_DM_MAP_NAME, false)
+    .then(items =>
+      items
+        .map(it => it?.data)
+        .filter((d): d is CloudDirectConversation => Boolean(d && d.pairKey && Array.isArray(d.messages)))
+    )
+    .catch(() => [] as CloudDirectConversation[])
 
-    const json = await res.json()
-    return Array.isArray(json.items)
-      ? json.items
-          .map((it: any) => it.data as CloudDirectConversation)
-          .filter((d: any) => d && d.pairKey && Array.isArray(d.messages))
-      : []
-  } catch (err) {
-    console.warn("[connectin-cloud-sync] pullCloudDirectConversations notice:", err)
-    return []
+  const twilioListPromise = auth
+    ? (async (): Promise<CloudDirectConversation[]> => {
+        try {
+          const url = `https://sync.twilio.com/v1/Services/default/Maps/${SYNC_DM_MAP_NAME}/Items?PageSize=100`
+          const res = await fetch(url, {
+            method: "GET",
+            headers: { Authorization: auth },
+            cache: "no-store",
+          })
+          if (!res.ok) return []
+          const json = await res.json()
+          return Array.isArray(json.items)
+            ? json.items
+                .map((it: any) => it.data as CloudDirectConversation)
+                .filter((d: any) => d && d.pairKey && Array.isArray(d.messages))
+            : []
+        } catch (err) {
+          console.warn("[connectin-cloud-sync] pullCloudDirectConversations notice:", err)
+          return []
+        }
+      })()
+    : Promise.resolve([] as CloudDirectConversation[])
+
+  const [kvConvos, twilioConvos] = await Promise.all([kvListPromise, twilioListPromise])
+  const merged = new Map<string, CloudDirectConversation>()
+  for (const c of [...twilioConvos, ...kvConvos]) {
+    const prev = merged.get(c.pairKey)
+    if (!prev) {
+      merged.set(c.pairKey, c)
+    } else {
+      const newerMeta = (c.updatedAtIso || "") >= (prev.updatedAtIso || "") ? c : prev
+      merged.set(c.pairKey, {
+        ...newerMeta,
+        messages: mergeCloudDirectMessageArrays(prev.messages, c.messages),
+      })
+    }
   }
+  return Array.from(merged.values())
 }
 
 async function pullRawActivityMapItems(): Promise<any[]> {

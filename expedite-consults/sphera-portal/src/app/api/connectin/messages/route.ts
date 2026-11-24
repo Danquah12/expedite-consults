@@ -10,6 +10,7 @@ import {
     CloudDirectMessage,
     makeDmPairKey,
     normalizeParticipantKey,
+    pullCloudDirectConversationByPairKey,
     pullCloudDirectConversations,
     upsertCloudDirectConversation,
     pullCloudUsersIntoDb,
@@ -149,9 +150,20 @@ function mergeCloudConversationsIntoMemory(cloudConvos: CloudDirectConversation[
                         mergedComments.push(c);
                     }
                 }
+                const isDeleted = Boolean(existing.isDeleted || m.isDeleted);
+                const existingEdit = existing.editedAtIso || '';
+                const incomingEdit = m.editedAtIso || '';
+                const useExistingEdit = !isDeleted && Boolean(existingEdit) && (!incomingEdit || existingEdit > incomingEdit);
                 msgMap.set(m.id, {
                     ...existing,
                     ...m,
+                    isDeleted,
+                    text: isDeleted
+                        ? 'This message was deleted'
+                        : useExistingEdit
+                        ? existing.text
+                        : m.text,
+                    editedAtIso: useExistingEdit ? existingEdit : m.editedAtIso || existing.editedAtIso,
                     readBy: mergedReadBy,
                     reactions:
                         Object.keys(mergedReactions).length > 0 ? mergedReactions : existing.reactions || m.reactions,
@@ -746,6 +758,12 @@ export async function POST(request: Request) {
             }
 
             const nowIso = new Date().toISOString();
+            if (threadId) {
+                const directConvo = await pullCloudDirectConversationByPairKey(threadId).catch(() => null);
+                if (directConvo) {
+                    mergeCloudConversationsIntoMemory([directConvo]);
+                }
+            }
             let updatedMessage: any = null;
 
             for (const c of Object.values(bilateralConversationsByPairKey)) {
