@@ -28,10 +28,13 @@ import {
     splitLinkAndCustomTitle,
     SocialEmbedProvider,
 } from '@/lib/connectin-social-video';
+import { ConnectLnTeamsCalendarView } from './ConnectLnTeamsCalendarView';
+import { MeetingInvitee } from './ScheduleMeetingModal';
 
 export type MessagingWorkspaceMode =
     | 'chats'
     | 'calls'
+    | 'calendar'
     | 'status'
     | 'channels'
     | 'communities'
@@ -1059,12 +1062,14 @@ export function WhatsAppLeftIconRail({
     onSelectMode,
     unreadChatsCount,
     unreadArchivedCount,
+    todayCalendarCount,
     currentUserAvatar,
 }: {
     activeMode: MessagingWorkspaceMode;
     onSelectMode: (mode: MessagingWorkspaceMode) => void;
     unreadChatsCount: number;
     unreadArchivedCount: number;
+    todayCalendarCount?: number;
     currentUserAvatar?: string;
 }) {
     const items: Array<{
@@ -1103,6 +1108,24 @@ export function WhatsAppLeftIconRail({
                     <line x1="8.5" y1="21" x2="15.5" y2="21" strokeLinecap="round" />
                     <line x1="3" y1="7.5" x2="3" y2="12.5" strokeLinecap="round" />
                     <line x1="21" y1="7.5" x2="21" y2="12.5" strokeLinecap="round" />
+                </svg>
+            ),
+        },
+        {
+            id: 'calendar',
+            label: 'ConnectLn Calendar & Work Schedule (Day · Week · Month)',
+            shortLabel: 'Calendar',
+            badge: todayCalendarCount && todayCalendarCount > 0 ? todayCalendarCount : undefined,
+            icon: (
+                /* ConnectLn Bespoke Teams-Style Schedule Grid Emblem */
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9}>
+                    <rect x="3.5" y="4.5" width="17" height="16" rx="2.5" />
+                    <line x1="3.5" y1="9.5" x2="20.5" y2="9.5" />
+                    <line x1="8" y1="2.5" x2="8" y2="6" strokeLinecap="round" />
+                    <line x1="16" y1="2.5" x2="16" y2="6" strokeLinecap="round" />
+                    <rect x="7" y="12.5" width="3" height="2.5" rx="0.5" fill="currentColor" stroke="none" />
+                    <rect x="11.5" y="12.5" width="5.5" height="2.5" rx="0.5" fill="currentColor" stroke="none" />
+                    <line x1="7" y1="17.5" x2="13.5" y2="17.5" strokeLinecap="round" />
                 </svg>
             ),
         },
@@ -1223,6 +1246,9 @@ export function WhatsAppModeWorkspace({
     onSelectChatThread,
     onStartLiveCall,
     onOpenScheduleModal,
+    invitees,
+    onSendInvite,
+    onCalendarCountChange,
     triggerToast,
 }: {
     mode: Exclude<MessagingWorkspaceMode, 'chats'>;
@@ -1233,6 +1259,9 @@ export function WhatsAppModeWorkspace({
     onSelectChatThread: (threadId: string) => void;
     onStartLiveCall: (mode: 'audio' | 'video', targetName?: string) => void;
     onOpenScheduleModal: () => void;
+    invitees?: MeetingInvitee[];
+    onSendInvite?: (invitee: MeetingInvitee, text: string) => Promise<void> | void;
+    onCalendarCountChange?: (count: number) => void;
     triggerToast: (msg: string) => void;
 }) {
     const userAvatar = currentUser?.avatar || '/brand/kwesi-avatar.png';
@@ -1838,6 +1867,24 @@ export function WhatsAppModeWorkspace({
         };
     }, [mode]);
     const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
+
+    // =========================================================================
+    // 0. CALENDAR VIEW (Microsoft Teams-Style Work Schedule & Shift Planner)
+    // =========================================================================
+    if (mode === 'calendar') {
+        return (
+            <ConnectLnTeamsCalendarView
+                currentUser={currentUser}
+                threads={threads}
+                invitees={invitees || []}
+                onStartLiveCall={onStartLiveCall}
+                onSelectChatThread={onSelectChatThread}
+                onSendInvite={onSendInvite}
+                onEventsCountChange={onCalendarCountChange}
+                triggerToast={triggerToast}
+            />
+        );
+    }
 
     // =========================================================================
     // 1. STATUS VIEW (Desk Note Warm Parchment & Espresso Theme)

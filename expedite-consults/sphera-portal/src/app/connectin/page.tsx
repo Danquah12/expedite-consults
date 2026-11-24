@@ -219,6 +219,7 @@ export default function ConnectLnPage() {
     isScreenSharing?: boolean
     nonce: number
   } | null>(null)
+  const [messagingInitialMode, setMessagingInitialMode] = useState<'chats' | 'calendar' | undefined>(undefined)
 
   const handleReturnFromStudioToMessaging = (opts?: {
     keepCallActive?: boolean
@@ -904,7 +905,7 @@ export default function ConnectLnPage() {
           ? "veterans"
           : tabParam === "franchises"
           ? "franchises"
-          : tabParam === "messaging"
+          : tabParam === "messaging" || tabParam === "calendar"
           ? "messaging"
           : null
 
@@ -945,6 +946,9 @@ export default function ConnectLnPage() {
 
       if (resolvedUrlTab) {
         setActiveTab(resolvedUrlTab as any)
+        if (tabParam === "calendar" && isMounted) {
+          setMessagingInitialMode("calendar")
+        }
       }
 
       const isSignedOut = localStorage.getItem("connectin_is_signed_out") === "true"
@@ -2689,7 +2693,13 @@ export default function ConnectLnPage() {
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] antialiased transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white">
       {/* Meeting reminders (15 / 30 min before scheduled meetings) */}
-      <MeetingReminders onOpenMessaging={() => setActiveTab('messaging' as any)} />
+      <MeetingReminders
+        onOpenMessaging={() => setActiveTab('messaging' as any)}
+        onOpenCalendar={() => {
+          setMessagingInitialMode('calendar')
+          setActiveTab('messaging' as any)
+        }}
+      />
       {/* Mandatory phone + 2FA for every account (incl. Google / Microsoft Entra ID SSO) */}
       {isAuthenticated === true && !isAuthModalOpen && (
         <ConnectLnPhoneVerificationGate
@@ -4034,6 +4044,7 @@ export default function ConnectLnPage() {
         {activeTab === 'messaging' && (
           <MessagingView
             currentUser={userData}
+            initialWorkspaceMode={messagingInitialMode}
             onPostToFeed={(content, repostOf) =>
               handleAddPost({
                 author: {

@@ -92,6 +92,12 @@ export async function getConnectLnMongoDb(): Promise<Db | null> {
       db
         .collection("connectln_admin_activity_logs")
         .createIndex({ timestampMs: -1 }, { background: true }),
+      db
+        .collection("connectln_calendar_events")
+        .createIndex({ participantKeys: 1, startMs: 1 }, { background: true }),
+      db
+        .collection("connectln_calendar_events")
+        .createIndex({ ownerKey: 1, startMs: 1 }, { background: true }),
     ]).catch(() => {
       g.__connectlnMongoIndexesReady = false
     })

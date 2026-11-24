@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { loadScheduledMeetings } from './ScheduleMeetingModal';
+import { loadActiveCachedCalendarEvents } from '@/lib/connectln-calendar-utils';
 
 const FIRED_KEY = 'connectln_meeting_reminders_fired_v1';
 
@@ -35,7 +36,13 @@ function saveFired(list: string[]) {
  * Shows an in-app reminder (and a desktop notification, if allowed) 15 / 30 minutes (or whatever the host chose)
  * before a scheduled meeting. Works while ConnectLn is open in a browser tab.
  */
-export function MeetingReminders({ onOpenMessaging }: { onOpenMessaging?: () => void }) {
+export function MeetingReminders({
+    onOpenMessaging,
+    onOpenCalendar,
+}: {
+    onOpenMessaging?: () => void;
+    onOpenCalendar?: () => void;
+}) {
     const [toasts, setToasts] = useState<ReminderToast[]>([]);
 
     useEffect(() => {
@@ -43,7 +50,32 @@ export function MeetingReminders({ onOpenMessaging }: { onOpenMessaging?: () => 
             const now = Date.now();
             const fired = loadFired();
             const newToasts: ReminderToast[] = [];
-            for (const m of loadScheduledMeetings()) {
+            const legacy = loadScheduledMeetings();
+            const cachedCalendar = loadActiveCachedCalendarEvents().map((ev) => ({
+                id: ev.id,
+                reason: ev.title,
+                startIso: ev.startIso,
+                mode: (ev.callMode === 'audio' ? 'audio' : 'video') as 'video' | 'audio',
+                invitees: (ev.attendees || []).map((a) => ({ id: a.id || a.key, name: a.name })),
+                reminders: ev.reminders || [15],
+                joinUrl: ev.joinUrl,
+            }));
+            const byId = new Map<
+                string,
+                {
+                    id: string;
+                    reason: string;
+                    startIso: string;
+                    mode: 'video' | 'audio';
+                    invitees: { id: string; name: string }[];
+                    reminders?: number[];
+                    joinUrl?: string;
+                }
+            >();
+            for (const item of legacy) byId.set(item.id, item);
+            for (const item of cachedCalendar) byId.set(item.id, item);
+
+            for (const m of byId.values()) {
                 const start = new Date(m.startIso).getTime();
                 if (!Number.isFinite(start) || start < now) continue; // meeting already started or passed
                 for (const min of m.reminders || []) {
@@ -114,6 +146,19 @@ export function MeetingReminders({ onOpenMessaging }: { onOpenMessaging?: () => 
                         >
                             ▶ Join meeting
                         </a>
+                    )}
+                    {onOpenCalendar && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onOpenCalendar();
+                                setToasts((all) => all.filter((x) => x.key !== t.key));
+                            }}
+                            className="mt-2 mr-2 rounded-lg bg-[#7C4225] px-3 py-1.5 text-xs font-extrabold cursor-pointer"
+                            style={{ color: '#FFFFFF' }}
+                        >
+                            📅 Open Calendar
+                        </button>
                     )}
                     {onOpenMessaging && (
                         <button

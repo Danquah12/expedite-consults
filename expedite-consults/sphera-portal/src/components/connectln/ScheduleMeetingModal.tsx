@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { convertLegacyMeetingToCalendarEvent } from '@/lib/connectln-calendar-utils';
 
 export interface MeetingInvitee {
     id: string;
@@ -85,18 +86,22 @@ export function ScheduleMeetingModal({
     invitees,
     defaultInviteeId,
     hostName,
+    hostEmail,
     onSendInvite,
     onLaunchCall,
     onOpenScheduledFolder,
+    onOpenCalendar,
 }: {
     open: boolean;
     onClose: () => void;
     invitees: MeetingInvitee[];
     defaultInviteeId?: string;
     hostName: string;
+    hostEmail?: string;
     onSendInvite: (invitee: MeetingInvitee, text: string) => Promise<void> | void;
     onLaunchCall?: (mode: 'video' | 'audio') => void;
     onOpenScheduledFolder?: () => void;
+    onOpenCalendar?: () => void;
 }) {
     const today = useMemo(() => {
         const d = new Date();
@@ -196,14 +201,30 @@ export function ScheduleMeetingModal({
             `\n📋 Please confirm your attendance: Yes · No · Maybe`;
 
         setSending(true);
+        const persistCalendarBlock = () => {
+            const calEvent = convertLegacyMeetingToCalendarEvent(meeting, hostName, hostEmail);
+            fetch('/api/connectin/calendar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'create',
+                    userName: hostName,
+                    userEmail: hostEmail,
+                    origin,
+                    event: calEvent,
+                }),
+            }).catch(() => {});
+        };
         try {
             await Promise.allSettled(
                 chosen.map((p) => Promise.resolve(onSendInvite(p, text)))
             );
             saveMeeting(meeting);
+            persistCalendarBlock();
             setDone(meeting);
         } catch {
             saveMeeting(meeting);
+            persistCalendarBlock();
             setDone(meeting);
         } finally {
             setSending(false);
@@ -252,6 +273,16 @@ export function ScheduleMeetingModal({
                                     style={{ color: '#FFFFFF' }}
                                 >
                                     {done.mode === 'video' ? '🎥 Launch Video Huddle Now' : '📞 Launch Voice Call Now'}
+                                </button>
+                            )}
+                            {onOpenCalendar && (
+                                <button
+                                    type="button"
+                                    onClick={onOpenCalendar}
+                                    className="px-3.5 py-2 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] text-xs font-extrabold cursor-pointer"
+                                    style={{ color: '#FFFFFF' }}
+                                >
+                                    📅 Open in Calendar
                                 </button>
                             )}
                             {onOpenScheduledFolder && (

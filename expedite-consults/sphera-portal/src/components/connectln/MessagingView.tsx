@@ -16,6 +16,11 @@ import {
     MessagingWorkspaceMode,
 } from './WhatsAppMessagingModes';
 import {
+    buildViewerCalendarKeys,
+    expandRecurringOccurrences,
+    normalizeCalendarParticipantKey,
+} from '@/lib/connectln-calendar-utils';
+import {
     ConnectLnInlineCellBridgeBar,
     looksLikeClientPhone,
     prettyClientPhone,
@@ -359,6 +364,7 @@ export function MessagingView({
     onPostToFeed,
     resumeCallSession,
     onConsumeResumeCall,
+    initialWorkspaceMode,
 }: {
     onNavigateVibeComms?: (handoff?: MessagingStudioHandoff) => void;
     onNavigateMarketplace?: () => void;
@@ -373,6 +379,7 @@ export function MessagingView({
         nonce: number;
     } | null;
     onConsumeResumeCall?: () => void;
+    initialWorkspaceMode?: MessagingWorkspaceMode;
 }) {
     const activeEnclave = currentUser?.professionEnclave || 'trades_construction';
     const [selectedEnclave, setSelectedEnclave] = useState<string>(activeEnclave);
@@ -395,7 +402,56 @@ export function MessagingView({
     const [isLoadingThreads, setIsLoadingThreads] = useState(false);
 
     // ConnectLn Mailbox Navigation Rail States (Inbox, AI Inbox, Starred, Snoozed, Important, Sent, Drafts, Purchases, Social, Updates, Forums, Promotions, Labels)
-    const [workspaceMode, setWorkspaceMode] = useState<MessagingWorkspaceMode>('chats');
+    const [workspaceMode, setWorkspaceMode] = useState<MessagingWorkspaceMode>(() => {
+        if (initialWorkspaceMode) return initialWorkspaceMode;
+        if (typeof window !== 'undefined') {
+            const sp = new URLSearchParams(window.location.search);
+            if (sp.get('tab') === 'calendar' || sp.get('mode') === 'calendar') {
+                return 'calendar';
+            }
+        }
+        return 'chats';
+    });
+    const [todayCalendarCount, setTodayCalendarCount] = useState<number>(0);
+
+    useEffect(() => {
+        if (initialWorkspaceMode) {
+            setWorkspaceMode(initialWorkspaceMode);
+        }
+    }, [initialWorkspaceMode]);
+
+    // Lightweight initial calendar badge hydration for the left rail
+    useEffect(() => {
+        const uName = String(currentUser?.name || '').trim();
+        const uEmail = String(currentUser?.email || '').trim().toLowerCase();
+        if (!uName && !uEmail) return;
+        const viewerKeys = new Set(buildViewerCalendarKeys(uName, uEmail));
+        const qs = new URLSearchParams({
+            ...(uName ? { userName: uName } : {}),
+            ...(uEmail ? { userEmail: uEmail } : {}),
+        });
+        fetch(`/api/connectin/calendar?${qs.toString()}`, { cache: 'no-store' })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+                if (!data?.ok || !Array.isArray(data.events)) return;
+                const now = new Date();
+                const tStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
+                const tEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
+                const occs = expandRecurringOccurrences(data.events, tStart, tEnd);
+                const activeToday = occs.filter((occ) => {
+                    const att = (occ.baseEvent.attendees || []).find((a: any) =>
+                        [
+                            normalizeCalendarParticipantKey(a.key),
+                            normalizeCalendarParticipantKey(a.email),
+                            normalizeCalendarParticipantKey(a.name),
+                        ].some((k) => viewerKeys.has(k))
+                    );
+                    return att?.rsvp !== 'declined';
+                });
+                setTodayCalendarCount(activeToday.length);
+            })
+            .catch(() => {});
+    }, [currentUser?.email, currentUser?.name]);
     const [archivedThreadIds, setArchivedThreadIds] = useState<string[]>(() => {
         if (typeof window === 'undefined') return [];
         try {
@@ -687,10 +743,10 @@ export function MessagingView({
     const [newInitialMessage, setNewInitialMessage] = useState('');
 
     useEffect(() => {
-        if (showNewMessageModal || showScheduler) {
+        if (showNewMessageModal || showScheduler || workspaceMode === 'calendar') {
             loadMembers().then(setAllPlatformMembers);
         }
-    }, [showNewMessageModal, showScheduler]);
+    }, [showNewMessageModal, showScheduler, workspaceMode]);
 
     const [showEnclaveFilterBar, setShowEnclaveFilterBar] = useState(false);
     const [showQuickRepliesBar, setShowQuickRepliesBar] = useState(false);
@@ -3331,6 +3387,72 @@ export function MessagingView({
 
     const totalUnreadCount = threads.reduce((acc, t) => acc + (t.unreadCount || 0), 0);
 
+    const schedulerInvitees: MeetingInvitee[] = (() => {
+        const myCompact = (currentUser?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const seen = new Set<string>(myCompact ? [myCompact] : []);
+        const list: MeetingInvitee[] = [];
+        const raw: MeetingInvitee[] = [
+            ...threads
+                .filter((t) => t.channelType === 'People')
+                .map<MeetingInvitee>((t) => ({ id: t.id, name: t.title, avatar: t.avatar, subtitle: t.subtitle })),
+            ...allPlatformMembers,
+        ];
+        for (const item of raw) {
+            const key = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (!key || seen.has(key)) continue;
+            seen.add(key);
+            list.push(item);
+        }
+        return list;
+    })();
+
+    const dispatchMeetingInvite = async (invitee: MeetingInvitee, text: string) => {
+        const senderName = currentUser?.name || 'You';
+        const senderEmail = currentUser?.email || '';
+        const rawAvatar = currentUser?.avatar || '';
+        const senderAvatar =
+            rawAvatar && !String(rawAvatar).startsWith('data:')
+                ? rawAvatar
+                : '/brand/kwesi-avatar.png';
+        const senderRole = currentUser?.headline || 'Verified ConnectIn Professional';
+        const updatedConvo = recordLocalBilateralDirectMessage({
+            senderName,
+            senderEmail,
+            senderAvatar,
+            senderRole,
+            recipientName: invitee.name,
+            recipientAvatar: invitee.avatar,
+            recipientSubtitle: invitee.subtitle,
+            text,
+        });
+        if (updatedConvo?.pairKey) {
+            const freshLocal = getLocalBilateralThreadsForViewer(
+                senderName,
+                senderEmail,
+                selectedEnclave
+            );
+            setThreads((prev) => mergeBilateralAndServerThreads(freshLocal, prev));
+        }
+        fetch('/api/connectin/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'send_message',
+                enclave: selectedEnclave === 'all' ? activeEnclave : selectedEnclave,
+                threadId: invitee.id || updatedConvo?.pairKey || `dm_mtg_${Date.now()}`,
+                text,
+                senderName,
+                senderEmail,
+                senderAvatar,
+                senderRole,
+                recipientName: invitee.name,
+                recipientSubtitle: invitee.subtitle,
+                recipientAvatar: invitee.avatar,
+                channelType: 'People',
+            }),
+        }).catch(() => {});
+    };
+
     return (
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xl overflow-hidden flex flex-col max-w-[1250px] mx-auto my-2 animate-in fade-in duration-300">
             {/* Top Toast Notification */}
@@ -3475,6 +3597,7 @@ export function MessagingView({
                     }}
                     unreadChatsCount={totalUnreadCount}
                     unreadArchivedCount={archivedThreadIds.length + 1}
+                    todayCalendarCount={todayCalendarCount}
                     currentUserAvatar={currentUser?.avatar}
                 />
 
@@ -3529,6 +3652,9 @@ export function MessagingView({
                             setActiveCallMode(callType);
                         }}
                         onOpenScheduleModal={() => setShowScheduler(true)}
+                        invitees={schedulerInvitees}
+                        onSendInvite={dispatchMeetingInvite}
+                        onCalendarCountChange={setTodayCalendarCount}
                         triggerToast={triggerToast}
                     />
                 ) : (
@@ -5324,80 +5450,23 @@ export function MessagingView({
                 open={showScheduler}
                 onClose={() => setShowScheduler(false)}
                 hostName={currentUser?.name || 'You'}
+                hostEmail={currentUser?.email}
                 defaultInviteeId={activeThread?.channelType === 'People' ? activeThread.id : undefined}
-                invitees={(() => {
-                    const myCompact = (currentUser?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-                    const seen = new Set<string>(myCompact ? [myCompact] : []);
-                    const list: MeetingInvitee[] = [];
-                    const raw: MeetingInvitee[] = [
-                        ...threads
-                            .filter((t) => t.channelType === 'People')
-                            .map<MeetingInvitee>((t) => ({ id: t.id, name: t.title, avatar: t.avatar, subtitle: t.subtitle })),
-                        ...allPlatformMembers,
-                    ];
-                    for (const item of raw) {
-                        const key = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        if (!key || seen.has(key)) continue;
-                        seen.add(key);
-                        list.push(item);
-                    }
-                    return list;
-                })()}
+                invitees={schedulerInvitees}
                 onLaunchCall={(callMode) => {
                     setShowScheduler(false);
                     setIsCameraOn(callMode === 'video');
                     setActiveCallMode(callMode);
                 }}
+                onOpenCalendar={() => {
+                    setShowScheduler(false);
+                    setWorkspaceMode('calendar');
+                }}
                 onOpenScheduledFolder={() => {
                     setShowScheduler(false);
                     handleSelectMailboxFolder('scheduled');
                 }}
-                onSendInvite={async (invitee, text) => {
-                    const senderName = currentUser?.name || 'You';
-                    const senderEmail = currentUser?.email || '';
-                    const rawAvatar = currentUser?.avatar || '';
-                    const senderAvatar =
-                        rawAvatar && !String(rawAvatar).startsWith('data:')
-                            ? rawAvatar
-                            : '/brand/kwesi-avatar.png';
-                    const senderRole = currentUser?.headline || 'Verified ConnectIn Professional';
-                    const updatedConvo = recordLocalBilateralDirectMessage({
-                        senderName,
-                        senderEmail,
-                        senderAvatar,
-                        senderRole,
-                        recipientName: invitee.name,
-                        recipientAvatar: invitee.avatar,
-                        recipientSubtitle: invitee.subtitle,
-                        text,
-                    });
-                    if (updatedConvo?.pairKey) {
-                        const freshLocal = getLocalBilateralThreadsForViewer(
-                            senderName,
-                            senderEmail,
-                            selectedEnclave
-                        );
-                        setThreads((prev) => mergeBilateralAndServerThreads(freshLocal, prev));
-                    }
-                    fetch('/api/connectin/messages', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'send_message',
-                            enclave: selectedEnclave === 'all' ? activeEnclave : selectedEnclave,
-                            threadId: invitee.id || updatedConvo?.pairKey || `dm_mtg_${Date.now()}`,
-                            text,
-                            senderName,
-                            senderEmail,
-                            senderAvatar,
-                            senderRole,
-                            recipientName: invitee.name,
-                            recipientSubtitle: invitee.subtitle,
-                            recipientAvatar: invitee.avatar,
-                            channelType: 'People',
-                        }),
-                    }).catch(() => {});
-                }}
+                onSendInvite={dispatchMeetingInvite}
             />
 
             {/* Live WebRTC Audio / Video Huddle Studio Modal */}
