@@ -151,7 +151,7 @@ public class ConnectLnMessagingService extends MessagingService {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setOngoing(true)
                 .setAutoCancel(true)
-                .setTimeoutAfter(45000)
+                .setTimeoutAfter(60000)
                 .setSound(ringtone)
                 .setFullScreenIntent(answerPi, true)
                 .setContentIntent(answerPi);

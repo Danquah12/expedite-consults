@@ -1,4 +1,4 @@
-/* ConnectLn Service Worker v2026-11-24-whatsapp-stopring — Background & Minimized Incoming Video & Voice Call Ringing + High-Visibility Banner */
+/* ConnectLn Service Worker v2026-11-24-whatsapp-stopring-v2 — Background & Minimized Incoming Video & Voice Call Ringing + High-Visibility Banner */
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
 });
@@ -82,7 +82,7 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
 
   await self.registration.showNotification(spec.title, spec.options).catch(() => {});
 
-  for (let step = 0; step < 16; step++) {
+  for (let step = 0; step < 30; step++) {
     await new Promise((resolve) => setTimeout(resolve, 1500));
     if (swHandledCallIds.has(callId)) {
       await closeCallNotificationsByTag(callId);
@@ -151,7 +151,8 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
           });
         } catch {}
       }
-      if (!swPageAudioRingingCallIds.has(callId)) {
+      const hasVisibleClient = windowClients.some((c) => c.visibilityState === "visible");
+      if (!hasVisibleClient || !swPageAudioRingingCallIds.has(callId)) {
         await self.registration
           .showNotification(
             spec.title,

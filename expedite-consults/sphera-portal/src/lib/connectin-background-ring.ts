@@ -39,6 +39,7 @@ let activeOutgoingRingbackSource: AudioBufferSourceNode | null = null
 let activeOutgoingRingbackGain: GainNode | null = null
 let isIncomingRingtoneActive = false
 let ringSessionSeq = 0
+let incomingRingWatchdogTimer: ReturnType<typeof setInterval> | null = null
 const CALL_STOP_RING_STORAGE_KEY = "connectln_stop_ring_broadcast_v1"
 let callStopControlChannel: BroadcastChannel | null = null
 let callControlListenersBound = false
@@ -674,6 +675,12 @@ function ensureLiveAudioPipelineStarted(): void {
       fallbackWavRingAudio.setAttribute("playsinline", "true")
       fallbackWavRingAudio.style.cssText =
         "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0.01;pointer-events:none;"
+      fallbackWavRingAudio.addEventListener("ended", () => {
+        if (isIncomingRingtoneActive && fallbackWavRingAudio) {
+          fallbackWavRingAudio.currentTime = 0
+          fallbackWavRingAudio.play().catch(() => {})
+        }
+      })
       if (typeof document !== "undefined" && document.body) {
         document.body.appendChild(fallbackWavRingAudio)
       }
@@ -694,6 +701,12 @@ function ensureLiveAudioPipelineStarted(): void {
       outgoingRingbackAudio.setAttribute("playsinline", "true")
       outgoingRingbackAudio.style.cssText =
         "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0.01;pointer-events:none;"
+      outgoingRingbackAudio.addEventListener("ended", () => {
+        if (isOutgoingRingbackActive && outgoingRingbackAudio) {
+          outgoingRingbackAudio.currentTime = 0
+          outgoingRingbackAudio.play().catch(() => {})
+        }
+      })
       if (typeof document !== "undefined" && document.body) {
         document.body.appendChild(outgoingRingbackAudio)
       }
@@ -824,6 +837,10 @@ function stopPipWindowRingAudio(win: Window | null | undefined): void {
 function stopLoudPhoneRingtoneLocalOnly(): void {
   ringSessionSeq++
   isIncomingRingtoneActive = false
+  if (incomingRingWatchdogTimer) {
+    clearInterval(incomingRingWatchdogTimer)
+    incomingRingWatchdogTimer = null
+  }
   stopWebAudioRingSource()
   if (fallbackWavRingAudio) {
     try {
@@ -965,22 +982,18 @@ export function startLoudPhoneRingtone(): void {
     return
   }
   ensureCallStopControlListeners()
-  const mySeq = ++ringSessionSeq
-  isIncomingRingtoneActive = true
-  setCallMediaSilenceActive(true, "incoming-call-ringtone")
-  ensureLiveAudioPipelineStarted()
-
-  if (liveAudioCtx && !ringtoneBuffer) {
-    buildAudioBuffers(liveAudioCtx)
-  }
-
   const selectedId = getSelectedConnectLnRingtoneId()
   const useExternalAudioFile =
     selectedId === "studio-acoustic" ||
     (selectedId === "device-custom" && Boolean(getCustomDeviceRingtoneDataUrl()))
 
-  // Strict Single-Player Guard: never start or layer a second ringtone while one is playing
-  if (!useExternalAudioFile && activeRingSource && liveAudioCtx?.state === "running") {
+  // Strict Single-Player Guard BEFORE incrementing ringSessionSeq so 1.2s polling never cancels in-flight play/resume!
+  if (
+    isIncomingRingtoneActive &&
+    !useExternalAudioFile &&
+    activeRingSource &&
+    liveAudioCtx?.state === "running"
+  ) {
     if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
       try {
         fallbackWavRingAudio.muted = true
@@ -990,9 +1003,23 @@ export function startLoudPhoneRingtone(): void {
     }
     return
   }
-  if (fallbackWavRingAudio && !fallbackWavRingAudio.paused && !fallbackWavRingAudio.muted) {
+  if (
+    isIncomingRingtoneActive &&
+    fallbackWavRingAudio &&
+    !fallbackWavRingAudio.paused &&
+    !fallbackWavRingAudio.muted
+  ) {
     stopWebAudioRingSource()
     return
+  }
+
+  const mySeq = ++ringSessionSeq
+  isIncomingRingtoneActive = true
+  setCallMediaSilenceActive(true, "incoming-call-ringtone")
+  ensureLiveAudioPipelineStarted()
+
+  if (liveAudioCtx && !ringtoneBuffer) {
+    buildAudioBuffers(liveAudioCtx)
   }
 
   let startedWebAudio = false
@@ -1111,6 +1138,21 @@ export function startLoudPhoneRingtone(): void {
         navigator.vibrate?.([550, 220, 550, 220, 750])
       } catch {}
     }, 2400)
+  }
+
+  if (!incomingRingWatchdogTimer) {
+    incomingRingWatchdogTimer = setInterval(() => {
+      if (!isIncomingRingtoneActive || Number((window as any).__connectlnOpenCallModalCount || 0) > 0) {
+        if (incomingRingWatchdogTimer) {
+          clearInterval(incomingRingWatchdogTimer)
+          incomingRingWatchdogTimer = null
+        }
+        return
+      }
+      if (!isIncomingRingtoneAudiblyPlaying()) {
+        startLoudPhoneRingtone()
+      }
+    }, 1400)
   }
 }
 

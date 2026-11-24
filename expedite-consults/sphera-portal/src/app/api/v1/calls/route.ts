@@ -1039,7 +1039,12 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
         if (nowMs - remoteTs > 300000) continue
         let record = ACTIVE_CALLS_STORE.get(rData.call_id)
         if (!record && Array.isArray(rData.invited_roster) && rData.invited_roster.length > 0) {
-          record = ensureCallRoom(rData.call_id, "host", "ConnectLn Call", rData.call_id)
+          record = ensureCallRoom(
+            rData.call_id,
+            rData.initiator_user_id || "host",
+            rData.initiator_name || "ConnectLn Call",
+            rData.call_id
+          )
         }
         if (record && record.state !== "ENDED") {
           if (rData.initiator_user_id) record.initiator_user_id = rData.initiator_user_id
@@ -2392,8 +2397,12 @@ export async function POST(req: NextRequest) {
       const displayName = body.display_name || "Meeting Participant"
       const conversationId = body.conversation_id || "9b0bbf68-20c8-4416-b82c-0f0e81b8df80"
 
-      // Always pull cloud state first so cross-lambda call-end tombstones (`e__`) are known immediately
-      await pullCloudCallParticipants(userId, action === "join" || action === "create").catch(() => {})
+      // Always pull cloud state first so cross-lambda call-end tombstones (`e__`) and cold rooms are hydrated immediately
+      const isColdForCall = !ACTIVE_CALLS_STORE.has(callId)
+      await pullCloudCallParticipants(
+        isColdForCall ? undefined : userId,
+        isColdForCall || action === "join" || action === "create"
+      ).catch(() => {})
 
       if (action === "create" || (action === "join" && body.reopen && !body.is_answering_recipient)) {
         ENDED_CALL_TOMBSTONES.delete(callId)
@@ -2417,7 +2426,20 @@ export async function POST(req: NextRequest) {
       }
 
       const record = ensureCallRoom(callId, userId, displayName, conversationId)
-      if (action === "create") {
+      const callerSignalingHint = Boolean(
+        body.reopen ||
+          body.initiator_phone ||
+          body.target_recipient_phone ||
+          body.target_recipient_name ||
+          body.target_recipient_email
+      )
+      if (
+        action === "create" ||
+        (!body.is_answering_recipient &&
+          (!record.initiator_user_id ||
+            record.initiator_user_id === "host" ||
+            (callerSignalingHint && record.participants.length === 0)))
+      ) {
         record.initiator_user_id = userId
       }
 
@@ -2639,16 +2661,21 @@ export async function POST(req: NextRequest) {
         mutedSet
       )
 
+      const isAnsweringRecipientNow = Boolean(
+        body.is_answering_recipient === true ||
+          (existingIdx >= 0 && record.participants[existingIdx].is_answering_recipient === true) ||
+          (!callerSignalingHint &&
+            record.initiator_user_id &&
+            record.initiator_user_id !== "host" &&
+            userId !== record.initiator_user_id)
+      )
+
       const updatedParticipant: CommCallParticipant = {
         call_id: callId,
         user_id: userId,
         initiator_user_id: record.initiator_user_id,
         initiator_avatar: record.initiator_avatar,
-        is_answering_recipient: Boolean(
-          body.is_answering_recipient ||
-            (existingIdx >= 0 && record.participants[existingIdx].is_answering_recipient) ||
-            (record.initiator_user_id && userId !== record.initiator_user_id)
-        ),
+        is_answering_recipient: isAnsweringRecipientNow,
         device_id: deviceId,
         peer_id: body.peer_id || (existingIdx >= 0 ? record.participants[existingIdx].peer_id : undefined),
         display_name: displayName,
@@ -2742,7 +2769,9 @@ export async function POST(req: NextRequest) {
           record.participants[existingIdx].peer_id !== body.peer_id
       )
       const isNonInitiatorAnswering = Boolean(
-        record.initiator_user_id &&
+        isAnsweringRecipientNow &&
+          record.initiator_user_id &&
+          record.initiator_user_id !== "host" &&
           userId !== record.initiator_user_id &&
           (existingIdx < 0 || body.is_answering_recipient === true)
       )

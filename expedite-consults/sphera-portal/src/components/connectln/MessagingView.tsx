@@ -1217,7 +1217,7 @@ export function MessagingView({
         const timer = window.setTimeout(() => {
             if (!waitingForHuddleRemoteRef.current) return;
             stopOutgoingCallerRingbackTone();
-        }, 45000);
+        }, 60000);
         return () => window.clearTimeout(timer);
     }, [isCallModalOpen]);
 

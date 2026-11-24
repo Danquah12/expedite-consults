@@ -2887,7 +2887,7 @@ export function ConnectLnWhatsAppCallModal({
           body: JSON.stringify({
             action: "heartbeat",
             reopen: !isIncomingAnswer && reopenFlag,
-            is_answering_recipient: (isIncomingAnswer && reopenFlag) || undefined,
+            is_answering_recipient: isIncomingAnswer ? true : undefined,
             call_id: callId,
             user_id: localPeerUid,
             peer_id: myPeerIdRef.current || undefined,
@@ -3450,7 +3450,7 @@ export function ConnectLnWhatsAppCallModal({
     })
   }
 
-  // Never auto-end or auto-exit an active meeting: only quiet outgoing ringback tone after 45s while room stays open
+  // Never auto-end or auto-exit an active meeting: only quiet outgoing ringback tone after 60s while room stays open
   const remotePeerCountRef = useRef(0)
   remotePeerCountRef.current = remoteWebRtcPeers.length
   useEffect(() => {
@@ -3458,7 +3458,7 @@ export function ConnectLnWhatsAppCallModal({
     const t = window.setTimeout(() => {
       if (remotePeerCountRef.current > 0 || hasAnyWebRtcStreamRef.current) return
       stopOutgoingCallerRingbackTone()
-    }, 45000)
+    }, 60000)
     return () => window.clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isIncomingAnswer, callId])

@@ -184,6 +184,8 @@ export function ConnectLnIncomingCallBanner({
   const declinedIdsRef = useRef<Set<string>>(new Set())
   const seenInServerPollRef = useRef<Set<string>>(new Set())
   const realtimeRingRef = useRef<{ call: IncomingCallSummary; untilMs: number } | null>(null)
+  const consecutiveEmptyPollsRef = useRef<number>(0)
+  const activeIncomingCallIdRef = useRef<string>("")
   const vapidKeyRef = useRef<string>("")
   const myPhoneRef = useRef<string>("")
   const viewerNameRef = useRef<string>(viewerName || "")
@@ -196,6 +198,10 @@ export function ConnectLnIncomingCallBanner({
   useEffect(() => {
     onAcceptIncomingCallRef.current = onAcceptIncomingCall
   }, [onAcceptIncomingCall])
+
+  useEffect(() => {
+    activeIncomingCallIdRef.current = incomingCall?.id || ""
+  }, [incomingCall?.id])
 
   const acceptIncomingCallNow = (
     targetCallId: string,
@@ -211,6 +217,8 @@ export function ConnectLnIncomingCallBanner({
       return
     }
     lastAcceptedCallRef.current = { id: cleanId, ts: now }
+    consecutiveEmptyPollsRef.current = 0
+    activeIncomingCallIdRef.current = ""
     if (realtimeRingRef.current?.call.id === cleanId) {
       realtimeRingRef.current = null
     }
@@ -249,6 +257,10 @@ export function ConnectLnIncomingCallBanner({
     const cleanId = String(targetCallId || "").trim()
     if (!cleanId) return
     declinedIdsRef.current.add(cleanId)
+    consecutiveEmptyPollsRef.current = 0
+    if (activeIncomingCallIdRef.current === cleanId) {
+      activeIncomingCallIdRef.current = ""
+    }
     if (realtimeRingRef.current?.call.id === cleanId) {
       realtimeRingRef.current = null
     }
@@ -529,7 +541,9 @@ export function ConnectLnIncomingCallBanner({
             initiator_phone: p.callerPhone,
             initiator_avatar: p.callerAvatar || undefined,
           }
-          realtimeRingRef.current = { call: callObj, untilMs: Date.now() + 8000 }
+          realtimeRingRef.current = { call: callObj, untilMs: Date.now() + 45000 }
+          consecutiveEmptyPollsRef.current = 0
+          activeIncomingCallIdRef.current = callObj.id
           triggerImmediateIncomingCallRinging(callObj)
           setIncomingCall((prev) =>
             prev && prev.id === callObj.id
@@ -790,8 +804,24 @@ export function ConnectLnIncomingCallBanner({
           }
         }
         if (active) {
+          consecutiveEmptyPollsRef.current = 0
+          activeIncomingCallIdRef.current = active.id
           triggerImmediateIncomingCallRinging(active)
         } else {
+          const curId = activeIncomingCallIdRef.current
+          const explicitlyEnded =
+            !curId ||
+            endedIds.includes(curId) ||
+            declinedIdsRef.current.has(curId) ||
+            isConnectLnCallHandled(curId)
+          if (!explicitlyEnded) {
+            consecutiveEmptyPollsRef.current += 1
+            if (consecutiveEmptyPollsRef.current < 3) {
+              return
+            }
+          }
+          consecutiveEmptyPollsRef.current = 0
+          activeIncomingCallIdRef.current = ""
           setCallMediaSilenceActive(false, "incoming-call-banner")
           stopLoudPhoneRingtone()
           stopTitleCallFlash()
@@ -860,7 +890,9 @@ export function ConnectLnIncomingCallBanner({
               initiator_phone: d.callerPhone || "",
               initiator_avatar: d.callerAvatar || undefined,
             }
-            realtimeRingRef.current = { call, untilMs: Date.now() + 8000 }
+            realtimeRingRef.current = { call, untilMs: Date.now() + 45000 }
+            consecutiveEmptyPollsRef.current = 0
+            activeIncomingCallIdRef.current = call.id
             triggerImmediateIncomingCallRinging(call)
             setIncomingCall((prev) => {
               if (prev && prev.id === call.id) {
@@ -878,6 +910,10 @@ export function ConnectLnIncomingCallBanner({
             if (d?.callId) {
               declinedIdsRef.current.add(String(d.callId))
               markConnectLnCallHandled(String(d.callId))
+              if (activeIncomingCallIdRef.current === d.callId) {
+                activeIncomingCallIdRef.current = ""
+                consecutiveEmptyPollsRef.current = 0
+              }
             }
             if (realtimeRingRef.current?.call.id === d?.callId) realtimeRingRef.current = null
             setIncomingCall((prev) => (prev && prev.id === d?.callId ? null : prev))
@@ -890,6 +926,10 @@ export function ConnectLnIncomingCallBanner({
           ch.bind("call-answered", (d: any) => {
             if (d?.callId) {
               markConnectLnCallHandled(String(d.callId))
+              if (activeIncomingCallIdRef.current === d.callId) {
+                activeIncomingCallIdRef.current = ""
+                consecutiveEmptyPollsRef.current = 0
+              }
             }
             if (realtimeRingRef.current?.call.id === d?.callId) realtimeRingRef.current = null
             setIncomingCall((prev) => (prev && prev.id === d?.callId ? null : prev))
