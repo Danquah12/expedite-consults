@@ -70,7 +70,10 @@ import { useLanguage } from "@/context/LanguageContext"
 import { ConnectLnStudioPlayer } from "@/components/connectln/ConnectLnStudioPlayer"
 import { HOME_TAB_EXCLUSIVE_YOUTUBE_IDS } from "@/lib/connectin-videos"
 import { SkilledTradesLearnByDoingSection } from "@/components/connectln/SkilledTradesLearnByDoingSection"
-import { SkilledTradesCategory } from "@/lib/skilled-trades-learn-by-doing-data"
+import {
+  SKILLED_TRADES_LEARN_BY_DOING_LESSONS,
+  SkilledTradesCategory,
+} from "@/lib/skilled-trades-learn-by-doing-data"
 import {
   LEARNING_VENDOR_SOURCES,
   VENDOR_CATEGORY_TABS,
@@ -898,7 +901,7 @@ export function LearningView({
               }`}
             >
               <Sparkles className="h-3.5 w-3.5" />
-              <span>🛠️ Skilled Trades: Learn by Doing (Carpentry · Auto · Painting · Plumbing · Electrical · Welding · HVAC)</span>
+              <span>🛠️ Learn a Trade or Profession ({SKILLED_TRADES_LEARN_BY_DOING_LESSONS.length} Hands-On Videos)</span>
             </button>
 
             <button

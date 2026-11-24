@@ -28,12 +28,14 @@ import {
   Globe,
   ShieldCheck,
   SquarePen,
-  RefreshCw
+  RefreshCw,
+  Search
 } from "lucide-react"
 import {
   SkilledTradesCategory,
   LearnByDoingLesson,
   LearnByDoingLessonTelemetry,
+  LEARN_CATEGORY_META,
   SKILLED_TRADES_COLLECTION_META,
   SKILLED_TRADES_LEARN_BY_DOING_LESSONS,
   RUNNING_YOUR_TRADE_BUSINESS_PATH,
@@ -89,6 +91,7 @@ export function SkilledTradesLearnByDoingSection({
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(
     initialCategory || 'All'
   )
+  const [searchQuery, setSearchQuery] = useState<string>('')
   const [telemetryMap, setTelemetryMap] = useState<Record<string, LearnByDoingLessonTelemetry>>(() =>
     loadAllLearnByDoingTelemetry()
   )
@@ -201,23 +204,26 @@ export function SkilledTradesLearnByDoingSection({
     }
   }, [isHomeVideos, autoplayPref, autoPlayMuted])
 
-  // Auto-sync the Skilled Trades video filter to the user's selected Logged-In Profession
+  // Auto-sync the Learn a Trade or Profession video filter to the user's selected Logged-In Profession or Enclave
   useEffect(() => {
     if (initialCategory) return
     const raw = `${user?.professionId || ''} ${user?.profession || ''} ${user?.headline || ''}`.toLowerCase().trim()
-    if (!raw) return
+    const enclaveRaw = String(user?.professionEnclave || '').toLowerCase().trim()
+    if (!raw && !enclaveRaw) return
     const numMatch = (user?.professionId || '').match(/^h250_(\d+)_/)
     const folderNum = numMatch ? Number(numMatch[1]) : 0
 
-    let resolvedCat: CategoryFilter = 'All'
+    let resolvedCat: CategoryFilter | null = null
     if (
       (folderNum >= 16 && folderNum <= 29) ||
-      /plumb|drain|sewer|water_heater|pipefitter|septic|sump|irrigation|backflow/.test(raw)
+      /plumb|drain|sewer|water_heater|pipefitter|septic|sump|irrigation_pipe|backflow/.test(raw)
     ) {
       resolvedCat = 'Plumbing'
+    } else if (/solar|photovoltaic|pv_install|renewable|wind_turb|water_treatment|utility|mining/.test(raw)) {
+      resolvedCat = 'Solar & Energy'
     } else if (
       (folderNum >= 30 && folderNum <= 43) ||
-      /electri|lighting|ceiling_fan|generator|solar|ev_charg|low_voltage|smart_home/.test(raw)
+      /electri|lighting|ceiling_fan|generator|ev_charg|low_voltage|smart_home/.test(raw)
     ) {
       resolvedCat = 'Electrical Fundamentals'
     } else if (
@@ -225,9 +231,13 @@ export function SkilledTradesLearnByDoingSection({
       /hvac|air_conditioning|heating|furnace|boiler|heat_pump|refrigeration|duct|thermostat|ventilation/.test(raw)
     ) {
       resolvedCat = 'HVAC'
+    } else if (/masonry|brick|stone_mason|tile|terrazzo|grout/.test(raw)) {
+      resolvedCat = 'Masonry & Tile'
+    } else if (/roofer|roofing|drywall|sheetrock|shingle|stucco/.test(raw)) {
+      resolvedCat = 'Roofing & Drywall'
     } else if (
       (folderNum >= 71 && folderNum <= 82) ||
-      /paint|wallpaper|drywall|plaster|texture|pressure_wash/.test(raw)
+      /paint|wallpaper|plaster|texture|pressure_wash/.test(raw)
     ) {
       resolvedCat = 'Painting & Decorating'
     } else if (
@@ -240,17 +250,56 @@ export function SkilledTradesLearnByDoingSection({
       /weld|ironworker|metal_fab|steel|sheet_metal/.test(raw)
     ) {
       resolvedCat = 'Welding'
+    } else if (/cnc|machin|tool_and_die|appliance|repair_technician|lathe|milling/.test(raw)) {
+      resolvedCat = 'Machining & Repair'
+    } else if (/tailor|seamstress|sew|apparel|fashion|textile|garment/.test(raw)) {
+      resolvedCat = 'Tailoring & Sewing'
     } else if (
       (folderNum >= 1 && folderNum <= 15) ||
       (folderNum >= 57 && folderNum <= 70) ||
       /carpent|handyman|cabinet|furniture|deck|fence|door|trim|stair|wood|framing/.test(raw)
     ) {
       resolvedCat = 'Carpentry'
+    } else if (/farm|agri|landscape|garden|forest|agronom|crop|fish|horticult/.test(raw)) {
+      resolvedCat = 'Agriculture & Landscaping'
+    } else if (/chef|cook|culinary|hospitality|cater|baker|pastry|hotel|restaurant/.test(raw)) {
+      resolvedCat = 'Culinary & Hospitality'
+    } else if (/barber|hair|beauty|salon|esthetic|cosmetol|wellness|fitness|massage/.test(raw)) {
+      resolvedCat = 'Barbering & Beauty'
+    } else if (/nurse|doctor|health|medic|pharm|dental|clinical|emt|paramedic|surgeon|physician/.test(raw)) {
+      resolvedCat = 'Healthcare & Nursing'
+    } else if (/cyber|security|soc|pentest|infosec|ot_sec|threat|ciso/.test(raw)) {
+      resolvedCat = 'Cybersecurity & IT'
+    } else if (/software|developer|ai_eng|ml_eng|machine_learning|cloud|data_sci|python|devops|no-code/.test(raw)) {
+      resolvedCat = 'Software & AI'
+    } else if (/account|finance|bookkeep|tax|insur|business|real_estate|franchise|broker|realtor|commerce/.test(raw)) {
+      resolvedCat = 'Finance & Business'
+    } else if (/law|legal|attorney|lawyer|judge|paralegal|court/.test(raw)) {
+      resolvedCat = 'Law & Legal'
+    } else if (/photo|video|graphic|design|media|journal|writer|music|artist/.test(raw)) {
+      resolvedCat = 'Creative Media & Design'
+    } else if (/fiber|telecom|satellite|directv|broadband|network_tech|cabling|pro-av|av_tech/.test(raw)) {
+      resolvedCat = 'Telecom & Fiber Optics'
+    } else if (/pilot|aviation|aerospace|aircraft|marine|maritime|boat|ship/.test(raw)) {
+      resolvedCat = 'Aviation & Maritime'
+    } else if (/science|lab_|laboratory|biotech|chem|biologist|research_sci|metrology/.test(raw)) {
+      resolvedCat = 'Science & Lab Tech'
+    } else if (/teach|educat|professor|instructor|coach|trainer|curriculum/.test(raw)) {
+      resolvedCat = 'Education & Training'
+    } else if (/osha|safety|security_guard|veteran|military|police|firefighter|emergency|civic/.test(raw)) {
+      resolvedCat = 'Safety & Civic Ops'
     }
 
-    setSelectedCategory(resolvedCat)
+    if (!resolvedCat && enclaveRaw) {
+      const enclaveMatch = SKILLED_TRADES_COLLECTION_META.categories.find((cat) =>
+        LEARN_CATEGORY_META[cat]?.enclaveIds.includes(enclaveRaw)
+      )
+      resolvedCat = enclaveMatch || 'All'
+    }
+
+    setSelectedCategory(resolvedCat || 'All')
     setHomeRotationOffset(0)
-  }, [user?.professionId, user?.profession, user?.headline, initialCategory])
+  }, [user?.professionId, user?.profession, user?.professionEnclave, user?.headline, initialCategory])
 
   // Load persisted telemetry on mount
   useEffect(() => {
@@ -447,16 +496,36 @@ export function SkilledTradesLearnByDoingSection({
     }))
   }
 
-  // Filtered lessons
+  // Filtered lessons (category + keyword search)
+  const normalizedSearch = searchQuery.trim().toLowerCase()
   const filteredLessons = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(lesson => {
     const t = telemetryMap[lesson.id] || createInitialLessonTelemetry(lesson.id)
-    if (selectedCategory === 'All') return true
-    if (selectedCategory === 'Global Interpreted') {
-      return Boolean(lesson.sourceLanguage && lesson.sourceLanguage !== 'en')
-    }
-    if (selectedCategory === 'Saved') return t.isSaved
-    if (selectedCategory === 'Learning Journey') return t.inLearningJourney
-    return lesson.category === selectedCategory
+    const categoryMatches =
+      selectedCategory === 'All'
+        ? true
+        : selectedCategory === 'Global Interpreted'
+          ? Boolean(lesson.sourceLanguage && lesson.sourceLanguage !== 'en')
+          : selectedCategory === 'Saved'
+            ? t.isSaved
+            : selectedCategory === 'Learning Journey'
+              ? t.inLearningJourney
+              : lesson.category === selectedCategory
+
+    if (!categoryMatches) return false
+    if (!normalizedSearch || mode === 'home_videos_only') return true
+
+    const haystack = [
+      lesson.title,
+      lesson.category,
+      lesson.description,
+      lesson.originalCreator,
+      lesson.enclaveId,
+      lesson.professionId,
+      ...(lesson.skillsCovered || [])
+    ]
+      .join(' ')
+      .toLowerCase()
+    return haystack.includes(normalizedSearch)
   })
   const globalInterpretedCount = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(
     l => Boolean(l.sourceLanguage && l.sourceLanguage !== 'en')
@@ -494,6 +563,10 @@ export function SkilledTradesLearnByDoingSection({
         return <Hammer className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400" />
       case 'HVAC':
         return <Compass className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+      default: {
+        const meta = LEARN_CATEGORY_META[cat]
+        return <span className="text-xs leading-none">{meta?.emoji || '📚'}</span>
+      }
     }
   }
 
@@ -725,7 +798,6 @@ export function SkilledTradesLearnByDoingSection({
           ringColor: '#B45309'
         }
       case 'lbd_hvac_refrigeration_13':
-      default:
         return {
           instructorName: 'Bryan Orr',
           role: `Founder & Master HVACR Educator · ${category}`,
@@ -733,6 +805,23 @@ export function SkilledTradesLearnByDoingSection({
             'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
           ringColor: '#4F46E5'
         }
+      default: {
+        const fallbackAvatars = [
+          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+        ]
+        const hash = lessonId.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
+        return {
+          instructorName: creator,
+          role: `${category} Instructor · ${creator}`,
+          avatarUrl: fallbackAvatars[hash % fallbackAvatars.length],
+          ringColor: LEARN_CATEGORY_META[category]?.ringColor || '#0A66C2'
+        }
+      }
     }
   }
 
@@ -765,13 +854,13 @@ export function SkilledTradesLearnByDoingSection({
               [
                 { id: 'All', label: `All Videos (${totalLessonsCount})` },
                 { id: 'Global Interpreted', label: `🌍 Global → ${currentLanguage.flag} ${currentLanguage.localName} (${globalInterpretedCount})` },
-                { id: 'Carpentry', label: '🪚 Carpentry' },
-                { id: 'Auto Mechanics', label: '🔧 Auto' },
-                { id: 'Painting & Decorating', label: '🎨 Painting' },
-                { id: 'Plumbing', label: '🚰 Plumbing' },
-                { id: 'Electrical Fundamentals', label: '⚡ Electrical' },
-                { id: 'Welding', label: '🔥 Welding' },
-                { id: 'HVAC', label: '❄️ HVAC' }
+                ...SKILLED_TRADES_COLLECTION_META.categories.map((cat) => {
+                  const meta = LEARN_CATEGORY_META[cat]
+                  return {
+                    id: cat,
+                    label: `${meta?.emoji || '📚'} ${meta?.shortLabel || cat}`
+                  }
+                })
               ] as { id: CategoryFilter; label: string }[]
             ).map(tab => {
               const isSelected = selectedCategory === tab.id
@@ -1302,7 +1391,7 @@ export function SkilledTradesLearnByDoingSection({
                 Featured Collection
               </span>
               <span className="rounded-full bg-white/10 border border-white/20 px-2.5 py-0.5 text-[11px] font-semibold text-amber-200">
-                Carpentry · Auto Mechanics · Painting · Plumbing · Electrical · Welding · HVAC
+                26 Trades &amp; Professions · All ConnectLn Enclaves
               </span>
               <span className="rounded-full bg-emerald-500/20 border border-emerald-400/40 px-2.5 py-0.5 text-[10px] font-mono font-bold text-emerald-300">
                 100% Real User Activity Telemetry · Zero Seeded Counts
@@ -1354,20 +1443,49 @@ export function SkilledTradesLearnByDoingSection({
           </div>
         </div>
 
-        {/* Category & Saved / Learning Journey Filter Tabs */}
-        <div className="mt-4 pt-3.5 border-t border-white/15 flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        {/* Search & Category Filter Bar */}
+        <div className="mt-4 pt-3.5 border-t border-white/15 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="relative flex-1 max-w-md">
+              <Search className="h-3.5 w-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search any trade, profession, skill, or instructor..."
+                className="w-full rounded-full bg-white/10 border border-white/20 pl-8 pr-8 py-1.5 text-xs text-white placeholder:text-zinc-400 focus:outline-none focus:border-amber-400"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  title="Clear search"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-300 hover:text-white cursor-pointer"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            <div className="text-[11px] text-zinc-300 font-medium shrink-0">
+              Showing <strong className="text-white">{filteredLessons.length}</strong> of{' '}
+              <strong className="text-amber-300">{totalLessonsCount}</strong> videos · Recorded User Interactions:{' '}
+              <strong className="text-amber-300">{totalInteractions}</strong>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
             {(
               [
                 { id: 'All', label: `All ${totalLessonsCount} Lessons`, count: totalLessonsCount },
                 { id: 'Global Interpreted', label: `🌍 Global → ${currentLanguage.flag} ${currentLanguage.localName}`, count: globalInterpretedCount },
-                { id: 'Carpentry', label: '🪚 Carpentry', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'Carpentry').length },
-                { id: 'Auto Mechanics', label: '🔧 Auto Mechanics', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'Auto Mechanics').length },
-                { id: 'Painting & Decorating', label: '🎨 Painting & Decorating', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'Painting & Decorating').length },
-                { id: 'Plumbing', label: '🚰 Plumbing', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'Plumbing').length },
-                { id: 'Electrical Fundamentals', label: '⚡ Electrical Fundamentals', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'Electrical Fundamentals').length },
-                { id: 'Welding', label: '🔥 Welding', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'Welding').length },
-                { id: 'HVAC', label: '❄️ HVAC', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'HVAC').length },
+                ...SKILLED_TRADES_COLLECTION_META.categories.map((cat) => {
+                  const meta = LEARN_CATEGORY_META[cat]
+                  return {
+                    id: cat,
+                    label: `${meta?.emoji || '📚'} ${cat}`,
+                    count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === cat).length
+                  }
+                }),
                 { id: 'Saved', label: '🔖 Saved Content', count: totalSavedCount },
                 { id: 'Learning Journey', label: '🧭 My Learning Journey', count: totalJourneyCount }
               ] as { id: CategoryFilter; label: string; count: number }[]
@@ -1397,7 +1515,7 @@ export function SkilledTradesLearnByDoingSection({
                       setAutoPlayRequested(true)
                     }
                   }}
-                  className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                  className={`rounded-full px-3 py-1 text-[11px] font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
                     isSelected
                       ? 'bg-amber-400 text-slate-950 shadow-xs'
                       : 'bg-white/10 text-zinc-200 hover:bg-white/20 border border-white/15'
@@ -1415,10 +1533,6 @@ export function SkilledTradesLearnByDoingSection({
               )
             })}
           </div>
-
-          <div className="text-[11px] text-zinc-300 font-medium">
-            Recorded User Interactions: <strong className="text-amber-300">{totalInteractions}</strong>
-          </div>
         </div>
 
         {/* Quick-Jump Section Bar on Learn Tab */}
@@ -1435,7 +1549,7 @@ export function SkilledTradesLearnByDoingSection({
               }}
               className="rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 px-2.5 py-1 text-[11px] font-bold text-white cursor-pointer transition-colors"
             >
-              📚 13 Video Lessons &amp; Detailed Study Notes
+              📚 {totalLessonsCount} Video Lessons &amp; Detailed Study Notes
             </button>
             <button
               type="button"
@@ -1477,10 +1591,13 @@ export function SkilledTradesLearnByDoingSection({
             </p>
             <button
               type="button"
-              onClick={() => setSelectedCategory('All')}
+              onClick={() => {
+                setSelectedCategory('All')
+                setSearchQuery('')
+              }}
               className="mt-2 rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-1.5 text-xs font-bold text-white cursor-pointer"
             >
-              Show All 13 Beginner Lessons
+              Show All {totalLessonsCount} Hands-On Lessons
             </button>
           </div>
         ) : (

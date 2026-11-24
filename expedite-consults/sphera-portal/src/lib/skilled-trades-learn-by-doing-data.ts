@@ -1,3 +1,5 @@
+import { PROFESSION_LEARN_BY_DOING_LESSONS } from './profession-learn-by-doing-lessons'
+
 export type SkilledTradesCategory =
   | 'Carpentry'
   | 'Auto Mechanics'
@@ -6,6 +8,187 @@ export type SkilledTradesCategory =
   | 'Electrical Fundamentals'
   | 'Welding'
   | 'HVAC'
+  | 'Masonry & Tile'
+  | 'Roofing & Drywall'
+  | 'Solar & Energy'
+  | 'Machining & Repair'
+  | 'Agriculture & Landscaping'
+  | 'Culinary & Hospitality'
+  | 'Barbering & Beauty'
+  | 'Tailoring & Sewing'
+  | 'Healthcare & Nursing'
+  | 'Software & AI'
+  | 'Cybersecurity & IT'
+  | 'Finance & Business'
+  | 'Law & Legal'
+  | 'Creative Media & Design'
+  | 'Telecom & Fiber Optics'
+  | 'Aviation & Maritime'
+  | 'Science & Lab Tech'
+  | 'Education & Training'
+  | 'Safety & Civic Ops'
+
+export const LEARN_CATEGORY_META: Record<
+  SkilledTradesCategory,
+  { emoji: string; shortLabel: string; enclaveIds: string[]; ringColor: string }
+> = {
+  Carpentry: {
+    emoji: '🪚',
+    shortLabel: 'Carpentry',
+    enclaveIds: ['trades_construction'],
+    ringColor: '#D97706'
+  },
+  'Auto Mechanics': {
+    emoji: '🔧',
+    shortLabel: 'Auto',
+    enclaveIds: ['automotive_mechanics'],
+    ringColor: '#0284C7'
+  },
+  'Painting & Decorating': {
+    emoji: '🎨',
+    shortLabel: 'Painting',
+    enclaveIds: ['trades_construction'],
+    ringColor: '#059669'
+  },
+  Plumbing: {
+    emoji: '🚰',
+    shortLabel: 'Plumbing',
+    enclaveIds: ['trades_construction'],
+    ringColor: '#0891B2'
+  },
+  'Electrical Fundamentals': {
+    emoji: '⚡',
+    shortLabel: 'Electrical',
+    enclaveIds: ['trades_construction'],
+    ringColor: '#CA8A04'
+  },
+  Welding: {
+    emoji: '🔥',
+    shortLabel: 'Welding',
+    enclaveIds: ['trades_construction', 'manufacturing_industrial'],
+    ringColor: '#EA580C'
+  },
+  HVAC: {
+    emoji: '❄️',
+    shortLabel: 'HVAC',
+    enclaveIds: ['trades_construction'],
+    ringColor: '#4F46E5'
+  },
+  'Masonry & Tile': {
+    emoji: '🧱',
+    shortLabel: 'Masonry & Tile',
+    enclaveIds: ['trades_construction'],
+    ringColor: '#B45309'
+  },
+  'Roofing & Drywall': {
+    emoji: '🏠',
+    shortLabel: 'Roofing & Drywall',
+    enclaveIds: ['trades_construction'],
+    ringColor: '#7C2D12'
+  },
+  'Solar & Energy': {
+    emoji: '☀️',
+    shortLabel: 'Solar & Energy',
+    enclaveIds: ['energy_utilities_environment'],
+    ringColor: '#EAB308'
+  },
+  'Machining & Repair': {
+    emoji: '⚙️',
+    shortLabel: 'Machining & Repair',
+    enclaveIds: ['manufacturing_industrial', 'trades_construction'],
+    ringColor: '#475569'
+  },
+  'Agriculture & Landscaping': {
+    emoji: '🌱',
+    shortLabel: 'Agriculture',
+    enclaveIds: ['agriculture_natural_resources'],
+    ringColor: '#16A34A'
+  },
+  'Culinary & Hospitality': {
+    emoji: '👨‍🍳',
+    shortLabel: 'Culinary',
+    enclaveIds: ['culinary_hospitality_events'],
+    ringColor: '#DC2626'
+  },
+  'Barbering & Beauty': {
+    emoji: '💈',
+    shortLabel: 'Barber & Beauty',
+    enclaveIds: ['personal_services_wellness'],
+    ringColor: '#9333EA'
+  },
+  'Tailoring & Sewing': {
+    emoji: '🧵',
+    shortLabel: 'Tailoring',
+    enclaveIds: ['trades_construction', 'creative_media_arts'],
+    ringColor: '#DB2777'
+  },
+  'Healthcare & Nursing': {
+    emoji: '🩺',
+    shortLabel: 'Healthcare',
+    enclaveIds: ['healthcare_medicine'],
+    ringColor: '#E11D48'
+  },
+  'Software & AI': {
+    emoji: '💻',
+    shortLabel: 'Software & AI',
+    enclaveIds: ['tech_software', 'campus_students'],
+    ringColor: '#2563EB'
+  },
+  'Cybersecurity & IT': {
+    emoji: '🛡️',
+    shortLabel: 'Cybersecurity',
+    enclaveIds: ['tech_cybersecurity'],
+    ringColor: '#4338CA'
+  },
+  'Finance & Business': {
+    emoji: '💼',
+    shortLabel: 'Finance & Biz',
+    enclaveIds: ['finance_accounting', 'commerce_small_business', 'franchise_networks'],
+    ringColor: '#0D9488'
+  },
+  'Law & Legal': {
+    emoji: '⚖️',
+    shortLabel: 'Law & Legal',
+    enclaveIds: ['law_gov_defense'],
+    ringColor: '#7C3AED'
+  },
+  'Creative Media & Design': {
+    emoji: '🎬',
+    shortLabel: 'Creative Media',
+    enclaveIds: ['creative_media_arts'],
+    ringColor: '#C026D3'
+  },
+  'Telecom & Fiber Optics': {
+    emoji: '📡',
+    shortLabel: 'Telecom & Fiber',
+    enclaveIds: ['telecom_digital_infrastructure', 'veterans_military'],
+    ringColor: '#0369A1'
+  },
+  'Aviation & Maritime': {
+    emoji: '✈️',
+    shortLabel: 'Aviation & Marine',
+    enclaveIds: ['aviation_aerospace_maritime', 'veterans_military'],
+    ringColor: '#1D4ED8'
+  },
+  'Science & Lab Tech': {
+    emoji: '🔬',
+    shortLabel: 'Science & Lab',
+    enclaveIds: ['science_laboratory_research'],
+    ringColor: '#0F766E'
+  },
+  'Education & Training': {
+    emoji: '🎓',
+    shortLabel: 'Education',
+    enclaveIds: ['education_workforce', 'campus_students'],
+    ringColor: '#6D28D9'
+  },
+  'Safety & Civic Ops': {
+    emoji: '🦺',
+    shortLabel: 'Safety & OSHA',
+    enclaveIds: ['community_civic_security', 'veterans_military'],
+    ringColor: '#D97706'
+  }
+}
 
 export interface LearnByDoingKnowledgeCheck {
   question: string
@@ -38,7 +221,7 @@ export interface LearnByDoingLesson {
   videoLabel: string
   title: string
   category: SkilledTradesCategory
-  enclaveId: 'trades_construction' | 'automotive_mechanics'
+  enclaveId: string
   professionId: string
   level: 'Beginner'
   originalCreator: string
@@ -87,9 +270,9 @@ export interface LearnByDoingLessonTelemetry {
 
 export const SKILLED_TRADES_COLLECTION_META = {
   id: 'collection_skilled_trades_learn_by_doing',
-  title: 'Skilled Trades: Learn by Doing',
+  title: 'Learn a Trade or Profession: Learn by Doing',
   subtitle:
-    'Hands-on beginner lessons across Carpentry, Auto Mechanics, Painting & Decorating, Plumbing, Electrical Fundamentals, Welding, and HVAC with original creator attribution, guided practice activities, and knowledge checks.',
+    'Hands-on instructional video lessons aligned with ConnectLn’s professions and trades — from Carpentry, Plumbing, Electrical, Welding, HVAC, Masonry, Solar, Auto & Machining to Healthcare, Culinary, Barbering, Tailoring, Agriculture, Software, Cybersecurity, Finance, Law, Media, Telecom, Aviation & Lab Science.',
   categories: [
     'Carpentry',
     'Auto Mechanics',
@@ -97,7 +280,26 @@ export const SKILLED_TRADES_COLLECTION_META = {
     'Plumbing',
     'Electrical Fundamentals',
     'Welding',
-    'HVAC'
+    'HVAC',
+    'Masonry & Tile',
+    'Roofing & Drywall',
+    'Solar & Energy',
+    'Machining & Repair',
+    'Agriculture & Landscaping',
+    'Culinary & Hospitality',
+    'Barbering & Beauty',
+    'Tailoring & Sewing',
+    'Healthcare & Nursing',
+    'Software & AI',
+    'Cybersecurity & IT',
+    'Finance & Business',
+    'Law & Legal',
+    'Creative Media & Design',
+    'Telecom & Fiber Optics',
+    'Aviation & Maritime',
+    'Science & Lab Tech',
+    'Education & Training',
+    'Safety & Civic Ops'
   ] as SkilledTradesCategory[]
 }
 
@@ -1497,7 +1699,8 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       explanation:
         'Sunmao (榫卯) joinery uses interlocking geometric shoulders, keyed tenons, and dovetail profiles so structural loads tighten the joint mechanically.'
     }
-  }
+  },
+  ...PROFESSION_LEARN_BY_DOING_LESSONS
 ]
 
 const TELEMETRY_STORAGE_KEY = 'connectln_skilled_trades_learn_by_doing_telemetry_v1'
@@ -1764,7 +1967,7 @@ export interface ProposedTradeProfessionTopic {
   firstVideoTopic: string
   secondVideoTopic: string
   suggestedPracticePreview: string
-  status: 'Proposed Topic · Video Selection Pending'
+  status: 'Live Now · Available Above' | 'Proposed Topic · Video Selection Pending'
 }
 
 export const PROPOSED_NEXT_TRADE_PROFESSIONS: ProposedTradeProfessionTopic[] = [
@@ -1776,7 +1979,7 @@ export const PROPOSED_NEXT_TRADE_PROFESSIONS: ProposedTradeProfessionTopic[] = [
     secondVideoTopic: 'Understanding mortar and joint finishing',
     suggestedPracticePreview:
       'Dry-lay a running bond and stack bond pattern with bricks or blocks, then identify concave vs. flush mortar joint profiles.',
-    status: 'Proposed Topic · Video Selection Pending'
+    status: 'Live Now · Available Above'
   },
   {
     id: 'prop_tile_installation',
@@ -1786,7 +1989,7 @@ export const PROPOSED_NEXT_TRADE_PROFESSIONS: ProposedTradeProfessionTopic[] = [
     secondVideoTopic: 'Grouting and finishing',
     suggestedPracticePreview:
       'Snap chalk centerlines on a practice board to balance perimeter cut tiles and avoid narrow sliver cuts along edges.',
-    status: 'Proposed Topic · Video Selection Pending'
+    status: 'Live Now · Available Above'
   },
   {
     id: 'prop_appliance_maintenance',
@@ -1796,7 +1999,7 @@ export const PROPOSED_NEXT_TRADE_PROFESSIONS: ProposedTradeProfessionTopic[] = [
     secondVideoTopic: 'Routine cleaning and maintenance checks',
     suggestedPracticePreview:
       'Locate the model and serial number plate on a household appliance and list its routine filter, coil, or seal maintenance checks.',
-    status: 'Proposed Topic · Video Selection Pending'
+    status: 'Live Now · Available Above'
   },
   {
     id: 'prop_landscaping_gardening',
@@ -1806,7 +2009,7 @@ export const PROPOSED_NEXT_TRADE_PROFESSIONS: ProposedTradeProfessionTopic[] = [
     secondVideoTopic: 'Lawn and garden maintenance',
     suggestedPracticePreview:
       'Assess soil drainage and texture in a planting bed and create a seasonal watering, mulching, and pruning schedule.',
-    status: 'Proposed Topic · Video Selection Pending'
+    status: 'Live Now · Available Above'
   },
   {
     id: 'prop_tailoring_sewing',
@@ -1816,7 +2019,7 @@ export const PROPOSED_NEXT_TRADE_PROFESSIONS: ProposedTradeProfessionTopic[] = [
     secondVideoTopic: 'Basic seams and hemming',
     suggestedPracticePreview:
       'Record key garment measurements with a flexible tape and stitch a straight seam and clean hem on scrap fabric.',
-    status: 'Proposed Topic · Video Selection Pending'
+    status: 'Live Now · Available Above'
   },
   {
     id: 'prop_barbering_hairdressing',
@@ -1826,7 +2029,7 @@ export const PROPOSED_NEXT_TRADE_PROFESSIONS: ProposedTradeProfessionTopic[] = [
     secondVideoTopic: 'Consultation and hairstyle planning',
     suggestedPracticePreview:
       'Lay out clippers, guards, shears, and combs with their sanitization steps, and write a structured 4-question client consultation checklist.',
-    status: 'Proposed Topic · Video Selection Pending'
+    status: 'Live Now · Available Above'
   },
   {
     id: 'prop_professional_cleaning',
@@ -1846,7 +2049,7 @@ export const PROPOSED_NEXT_TRADE_PROFESSIONS: ProposedTradeProfessionTopic[] = [
     secondVideoTopic: 'Portion planning and food presentation',
     suggestedPracticePreview:
       'Organize a mise-en-place prep station for a 3-ingredient dish and calculate portion weights for a 10-guest catering tray.',
-    status: 'Proposed Topic · Video Selection Pending'
+    status: 'Live Now · Available Above'
   },
   {
     id: 'prop_furniture_restoration',
@@ -1866,7 +2069,7 @@ export const PROPOSED_NEXT_TRADE_PROFESSIONS: ProposedTradeProfessionTopic[] = [
     secondVideoTopic: 'Photographing completed work for a portfolio',
     suggestedPracticePreview:
       'Write a clear customer estimate for a sample trade service and take a clean, well-framed before-and-after portfolio photo.',
-    status: 'Proposed Topic · Video Selection Pending'
+    status: 'Live Now · Available Above'
   }
 ]
 

@@ -36,6 +36,7 @@ export interface LearningCourse {
   practiceActivity?: string
   skillsCovered?: string[]
   isLearnByDoingCatalogue?: boolean
+  enclaveId?: string
   instructor: {
     name: string
     role: string
@@ -1004,6 +1005,7 @@ export const SKILLED_TRADES_LEARN_BY_DOING_COURSES: LearningCourse[] =
     practiceActivity: lesson.practiceActivity,
     skillsCovered: lesson.skillsCovered,
     isLearnByDoingCatalogue: true,
+    enclaveId: lesson.enclaveId,
     instructor: {
       name: lesson.originalCreator,
       role: `Original Creator · ${lesson.category}`,
@@ -1046,12 +1048,25 @@ function deduplicateCoursesBySourceVideo(courses: LearningCourse[]): LearningCou
   return result
 }
 
+export function sortCoursesForEnclave(
+  courses: LearningCourse[],
+  enclaveId?: string
+): LearningCourse[] {
+  if (!enclaveId) return courses
+  return [...courses].sort((a, b) => {
+    const aMatch = a.enclaveId === enclaveId ? 1 : 0
+    const bMatch = b.enclaveId === enclaveId ? 1 : 0
+    return bMatch - aMatch
+  })
+}
+
 export function getEnclaveLearningCourses(enclaveId?: string): LearningCourse[] {
   const dailyCourses = getAccumulatedDailyLearningCourses()
+  const sortedLbdCourses = sortCoursesForEnclave(SKILLED_TRADES_LEARN_BY_DOING_COURSES, enclaveId)
   if (enclaveId === 'trades_construction') {
     return deduplicateCoursesBySourceVideo([
       ...dailyCourses,
-      ...SKILLED_TRADES_LEARN_BY_DOING_COURSES,
+      ...sortedLbdCourses,
       {
         id: 'crs_timber_1',
         title: 'Heavy Timber Mortise & Tenon Joinery & Bent Fabrication',
@@ -1265,13 +1280,13 @@ export function getEnclaveLearningCourses(enclaveId?: string): LearningCourse[] 
         hasCertificate: true,
         recommendedMarketplaceTools: []
       },
-      ...SKILLED_TRADES_LEARN_BY_DOING_COURSES
+      ...sortCoursesForEnclave(SKILLED_TRADES_LEARN_BY_DOING_COURSES, 'healthcare_medicine')
     ])
   }
 
   if (enclaveId === 'automotive_mechanics') {
     return deduplicateCoursesBySourceVideo([
-      ...SKILLED_TRADES_LEARN_BY_DOING_COURSES,
+      ...sortCoursesForEnclave(SKILLED_TRADES_LEARN_BY_DOING_COURSES, 'automotive_mechanics'),
       {
         id: 'crs_auto_scope',
         title: 'PicoScope 4-Channel CAN-FD & Oscilloscope Waveforms',
@@ -1337,10 +1352,10 @@ export function getEnclaveLearningCourses(enclaveId?: string): LearningCourse[] 
     ])
   }
 
-  // tech_cybersecurity or default
+  // All other enclaves: surface enclave-matching Learn-By-Doing courses before general courses
   return deduplicateCoursesBySourceVideo([
+    ...sortCoursesForEnclave(SKILLED_TRADES_LEARN_BY_DOING_COURSES, enclaveId),
     ...LEARNING_COURSES_DATA,
-    ...SKILLED_TRADES_LEARN_BY_DOING_COURSES
   ])
 }
 
