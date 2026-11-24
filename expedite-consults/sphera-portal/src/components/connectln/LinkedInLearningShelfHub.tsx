@@ -16,10 +16,13 @@ import {
   ExternalLink,
   FileText,
   HelpCircle,
+  Link2,
   Play,
   RefreshCw,
   Search,
+  ShieldCheck,
   Sparkles,
+  Upload,
   X,
 } from "lucide-react"
 import type { LearningVideoSyncMeta } from "@/lib/connectln-learning-video-sync"
@@ -29,6 +32,7 @@ import {
   LearnByDoingLesson,
   LearnByDoingLessonTelemetry,
   LearnIndustryGroupId,
+  LearnVideoSourceProvider,
   PROPOSED_NEXT_TRADE_PROFESSIONS,
   RUNNING_YOUR_TRADE_BUSINESS_PATH,
   SKILLED_TRADES_COLLECTION_META,
@@ -54,6 +58,7 @@ export interface LinkedInLearningShelfHubProps {
   syncMeta?: LearningVideoSyncMeta | null
   isSyncingVideos?: boolean
   onSyncVideosNow?: () => void
+  onLessonPublished?: (lesson: LearnByDoingLesson) => void
   recommendedCategory: SkilledTradesCategory | "All"
   selectedIndustryGroup: LearnIndustryGroupId
   setSelectedIndustryGroup: (g: LearnIndustryGroupId) => void
@@ -125,6 +130,32 @@ function formatDurationPill(raw?: string): string {
   return clean
 }
 
+function resolveLessonProvider(lesson: LearnByDoingLesson): LearnVideoSourceProvider {
+  if (lesson.sourceProvider) return lesson.sourceProvider
+  if (lesson.directVideoUrl) return "connectln_native"
+  return "youtube"
+}
+
+function getLessonSourceBadge(lesson: LearnByDoingLesson): { label: string; cls: string } {
+  switch (resolveLessonProvider(lesson)) {
+    case "connectln_native":
+      return { label: "ConnectLn Original", cls: "bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-700" }
+    case "vimeo":
+      return { label: "Vimeo", cls: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/50 dark:text-sky-300 dark:border-sky-800" }
+    case "archive_org":
+      return { label: "MIT / Archive", cls: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800" }
+    case "peertube":
+      return { label: "PeerTube", cls: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800" }
+    case "dailymotion":
+      return { label: "Dailymotion", cls: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800" }
+    case "ted":
+      return { label: "TED", cls: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800" }
+    case "youtube":
+    default:
+      return { label: "YouTube", cls: "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700" }
+  }
+}
+
 function getLessonVariantView(
   lesson: LearnByDoingLesson,
   lesson6Variant: "primary" | "companion"
@@ -179,6 +210,7 @@ function CoursePopOutCard({
 }: CoursePopOutCardProps) {
   const view = getLessonVariantView(lesson, lesson6Variant)
   const durationBadge = formatDurationPill(view.duration)
+  const sourceBadge = getLessonSourceBadge(lesson)
 
   const badge = telemetry.isCompleted
     ? { label: "Completed ✓", cls: "bg-emerald-500/95 text-white" }
@@ -236,9 +268,16 @@ function CoursePopOutCard({
 
         {/* Clean Resting Card Body */}
         <div className="pt-2.5 px-0.5 space-y-1">
-          <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
-            Course · {lesson.category}
-          </p>
+          <div className="flex items-center justify-between gap-1.5">
+            <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
+              Course · {lesson.category}
+            </p>
+            <span
+              className={`rounded px-1.5 py-0.5 text-[9.5px] font-bold border shrink-0 ${sourceBadge.cls}`}
+            >
+              {sourceBadge.label}
+            </span>
+          </div>
           <h4 className="text-[13.5px] font-bold leading-snug text-zinc-900 dark:text-zinc-100 line-clamp-2 min-h-[2.4rem]">
             {view.title}
           </h4>
@@ -441,6 +480,7 @@ export function LinkedInLearningShelfHub({
   syncMeta,
   isSyncingVideos = false,
   onSyncVideosNow,
+  onLessonPublished,
   recommendedCategory,
   selectedIndustryGroup,
   setSelectedIndustryGroup,
@@ -490,6 +530,22 @@ export function LinkedInLearningShelfHub({
   )
   const [showBusinessPath, setShowBusinessPath] = useState<boolean>(false)
   const [showRoadmap, setShowRoadmap] = useState<boolean>(false)
+  const [sourceFilter, setSourceFilter] = useState<
+    "all" | "connectln_native" | "youtube" | "vimeo" | "archive_org" | "peertube_dm"
+  >("all")
+  const [showUploadModal, setShowUploadModal] = useState<boolean>(false)
+  const [uploadMode, setUploadMode] = useState<"file" | "link">("file")
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadSourceUrl, setUploadSourceUrl] = useState<string>("")
+  const [uploadTitle, setUploadTitle] = useState<string>("")
+  const [uploadCategory, setUploadCategory] = useState<SkilledTradesCategory>("Carpentry")
+  const [uploadDescription, setUploadDescription] = useState<string>("")
+  const [uploadPracticePrompt, setUploadPracticePrompt] = useState<string>("")
+  const [uploadLang, setUploadLang] = useState<string>("en")
+  const [uploadRightsAttested, setUploadRightsAttested] = useState<boolean>(false)
+  const [uploadProgressPct, setUploadProgressPct] = useState<number>(0)
+  const [isPublishingLesson, setIsPublishingLesson] = useState<boolean>(false)
+  const [uploadStatusMsg, setUploadStatusMsg] = useState<string | null>(null)
   const modalPhotoInputRef = useRef<HTMLInputElement | null>(null)
   const hubTopRef = useRef<HTMLDivElement | null>(null)
 
@@ -531,10 +587,20 @@ export function LinkedInLearningShelfHub({
     [lessons]
   )
 
+  const matchesSourceFilter = (lesson: LearnByDoingLesson): boolean => {
+    if (sourceFilter === "all") return true
+    const prov = resolveLessonProvider(lesson)
+    if (sourceFilter === "peertube_dm") {
+      return prov === "peertube" || prov === "dailymotion" || prov === "ted"
+    }
+    return prov === sourceFilter
+  }
+
   const hasActiveFilter =
     searchQuery.trim() !== "" ||
     selectedCategory !== "All" ||
-    selectedIndustryGroup !== "all"
+    selectedIndustryGroup !== "all" ||
+    sourceFilter !== "all"
 
   const effectiveViewMode: "shelves" | "grid" = hasActiveFilter ? "grid" : explicitViewMode
 
@@ -546,6 +612,7 @@ export function LinkedInLearningShelfHub({
   const filteredGridLessons = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     return lessons.filter((lesson) => {
+      if (!matchesSourceFilter(lesson)) return false
       const t = telemetryMap[lesson.id] || createInitialLessonTelemetry(lesson.id)
       const matchesCat =
         selectedCategory === "All"
@@ -568,13 +635,15 @@ export function LinkedInLearningShelfHub({
         lesson.originalCreator,
         lesson.enclaveId,
         lesson.professionId,
+        lesson.licenseLabel || "",
+        resolveLessonProvider(lesson),
         ...(lesson.skillsCovered || []),
       ]
         .join(" ")
         .toLowerCase()
       return haystack.includes(q)
     })
-  }, [lessons, telemetryMap, selectedCategory, activeGroupObj, searchQuery])
+  }, [lessons, telemetryMap, selectedCategory, activeGroupObj, searchQuery, sourceFilter])
 
   // User Display Names
   const rawName = String(user?.name || "Member").trim()
@@ -664,7 +733,136 @@ export function LinkedInLearningShelfHub({
     setSearchQuery("")
     setSelectedCategory("All")
     setSelectedIndustryGroup("all")
+    setSourceFilter("all")
     setExplicitViewMode("shelves")
+  }
+
+  const handlePublishCreatorLesson = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (isPublishingLesson) return
+    setUploadStatusMsg(null)
+
+    if (!uploadTitle.trim()) {
+      setUploadStatusMsg("Please enter a lesson title.")
+      return
+    }
+    if (!uploadRightsAttested) {
+      setUploadStatusMsg("Please attest that you hold rights or open-license permission to share this lesson.")
+      return
+    }
+
+    setIsPublishingLesson(true)
+    setUploadProgressPct(0)
+
+    try {
+      if (uploadMode === "file") {
+        if (!uploadFile) {
+          setUploadStatusMsg("Select an MP4 or WebM video file (up to 36 MB).")
+          setIsPublishingLesson(false)
+          return
+        }
+        if (uploadFile.size > 36 * 1024 * 1024) {
+          setUploadStatusMsg("Video file must be 36 MB or smaller.")
+          setIsPublishingLesson(false)
+          return
+        }
+
+        const CHUNK_SIZE = 2_500_000
+        const totalChunks = Math.max(1, Math.ceil(uploadFile.size / CHUNK_SIZE))
+        const uploadId = `cln_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+
+        for (let idx = 0; idx < totalChunks; idx++) {
+          const slice = uploadFile.slice(idx * CHUNK_SIZE, Math.min(uploadFile.size, (idx + 1) * CHUNK_SIZE))
+          const fd = new FormData()
+          fd.append("uploadId", uploadId)
+          fd.append("chunkIndex", String(idx))
+          fd.append("totalChunks", String(totalChunks))
+          fd.append("chunk", slice, uploadFile.name)
+
+          const cRes = await fetch("/api/connectin/learning-videos/upload", {
+            method: "POST",
+            body: fd,
+          })
+          if (!cRes.ok) {
+            const cErr = await cRes.json().catch(() => ({}))
+            throw new Error(cErr?.error || `Chunk ${idx + 1} upload failed`)
+          }
+          setUploadProgressPct(Math.round(((idx + 1) / totalChunks) * 90))
+        }
+
+        const finRes = await fetch("/api/connectin/learning-videos/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "finalize_upload",
+            uploadId,
+            totalChunks,
+            totalBytes: uploadFile.size,
+            mimeType: uploadFile.type || "video/mp4",
+            title: uploadTitle.trim(),
+            category: uploadCategory,
+            description: uploadDescription.trim(),
+            practiceActivity: uploadPracticePrompt.trim(),
+            sourceLanguage: uploadLang,
+            creatorName: user?.name || "ConnectLn Creator",
+            creatorEmail: user?.email,
+            rightsAttested: true,
+          }),
+        })
+        const finJson = await finRes.json().catch(() => ({}))
+        if (!finRes.ok || !finJson?.lesson) {
+          throw new Error(finJson?.error || "Failed to finalize uploaded lesson")
+        }
+
+        setUploadProgressPct(100)
+        onLessonPublished?.(finJson.lesson as LearnByDoingLesson)
+        setShowUploadModal(false)
+        setUploadFile(null)
+        setUploadTitle("")
+        setUploadDescription("")
+        setUploadPracticePrompt("")
+        setUploadRightsAttested(false)
+        handleOpenClassroomModal(finJson.lesson as LearnByDoingLesson)
+      } else {
+        if (!uploadSourceUrl.trim()) {
+          setUploadStatusMsg("Please enter a valid Vimeo, YouTube, Internet Archive, PeerTube, Dailymotion, or MP4 URL.")
+          setIsPublishingLesson(false)
+          return
+        }
+        const linkRes = await fetch("/api/connectin/learning-videos/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "submit_external_link",
+            sourceUrl: uploadSourceUrl.trim(),
+            title: uploadTitle.trim(),
+            category: uploadCategory,
+            description: uploadDescription.trim(),
+            practiceActivity: uploadPracticePrompt.trim(),
+            sourceLanguage: uploadLang,
+            creatorName: user?.name || "ConnectLn Creator",
+            creatorEmail: user?.email,
+            rightsAttested: true,
+          }),
+        })
+        const linkJson = await linkRes.json().catch(() => ({}))
+        if (!linkRes.ok || !linkJson?.lesson) {
+          throw new Error(linkJson?.error || "Failed to verify and add external video link")
+        }
+        onLessonPublished?.(linkJson.lesson as LearnByDoingLesson)
+        setShowUploadModal(false)
+        setUploadSourceUrl("")
+        setUploadTitle("")
+        setUploadDescription("")
+        setUploadPracticePrompt("")
+        setUploadRightsAttested(false)
+        handleOpenClassroomModal(linkJson.lesson as LearnByDoingLesson)
+      }
+    } catch (err: any) {
+      setUploadStatusMsg(err?.message || "Upload failed — please try again.")
+    } finally {
+      setIsPublishingLesson(false)
+    }
   }
 
   const focusedLesson = useMemo(
@@ -830,12 +1028,59 @@ export function LinkedInLearningShelfHub({
           </div>
         </div>
 
-        {/* Inline Metrics & 24h Sync Strip */}
+        {/* Multi-Source Provider Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <span className="text-[10.5px] font-bold uppercase tracking-wider text-zinc-400 mr-1 shrink-0">
+            Sources:
+          </span>
+          {(
+            [
+              { id: "all", label: "All Sources" },
+              { id: "connectln_native", label: "✨ ConnectLn Originals" },
+              { id: "youtube", label: "YouTube" },
+              { id: "vimeo", label: "Vimeo" },
+              { id: "archive_org", label: "Open Archive / MIT" },
+              { id: "peertube_dm", label: "PeerTube & Dailymotion" },
+            ] as const
+          ).map((src) => {
+            const active = sourceFilter === src.id
+            return (
+              <button
+                key={src.id}
+                type="button"
+                onClick={() => {
+                  setSourceFilter(src.id)
+                  if (src.id !== "all") setExplicitViewMode("grid")
+                }}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold border transition-colors shrink-0 cursor-pointer ${
+                  active
+                    ? "bg-[#01754F] text-white border-[#01754F]"
+                    : "bg-zinc-50 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-[#01754F]"
+                }`}
+              >
+                {src.label}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Inline Metrics, Upload CTA & 24h Sync Strip */}
         <div className="flex items-center justify-between gap-3 flex-wrap pt-1 border-t border-zinc-100 dark:border-zinc-800 text-[11px] text-zinc-500 dark:text-zinc-400">
           <span>
             {SKILLED_TRADES_COLLECTION_META.subtitle}
           </span>
           <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setUploadStatusMsg(null)
+                setShowUploadModal(true)
+              }}
+              className="inline-flex items-center gap-1 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-3 py-1 text-[11px] font-bold shadow-2xs transition-colors cursor-pointer"
+            >
+              <Upload className="h-3 w-3" />
+              <span>+ Upload Lesson</span>
+            </button>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 font-semibold text-[#01754F] dark:text-emerald-300">
               <span>24h Auto-Sync</span>
               {syncedDailyLessons.length > 0 && (
@@ -1307,7 +1552,10 @@ export function LinkedInLearningShelfHub({
           telemetryMap[focusedLesson.id] ||
           createInitialLessonTelemetry(focusedLesson.id)
         const view = getLessonVariantView(focusedLesson, lesson6Variant)
-        const canEmbed = Boolean(view.embedAvailable && view.youtubeId)
+        const canEmbed = Boolean(
+          view.embedAvailable &&
+            (view.youtubeId || focusedLesson.embedUrl || focusedLesson.directVideoUrl)
+        )
         const instructor = resolveInstructorProfile(
           focusedLesson.id,
           view.creator,
@@ -1400,13 +1648,19 @@ export function LinkedInLearningShelfHub({
 
               {/* 2-Column Classroom Body */}
               <div className="p-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
-                {/* Left Column: Embedded Video Stage */}
+                {/* Left Column: Embedded Multi-Source Video Stage */}
                 <div className="lg:col-span-7 space-y-3">
-                  {canEmbed && view.youtubeId ? (
+                  {canEmbed ? (
                     <div className="rounded-xl overflow-hidden bg-black border border-zinc-200 dark:border-zinc-800">
                       <ConnectLnStudioPlayer
-                        key={`modal-player-${focusedLesson.id}-${view.youtubeId}-${lesson6Variant}`}
+                        key={`modal-player-${focusedLesson.id}-${view.youtubeId || focusedLesson.sourceProvider || "native"}-${lesson6Variant}`}
                         youtubeId={view.youtubeId}
+                        sourceProvider={focusedLesson.sourceProvider}
+                        embedUrl={focusedLesson.embedUrl}
+                        directVideoUrl={focusedLesson.directVideoUrl}
+                        sourceVideoUrl={view.sourceUrl}
+                        licenseLabel={focusedLesson.licenseLabel}
+                        posterImageUrl={view.thumbnailUrl}
                         title={view.title}
                         serialPlate={serialPlate}
                         speaker={instructor.instructorName}
@@ -1806,6 +2060,258 @@ export function LinkedInLearningShelfHub({
           </div>
         )
       })()}
+
+      {/* Creator Multi-Source Lesson Upload Modal */}
+      {showUploadModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Upload or Contribute a Trade Lesson"
+          onClick={() => !isPublishingLesson && setShowUploadModal(false)}
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-xl rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden"
+          >
+            <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
+                  Contribute a Trade or Profession Lesson
+                </h3>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                  Upload original MP4/WebM training directly to ConnectLn or link an open-licensed video
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={isPublishingLesson}
+                onClick={() => setShowUploadModal(false)}
+                className="h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handlePublishCreatorLesson} className="p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setUploadMode("file")}
+                  className={`flex items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-bold cursor-pointer transition-colors ${
+                    uploadMode === "file"
+                      ? "bg-[#01754F] text-white border-[#01754F]"
+                      : "bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700"
+                  }`}
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  <span>Upload MP4 / WebM</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUploadMode("link")}
+                  className={`flex items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-bold cursor-pointer transition-colors ${
+                    uploadMode === "link"
+                      ? "bg-[#01754F] text-white border-[#01754F]"
+                      : "bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700"
+                  }`}
+                >
+                  <Link2 className="h-3.5 w-3.5" />
+                  <span>External Verified Link</span>
+                </button>
+              </div>
+
+              {uploadMode === "file" ? (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-200 block">
+                    Video File (MP4, WebM, MOV · Max 36 MB)
+                  </label>
+                  <input
+                    type="file"
+                    accept="video/mp4,video/webm,video/quicktime"
+                    onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                    className="w-full text-xs text-zinc-700 dark:text-zinc-200 file:mr-3 file:rounded-full file:border-0 file:bg-[#0A66C2] file:px-3.5 file:py-1.5 file:text-xs file:font-bold file:text-white hover:file:bg-[#004182] cursor-pointer"
+                  />
+                  {uploadProgressPct > 0 && isPublishingLesson && (
+                    <div className="space-y-1 pt-1">
+                      <div className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-500 transition-all duration-200"
+                          style={{ width: `${uploadProgressPct}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                        Uploading &amp; verifying chunks… {uploadProgressPct}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-200 block">
+                    Video URL (Vimeo, Internet Archive, PeerTube, Dailymotion, TED, YouTube, or Direct MP4)
+                  </label>
+                  <input
+                    type="url"
+                    value={uploadSourceUrl}
+                    onChange={(e) => setUploadSourceUrl(e.target.value)}
+                    placeholder="https://vimeo.com/... or https://archive.org/details/..."
+                    className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-[#0A66C2]"
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-200 block">
+                    Lesson Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={uploadTitle}
+                    onChange={(e) => setUploadTitle(e.target.value)}
+                    placeholder="e.g. Installing a 200A Subpanel Safely"
+                    className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-[#0A66C2]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-200 block">
+                    Trade / Profession *
+                  </label>
+                  <select
+                    value={uploadCategory}
+                    onChange={(e) => setUploadCategory(e.target.value as SkilledTradesCategory)}
+                    className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-[#0A66C2]"
+                  >
+                    {LEARN_INDUSTRY_GROUPS.map((g) => (
+                      <optgroup key={g.id} label={`${g.emoji} ${g.label}`}>
+                        {g.categories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2 space-y-1">
+                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-200 block">
+                    Summary / Skills Covered
+                  </label>
+                  <input
+                    type="text"
+                    value={uploadDescription}
+                    onChange={(e) => setUploadDescription(e.target.value)}
+                    placeholder="Tools, technique steps, and key safety checks..."
+                    className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-[#0A66C2]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-200 block">
+                    Spoken Language
+                  </label>
+                  <select
+                    value={uploadLang}
+                    onChange={(e) => setUploadLang(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-[#0A66C2]"
+                  >
+                    <option value="en">English (en)</option>
+                    <option value="es">Español (es)</option>
+                    <option value="fr">Français (fr)</option>
+                    <option value="pt">Português (pt)</option>
+                    <option value="zh">中文 (zh)</option>
+                    <option value="ar">العربية (ar)</option>
+                    <option value="ak">Twi / Akan (ak)</option>
+                    <option value="hi">हिन्दी (hi)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-200 block">
+                  Hands-On Practice Activity (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={uploadPracticePrompt}
+                  onChange={(e) => setUploadPracticePrompt(e.target.value)}
+                  placeholder="What should learners practice on their bench or jobsite?"
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-[#0A66C2]"
+                />
+              </div>
+
+              <label className="flex items-start gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 text-[11px] text-zinc-700 dark:text-zinc-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={uploadRightsAttested}
+                  onChange={(e) => setUploadRightsAttested(e.target.checked)}
+                  className="mt-0.5 rounded border-zinc-400"
+                />
+                <span>
+                  I confirm that I own the rights to this original video or hold open-license / creator-approved permission to embed and share it freely on ConnectLn.
+                </span>
+              </label>
+
+              {uploadStatusMsg && (
+                <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                  {uploadStatusMsg}
+                </p>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  disabled={isPublishingLesson}
+                  onClick={() => setShowUploadModal(false)}
+                  className="rounded-full border border-zinc-300 dark:border-zinc-700 px-4 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPublishingLesson}
+                  className="rounded-full bg-[#01754F] hover:bg-[#015e3f] text-white px-5 py-1.5 text-xs font-bold shadow-xs cursor-pointer disabled:opacity-60"
+                >
+                  {isPublishingLesson ? "Publishing..." : "Publish Lesson"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Compliant Multi-Source Attribution & Platform Policy Footer */}
+      <footer className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 px-4 py-3 text-[11px] text-zinc-600 dark:text-zinc-400 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <ShieldCheck className="h-3.5 w-3.5 text-[#01754F] shrink-0" />
+          <span>
+            ConnectLn Learning combines <strong>ConnectLn Creator Originals</strong>, Creative Commons / Public Domain open media (<strong>MIT OpenCourseWare · Internet Archive</strong>), and official creator-attributed embeds (<strong>YouTube</strong>, <strong>Vimeo</strong>, <strong>PeerTube</strong>, <strong>Dailymotion</strong>). Embedded third-party videos remain free to watch and link directly to source creators.
+          </span>
+        </div>
+        <div className="flex items-center gap-3 font-semibold shrink-0">
+          <a
+            href="https://www.youtube.com/t/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#0A66C2] dark:text-sky-400 hover:underline"
+          >
+            YouTube Terms of Service
+          </a>
+          <span>·</span>
+          <a
+            href="https://policies.google.com/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#0A66C2] dark:text-sky-400 hover:underline"
+          >
+            Google Privacy Policy
+          </a>
+        </div>
+      </footer>
     </section>
   )
 }

@@ -3496,5 +3496,656 @@ export const PROFESSION_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       explanation:
         'Concrete comparisons and well-paced visuals give apprentices intuitive hooks to remember technical principles on the job.'
     }
+  },
+
+  // ─── MULTI-SOURCE VERIFIED LESSONS (#103–116: VIMEO, ARCHIVE.ORG/MIT, PEERTUBE, DAILYMOTION) ──
+  {
+    id: 'lbd_vimeo_timber_craft_103',
+    lessonNumber: 103,
+    videoLabel: 'Vimeo Craft 103: Timber Retreat Joinery & Architecture',
+    title: 'Jens Risom’s Block Island Timber Craft Retreat',
+    category: 'Carpentry',
+    enclaveId: 'trades_construction',
+    professionId: 'carpenter',
+    level: 'Intermediate',
+    originalCreator: 'Gary Nadeau · Vimeo Craft',
+    creatorDomain: 'vimeo.com',
+    sourceProvider: 'vimeo',
+    sourceVideoUrl: 'https://vimeo.com/53942891',
+    referenceArticleUrl: 'https://vimeo.com/53942891',
+    embedUrl: 'https://player.vimeo.com/video/53942891',
+    licenseLabel: 'Standard Vimeo Embed · Creator Attributed',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '4:15',
+    thumbnailUrl: 'https://i.vimeocdn.com/video/372786473-fb6ea711b175c500976fb7054e4362bc8f5ef8eb3e51dee428f997e99d0f69cc-d_640?region=us',
+    description:
+      'Vimeo Craft profile exploring mid-century prefab timber joinery, coastal wind-braced framing proportions, and functional interior wood detailing.',
+    skillsCovered: [
+      'Modular Timber Framing Proportions',
+      'Coastal Weathering & Wood Selection',
+      'Built-In Millwork & Space Optimization',
+      'Craftsman Design Thinking'
+    ],
+    practiceActivity:
+      'Sketch a compact timber workspace or studio layout prioritizing natural daylight capture, cross-ventilation, and built-in millwork storage.',
+    practiceDeliverablePrompt:
+      'Explain why consistent module dimensions speed framing assembly and reduce off-cut lumber waste.',
+    knowledgeCheck: {
+      question:
+        'What advantage does standardized modular timber layout bring to compact frame buildings?',
+      options: [
+        'Repeatable span grids match standard lumber lengths cleanly, accelerating assembly and cutting site waste',
+        'Every wall stud is cut to an incompatible random angle',
+        'Timber beams cannot support roof live loads',
+        'Millwork must wait until furniture dissolves'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Modular structural grids align sheathing, glazing, and cabinet spacing seamlessly.'
+    }
+  },
+  {
+    id: 'lbd_vimeo_lighting_design_104',
+    lessonNumber: 104,
+    videoLabel: 'Vimeo Design 104: Sustainable Lighting & Form',
+    title: 'Light Volumes, Dark Matters: Sustainable Lighting Design',
+    category: 'Creative Media & Design',
+    enclaveId: 'creative_media_arts',
+    professionId: 'photographer',
+    level: 'Intermediate',
+    originalCreator: 'Helen Hamlyn Centre · Vimeo Design',
+    creatorDomain: 'vimeo.com',
+    sourceProvider: 'vimeo',
+    sourceVideoUrl: 'https://vimeo.com/7965429',
+    referenceArticleUrl: 'https://vimeo.com/7965429',
+    embedUrl: 'https://player.vimeo.com/video/7965429',
+    licenseLabel: 'Standard Vimeo Embed · Creator Attributed',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '3:50',
+    thumbnailUrl: 'https://i.vimeocdn.com/video/35887894-c677f2fe0a084695299fe7e3a096f6cadb25efbfc4405704fc6c6bebc9133ee8-d_640?region=us',
+    description:
+      'Industrial & spatial design exploration hosted on Vimeo examining architectural light diffusion, human-centered urban fixture placement, and sustainable illumination efficiency.',
+    skillsCovered: [
+      'Direct vs. Diffused Architectural Illumination',
+      'Minimizing Light Spill & Glare Fatigue',
+      'Human-Scale Environmental Storytelling',
+      'Iterative Lighting Prototype Critique'
+    ],
+    practiceActivity:
+      'Evaluate a workspace or street corner at dusk: log dark trip zones vs. harsh unshielded glare fixtures and propose softer shielded bounce lighting.',
+    practiceDeliverablePrompt:
+      'Explain why shielded indirect light improves safety and night visibility compared to exposed glaring bulbs.',
+    knowledgeCheck: {
+      question:
+        'Why do architectural and stage lighting designers shield raw emitters or bounce light off matte surfaces?',
+      options: [
+        'Shielded bounce illumination eliminates blinding contrast glare and wraps soft uniform readability across subjects',
+        'Bouncing turns off electrical circuits automatically',
+        'Bare point glare improves night-vision pupil comfort',
+        'Diffusers eliminate shadows permanently outdoors'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Managing beam cutoff and surface softness keeps spaces comfortable, legible, and energy-conscious.'
+    }
+  },
+  {
+    id: 'lbd_vimeo_fluids_lab_105',
+    lessonNumber: 105,
+    videoLabel: 'Vimeo Science 105: Non-Newtonian Fluid Physics',
+    title: 'Physical Fluid Mechanics: Non-Newtonian Shear Response',
+    category: 'Science & Lab Tech',
+    enclaveId: 'science_laboratory_research',
+    professionId: 'research_scientist',
+    level: 'Beginner',
+    originalCreator: 'psharkr · Vimeo Science',
+    creatorDomain: 'vimeo.com',
+    sourceProvider: 'vimeo',
+    sourceVideoUrl: 'https://vimeo.com/6900459',
+    referenceArticleUrl: 'https://vimeo.com/6900459',
+    embedUrl: 'https://player.vimeo.com/video/6900459',
+    licenseLabel: 'Standard Vimeo Embed · Creator Attributed',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '2:45',
+    thumbnailUrl: 'https://i.vimeocdn.com/video/27857623-261d0885240d82dd5043e6f45c0f8cb67f3af2536cc8621eeb5a50491561f782-d_640?region=us',
+    description:
+      'Real-world laboratory fluid dynamics demonstration on Vimeo illustrating shear-thickening suspensions where rapid impact locks particles while slow immersion flows freely.',
+    skillsCovered: [
+      'Shear-Thickening (Dilatant) Fluid Behavior',
+      'Strain Rate vs. Apparent Viscosity',
+      'Industrial Rheology & Impact Dampening Applications',
+      'Controlled Lab Observation'
+    ],
+    practiceActivity:
+      'Compare shear-thickening vs. shear-thinning industrial fluids (e.g., mortar/paint vs. cornstarch suspension) and note how stirring speed alters resistance.',
+    practiceDeliverablePrompt:
+      'Explain why slow stirring vs. sudden strike force produces opposite resistance in shear-thickening suspensions.',
+    knowledgeCheck: {
+      question:
+        'What characterizes a shear-thickening (dilatant) non-Newtonian fluid when struck rapidly?',
+      options: [
+        'Its effective viscosity spikes sharply under rapid shear stress, temporarily acting almost solid until impact force relaxes',
+        'It vaporizes instantaneously into helium gas',
+        'Its viscosity stays fixed identically regardless of shear speed',
+        'It freezes solid whenever room lights turn off'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Under sudden force, suspended particles jam against one another; moving slowly lets liquid lubricate past smoothly.'
+    }
+  },
+  {
+    id: 'lbd_vimeo_resilient_city_106',
+    lessonNumber: 106,
+    videoLabel: 'Vimeo Architecture 106: Resilient Urban Building',
+    title: 'CROSSROADS: Life & Construction in the Resilient City',
+    category: 'Roofing & Drywall',
+    enclaveId: 'trades_construction',
+    professionId: 'construction_worker',
+    level: 'Intermediate',
+    originalCreator: 'Nils Clauss · Vimeo Documentary',
+    creatorDomain: 'vimeo.com',
+    sourceProvider: 'vimeo',
+    sourceVideoUrl: 'https://vimeo.com/623446741',
+    referenceArticleUrl: 'https://vimeo.com/623446741',
+    embedUrl: 'https://player.vimeo.com/video/623446741',
+    licenseLabel: 'Standard Vimeo Embed · Creator Attributed',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '8:10',
+    thumbnailUrl: 'https://i.vimeocdn.com/video/1271296556-29a0a0e3076794ca3ffb3d5ef684b434c55d1162ba193ce8a_640?region=us',
+    description:
+      'Architectural field documentary on Vimeo examining high-density building envelopes, flood/heat resilience retrofits, and skilled infrastructure upkeep in growing cities.',
+    skillsCovered: [
+      'Urban Building Envelope Resilience',
+      'Heat & Weather Stress Retrofits',
+      'Trade Coordination in High-Density Sites',
+      'Long-Lifecycle Material Durability'
+    ],
+    practiceActivity:
+      'List three roof, drainage, or cladding upgrades that help buildings survive heavier storm gusts and urban heat spikes.',
+    practiceDeliverablePrompt:
+      'Explain why continuous air/water barriers and cool-roof reflectivity cut both leak damage and summer HVAC loads.',
+    knowledgeCheck: {
+      question:
+        'Why are modern resilient building codes pairing sealed continuous envelopes with dedicated storm-drainage redundancy?',
+      options: [
+        'To protect structural framing from extreme wind-driven rain while keeping indoor thermal comfort stable during grid peaks',
+        'To seal gutters shut with concrete mortar',
+        'To remove roof insulation permanently',
+        'So interior drywall absorbs standing water'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Durable weather envelopes prevent moisture rot and sharply lower peak energy demand across city neighborhoods.'
+    }
+  },
+  {
+    id: 'lbd_archive_mit_cs_107',
+    lessonNumber: 107,
+    videoLabel: 'MIT OCW / Internet Archive 107: Intro CS & Python',
+    title: 'MIT 6.00SC: Computational Thinking & Python Engineering',
+    category: 'Software & AI',
+    enclaveId: 'tech_software',
+    professionId: 'software_engineer',
+    level: 'Beginner',
+    originalCreator: 'MIT OpenCourseWare · Prof. John Guttag',
+    creatorDomain: 'archive.org',
+    sourceProvider: 'archive_org',
+    sourceVideoUrl: 'https://archive.org/details/MIT6.00SCS11',
+    referenceArticleUrl: 'https://archive.org/details/MIT6.00SCS11',
+    directVideoUrl: 'https://archive.org/download/MIT6.00SCS11/MIT6_00SCS11_lec01_300k.mp4',
+    embedUrl: 'https://archive.org/embed/MIT6.00SCS11',
+    licenseLabel: 'CC BY-NC-SA 4.0 · Internet Archive Open MP4',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '51:15',
+    thumbnailUrl: 'https://archive.org/services/img/MIT6.00SCS11',
+    description:
+      'Open-licensed MIT OpenCourseWare lecture streamed directly from Internet Archive MP4 covering declarative vs. imperative knowledge, algorithms, and systematic program debugging.',
+    skillsCovered: [
+      'Declarative vs. Imperative Problem Decomposition',
+      'Stored-Program Architecture Fundamentals',
+      'Syntax vs. Static Semantics vs. Runtime Bugs',
+      'Engineering Structured Control Flow'
+    ],
+    practiceActivity:
+      'Outline an imperative step-by-step recipe in Python pseudocode to approximate square roots iteratively using error tolerance thresholds.',
+    practiceDeliverablePrompt:
+      'Distinguish a syntax error from a semantic logic bug and explain why semantic errors are harder to catch automatically.',
+    knowledgeCheck: {
+      question:
+        'What is the key difference between a syntactic error and a semantic logic error in Python code?',
+      options: [
+        'Syntax errors violate grammar rules before running; semantic errors execute cleanly without crashing yet compute the wrong result',
+        'Syntax errors only occur in dark theme editors',
+        'Semantic errors cannot be fixed without replacing monitors',
+        'Python compiles code only on leap years'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Systematic unit tests catch subtle semantic mistakes where programs run without throwing tracebacks yet return incorrect logic.'
+    }
+  },
+  {
+    id: 'lbd_archive_mit_circuits_108',
+    lessonNumber: 108,
+    videoLabel: 'MIT OCW / Archive 108: Circuits & Electronics',
+    title: 'MIT 6.002: Electrical Circuits, Lumped Models & Engineering',
+    category: 'Electrical Fundamentals',
+    enclaveId: 'trades_construction',
+    professionId: 'electrician',
+    level: 'Intermediate',
+    originalCreator: 'MIT OpenCourseWare · Prof. Anant Agarwal',
+    creatorDomain: 'archive.org',
+    sourceProvider: 'archive_org',
+    sourceVideoUrl: 'https://archive.org/details/MIT6.002S07',
+    referenceArticleUrl: 'https://archive.org/details/MIT6.002S07',
+    directVideoUrl: 'https://archive.org/download/MIT6.002S07/mit-6.002-lec-mit-10250-04sep2003-0000-220k.mp4',
+    embedUrl: 'https://archive.org/embed/MIT6.002S07',
+    licenseLabel: 'CC BY-NC-SA 4.0 · Internet Archive Open MP4',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '50:00',
+    thumbnailUrl: 'https://archive.org/services/img/MIT6.002S07',
+    description:
+      'MIT Electrical Engineering open lecture streamed via Internet Archive introducing engineering abstraction, KVL/KCL circuit laws, lumped element modeling, and practical resistive loads.',
+    skillsCovered: [
+      'Lumped Circuit Abstraction Discipline',
+      'Kirchhoff Voltage & Current Conservation',
+      'Ohm’s Law Power Dissipation Limits',
+      'Bridging Maxwell Physics to Field Circuits'
+    ],
+    practiceActivity:
+      'Solve a two-loop DC resistive divider using KVL and KCL, then verify power dissipation (`I²R`) fits standard 1/4W vs. 2W resistor ratings.',
+    practiceDeliverablePrompt:
+      'Explain why engineering abstraction treats long wires as ideal nodes only when signal wavelengths far exceed circuit length.',
+    knowledgeCheck: {
+      question:
+        'Under Kirchhoff’s Current Law (KCL) inside a steady DC junction node, what must equal zero?',
+      options: [
+        'The algebraic sum of all electrical currents entering and leaving the node (charge cannot accumulate infinitely)',
+        'Every resistor ohm rating in parallel',
+        'Panel ground bonding conductivity',
+        'Circuit breaker interrupt capacity'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Total current flowing into any junction equals total current leaving—essential for diagnosing split-phase neutral loads.'
+    }
+  },
+  {
+    id: 'lbd_archive_mit_physics_109',
+    lessonNumber: 109,
+    videoLabel: 'MIT OCW / Archive 109: Electricity & Magnetism Lab',
+    title: 'MIT 8.02: Electrostatics, Induction & Lab Demonstration',
+    category: 'Science & Lab Tech',
+    enclaveId: 'science_laboratory_research',
+    professionId: 'lab_technician',
+    level: 'Intermediate',
+    originalCreator: 'MIT OpenCourseWare · Internet Archive',
+    creatorDomain: 'archive.org',
+    sourceProvider: 'archive_org',
+    sourceVideoUrl: 'https://archive.org/details/MIT8.02S02',
+    referenceArticleUrl: 'https://archive.org/details/MIT8.02S02',
+    directVideoUrl: 'https://archive.org/download/MIT8.02S02/OCW-8.02-Course-Intro-Lewin-220k.mp4',
+    embedUrl: 'https://archive.org/embed/MIT8.02S02',
+    licenseLabel: 'CC BY-NC-SA 4.0 · Internet Archive Open MP4',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '45:00',
+    thumbnailUrl: 'https://archive.org/services/img/MIT8.02S02',
+    description:
+      'Classic open-access MIT laboratory physics walkthrough streamed directly in HTML5 MP4 illustrating electrostatic induction, electric fields, measurement precision, and lab bench safety.',
+    skillsCovered: [
+      'Electrostatic Charge Induction & Shielding',
+      'Lab Measurement Error & Precision Discipline',
+      'Grounding High-Voltage Lab Apparatus Safely',
+      'Experimental Physical Evidence Checks'
+    ],
+    practiceActivity:
+      'Log every step required to discharge a high-voltage capacitor bank via an insulated bleed resistor before handling lab probes.',
+    practiceDeliverablePrompt:
+      'Explain why ESD wrist straps and proper ground bonds protect sensitive semiconductor lab sensors.',
+    knowledgeCheck: {
+      question:
+        'Why do laboratory technicians perform high-voltage grounding via rated discharge sticks instead of bare metal screwdrivers?',
+      options: [
+        'Rated discharge paths bleed stored capacitive energy safely without arcing flashes or lethal shock exposure',
+        'Screwdrivers increase capacitive charge tenfold indefinitely',
+        'Ground straps erase optical microscope lenses',
+        'Static electricity cannot arc through humid lab air'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Controlled energy discharge protects both researchers and precision bench instruments.'
+    }
+  },
+  {
+    id: 'lbd_archive_mit_linear_alg_110',
+    lessonNumber: 110,
+    videoLabel: 'MIT OCW / Archive 110: Linear Systems Pedagogy',
+    title: 'MIT 18.06: Teaching Linear Equations Geometrically',
+    category: 'Education & Training',
+    enclaveId: 'education_workforce',
+    professionId: 'workforce_trainer',
+    level: 'Intermediate',
+    originalCreator: 'MIT OpenCourseWare · Prof. Gilbert Strang',
+    creatorDomain: 'archive.org',
+    sourceProvider: 'archive_org',
+    sourceVideoUrl: 'https://archive.org/details/MIT18.06S05_MP4',
+    referenceArticleUrl: 'https://archive.org/details/MIT18.06S05_MP4',
+    directVideoUrl: 'https://archive.org/download/MIT18.06S05_MP4/01.ia.mp4',
+    embedUrl: 'https://archive.org/embed/MIT18.06S05_MP4',
+    licenseLabel: 'CC BY-NC-SA 4.0 · Internet Archive Open MP4',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '39:50',
+    thumbnailUrl: 'https://archive.org/services/img/MIT18.06S05_MP4',
+    description:
+      'Renowned MIT pedagogy example on Internet Archive teaching linear systems through dual row-picture vs. column-picture visual geometry—a masterclass in technical instruction.',
+    skillsCovered: [
+      'Dual Row vs. Column Visual Intuition',
+      'Teaching Quantitative Concepts Clearly',
+      'Chalkboard Pacing & Concept Repetition',
+      'Linear Combination Intuition for AI & Engineering'
+    ],
+    practiceActivity:
+      'Explain a 2x2 equation system twice to a peer: first as intersecting lines (row picture) and second as weighted vector combinations (column picture).',
+    practiceDeliverablePrompt:
+      'Describe why multiple visual representations help technical learners overcome symbol overload.',
+    knowledgeCheck: {
+      question:
+        'How does Prof. Strang recommend visualizing matrix multiplication `Ax = b` cleanly?',
+      options: [
+        'As linear combinations of the columns of matrix `A` weighted by entries of vector `x` to reach target `b`',
+        'Memorizing 100 unrelated phone numbers without diagrams',
+        'Converting integers into random colors permanently',
+        'Removing column vectors from matrices completely'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Column-space intuition bridges classic engineering math directly into modern machine learning embeddings.'
+    }
+  },
+  {
+    id: 'lbd_archive_auto_service_111',
+    lessonNumber: 111,
+    videoLabel: 'Internet Archive 111: Mechanical Drivetrain Service',
+    title: 'Automotive Service Foundations: Drivetrain & Shop Safety',
+    category: 'Auto Mechanics',
+    enclaveId: 'automotive_mechanics',
+    professionId: 'auto_mechanic',
+    level: 'Beginner',
+    originalCreator: 'Internet Archive · Vocational Film Vault',
+    creatorDomain: 'archive.org',
+    sourceProvider: 'archive_org',
+    sourceVideoUrl: 'https://archive.org/details/Automoti1940',
+    referenceArticleUrl: 'https://archive.org/details/Automoti1940',
+    directVideoUrl: 'https://archive.org/download/Automoti1940/Automoti1940.mp4',
+    embedUrl: 'https://archive.org/embed/Automoti1940',
+    licenseLabel: 'Public Domain · Internet Archive Open MP4',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '10:30',
+    thumbnailUrl: 'https://archive.org/services/img/Automoti1940',
+    description:
+      'Public-domain vocational automotive service briefing streamed directly from Internet Archive explaining bay organization, systematic chassis lubrication, brake/clutch clearances, and tool care.',
+    skillsCovered: [
+      'Systematic Chassis & Drivetrain Inspection',
+      'Lubrication Interval Discipline',
+      'Tool Cleaning & Shop Bay Ergonomics',
+      'Mechanical Linkage Clearance Checks'
+    ],
+    practiceActivity:
+      'Draft a multi-point undercarriage preventive inspection sheet covering ball joints, tie-rod boots, brake line corrosion, and fluid seepage checks.',
+    practiceDeliverablePrompt:
+      'Explain why wiping grease fittings clean BEFORE pumping fresh grease prevents grit contamination inside bearings.',
+    knowledgeCheck: {
+      question:
+        'Why should a mechanic wipe every Zerk grease fitting spotless with a clean rag before attaching a grease gun coupler?',
+      options: [
+        'Pumping grease through dirty dust forces abrasive sand straight into precision joint bearings, accelerating premature wear',
+        'Clean metal turns steel shafts into plastic',
+        'Greasing bearings removes all lubrication',
+        'It doubles tire tread depth automatically'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Contamination prevention adds tens of thousands of trouble-free miles to suspension and drivetrain joints.'
+    }
+  },
+  {
+    id: 'lbd_peertube_linux_sec_112',
+    lessonNumber: 112,
+    videoLabel: 'PeerTube 112: Debian Linux Security & Patch Lifecycle',
+    title: 'Enterprise Security Support & Vulnerability Patching in Linux',
+    category: 'Cybersecurity & IT',
+    enclaveId: 'tech_cybersecurity',
+    professionId: 'security_analyst',
+    level: 'Intermediate',
+    originalCreator: 'DebConf · PeerTube Federated',
+    creatorDomain: 'makertube.net',
+    sourceProvider: 'peertube',
+    sourceVideoUrl: 'https://makertube.net/w/4RqxFNEZg4efxaxLF7d7Vj',
+    referenceArticleUrl: 'https://makertube.net/w/4RqxFNEZg4efxaxLF7d7Vj',
+    embedUrl: 'https://makertube.net/videos/embed/4RqxFNEZg4efxaxLF7d7Vj',
+    licenseLabel: 'Creative Commons Attribution · MakerTube PeerTube',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '1:58:16',
+    thumbnailUrl: 'https://makertube.net/lazy-static/thumbnails/e2422352-43e7-49d5-9f7a-f81e65431ced.jpg',
+    description:
+      'Open-source federated PeerTube engineering session detailing CVE severity triage, security advisory signing, stable backport patching without breaking production ABI, and mirror verification.',
+    skillsCovered: [
+      'CVE Severity Triage & Backport Patching',
+      'Cryptographically Signed Package Advisories',
+      'Staged Rollout & Regression Testing',
+      'Maintaining Stable Production Servers'
+    ],
+    practiceActivity:
+      'Review an unpatched production package manifest, rank critical vs. low CVEs by internet exposure, and outline a staged security patch verification plan.',
+    practiceDeliverablePrompt:
+      'Explain why enterprise Linux maintainers backport targeted security patches instead of jumping major software versions mid-release.',
+    knowledgeCheck: {
+      question:
+        'Why do enterprise security teams verify GPG signatures on package repositories before deploying updates?',
+      options: [
+        'Cryptographic signatures guarantee packages originated authentically from trusted maintainers and weren’t altered on mirrors',
+        'Signatures convert encrypted firewalls into plain text',
+        'Unverified unsigned binaries speed CPU clock speeds twice as fast',
+        'Advisory keys delete audit logs automatically'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Signed repository metadata blocks supply-chain mirror tampering cleanly.'
+    }
+  },
+  {
+    id: 'lbd_peertube_routing_hex_113',
+    lessonNumber: 113,
+    videoLabel: 'PeerTube 113: Wired Enterprise Router Architecture',
+    title: 'Wired Gigabit Router Hardware, Switching & Packet Flow',
+    category: 'Telecom & Fiber Optics',
+    enclaveId: 'telecom_digital_infrastructure',
+    professionId: 'network_technician',
+    level: 'Intermediate',
+    originalCreator: 'MikroTik News · MakerTube PeerTube',
+    creatorDomain: 'makertube.net',
+    sourceProvider: 'peertube',
+    sourceVideoUrl: 'https://makertube.net/w/1RsyDgwQqsFzUnCzoMoreZ',
+    referenceArticleUrl: 'https://makertube.net/w/1RsyDgwQqsFzUnCzoMoreZ',
+    embedUrl: 'https://makertube.net/videos/embed/1RsyDgwQqsFzUnCzoMoreZ',
+    licenseLabel: 'MakerTube Federated Embed · Creator Attributed',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '3:52',
+    thumbnailUrl: 'https://makertube.net/lazy-static/thumbnails/56fe1d59-9c56-4133-978b-13aa5f4511d6.jpg',
+    description:
+      'Federated PeerTube hardware overview examining multi-port wired routing architecture, switch-chip VLAN offloading vs. CPU firewall routing, and compact field rack deployment.',
+    skillsCovered: [
+      'Switch-Chip Hardware Offloading vs. CPU Routing',
+      'Wired VLAN Segmentation Basics',
+      'IPsec Hardware Acceleration Planning',
+      'Reliable SOHO & Edge Telecom Installations'
+    ],
+    practiceActivity:
+      'Diagram how LAN VLAN traffic stays inside wire-speed switch chips while only inter-VLAN/WAN packets cross the router CPU bottleneck.',
+    practiceDeliverablePrompt:
+      'Explain why saturating router CPU bridges drops gigabit WAN throughput compared to hardware-offloaded fast-path forwarding.',
+    knowledgeCheck: {
+      question:
+        'What performance advantage does switch-chip hardware offloading provide on modern field routers?',
+      options: [
+        'Layer-2 switched traffic moves at full wire speed in silicon without pegging the general router CPU',
+        'Offloading disconnects Ethernet RJ45 latches physically',
+        'Switch chips convert fiber strands into analog radio static',
+        'It doubles ISP latency intentionally'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Keeping local switching offloaded preserves router CPU headroom cleanly for VPNs and firewall filtering.'
+    }
+  },
+  {
+    id: 'lbd_dailymotion_cabinet_joinery_114',
+    lessonNumber: 114,
+    videoLabel: 'Dailymotion 114: Cabinet Anatomy & Joinery',
+    title: 'Woodworking Craft: Cabinet Carcass Anatomy & Joinery',
+    category: 'Carpentry',
+    enclaveId: 'trades_construction',
+    professionId: 'carpenter',
+    level: 'Beginner',
+    originalCreator: 'Tutorials Arena · Dailymotion',
+    creatorDomain: 'dailymotion.com',
+    sourceProvider: 'dailymotion',
+    sourceVideoUrl: 'https://www.dailymotion.com/video/x8itt0a',
+    referenceArticleUrl: 'https://www.dailymotion.com/video/x8itt0a',
+    embedUrl: 'https://geo.dailymotion.com/player.html?video=x8itt0a',
+    licenseLabel: 'Standard Dailymotion Embed · Creator Attributed',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '8:45',
+    thumbnailUrl: 'https://www.dailymotion.com/thumbnail/video/x8itt0a',
+    description:
+      'Detailed cabinetry walkthrough hosted on Dailymotion breaking down face-frame vs. frameless Euro-box joinery, dado/rabbet back panels, and checking corner diagonals square.',
+    skillsCovered: [
+      'Face-Frame vs. Frameless Cabinet Construction',
+      'Rabbet & Dado Carcass Panel Alignment',
+      'Checking Carcass Square via Cross Diagonals',
+      'Flush Scribing Walls During Installation'
+    ],
+    practiceActivity:
+      'Sketch an exploded cabinet box labeling side panels, fixed stretcher rails, recessed back panel rabbet, and diagonal square check.',
+    practiceDeliverablePrompt:
+      'Explain why cabinet makers pull cross-corner diagonals immediately after clamping before driving final fasteners.',
+    knowledgeCheck: {
+      question:
+        'How does a recessed cabinet back panel lock a carcass square against racking?',
+      options: [
+        'Once fitted into tight dadoes or rabbets and checked for equal cross diagonals, the rigid back plane acts as a structural diaphragm',
+        'It makes doors swing backward inside the box',
+        'It eliminates the need for bottom toe-kicks everywhere',
+        'Thin backs allow side walls to twist freely 15 degrees'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Equal diagonal measurements plus a well-fastened back diaphragm guarantee smooth, bind-free doors and drawers.'
+    }
+  },
+  {
+    id: 'lbd_dailymotion_mig_vs_tig_115',
+    lessonNumber: 115,
+    videoLabel: 'Dailymotion 115: MIG vs. TIG Welding Trade Guide',
+    title: 'MIG Welding vs. TIG Welding: Process Selection & Weld Quality',
+    category: 'Welding',
+    enclaveId: 'trades_construction',
+    professionId: 'welder',
+    level: 'Beginner',
+    originalCreator: 'Engineering Career · Dailymotion',
+    creatorDomain: 'dailymotion.com',
+    sourceProvider: 'dailymotion',
+    sourceVideoUrl: 'https://www.dailymotion.com/video/x8h7sly',
+    referenceArticleUrl: 'https://www.dailymotion.com/video/x8h7sly',
+    embedUrl: 'https://geo.dailymotion.com/player.html?video=x8h7sly',
+    licenseLabel: 'Standard Dailymotion Embed · Creator Attributed',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '4:38',
+    thumbnailUrl: 'https://www.dailymotion.com/thumbnail/video/x8h7sly',
+    description:
+      'Clear shop comparison hosted on Dailymotion contrasting GMAW (MIG) wire-feed deposition speed with GTAW (TIG) thin-gauge precision, shielding gas mixes, and cost tradeoffs.',
+    skillsCovered: [
+      'GMAW (MIG) Constant-Voltage Wire Speed Balance',
+      'GTAW (TIG) Constant-Current Puddle Precision',
+      'C25 vs. Pure Argon Gas Cylinder Selection',
+      'Matching Process to Plate Thickness & Finish'
+    ],
+    practiceActivity:
+      'Create a fabrication selection matrix matching steel frame production, sanitary stainless piping, and thin aluminum enclosures to MIG vs. TIG.',
+    practiceDeliverablePrompt:
+      'Explain why shop fabricators pick MIG for long structural mild steel production seams and TIG for critical sanitary or exotic thin-wall alloys.',
+    knowledgeCheck: {
+      question:
+        'Which shielding gas cylinder is used with standard GTAW (TIG) torches on both steel and aluminum?',
+      options: [
+        '100% Pure Argon—whereas steel MIG typically uses 75% Argon / 25% CO2 (never use CO2 mix in TIG, it burns up tungsten rapidly)',
+        'Pure oxygen propellant',
+        'Unfiltered shop compressed air',
+        'Acetylene gas fed through the TIG cup'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Inert pure argon protects white-hot TIG tungsten electrodes cleanly without oxidation.'
+    }
+  },
+  {
+    id: 'lbd_dailymotion_pipe_fittings_116',
+    lessonNumber: 116,
+    videoLabel: 'Dailymotion 116: Residential Plumbing Pipe Fittings',
+    title: 'Top 5 Residential Plumbing Pipe Fittings & Joint Selection',
+    category: 'Plumbing',
+    enclaveId: 'trades_construction',
+    professionId: 'plumber',
+    level: 'Beginner',
+    originalCreator: 'suhen.dyb · Dailymotion',
+    creatorDomain: 'dailymotion.com',
+    sourceProvider: 'dailymotion',
+    sourceVideoUrl: 'https://www.dailymotion.com/video/xbq3pg6',
+    referenceArticleUrl: 'https://www.dailymotion.com/video/xbq3pg6',
+    embedUrl: 'https://geo.dailymotion.com/player.html?video=xbq3pg6',
+    licenseLabel: 'Standard Dailymotion Embed · Creator Attributed',
+    youtubeId: '',
+    embedAvailable: true,
+    duration: '3:00',
+    thumbnailUrl: 'https://www.dailymotion.com/thumbnail/video/xbq3pg6',
+    description:
+      'Practical plumbing hardware tutorial hosted on Dailymotion identifying couplings, unions, dielectric transition fittings, valves, and proper PTFE thread sealing directions.',
+    skillsCovered: [
+      'Couplings vs. Serviceable Unions',
+      'Preventing Galvanic Corrosion With Dielectric Unions',
+      'Clockwise PTFE Tape & Pipe Dope Wrapping',
+      'Quarter-Turn Ball Valve Isolation Placement'
+    ],
+    practiceActivity:
+      'Lay out five real pipe fittings (slip coupling, service union, 90° street elbow, reducing tee, full-port ball valve) and label each service role.',
+    practiceDeliverablePrompt:
+      'Explain why joining copper directly to galvanized steel without a dielectric union or brass nipple accelerates pinhole pipe leaks.',
+    knowledgeCheck: {
+      question:
+        'In which direction should PTFE thread seal tape be wrapped around male tapered pipe threads?',
+      options: [
+        'Clockwise when looking straight at the open pipe end, so screwing the female fitting tightens the tape into threads instead of bunching it off',
+        'Counterclockwise loosely around smooth outer pipe paint',
+        'Only over slip-fit sweat copper solder joints',
+        'Wrapped completely across compression ferrules'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Clockwise wrapping follows male thread pitch so tightening seats the tape cleanly into tapered NPT valleys.'
+    }
   }
 ]

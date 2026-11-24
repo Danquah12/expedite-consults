@@ -1,6 +1,8 @@
 import {
   SKILLED_TRADES_LEARN_BY_DOING_LESSONS,
+  LEARN_CATEGORY_META,
   type LearnByDoingLesson,
+  type LearnVideoSourceProvider,
   type SkilledTradesCategory,
 } from "./skilled-trades-learn-by-doing-data"
 import { getConnectLnMongoDb, isConnectLnMongoConfigured } from "./connectln-mongodb"
@@ -26,6 +28,8 @@ export interface LearningVideoSyncMeta {
   totalSyncedCount: number
   cadenceHours: number
   triggeredBy: string
+  sourceBreakdown?: Record<string, number>
+  prunedStaleYouTubeCount?: number
 }
 
 export const LEARNING_YOUTUBE_RSS_CHANNELS: LearningChannelConfig[] = [
@@ -182,7 +186,7 @@ export const LEARNING_YOUTUBE_RSS_CHANNELS: LearningChannelConfig[] = [
     defaultPractice: "Note surface degreasing, caulk/spackle sanding grit choices, and primer sealing steps shown.",
     defaultDeliverable: "Explain why thorough wall prep dictates 80% of the final coated finish appearance.",
     defaultQuizQuestion: "Why should glossy or stained surfaces be deglossed and primed before applying finish coats?",
-    defaultQuizCorrect: "Mechanical tooth and Stain-Blocking primer prevent peeling and tannin bleed-through",
+    defaultQuizCorrect: "Mechanical tooth and stain-blocking primer prevent peeling and tannin bleed-through",
     defaultQuizExplanation: "Proper surface profiling and primer selection give topcoats durable long-term adhesion.",
   },
   {
@@ -296,7 +300,7 @@ export const LEARNING_YOUTUBE_RSS_CHANNELS: LearningChannelConfig[] = [
     enclaveId: "culinary_hospitality_events",
     professionId: "chef",
     defaultSkills: ["Mise en Place Readiness", "Temperature & Maillard Control", "Tasting & Sauce Balance"],
-    defaultPractice: "Stage ingredients pre-measured in prep bowls (" + '"mise en place"' + ") before turning on burner heat.",
+    defaultPractice: "Stage ingredients pre-measured in prep bowls (\"mise en place\") before turning on burner heat.",
     defaultDeliverable: "Note how controlling pan heat and acid/salt timing elevates texture and flavor clarity.",
     defaultQuizQuestion: "Why do commercial chefs enforce strict 'mise en place' prep before service begins?",
     defaultQuizCorrect: "Having prepped, portioned ingredients at arm's reach stops frantic mistakes during high-heat cooking windows",
@@ -438,7 +442,8 @@ const MONGO_COLLECTION = "connectln_learning_videos"
 const META_DOC_ID = "__meta_24h_learning_sync__"
 const FB_LEARNING_KV_MAP = "connectln_learning_videos_v1"
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000
-const MAX_RSS_CANDIDATES_PER_SYNC = 18
+const YOUTUBE_REFRESH_AGE_MS = 25 * 24 * 60 * 60 * 1000
+const MAX_RSS_CANDIDATES_PER_SYNC = 10
 
 function decodeXmlEntities(raw: string): string {
   return String(raw || "")
@@ -470,7 +475,7 @@ function cleanRssDescription(rawDesc: string, title: string, category: string, c
   if (picked.length >= 36) {
     return picked.length > 300 ? `${picked.slice(0, 297).trim()}...` : picked
   }
-  return `Verified ${category} hands-on training session by ${creator}: "${title}". Synced via the ConnectLn 24-hour continuous curriculum pipeline.`
+  return `Verified ${category} hands-on training session by ${creator}: "${title}". Synced via the ConnectLn 24-hour multi-source curriculum pipeline.`
 }
 
 function isCleanLearningCandidateTitle(title: string): boolean {
@@ -482,6 +487,110 @@ function isCleanLearningCandidateTitle(title: string): boolean {
   }
   return true
 }
+
+function normalizeUrlDedupeKey(raw?: string): string {
+  if (!raw) return ""
+  return String(raw).trim().toLowerCase().replace(/^https?:\/\/(www\.)?/, "").replace(/\/+$/, "")
+}
+
+/**
+ * Strip empty `youtubeId` before inserting into MongoDB because `connectln_learning_videos`
+ * carries a unique sparse index on `youtubeId` (`""` would collide across non-YouTube docs!).
+ */
+function prepareLessonDocForMongo(lesson: LearnByDoingLesson, syncedAtMs: number): Record<string, any> {
+  const { youtubeId, ...rest } = lesson
+  const doc: Record<string, any> = {
+    ...rest,
+    _id: lesson.id,
+    docType: "lesson",
+    syncedAtMs,
+  }
+  if (youtubeId && youtubeId.trim().length > 0) {
+    doc.youtubeId = youtubeId.trim()
+  }
+  return doc
+}
+
+export function buildCategoryMetadataDefaults(category: SkilledTradesCategory): {
+  enclaveId: string
+  professionId: string
+  skillsCovered: string[]
+  practiceActivity: string
+  practiceDeliverablePrompt: string
+  knowledgeCheck: LearnByDoingLesson["knowledgeCheck"]
+} {
+  const matchingChannel = LEARNING_YOUTUBE_RSS_CHANNELS.find((c) => c.category === category)
+  const enclaveId = LEARN_CATEGORY_META[category]?.enclaveIds?.[0] || "trades_construction"
+  if (matchingChannel) {
+    return {
+      enclaveId: matchingChannel.enclaveId,
+      professionId: matchingChannel.professionId,
+      skillsCovered: matchingChannel.defaultSkills,
+      practiceActivity: matchingChannel.defaultPractice,
+      practiceDeliverablePrompt: matchingChannel.defaultDeliverable,
+      knowledgeCheck: {
+        question: matchingChannel.defaultQuizQuestion,
+        options: [
+          matchingChannel.defaultQuizCorrect,
+          "Skip verification checks completely to save 3 minutes",
+          "Guess measurements without checking manufacturers' or code limits",
+          "Bypass protective gear and isolate procedures permanently",
+        ],
+        correctIndex: 0,
+        explanation: matchingChannel.defaultQuizExplanation,
+      },
+    }
+  }
+  return {
+    enclaveId,
+    professionId: "skilled_professional",
+    skillsCovered: [
+      `${category} Core Principles`,
+      "Safe Field & Lab Execution",
+      "Quality Verification & Documentation",
+    ],
+    practiceActivity: `Review the demonstration in this ${category} session and document the key workflow steps cleanly.`,
+    practiceDeliverablePrompt: `Summarize two practical quality or safety standards essential for this ${category} task.`,
+    knowledgeCheck: {
+      question: `Why are structured inspection and step-by-step verification essential in ${category} workflows?`,
+      options: [
+        "They prevent preventable mistakes, ensure safe execution, and maintain repeatable quality",
+        "Verification checks double waste and slow reliable delivery permanently",
+        "Safety standards only apply once equipment fails",
+        "Documentation never helps teams troubleshoot future issues",
+      ],
+      correctIndex: 0,
+      explanation: `Disciplined ${category} workflows protect craftspeople, clients, and long-term outcomes.`,
+    },
+  }
+}
+
+function mapKeywordsToCategory(text: string, fallback: SkilledTradesCategory): SkilledTradesCategory {
+  const lower = text.toLowerCase()
+  if (/\b(wood|carpenter|joinery|cabinet|timber|furniture|chisel)\b/.test(lower)) return "Carpentry"
+  if (/\b(weld|tig|mig|stick|arc weld)\b/.test(lower)) return "Welding"
+  if (/\b(plumb|pipe|drain|p-trap|venting|solder)\b/.test(lower)) return "Plumbing"
+  if (/\b(electric|circuit|volt|amp|wiring|multimeter|electronics)\b/.test(lower)) return "Electrical Fundamentals"
+  if (/\b(hvac|air condition|refriger|furnace|heat pump|chiller)\b/.test(lower)) return "HVAC"
+  if (/\b(auto|engine|brake|coolant|mechanic|transmission|car)\b/.test(lower)) return "Auto Mechanics"
+  if (/\b(solar|battery|lifepo4|photovoltaic|inverter)\b/.test(lower)) return "Solar & Energy"
+  if (/\b(masonry|brick|tile|mortar|grout|concrete)\b/.test(lower)) return "Masonry & Tile"
+  if (/\b(roof|shingle|flashing|drywall)\b/.test(lower)) return "Roofing & Drywall"
+  if (/\b(paint|primer|stain|varnish)\b/.test(lower)) return "Painting & Decorating"
+  if (/\b(cyber|security|debian|cve|linux|encryption|firewall)\b/.test(lower)) return "Cybersecurity & IT"
+  if (/\b(router|network|switch|fiber|vlan|ethernet|tcp)\b/.test(lower)) return "Telecom & Fiber Optics"
+  if (/\b(python|code|algorithm|software|programming|computer science|ai|vector)\b/.test(lower)) return "Software & AI"
+  if (/\b(cook|kitchen|chef|culinary|recipe)\b/.test(lower)) return "Culinary & Hospitality"
+  if (/\b(nurse|clinical|medical|health|patient)\b/.test(lower)) return "Healthcare & Nursing"
+  if (/\b(lighting|design|architecture|3d|blender|film|photo)\b/.test(lower)) return "Creative Media & Design"
+  if (/\b(teach|linear algebra|lecture|pedagogy|education|geology)\b/.test(lower)) return "Education & Training"
+  if (/\b(physics|chemistry|fluid|lab|viscosity|experiment|science)\b/.test(lower)) return "Science & Lab Tech"
+  return fallback
+}
+
+// =====================================================================
+// SOURCE ADAPTER 1: YOUTUBE RSS + OEMBED (POLICY-COMPLIANT)
+// =====================================================================
 
 interface RawRssCandidate {
   youtubeId: string
@@ -506,7 +615,7 @@ async function fetchChannelRssCandidates(channel: LearningChannelConfig): Promis
     const entries = xml.match(/<entry>[\s\S]*?<\/entry>/g) || []
     const out: RawRssCandidate[] = []
 
-    for (const block of entries.slice(0, 6)) {
+    for (const block of entries.slice(0, 5)) {
       const vidMatch = block.match(/<yt:videoId>([a-zA-Z0-9_-]{8,16})<\/yt:videoId>/)
       const titleMatch = block.match(/<title>([\s\S]*?)<\/title>/)
       const pubMatch = block.match(/<published>([\s\S]*?)<\/published>/)
@@ -530,15 +639,20 @@ async function fetchChannelRssCandidates(channel: LearningChannelConfig): Promis
   }
 }
 
-async function verifyYoutubeEmbeddable(youtubeId: string): Promise<{ ok: boolean; authorName?: string; title?: string }> {
+export async function verifyYoutubeEmbeddable(
+  youtubeId: string
+): Promise<{ ok: boolean; permanentlyUnavailable?: boolean; authorName?: string; title?: string }> {
   try {
     const res = await fetch(
       `https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${youtubeId}`)}&format=json`,
       {
-        signal: AbortSignal.timeout(3000),
+        signal: AbortSignal.timeout(3500),
         cache: "no-store",
       }
     )
+    if (res.status === 401 || res.status === 403 || res.status === 404) {
+      return { ok: false, permanentlyUnavailable: true }
+    }
     if (!res.ok) return { ok: false }
     const json: any = await res.json().catch(() => null)
     if (!json) return { ok: false }
@@ -552,50 +666,439 @@ async function verifyYoutubeEmbeddable(youtubeId: string): Promise<{ ok: boolean
   }
 }
 
-function buildLessonFromCandidate(
-  c: RawRssCandidate,
-  lessonNumber: number,
-  verifiedAuthor?: string,
-  verifiedTitle?: string
-): LearnByDoingLesson {
-  const finalTitle = (verifiedTitle || c.title).replace(/\s+/g, " ").trim().slice(0, 115)
-  const finalCreator = verifiedAuthor || c.channel.creatorName
-  const shortTitle = finalTitle.length > 52 ? `${finalTitle.slice(0, 49).trim()}...` : finalTitle
+async function syncYouTubeSource(
+  seenYtIds: Set<string>,
+  baseLessonNum: number
+): Promise<LearnByDoingLesson[]> {
+  const rssResults = await Promise.all(
+    LEARNING_YOUTUBE_RSS_CHANNELS.map((ch) => fetchChannelRssCandidates(ch))
+  )
 
-  return {
-    id: `lbd_sync_${c.youtubeId}`,
-    lessonNumber,
-    videoLabel: `Synced (24h · ${c.channel.category}): ${shortTitle}`,
-    title: finalTitle,
-    category: c.channel.category,
-    enclaveId: c.channel.enclaveId,
-    professionId: c.channel.professionId,
-    level: lessonNumber % 2 === 0 ? "Intermediate" : "Beginner",
-    originalCreator: finalCreator,
-    creatorDomain: "youtube.com",
-    description: c.description,
-    skillsCovered: c.channel.defaultSkills,
-    sourceVideoUrl: `https://www.youtube.com/watch?v=${c.youtubeId}`,
-    referenceArticleUrl: `https://www.youtube.com/watch?v=${c.youtubeId}`,
-    youtubeId: c.youtubeId,
-    embedAvailable: true,
-    duration: "",
-    thumbnailUrl: `https://i.ytimg.com/vi/${c.youtubeId}/hqdefault.jpg`,
-    practiceActivity: c.channel.defaultPractice,
-    practiceDeliverablePrompt: c.channel.defaultDeliverable,
-    knowledgeCheck: {
-      question: c.channel.defaultQuizQuestion,
-      options: [
-        c.channel.defaultQuizCorrect,
-        "Skip verification checks and tools completely to save 3 minutes",
-        "Guess measurements without checking manufacturers' or code limits",
-        "Bypass protective gear and isolate procedures permanently",
-      ],
-      correctIndex: 0,
-      explanation: c.channel.defaultQuizExplanation,
-    },
+  const candidates: RawRssCandidate[] = []
+  for (const chEntries of rssResults) {
+    const fresh = chEntries
+      .filter((e) => !seenYtIds.has(e.youtubeId))
+      .sort((a, b) => Date.parse(b.publishedIso || "") - Date.parse(a.publishedIso || ""))
+    if (fresh[0]) {
+      seenYtIds.add(fresh[0].youtubeId)
+      candidates.push(fresh[0])
+    }
+  }
+
+  const picked = candidates.slice(0, MAX_RSS_CANDIDATES_PER_SYNC)
+  const checks = await Promise.all(
+    picked.map(async (cand) => ({ cand, check: await verifyYoutubeEmbeddable(cand.youtubeId) }))
+  )
+
+  const nowMs = Date.now()
+  const out: LearnByDoingLesson[] = []
+  let idx = 0
+  for (const { cand, check } of checks) {
+    if (!check.ok) continue
+    const finalTitle = (check.title || cand.title).replace(/\s+/g, " ").trim().slice(0, 115)
+    const finalCreator = check.authorName || cand.channel.creatorName
+    const shortTitle = finalTitle.length > 52 ? `${finalTitle.slice(0, 49).trim()}...` : finalTitle
+    out.push({
+      id: `lbd_sync_${cand.youtubeId}`,
+      lessonNumber: baseLessonNum + idx,
+      videoLabel: `Synced (YouTube · ${cand.channel.category}): ${shortTitle}`,
+      title: finalTitle,
+      category: cand.channel.category,
+      enclaveId: cand.channel.enclaveId,
+      professionId: cand.channel.professionId,
+      level: idx % 2 === 0 ? "Intermediate" : "Beginner",
+      originalCreator: finalCreator,
+      creatorDomain: "youtube.com",
+      sourceProvider: "youtube",
+      licenseLabel: "Standard YouTube License · Embedded via Official Player",
+      lastVerifiedAtMs: nowMs,
+      description: cand.description,
+      skillsCovered: cand.channel.defaultSkills,
+      sourceVideoUrl: `https://www.youtube.com/watch?v=${cand.youtubeId}`,
+      referenceArticleUrl: `https://www.youtube.com/watch?v=${cand.youtubeId}`,
+      youtubeId: cand.youtubeId,
+      embedAvailable: true,
+      duration: "",
+      thumbnailUrl: `https://i.ytimg.com/vi/${cand.youtubeId}/hqdefault.jpg`,
+      practiceActivity: cand.channel.defaultPractice,
+      practiceDeliverablePrompt: cand.channel.defaultDeliverable,
+      knowledgeCheck: {
+        question: cand.channel.defaultQuizQuestion,
+        options: [
+          cand.channel.defaultQuizCorrect,
+          "Skip verification checks completely to save 3 minutes",
+          "Guess measurements without checking manufacturers' or code limits",
+          "Bypass protective gear and isolate procedures permanently",
+        ],
+        correctIndex: 0,
+        explanation: cand.channel.defaultQuizExplanation,
+      },
+    })
+    idx += 1
+  }
+  return out
+}
+
+// =====================================================================
+// SOURCE ADAPTER 2: VIMEO PUBLIC CHANNELS + OEMBED
+// =====================================================================
+
+const VIMEO_CHANNEL_FEEDS: Array<{ slug: string; fallbackCategory: SkilledTradesCategory }> = [
+  { slug: "channels/craft/videos/rss", fallbackCategory: "Carpentry" },
+  { slug: "channels/architecture/videos/rss", fallbackCategory: "Roofing & Drywall" },
+  { slug: "channels/design/videos/rss", fallbackCategory: "Creative Media & Design" },
+  { slug: "channels/science/videos/rss", fallbackCategory: "Science & Lab Tech" },
+]
+
+export async function verifyVimeoOembed(
+  url: string
+): Promise<{
+  ok: boolean
+  videoId?: string
+  title?: string
+  authorName?: string
+  thumbnailUrl?: string
+  duration?: number
+} | null> {
+  try {
+    const res = await fetch(
+      `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`,
+      { signal: AbortSignal.timeout(4000), cache: "no-store" }
+    )
+    if (!res.ok) return null
+    const d: any = await res.json().catch(() => null)
+    if (!d?.video_id) return null
+    return {
+      ok: true,
+      videoId: String(d.video_id),
+      title: typeof d.title === "string" ? d.title.trim() : undefined,
+      authorName: typeof d.author_name === "string" ? d.author_name.trim() : undefined,
+      thumbnailUrl: typeof d.thumbnail_url === "string" ? d.thumbnail_url.trim() : undefined,
+      duration: typeof d.duration === "number" ? d.duration : undefined,
+    }
+  } catch {
+    return null
   }
 }
+
+async function syncVimeoSource(
+  seenIds: Set<string>,
+  seenUrls: Set<string>,
+  baseLessonNum: number
+): Promise<LearnByDoingLesson[]> {
+  const collectedLinks: Array<{ link: string; title: string; fallbackCat: SkilledTradesCategory }> = []
+  await Promise.all(
+    VIMEO_CHANNEL_FEEDS.map(async (feed) => {
+      try {
+        const res = await fetch(`https://vimeo.com/${feed.slug}`, {
+          headers: { "User-Agent": "Mozilla/5.0 (compatible; ConnectLnLearningSync/1.0)" },
+          signal: AbortSignal.timeout(4500),
+          cache: "no-store",
+        })
+        if (!res.ok) return
+        const xml = await res.text()
+        const items = xml.match(/<item>[\s\S]*?<\/item>/g) || []
+        for (const item of items.slice(0, 4)) {
+          const linkMatch = item.match(/<link>([\s\S]*?)<\/link>/)
+          const titleMatch = item.match(/<title>([\s\S]*?)<\/title>/)
+          const link = decodeXmlEntities(linkMatch?.[1] || "").trim()
+          const title = decodeXmlEntities(titleMatch?.[1] || "").trim()
+          if (!link || !title || !isCleanLearningCandidateTitle(title)) continue
+          const norm = normalizeUrlDedupeKey(link)
+          if (seenUrls.has(norm)) continue
+          collectedLinks.push({ link, title, fallbackCat: feed.fallbackCategory })
+        }
+      } catch {}
+    })
+  )
+
+  const out: LearnByDoingLesson[] = []
+  for (const cand of collectedLinks.slice(0, 6)) {
+    if (out.length >= 3) break
+    const oe = await verifyVimeoOembed(cand.link)
+    if (!oe?.ok || !oe.videoId || !oe.thumbnailUrl) continue
+    const lessonId = `lbd_sync_vimeo_${oe.videoId}`
+    const norm = normalizeUrlDedupeKey(cand.link)
+    if (seenIds.has(lessonId) || seenUrls.has(norm)) continue
+    seenIds.add(lessonId)
+    seenUrls.add(norm)
+
+    const finalTitle = (oe.title || cand.title).slice(0, 115)
+    const cat = mapKeywordsToCategory(finalTitle, cand.fallbackCat)
+    const defaults = buildCategoryMetadataDefaults(cat)
+    const creator = oe.authorName || "Vimeo Creator"
+    const mins = oe.duration ? `${Math.floor(oe.duration / 60)}:${String(oe.duration % 60).padStart(2, "0")}` : ""
+
+    out.push({
+      id: lessonId,
+      lessonNumber: baseLessonNum + out.length,
+      videoLabel: `Synced (Vimeo · ${cat}): ${finalTitle.slice(0, 48)}`,
+      title: finalTitle,
+      category: cat,
+      enclaveId: defaults.enclaveId,
+      professionId: defaults.professionId,
+      level: "Intermediate",
+      originalCreator: `${creator} · Vimeo`,
+      creatorDomain: "vimeo.com",
+      sourceProvider: "vimeo",
+      sourceVideoUrl: cand.link,
+      referenceArticleUrl: cand.link,
+      embedUrl: `https://player.vimeo.com/video/${oe.videoId}`,
+      licenseLabel: "Standard Vimeo Embed · Creator Attributed",
+      lastVerifiedAtMs: Date.now(),
+      youtubeId: "",
+      embedAvailable: true,
+      duration: mins,
+      thumbnailUrl: oe.thumbnailUrl,
+      description: `Verified Vimeo ${cat} feature by ${creator}. Synced via the ConnectLn 24-hour multi-source curriculum feed.`,
+      skillsCovered: defaults.skillsCovered,
+      practiceActivity: defaults.practiceActivity,
+      practiceDeliverablePrompt: defaults.practiceDeliverablePrompt,
+      knowledgeCheck: defaults.knowledgeCheck,
+    })
+  }
+  return out
+}
+
+// =====================================================================
+// SOURCE ADAPTER 3: INTERNET ARCHIVE / MIT OCW (OPEN MP4)
+// =====================================================================
+
+async function syncInternetArchiveSource(
+  seenIds: Set<string>,
+  seenUrls: Set<string>,
+  baseLessonNum: number
+): Promise<LearnByDoingLesson[]> {
+  try {
+    const q = encodeURIComponent('collection:mit_ocw AND mediatype:movies AND format:"MPEG4"')
+    const res = await fetch(
+      `https://archive.org/advancedsearch.php?q=${q}&fl[]=identifier&fl[]=title&fl[]=creator&fl[]=description&sort[]=downloads+desc&rows=12&page=1&output=json`,
+      { signal: AbortSignal.timeout(5000), cache: "no-store" }
+    )
+    if (!res.ok) return []
+    const json: any = await res.json().catch(() => null)
+    const docs: any[] = Array.isArray(json?.response?.docs) ? json.response.docs : []
+
+    const out: LearnByDoingLesson[] = []
+    for (const d of docs) {
+      if (out.length >= 3) break
+      const ident = String(d?.identifier || "").trim()
+      if (!ident) continue
+      const safeIdent = ident.replace(/[^a-zA-Z0-9._-]/g, "_")
+      const lessonId = `lbd_sync_archive_${safeIdent}`
+      const detailsUrl = `https://archive.org/details/${ident}`
+      if (seenIds.has(lessonId) || seenUrls.has(normalizeUrlDedupeKey(detailsUrl))) continue
+
+      const metaRes = await fetch(`https://archive.org/metadata/${encodeURIComponent(ident)}`, {
+        signal: AbortSignal.timeout(4000),
+        cache: "no-store",
+      }).catch(() => null)
+      if (!metaRes?.ok) continue
+      const metaJson: any = await metaRes.json().catch(() => null)
+      const files: any[] = Array.isArray(metaJson?.files) ? metaJson.files : []
+      const mp4File = files.find((f) => String(f?.name || "").toLowerCase().endsWith(".mp4"))
+      if (!mp4File?.name) continue
+
+      seenIds.add(lessonId)
+      seenUrls.add(normalizeUrlDedupeKey(detailsUrl))
+
+      const title = String(d?.title || ident).trim().slice(0, 115)
+      const cat = mapKeywordsToCategory(title, "Science & Lab Tech")
+      const defaults = buildCategoryMetadataDefaults(cat)
+      const creator = String(d?.creator || "MIT OpenCourseWare").trim()
+      const rawDesc = Array.isArray(d?.description)
+        ? String(d.description[0] || "")
+        : String(d?.description || "")
+      const cleanDesc =
+        rawDesc.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 260) ||
+        `Open-licensed MIT / Internet Archive training lecture: "${title}".`
+
+      out.push({
+        id: lessonId,
+        lessonNumber: baseLessonNum + out.length,
+        videoLabel: `Synced (Open Archive · ${cat}): ${title.slice(0, 45)}`,
+        title,
+        category: cat,
+        enclaveId: defaults.enclaveId,
+        professionId: defaults.professionId,
+        level: "Intermediate",
+        originalCreator: `${creator} · Internet Archive`,
+        creatorDomain: "archive.org",
+        sourceProvider: "archive_org",
+        sourceVideoUrl: detailsUrl,
+        referenceArticleUrl: detailsUrl,
+        directVideoUrl: `https://archive.org/download/${encodeURIComponent(ident)}/${encodeURIComponent(String(mp4File.name))}`,
+        embedUrl: `https://archive.org/embed/${encodeURIComponent(ident)}`,
+        licenseLabel: "CC BY-NC-SA 4.0 · Internet Archive Open MP4",
+        lastVerifiedAtMs: Date.now(),
+        youtubeId: "",
+        embedAvailable: true,
+        duration: "",
+        thumbnailUrl: `https://archive.org/services/img/${encodeURIComponent(ident)}`,
+        description: cleanDesc,
+        skillsCovered: defaults.skillsCovered,
+        practiceActivity: defaults.practiceActivity,
+        practiceDeliverablePrompt: defaults.practiceDeliverablePrompt,
+        knowledgeCheck: defaults.knowledgeCheck,
+      })
+    }
+    return out
+  } catch {
+    return []
+  }
+}
+
+// =====================================================================
+// SOURCE ADAPTER 4: PEERTUBE (FEDERATED) & DAILYMOTION PUBLIC API
+// =====================================================================
+
+async function syncPeerTubeAndDailymotionSource(
+  seenIds: Set<string>,
+  seenUrls: Set<string>,
+  baseLessonNum: number
+): Promise<LearnByDoingLesson[]> {
+  const out: LearnByDoingLesson[] = []
+
+  // A. PeerTube (MakerTube + TILvids)
+  const ptHosts = ["makertube.net", "tilvids.com"]
+  for (const host of ptHosts) {
+    if (out.length >= 3) break
+    try {
+      const res = await fetch(
+        `https://${host}/api/v1/videos?count=6&sort=-publishedAt&nsfw=false`,
+        { signal: AbortSignal.timeout(4000), cache: "no-store" }
+      )
+      if (!res.ok) continue
+      const json: any = await res.json().catch(() => null)
+      const list: any[] = Array.isArray(json?.data) ? json.data : []
+      for (const v of list) {
+        if (out.length >= 3) break
+        const uuid = String(v?.shortUUID || v?.uuid || "").trim()
+        const name = String(v?.name || "").trim()
+        const dur = Number(v?.duration || 0)
+        if (!uuid || !name || dur < 120 || !isCleanLearningCandidateTitle(name)) continue
+        const lessonId = `lbd_sync_pt_${uuid}`
+        const watchUrl = `https://${host}/w/${uuid}`
+        if (seenIds.has(lessonId) || seenUrls.has(normalizeUrlDedupeKey(watchUrl))) continue
+        const rawThumb = String(v?.thumbnailPath || v?.previewPath || "").trim()
+        const thumbUrl = rawThumb.startsWith("/") ? `https://${host}${rawThumb}` : rawThumb
+        if (!thumbUrl) continue
+
+        seenIds.add(lessonId)
+        seenUrls.add(normalizeUrlDedupeKey(watchUrl))
+
+        const cat = mapKeywordsToCategory(
+          `${name} ${v?.category?.label || ""}`,
+          host === "makertube.net" ? "Electrical Fundamentals" : "Cybersecurity & IT"
+        )
+        const defaults = buildCategoryMetadataDefaults(cat)
+        const creator = String(v?.channel?.displayName || "PeerTube Creator").trim()
+        const lic = String(v?.licence?.label || "PeerTube Federated Embed")
+
+        out.push({
+          id: lessonId,
+          lessonNumber: baseLessonNum + out.length,
+          videoLabel: `Synced (PeerTube · ${cat}): ${name.slice(0, 48)}`,
+          title: name.slice(0, 115),
+          category: cat,
+          enclaveId: defaults.enclaveId,
+          professionId: defaults.professionId,
+          level: "Intermediate",
+          originalCreator: `${creator} · PeerTube`,
+          creatorDomain: host,
+          sourceProvider: "peertube",
+          sourceVideoUrl: watchUrl,
+          referenceArticleUrl: watchUrl,
+          embedUrl: `https://${host}/videos/embed/${uuid}`,
+          licenseLabel: lic,
+          lastVerifiedAtMs: Date.now(),
+          youtubeId: "",
+          embedAvailable: true,
+          duration: `${Math.floor(dur / 60)}:${String(dur % 60).padStart(2, "0")}`,
+          thumbnailUrl: thumbUrl,
+          description: `Verified federated PeerTube ${cat} session by ${creator}. Synced daily to the ConnectLn Learning Hub.`,
+          skillsCovered: defaults.skillsCovered,
+          practiceActivity: defaults.practiceActivity,
+          practiceDeliverablePrompt: defaults.practiceDeliverablePrompt,
+          knowledgeCheck: defaults.knowledgeCheck,
+        })
+      }
+    } catch {}
+  }
+
+  // B. Dailymotion rotating trade queries
+  const dmQueries: Array<{ q: string; cat: SkilledTradesCategory }> = [
+    { q: "carpentry woodworking tutorial", cat: "Carpentry" },
+    { q: "plumbing hvac repair tutorial", cat: "Plumbing" },
+    { q: "welding electrical tutorial", cat: "Welding" },
+    { q: "cybersecurity software engineering tutorial", cat: "Cybersecurity & IT" },
+  ]
+  const daySlot = Math.floor(Date.now() / TWENTY_FOUR_HOURS_MS) % dmQueries.length
+  const dmPick = dmQueries[daySlot]
+  try {
+    const dmRes = await fetch(
+      `https://api.dailymotion.com/videos?search=${encodeURIComponent(dmPick.q)}&fields=id,title,owner.screenname,thumbnail_480_url,duration&limit=8&sort=relevance`,
+      { signal: AbortSignal.timeout(4500), cache: "no-store" }
+    )
+    if (dmRes.ok) {
+      const dmJson: any = await dmRes.json().catch(() => null)
+      const list: any[] = Array.isArray(dmJson?.list) ? dmJson.list : []
+      let dmAdded = 0
+      for (const v of list) {
+        if (dmAdded >= 3) break
+        const id = String(v?.id || "").trim()
+        const title = String(v?.title || "").trim()
+        const dur = Number(v?.duration || 0)
+        const thumb = String(v?.thumbnail_480_url || "").trim()
+        if (!id || !title || dur < 120 || !thumb || !isCleanLearningCandidateTitle(title)) continue
+        const lessonId = `lbd_sync_dm_${id}`
+        const watchUrl = `https://www.dailymotion.com/video/${id}`
+        if (seenIds.has(lessonId) || seenUrls.has(normalizeUrlDedupeKey(watchUrl))) continue
+        seenIds.add(lessonId)
+        seenUrls.add(normalizeUrlDedupeKey(watchUrl))
+
+        const cat = mapKeywordsToCategory(title, dmPick.cat)
+        const defaults = buildCategoryMetadataDefaults(cat)
+        const creator = String(v?.["owner.screenname"] || "Dailymotion Creator").trim()
+
+        out.push({
+          id: lessonId,
+          lessonNumber: baseLessonNum + out.length,
+          videoLabel: `Synced (Dailymotion · ${cat}): ${title.slice(0, 48)}`,
+          title: title.slice(0, 115),
+          category: cat,
+          enclaveId: defaults.enclaveId,
+          professionId: defaults.professionId,
+          level: "Beginner",
+          originalCreator: `${creator} · Dailymotion`,
+          creatorDomain: "dailymotion.com",
+          sourceProvider: "dailymotion",
+          sourceVideoUrl: watchUrl,
+          referenceArticleUrl: watchUrl,
+          embedUrl: `https://geo.dailymotion.com/player.html?video=${id}`,
+          licenseLabel: "Standard Dailymotion Embed · Creator Attributed",
+          lastVerifiedAtMs: Date.now(),
+          youtubeId: "",
+          embedAvailable: true,
+          duration: `${Math.floor(dur / 60)}:${String(dur % 60).padStart(2, "0")}`,
+          thumbnailUrl: thumb,
+          description: `Verified Dailymotion ${cat} tutorial by ${creator}. Synced automatically every 24 hours.`,
+          skillsCovered: defaults.skillsCovered,
+          practiceActivity: defaults.practiceActivity,
+          practiceDeliverablePrompt: defaults.practiceDeliverablePrompt,
+          knowledgeCheck: defaults.knowledgeCheck,
+        })
+        dmAdded += 1
+      }
+    }
+  } catch {}
+
+  return out
+}
+
+// =====================================================================
+// ARCHIVE READ/WRITE & 30-DAY YOUTUBE COMPLIANCE REFRESH
+// =====================================================================
 
 async function readExistingSyncedArchive(): Promise<{
   lessons: LearnByDoingLesson[]
@@ -610,7 +1113,7 @@ async function readExistingSyncedArchive(): Promise<{
           .collection<Record<string, any>>(MONGO_COLLECTION)
           .find({})
           .sort({ syncedAtMs: -1 })
-          .limit(350)
+          .limit(450)
           .toArray()
 
         let meta: LearningVideoSyncMeta | null = null
@@ -619,9 +1122,19 @@ async function readExistingSyncedArchive(): Promise<{
           if (doc._id === META_DOC_ID || doc.docType === "meta") {
             const { _id, docType, ...rest } = doc
             meta = rest as LearningVideoSyncMeta
-          } else if (doc.id && doc.youtubeId && doc.title) {
+          } else if (doc.id && doc.title) {
             const { _id, docType, syncedAtMs, publishedAtIso, ...lesson } = doc
-            lessons.push(lesson as LearnByDoingLesson)
+            lessons.push({
+              ...(lesson as LearnByDoingLesson),
+              youtubeId: typeof lesson.youtubeId === "string" ? lesson.youtubeId : "",
+              sourceProvider:
+                lesson.sourceProvider ||
+                (lesson.directVideoUrl
+                  ? "connectln_native"
+                  : lesson.youtubeId
+                  ? "youtube"
+                  : undefined),
+            })
           }
         }
         return { lessons, meta, mongoConnected: true }
@@ -640,14 +1153,101 @@ async function readExistingSyncedArchive(): Promise<{
       if (!entry?.data) continue
       if (entry.key === META_DOC_ID) {
         meta = entry.data as LearningVideoSyncMeta
-      } else if (entry.data.id && entry.data.youtubeId) {
-        lessons.push(entry.data as LearnByDoingLesson)
+      } else if (entry.data.id && entry.data.title) {
+        lessons.push({
+          ...(entry.data as LearnByDoingLesson),
+          youtubeId: typeof entry.data.youtubeId === "string" ? entry.data.youtubeId : "",
+        })
       }
     }
     return { lessons, meta, mongoConnected: false }
   } catch {
     return { lessons: [], meta: null, mongoConnected: false }
   }
+}
+
+async function refreshAndPruneStaleYouTubeDocs(
+  existingLessons: LearnByDoingLesson[]
+): Promise<{ surviving: LearnByDoingLesson[]; prunedCount: number }> {
+  const nowMs = Date.now()
+  const staleCandidates = existingLessons
+    .filter((l) => {
+      if (l.id.startsWith("lbd_native_") || l.sourceProvider === "connectln_native") return false
+      const isYt = (l.sourceProvider || (l.youtubeId ? "youtube" : undefined)) === "youtube"
+      if (!isYt || !l.youtubeId) return false
+      return !l.lastVerifiedAtMs || nowMs - Number(l.lastVerifiedAtMs) >= YOUTUBE_REFRESH_AGE_MS
+    })
+    .slice(0, 20)
+
+  if (staleCandidates.length === 0) {
+    return { surviving: existingLessons, prunedCount: 0 }
+  }
+
+  const prunedIds = new Set<string>()
+  const refreshedMap = new Map<string, LearnByDoingLesson>()
+
+  await Promise.all(
+    staleCandidates.map(async (item) => {
+      const check = await verifyYoutubeEmbeddable(item.youtubeId || "")
+      if (check.permanentlyUnavailable) {
+        prunedIds.add(item.id)
+      } else if (check.ok) {
+        refreshedMap.set(item.id, {
+          ...item,
+          sourceProvider: "youtube",
+          title: check.title || item.title,
+          originalCreator: check.authorName || item.originalCreator,
+          lastVerifiedAtMs: nowMs,
+        })
+      }
+    })
+  )
+
+  if (isConnectLnMongoConfigured() && (prunedIds.size > 0 || refreshedMap.size > 0)) {
+    try {
+      const db = await getConnectLnMongoDb()
+      if (db) {
+        const col = db.collection<Record<string, any>>(MONGO_COLLECTION)
+        if (prunedIds.size > 0) {
+          await col.deleteMany({ _id: { $in: Array.from(prunedIds) as any[] } })
+        }
+        if (refreshedMap.size > 0) {
+          await col.bulkWrite(
+            Array.from(refreshedMap.values()).map((l) => ({
+              updateOne: {
+                filter: { _id: l.id as any },
+                update: {
+                  $set: {
+                    title: l.title,
+                    originalCreator: l.originalCreator,
+                    sourceProvider: "youtube",
+                    lastVerifiedAtMs: nowMs,
+                  },
+                },
+              },
+            })),
+            { ordered: false }
+          )
+        }
+      }
+    } catch {}
+  }
+
+  const surviving = existingLessons
+    .filter((l) => !prunedIds.has(l.id))
+    .map((l) => refreshedMap.get(l.id) || l)
+
+  return { surviving, prunedCount: prunedIds.size }
+}
+
+function computeSourceBreakdown(allSynced: LearnByDoingLesson[]): Record<string, number> {
+  const counts: Record<string, number> = {}
+  for (const l of allSynced) {
+    const prov: LearnVideoSourceProvider =
+      l.sourceProvider || (l.directVideoUrl ? "connectln_native" : "youtube")
+    counts[prov] = (counts[prov] || 0) + 1
+  }
+  return counts
 }
 
 async function saveNewSyncedArchive(
@@ -666,12 +1266,7 @@ async function saveNewSyncedArchive(
             updateOne: {
               filter: { _id: lesson.id as any },
               update: {
-                $setOnInsert: {
-                  ...lesson,
-                  _id: lesson.id,
-                  docType: "lesson",
-                  syncedAtMs: nowMs - idx,
-                },
+                $setOnInsert: prepareLessonDocForMongo(lesson, nowMs - idx),
               },
               upsert: true,
             },
@@ -710,10 +1305,38 @@ async function saveNewSyncedArchive(
   }
 }
 
+export async function insertCreatorLearningLesson(
+  lesson: LearnByDoingLesson
+): Promise<{ ok: boolean; mongoConnected: boolean }> {
+  const nowMs = Date.now()
+  if (isConnectLnMongoConfigured()) {
+    try {
+      const db = await getConnectLnMongoDb()
+      if (db) {
+        const doc = prepareLessonDocForMongo(lesson, nowMs)
+        await db
+          .collection<Record<string, any>>(MONGO_COLLECTION)
+          .updateOne({ _id: lesson.id as any }, { $set: doc }, { upsert: true })
+        return { ok: true, mongoConnected: true }
+      }
+    } catch (err) {
+      console.warn("[learning-video-sync] insertCreatorLearningLesson fallback:", (err as any)?.message)
+    }
+  }
+
+  try {
+    const { firebaseKvSetItem } = await import("./connectin-firebase-kv")
+    const ok = await firebaseKvSetItem(FB_LEARNING_KV_MAP, lesson.id, lesson)
+    return { ok, mongoConnected: false }
+  } catch {
+    return { ok: false, mongoConnected: false }
+  }
+}
+
 /**
- * Loads permanently archived 24h-synced Learning videos from MongoDB Atlas (`connectln_learning_videos`),
- * automatically fetching fresh verified videos across trades & professions once every 24 hours (or when `forceSync: true`).
- * Strictly additive: never deletes previously synced Learning videos.
+ * Loads permanently archived 24h-synced + native creator Learning videos from MongoDB Atlas,
+ * runs multi-source additive discovery (YouTube, Vimeo, Internet Archive MIT OCW, PeerTube, Dailymotion),
+ * and refreshes/prunes cached YouTube links <30 days old per YouTube API policy.
  */
 export async function getOrSync24HourLearningVideos(params?: {
   forceSync?: boolean
@@ -726,97 +1349,94 @@ export async function getOrSync24HourLearningVideos(params?: {
 }> {
   const forceSync = Boolean(params?.forceSync)
   const triggeredBy = params?.triggeredBy || "auto-24h-learning-check"
-  const { lessons: existingSynced, meta: existingMeta, mongoConnected } =
+  const { lessons: rawExisting, meta: existingMeta, mongoConnected } =
     await readExistingSyncedArchive()
 
   const lastSyncMs = existingMeta?.lastSyncIso ? Date.parse(existingMeta.lastSyncIso) : 0
   const due24h = !lastSyncMs || Number.isNaN(lastSyncMs) || Date.now() - lastSyncMs >= TWENTY_FOUR_HOURS_MS
-  const shouldFetchNow = forceSync || due24h || existingSynced.length === 0
+  const hasNonYouTubeSynced = rawExisting.some(
+    (l) => l.sourceProvider && l.sourceProvider !== "youtube"
+  )
+  const shouldFetchNow = forceSync || due24h || rawExisting.length === 0 || !hasNonYouTubeSynced
 
   if (!shouldFetchNow && existingMeta) {
     return {
-      lessons: existingSynced,
+      lessons: rawExisting,
       addedCount: 0,
-      meta: existingMeta,
+      meta: {
+        ...existingMeta,
+        sourceBreakdown: existingMeta.sourceBreakdown || computeSourceBreakdown(rawExisting),
+      },
       mongoConnected,
     }
   }
 
+  // Enforce <30 day YouTube metadata freshness & drop deleted/unembeddable YouTube clips
+  const { surviving: existingSynced, prunedCount } =
+    await refreshAndPruneStaleYouTubeDocs(rawExisting)
+
+  const seenIds = new Set<string>()
   const seenYtIds = new Set<string>()
+  const seenUrls = new Set<string>()
+
   for (const base of SKILLED_TRADES_LEARN_BY_DOING_LESSONS) {
+    seenIds.add(base.id)
     if (base.youtubeId) seenYtIds.add(base.youtubeId)
     if (base.companionVariant?.youtubeId) seenYtIds.add(base.companionVariant.youtubeId)
+    if (base.sourceVideoUrl) seenUrls.add(normalizeUrlDedupeKey(base.sourceVideoUrl))
   }
   for (const synced of existingSynced) {
+    seenIds.add(synced.id)
     if (synced.youtubeId) seenYtIds.add(synced.youtubeId)
+    if (synced.sourceVideoUrl) seenUrls.add(normalizeUrlDedupeKey(synced.sourceVideoUrl))
   }
-
-  // Pull RSS feeds in parallel with graceful per-channel isolation
-  const rssResults = await Promise.all(
-    LEARNING_YOUTUBE_RSS_CHANNELS.map((ch) => fetchChannelRssCandidates(ch))
-  )
-
-  // Pick up to 1–2 fresh unseen videos per channel first so every profession grows evenly
-  const diverseCandidates: RawRssCandidate[] = []
-  const secondPass: RawRssCandidate[] = []
-
-  for (const chEntries of rssResults) {
-    const freshForChannel = chEntries
-      .filter((e) => !seenYtIds.has(e.youtubeId))
-      .sort((a, b) => Date.parse(b.publishedIso || "") - Date.parse(a.publishedIso || ""))
-
-    if (freshForChannel[0]) {
-      seenYtIds.add(freshForChannel[0].youtubeId)
-      diverseCandidates.push(freshForChannel[0])
-    }
-    if (freshForChannel[1]) {
-      seenYtIds.add(freshForChannel[1].youtubeId)
-      secondPass.push(freshForChannel[1])
-    }
-  }
-
-  const selectedCandidates = [...diverseCandidates, ...secondPass].slice(
-    0,
-    MAX_RSS_CANDIDATES_PER_SYNC
-  )
-
-  // Verify embeddability via YouTube oEmbed before adding to Learning curriculum
-  const oembedChecks = await Promise.all(
-    selectedCandidates.map(async (cand) => ({
-      cand,
-      check: await verifyYoutubeEmbeddable(cand.youtubeId),
-    }))
-  )
 
   const baseLessonNumber =
     SKILLED_TRADES_LEARN_BY_DOING_LESSONS.length + existingSynced.length + 1
-  const newLessons: LearnByDoingLesson[] = []
-  let offset = 0
-  for (const { cand, check } of oembedChecks) {
-    if (!check.ok) continue
-    newLessons.push(
-      buildLessonFromCandidate(cand, baseLessonNumber + offset, check.authorName, check.title)
-    )
-    offset += 1
+
+  const [ytRes, vimeoRes, archiveRes, ptDmRes] = await Promise.allSettled([
+    syncYouTubeSource(seenYtIds, baseLessonNumber),
+    syncVimeoSource(seenIds, seenUrls, baseLessonNumber + 20),
+    syncInternetArchiveSource(seenIds, seenUrls, baseLessonNumber + 30),
+    syncPeerTubeAndDailymotionSource(seenIds, seenUrls, baseLessonNumber + 40),
+  ])
+
+  const combinedNew: LearnByDoingLesson[] = []
+  for (const res of [vimeoRes, archiveRes, ptDmRes, ytRes]) {
+    if (res.status === "fulfilled" && Array.isArray(res.value)) {
+      for (const item of res.value) {
+        if (!combinedNew.some((x) => x.id === item.id)) {
+          combinedNew.push(item)
+        }
+      }
+    }
   }
 
-  const allSynced = [...newLessons, ...existingSynced]
+  // Re-number sequentially for clean shelf labels
+  const numberedNew = combinedNew.map((l, idx) => ({
+    ...l,
+    lessonNumber: baseLessonNumber + idx,
+  }))
+
+  const allSynced = [...numberedNew, ...existingSynced]
   const nowIso = new Date().toISOString()
   const nextIso = new Date(Date.now() + TWENTY_FOUR_HOURS_MS).toISOString()
   const updatedMeta: LearningVideoSyncMeta = {
     lastSyncIso: nowIso,
     nextSyncIso: nextIso,
-    lastAddedCount: newLessons.length,
+    lastAddedCount: numberedNew.length,
     totalSyncedCount: allSynced.length,
     cadenceHours: 24,
     triggeredBy,
+    sourceBreakdown: computeSourceBreakdown(allSynced),
+    prunedStaleYouTubeCount: prunedCount,
   }
 
-  await saveNewSyncedArchive(newLessons, updatedMeta)
+  await saveNewSyncedArchive(numberedNew, updatedMeta)
 
   return {
     lessons: allSynced,
-    addedCount: newLessons.length,
+    addedCount: numberedNew.length,
     meta: updatedMeta,
     mongoConnected,
   }

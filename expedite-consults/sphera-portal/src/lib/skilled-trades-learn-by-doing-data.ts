@@ -1,5 +1,14 @@
 import { PROFESSION_LEARN_BY_DOING_LESSONS } from './profession-learn-by-doing-lessons'
 
+export type LearnVideoSourceProvider =
+  | 'youtube'
+  | 'vimeo'
+  | 'archive_org'
+  | 'ted'
+  | 'peertube'
+  | 'dailymotion'
+  | 'connectln_native'
+
 export type SkilledTradesCategory =
   | 'Carpentry'
   | 'Auto Mechanics'
@@ -233,6 +242,18 @@ export interface LearnByDoingLesson {
   skillsCovered: string[]
   sourceVideoUrl: string
   referenceArticleUrl: string
+  /** Video host/provider. Defaults to `'youtube'` when `youtubeId` is set. */
+  sourceProvider?: LearnVideoSourceProvider
+  /** Official embed iframe URL for non-YouTube providers (Vimeo, PeerTube, Dailymotion, TED, Archive). */
+  embedUrl?: string
+  /** Direct playable HTML5 MP4/WebM/HLS stream URL (Internet Archive MP4s & ConnectLn Creator Uploads). */
+  directVideoUrl?: string
+  /** Visible open/creator license attribution (e.g., CC BY-NC-SA 4.0, Public Domain, ConnectLn Original). */
+  licenseLabel?: string
+  /** Epoch ms when external YouTube/provider metadata was last verified (keeps YouTube cache <30 days). */
+  lastVerifiedAtMs?: number
+  /** Email of creator for native ConnectLn uploaded lessons. */
+  uploadedByEmail?: string
   /** Only set when the supplied source video URL has been verified to play in an embedded player. */
   youtubeId?: string
   embedAvailable: boolean
@@ -1860,9 +1881,9 @@ export function loadAllLearnByDoingTelemetry(): Record<string, LearnByDoingLesso
         initialMap[lesson.id] = merged
       }
     }
-    // Preserve saved telemetry for dynamically 24h-synced lessons (`lbd_sync_*`)
+    // Preserve saved telemetry for dynamically 24h-synced (`lbd_sync_*`) and creator-uploaded (`lbd_native_*`) lessons
     for (const [savedId, saved] of Object.entries(parsed)) {
-      if (saved && savedId.startsWith('lbd_sync_') && !initialMap[savedId]) {
+      if (saved && (savedId.startsWith('lbd_sync_') || savedId.startsWith('lbd_native_')) && !initialMap[savedId]) {
         const merged: LearnByDoingLessonTelemetry = {
           ...createInitialLessonTelemetry(savedId),
           ...saved,

@@ -111,21 +111,54 @@ export function SkilledTradesLearnByDoingSection({
   const [isSyncingLearningVideos, setIsSyncingLearningVideos] = useState<boolean>(false)
 
   const allLessons = useMemo<LearnByDoingLesson[]>(() => {
+    const seenIds = new Set<string>()
     const seenYt = new Set<string>()
+    const seenUrls = new Set<string>()
     const merged: LearnByDoingLesson[] = []
+
+    const normUrl = (u?: string) =>
+      String(u || "").trim().toLowerCase().replace(/^https?:\/\/(www\.)?/, "").replace(/\/+$/, "")
+
     for (const l of SKILLED_TRADES_LEARN_BY_DOING_LESSONS) {
+      seenIds.add(l.id)
       if (l.youtubeId) seenYt.add(l.youtubeId)
       if (l.companionVariant?.youtubeId) seenYt.add(l.companionVariant.youtubeId)
+      if (l.sourceVideoUrl) seenUrls.add(normUrl(l.sourceVideoUrl))
       merged.push(l)
     }
     for (const sl of syncedLearningLessons) {
-      if (!sl || !sl.id) continue
-      if (sl.youtubeId && seenYt.has(sl.youtubeId)) continue
-      if (sl.youtubeId) seenYt.add(sl.youtubeId)
+      if (!sl || !sl.id || seenIds.has(sl.id)) continue
+      if (sl.youtubeId && sl.youtubeId.trim() && seenYt.has(sl.youtubeId.trim())) continue
+      const nu = normUrl(sl.sourceVideoUrl)
+      if (nu && !sl.directVideoUrl?.startsWith('/api/connectin/learning-videos/stream/') && seenUrls.has(nu)) {
+        continue
+      }
+      seenIds.add(sl.id)
+      if (sl.youtubeId && sl.youtubeId.trim()) seenYt.add(sl.youtubeId.trim())
+      if (nu) seenUrls.add(nu)
       merged.push(sl)
     }
     return merged
   }, [syncedLearningLessons])
+
+  const handleLessonPublished = (newLesson: LearnByDoingLesson) => {
+    setSyncedLearningLessons((prev) => {
+      const next = [newLesson, ...prev.filter((l) => l.id !== newLesson.id)]
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('connectln_synced_learning_videos_v1', JSON.stringify(next))
+        } catch {}
+      }
+      return next
+    })
+    setTelemetryMap((prev) => {
+      if (prev[newLesson.id]) return prev
+      return {
+        ...prev,
+        [newLesson.id]: createInitialLessonTelemetry(newLesson.id),
+      }
+    })
+  }
 
   const [activeVideoLessonId, setActiveVideoLessonId] = useState<string | null>(
     initialLessonId ||
@@ -294,7 +327,7 @@ export function SkilledTradesLearnByDoingSection({
     const cleanups: Array<() => void> = []
     const playerPrefix = mode === 'home_videos_only' ? 'lbd-home-player-' : 'lbd-player-'
     for (const lesson of allLessons) {
-      if (!lesson.embedAvailable || !lesson.youtubeId) continue
+      if (!lesson.embedAvailable || (!lesson.youtubeId && !lesson.embedUrl && !lesson.directVideoUrl)) continue
       const slotId = `${playerPrefix}${lesson.id}`
       cleanups.push(
         registerViewportVideoSlot({
@@ -472,11 +505,14 @@ export function SkilledTradesLearnByDoingSection({
     })
   }
 
-  // Mark all verified YouTube lesson videos playable immediately in a single pass
+  // Mark all verified multi-source lesson videos playable immediately in a single pass
   useEffect(() => {
     const initialMap: Record<string, 'checking' | 'playable' | 'unavailable'> = {}
     for (const lesson of allLessons) {
-      initialMap[lesson.id] = lesson.embedAvailable && lesson.youtubeId ? 'playable' : 'unavailable'
+      const hasPlayable = Boolean(
+        lesson.embedAvailable && (lesson.youtubeId || lesson.embedUrl || lesson.directVideoUrl)
+      )
+      initialMap[lesson.id] = hasPlayable ? 'playable' : 'unavailable'
     }
     setEmbedPlayabilityMap(initialMap)
   }, [allLessons])
@@ -1286,12 +1322,18 @@ export function SkilledTradesLearnByDoingSection({
                   )}
                 </div>
 
-                {/* 3. FULL-BLEED UNCLOUDED WSJ-FORMAT VIDEO STAGE (Zero Top Clutter, Crisp Serif Bottom Headline + Monogram) */}
+                {/* 3. FULL-BLEED UNCLOUDED VIDEO STAGE (Multi-Source & YouTube Policy Compliant) */}
                 <div className="relative w-full bg-black border-y border-zinc-100 dark:border-zinc-800">
-                  {isActiveCard && cardYoutubeId ? (
+                  {isActiveCard && (cardYoutubeId || lesson.embedUrl || lesson.directVideoUrl) ? (
                     <ConnectLnStudioPlayer
-                      key={`home-card-${lesson.id}-${cardYoutubeId}-${lesson6Variant}`}
+                      key={`home-card-${lesson.id}-${cardYoutubeId || lesson.sourceProvider || 'native'}-${lesson6Variant}`}
                       youtubeId={cardYoutubeId}
+                      sourceProvider={lesson.sourceProvider}
+                      embedUrl={lesson.embedUrl}
+                      directVideoUrl={lesson.directVideoUrl}
+                      sourceVideoUrl={lesson.sourceVideoUrl}
+                      licenseLabel={lesson.licenseLabel}
+                      posterImageUrl={lesson.thumbnailUrl}
                       title={cardTitle}
                       serialPlate={serialPlate}
                       speaker={instructorProfile.instructorName}
@@ -1551,6 +1593,7 @@ export function SkilledTradesLearnByDoingSection({
       syncMeta={learningSyncMeta}
       isSyncingVideos={isSyncingLearningVideos}
       onSyncVideosNow={() => void pullSyncedLearningVideos(true)}
+      onLessonPublished={handleLessonPublished}
       recommendedCategory={recommendedCategory}
       selectedIndustryGroup={selectedIndustryGroup}
       setSelectedIndustryGroup={setSelectedIndustryGroup}

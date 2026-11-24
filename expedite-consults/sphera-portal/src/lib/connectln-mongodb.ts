@@ -78,6 +78,9 @@ export async function getConnectLnMongoDb(): Promise<Db | null> {
         .collection("connectln_learning_videos")
         .createIndex({ youtubeId: 1 }, { unique: true, sparse: true, background: true }),
       db
+        .collection("connectln_creator_video_chunks")
+        .createIndex({ uploadId: 1, chunkIndex: 1 }, { unique: true, background: true }),
+      db
         .collection("connectln_admin_users")
         .createIndex({ email: 1 }, { background: true }),
       db
