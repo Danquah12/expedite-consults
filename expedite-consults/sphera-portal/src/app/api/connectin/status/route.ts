@@ -16,7 +16,7 @@ import {
 const STATUS_KV_MAP = "connectln_status_updates_v1"
 const STATUS_INTERACTIONS_KV_MAP = "connectln_status_interactions_v1"
 const STATUS_TTL_SECONDS = 7 * 24 * 60 * 60 // 7 days
-const INTERACTIONS_TTL_SECONDS = 14 * 24 * 60 * 60 // 14 days
+const INTERACTIONS_TTL_SECONDS = 90 * 24 * 60 * 60 // 90 days
 const MAX_RESOLVE_BATCH = 15
 const MAX_PUBLISH_BATCH = 20
 const MAX_INLINE_DATA_CHARS = 700_000

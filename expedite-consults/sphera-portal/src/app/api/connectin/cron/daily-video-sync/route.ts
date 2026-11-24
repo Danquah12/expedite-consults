@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrRunAdditive24HourVideoArchive } from "@/lib/connectin-live-video-sync"
+import { getOrSync24HourLearningVideos } from "@/lib/connectln-learning-video-sync"
 import { persistDailyPlatformCronRun } from "@/lib/connectin-cloud-video-archive"
 import { connectinDb } from "@/lib/connectin-db"
 import {
@@ -54,10 +55,16 @@ export async function GET(req: NextRequest) {
     const triggeredBy = isVercelCronHeader ? "vercel-24h-cron" : "scheduled-24h-endpoint"
 
     // 1. Additive 24h Live Video Sync across all 12 RSS channels + permanent Cloud Archive
-    const videoResult = await getOrRunAdditive24HourVideoArchive({
-      forceSync: true,
-      triggeredBy,
-    })
+    const [videoResult, learningVideoResult] = await Promise.all([
+      getOrRunAdditive24HourVideoArchive({
+        forceSync: true,
+        triggeredBy,
+      }),
+      getOrSync24HourLearningVideos({
+        forceSync: true,
+        triggeredBy,
+      }),
+    ])
 
     // 2. Additive 24h Platform Content Sync across Jobs, Alerts, Market, Learning, Media, Pulse & More Tabs
     const nowMs = Date.now()
@@ -131,6 +138,11 @@ export async function GET(req: NextRequest) {
       learning: {
         accumulatedDailyCourses: dailyCourses.length,
         accumulatedDailyLabs: dailyLabs.length,
+        learningVideoSync: {
+          newlyAddedThisRun: learningVideoResult.addedCount,
+          totalSyncedPreserved: learningVideoResult.lessons.length,
+          nextScheduledSyncIso: learningVideoResult.meta.nextSyncIso,
+        },
       },
       media: {
         accumulatedDailyBroadcasts: dailyMediaVideos.length,
@@ -165,6 +177,11 @@ export async function GET(req: NextRequest) {
         lastDailySyncIso: videoResult.meta.lastDailySyncIso,
         nextScheduledSyncIso: videoResult.meta.nextScheduledSyncIso,
         addedTitles: videoResult.addedItems.slice(0, 10).map((i) => i.title),
+        learningVideoSync: {
+          newlyAddedThisRun: learningVideoResult.addedCount,
+          totalSyncedPreserved: learningVideoResult.lessons.length,
+          nextScheduledSyncIso: learningVideoResult.meta.nextSyncIso,
+        },
         platformSummary,
       },
       {

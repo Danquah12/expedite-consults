@@ -17,10 +17,12 @@ import {
   FileText,
   HelpCircle,
   Play,
+  RefreshCw,
   Search,
   Sparkles,
   X,
 } from "lucide-react"
+import type { LearningVideoSyncMeta } from "@/lib/connectln-learning-video-sync"
 import {
   LEARN_CATEGORY_META,
   LEARN_INDUSTRY_GROUPS,
@@ -49,6 +51,9 @@ export interface LinkedInLearningShelfHubProps {
   lessons: LearnByDoingLesson[]
   telemetryMap: Record<string, LearnByDoingLessonTelemetry>
   currentLanguage: { flag: string; localName: string; code?: string }
+  syncMeta?: LearningVideoSyncMeta | null
+  isSyncingVideos?: boolean
+  onSyncVideosNow?: () => void
   recommendedCategory: SkilledTradesCategory | "All"
   selectedIndustryGroup: LearnIndustryGroupId
   setSelectedIndustryGroup: (g: LearnIndustryGroupId) => void
@@ -100,7 +105,9 @@ const LIVE_ROADMAP_CATEGORY_MAP: Record<string, SkilledTradesCategory> = {
   prop_landscaping_gardening: "Agriculture & Landscaping",
   prop_tailoring_sewing: "Tailoring & Sewing",
   prop_barbering_hairdressing: "Barbering & Beauty",
+  prop_professional_cleaning: "Safety & Civic Ops",
   prop_cooking_catering: "Culinary & Hospitality",
+  prop_furniture_restoration: "Carpentry",
   prop_small_business_trades: "Finance & Business",
 }
 
@@ -431,6 +438,9 @@ export function LinkedInLearningShelfHub({
   lessons,
   telemetryMap,
   currentLanguage,
+  syncMeta,
+  isSyncingVideos = false,
+  onSyncVideosNow,
   recommendedCategory,
   selectedIndustryGroup,
   setSelectedIndustryGroup,
@@ -638,6 +648,12 @@ export function LinkedInLearningShelfHub({
     return sorted.slice(0, 16)
   }, [lessons])
 
+  // Daily 24h-synced videos shelf
+  const syncedDailyLessons = useMemo(
+    () => lessons.filter((l) => l.id.startsWith("lbd_sync_")).slice(0, 16),
+    [lessons]
+  )
+
   const handleOpenClassroomModal = (lesson: LearnByDoingLesson) => {
     setFocusedLessonId(lesson.id)
     setModalTab("overview")
@@ -814,18 +830,51 @@ export function LinkedInLearningShelfHub({
           </div>
         </div>
 
-        {/* Inline Metrics Strip */}
+        {/* Inline Metrics & 24h Sync Strip */}
         <div className="flex items-center justify-between gap-3 flex-wrap pt-1 border-t border-zinc-100 dark:border-zinc-800 text-[11px] text-zinc-500 dark:text-zinc-400">
           <span>
             {SKILLED_TRADES_COLLECTION_META.subtitle}
           </span>
-          <span className="inline-flex items-center gap-2 rounded-full bg-zinc-100 dark:bg-zinc-800 px-3 py-0.5 font-semibold text-zinc-700 dark:text-zinc-200 shrink-0">
-            <span>Views: {totalVerifiedViews}</span>
-            <span>·</span>
-            <span className="text-[#01754F] dark:text-emerald-400">
-              Progress: {overallProgress}%
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 font-semibold text-[#01754F] dark:text-emerald-300">
+              <span>24h Auto-Sync</span>
+              {syncedDailyLessons.length > 0 && (
+                <>
+                  <span>·</span>
+                  <span>+{syncedDailyLessons.length} Daily</span>
+                </>
+              )}
+              {syncMeta?.lastSyncIso && (
+                <>
+                  <span>·</span>
+                  <span className="font-normal">
+                    {new Date(syncMeta.lastSyncIso).toLocaleTimeString([], {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </>
+              )}
             </span>
-          </span>
+            {onSyncVideosNow && (
+              <button
+                type="button"
+                onClick={onSyncVideosNow}
+                disabled={isSyncingVideos}
+                className="inline-flex items-center gap-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-[#0A66C2] px-2.5 py-0.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer disabled:opacity-60"
+              >
+                <RefreshCw className={`h-3 w-3 ${isSyncingVideos ? "animate-spin" : ""}`} />
+                <span>{isSyncingVideos ? "Syncing..." : "Sync New Videos"}</span>
+              </button>
+            )}
+            <span className="inline-flex items-center gap-2 rounded-full bg-zinc-100 dark:bg-zinc-800 px-3 py-0.5 font-semibold text-zinc-700 dark:text-zinc-200">
+              <span>Views: {totalVerifiedViews}</span>
+              <span>·</span>
+              <span className="text-[#01754F] dark:text-emerald-400">
+                Progress: {overallProgress}%
+              </span>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -954,6 +1003,22 @@ export function LinkedInLearningShelfHub({
             onSeeAll={() => setExplicitViewMode("grid")}
             seeAllLabel={`Browse all ${totalLessonsCount} lessons →`}
           />
+
+          {/* Shelf 5 (when active): Freshly Synced Every 24h */}
+          {syncedDailyLessons.length > 0 && (
+            <LearningCarouselShelf
+              title="Freshly Synced Every 24h"
+              subtitle={`Automatically syndicated & verified daily across 26 trades (${syncedDailyLessons.length} live 24h additions preserved)`}
+              lessons={syncedDailyLessons}
+              telemetryMap={telemetryMap}
+              lesson6Variant={lesson6Variant}
+              onOpenModal={handleOpenClassroomModal}
+              onToggleSave={onToggleSave}
+              onToggleJourney={onToggleLearningJourney}
+              onSeeAll={() => setExplicitViewMode("grid")}
+              seeAllLabel={`Explore all ${totalLessonsCount} lessons →`}
+            />
+          )}
         </div>
       ) : (
         /* Filtered / Search / Browse-All 4-Column Pop-Out Grid View */

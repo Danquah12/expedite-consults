@@ -1253,6 +1253,7 @@ export function WhatsAppModeWorkspace({
     });
     const [showStatusComments, setShowStatusComments] = useState<boolean>(true);
     const [isSubmittingComment, setIsSubmittingComment] = useState<boolean>(false);
+    const lastStatusInteractionWriteMsRef = React.useRef<Record<string, number>>({});
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -1318,7 +1319,8 @@ export function WhatsAppModeWorkspace({
                             if (!sid || !srv || typeof srv !== 'object') continue;
                             const prevTs = Number(next[sid]?.updatedAtMs || 0);
                             const srvTs = Number(srv.updatedAtMs || 0);
-                            if (!next[sid] || srvTs >= prevTs) {
+                            const lastLocalWrite = lastStatusInteractionWriteMsRef.current[sid] || 0;
+                            if (!next[sid] || srvTs >= prevTs || Date.now() - lastLocalWrite > 4000) {
                                 next[sid] = {
                                     slideId: sid,
                                     reactions:
@@ -1918,6 +1920,7 @@ export function WhatsAppModeWorkspace({
 
         const handleToggleStatusReaction = async (slideId: string, emoji: string, boxAuthorName: string) => {
             if (!slideId || !emoji) return;
+            lastStatusInteractionWriteMsRef.current[slideId] = Date.now();
             let wasAdded = false;
             setStatusInteractions((prev) => {
                 const current = prev[slideId] || {
@@ -1983,6 +1986,7 @@ export function WhatsAppModeWorkspace({
         const handleSubmitStatusComment = async (slideId: string, boxAuthorName: string) => {
             const cleanText = statusReplyText.trim();
             if (!slideId || !cleanText || isSubmittingComment) return;
+            lastStatusInteractionWriteMsRef.current[slideId] = Date.now();
             const nowStamp = `Today at ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
             const optimisticComment: StatusCommentItem = {
                 id: `sc_local_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
@@ -2049,6 +2053,7 @@ export function WhatsAppModeWorkspace({
         };
 
         const handleDeleteStatusComment = async (slideId: string, commentId: string) => {
+            lastStatusInteractionWriteMsRef.current[slideId] = Date.now();
             setStatusInteractions((prev) => {
                 const current = prev[slideId];
                 if (!current) return prev;

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useMemo, useRef } from "react"
 import {
   Play,
   Bookmark,
@@ -31,6 +31,7 @@ import {
   RefreshCw,
   Search
 } from "lucide-react"
+import type { LearningVideoSyncMeta } from "@/lib/connectln-learning-video-sync"
 import {
   SkilledTradesCategory,
   LearnByDoingLesson,
@@ -105,6 +106,27 @@ export function SkilledTradesLearnByDoingSection({
   const [telemetryMap, setTelemetryMap] = useState<Record<string, LearnByDoingLessonTelemetry>>(() =>
     loadAllLearnByDoingTelemetry()
   )
+  const [syncedLearningLessons, setSyncedLearningLessons] = useState<LearnByDoingLesson[]>([])
+  const [learningSyncMeta, setLearningSyncMeta] = useState<LearningVideoSyncMeta | null>(null)
+  const [isSyncingLearningVideos, setIsSyncingLearningVideos] = useState<boolean>(false)
+
+  const allLessons = useMemo<LearnByDoingLesson[]>(() => {
+    const seenYt = new Set<string>()
+    const merged: LearnByDoingLesson[] = []
+    for (const l of SKILLED_TRADES_LEARN_BY_DOING_LESSONS) {
+      if (l.youtubeId) seenYt.add(l.youtubeId)
+      if (l.companionVariant?.youtubeId) seenYt.add(l.companionVariant.youtubeId)
+      merged.push(l)
+    }
+    for (const sl of syncedLearningLessons) {
+      if (!sl || !sl.id) continue
+      if (sl.youtubeId && seenYt.has(sl.youtubeId)) continue
+      if (sl.youtubeId) seenYt.add(sl.youtubeId)
+      merged.push(sl)
+    }
+    return merged
+  }, [syncedLearningLessons])
+
   const [activeVideoLessonId, setActiveVideoLessonId] = useState<string | null>(
     initialLessonId ||
       (mode === 'home_videos_only' ? null : SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id) ||
@@ -127,8 +149,96 @@ export function SkilledTradesLearnByDoingSection({
   // Rotate default Home trade lessons automatically every 15 minutes so the same 3 lessons don't repeat endlessly
   useEffect(() => {
     if (mode !== 'home_videos_only' || typeof window === 'undefined') return
-    setHomeRotationOffset((Math.floor(Date.now() / 900000) * 3) % SKILLED_TRADES_LEARN_BY_DOING_LESSONS.length)
-  }, [mode])
+    setHomeRotationOffset((Math.floor(Date.now() / 900000) * 3) % Math.max(1, allLessons.length))
+  }, [mode, allLessons.length])
+
+  // Continuous 24-Hour Additive Learning Video Sync (MongoDB Atlas + YouTube RSS)
+  const SYNCED_VIDEOS_STORAGE_KEY = 'connectln_synced_learning_videos_v1'
+  const LAST_LEARNING_24H_SYNC_KEY = 'connectln_learning_last_24h_sync_ms'
+  const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000
+
+  const pullSyncedLearningVideos = async (forceRefresh: boolean) => {
+    if (typeof window === 'undefined') return
+    setIsSyncingLearningVideos(true)
+    try {
+      const url = forceRefresh
+        ? '/api/connectin/learning-videos?force=1'
+        : '/api/connectin/learning-videos'
+      const res = await fetch(url, { cache: 'no-store' })
+      if (!res.ok) return
+      const data = await res.json()
+      const synced: LearnByDoingLesson[] = Array.isArray(data?.syncedLessons)
+        ? data.syncedLessons
+        : []
+      if (synced.length > 0) {
+        setSyncedLearningLessons(synced)
+        try {
+          localStorage.setItem(SYNCED_VIDEOS_STORAGE_KEY, JSON.stringify(synced))
+        } catch {}
+      }
+      if (data?.meta) {
+        setLearningSyncMeta(data.meta as LearningVideoSyncMeta)
+      }
+      try {
+        localStorage.setItem(LAST_LEARNING_24H_SYNC_KEY, String(Date.now()))
+      } catch {}
+    } catch {
+      // ignore transient network errors
+    } finally {
+      setIsSyncingLearningVideos(false)
+    }
+  }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    let cachedEmpty = true
+    try {
+      const raw = localStorage.getItem(SYNCED_VIDEOS_STORAGE_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSyncedLearningLessons(parsed)
+          cachedEmpty = false
+        }
+      }
+    } catch {}
+
+    const lastMs = Number(localStorage.getItem(LAST_LEARNING_24H_SYNC_KEY) || '0')
+    const due24h = Date.now() - lastMs >= TWENTY_FOUR_HOURS_MS || cachedEmpty
+    void pullSyncedLearningVideos(due24h)
+
+    const onFocus = () => {
+      const prevMs = Number(localStorage.getItem(LAST_LEARNING_24H_SYNC_KEY) || '0')
+      if (Date.now() - prevMs >= TWENTY_FOUR_HOURS_MS) {
+        void pullSyncedLearningVideos(true)
+      }
+    }
+    window.addEventListener('focus', onFocus)
+    const intervalId = window.setInterval(() => {
+      void pullSyncedLearningVideos(true)
+    }, TWENTY_FOUR_HOURS_MS)
+
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      window.clearInterval(intervalId)
+    }
+  }, [])
+
+  // Ensure dynamically 24h-synced lessons have telemetry keys initialized cleanly
+  useEffect(() => {
+    if (syncedLearningLessons.length === 0) return
+    setTelemetryMap((prev) => {
+      let changed = false
+      const next = { ...prev }
+      for (const sl of syncedLearningLessons) {
+        if (sl?.id && !next[sl.id]) {
+          next[sl.id] = createInitialLessonTelemetry(sl.id)
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [syncedLearningLessons])
 
   useEffect(() => {
     if (initialCategory) {
@@ -183,7 +293,7 @@ export function SkilledTradesLearnByDoingSection({
     // Coordinate cleanly across BOTH Home Feed and Learning Academy via the central Viewport Arbiter & unmute speaker when in view!
     const cleanups: Array<() => void> = []
     const playerPrefix = mode === 'home_videos_only' ? 'lbd-home-player-' : 'lbd-player-'
-    for (const lesson of SKILLED_TRADES_LEARN_BY_DOING_LESSONS) {
+    for (const lesson of allLessons) {
       if (!lesson.embedAvailable || !lesson.youtubeId) continue
       const slotId = `${playerPrefix}${lesson.id}`
       cleanups.push(
@@ -206,7 +316,7 @@ export function SkilledTradesLearnByDoingSection({
     return () => {
       cleanups.forEach((fn) => fn())
     }
-  }, [mode, selectedCategory, homeVisibleLimit])
+  }, [mode, selectedCategory, homeVisibleLimit, allLessons])
 
   // If autoplay is switched off in Settings, stop a Home video that was started automatically
   useEffect(() => {
@@ -365,11 +475,11 @@ export function SkilledTradesLearnByDoingSection({
   // Mark all verified YouTube lesson videos playable immediately in a single pass
   useEffect(() => {
     const initialMap: Record<string, 'checking' | 'playable' | 'unavailable'> = {}
-    for (const lesson of SKILLED_TRADES_LEARN_BY_DOING_LESSONS) {
+    for (const lesson of allLessons) {
       initialMap[lesson.id] = lesson.embedAvailable && lesson.youtubeId ? 'playable' : 'unavailable'
     }
     setEmbedPlayabilityMap(initialMap)
-  }, [])
+  }, [allLessons])
 
   // Notify parent LearningView whenever telemetry updates
   useEffect(() => {
@@ -552,7 +662,7 @@ export function SkilledTradesLearnByDoingSection({
       ? LEARN_INDUSTRY_GROUPS.find(g => g.id === selectedIndustryGroup)
       : undefined
   const normalizedSearch = searchQuery.trim().toLowerCase()
-  const filteredLessons = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(lesson => {
+  const filteredLessons = allLessons.filter(lesson => {
     const t = telemetryMap[lesson.id] || createInitialLessonTelemetry(lesson.id)
     const categoryMatches =
       selectedCategory === 'All'
@@ -583,7 +693,7 @@ export function SkilledTradesLearnByDoingSection({
       .toLowerCase()
     return haystack.includes(normalizedSearch)
   })
-  const globalInterpretedCount = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(
+  const globalInterpretedCount = allLessons.filter(
     l => Boolean(l.sourceLanguage && l.sourceLanguage !== 'en')
   ).length
 
@@ -601,7 +711,7 @@ export function SkilledTradesLearnByDoingSection({
         )
       : 0
 
-  const totalLessonsCount = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.length
+  const totalLessonsCount = allLessons.length
 
   const getCategoryIcon = (cat: SkilledTradesCategory) => {
     switch (cat) {
@@ -883,9 +993,9 @@ export function SkilledTradesLearnByDoingSection({
 
   if (mode === 'home_videos_only') {
     const activeLesson =
-      SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => l.id === activeVideoLessonId) ||
+      allLessons.find(l => l.id === activeVideoLessonId) ||
       filteredLessons[0] ||
-      SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]
+      allLessons[0]
 
     const baseVisibleHomeLessons = filteredLessons.filter(l => !dismissedLessonMap[l.id])
     const effectiveOffset =
@@ -933,12 +1043,12 @@ export function SkilledTradesLearnByDoingSection({
                     }
                     const firstMatch =
                       tab.id === 'All'
-                        ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]
+                        ? allLessons[0]
                         : tab.id === 'Global Interpreted'
-                          ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(
+                          ? allLessons.find(
                               l => Boolean(l.sourceLanguage && l.sourceLanguage !== 'en')
                             )
-                          : SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => l.category === tab.id)
+                          : allLessons.find(l => l.category === tab.id)
                     if (firstMatch) {
                       notifyExclusiveVideoPlay(`lbd-home-player-${firstMatch.id}`)
                       setActiveVideoLessonId(firstMatch.id)
@@ -1435,9 +1545,12 @@ export function SkilledTradesLearnByDoingSection({
   return (
     <LinkedInLearningShelfHub
       user={user}
-      lessons={SKILLED_TRADES_LEARN_BY_DOING_LESSONS}
+      lessons={allLessons}
       telemetryMap={telemetryMap}
       currentLanguage={currentLanguage}
+      syncMeta={learningSyncMeta}
+      isSyncingVideos={isSyncingLearningVideos}
+      onSyncVideosNow={() => void pullSyncedLearningVideos(true)}
       recommendedCategory={recommendedCategory}
       selectedIndustryGroup={selectedIndustryGroup}
       setSelectedIndustryGroup={setSelectedIndustryGroup}

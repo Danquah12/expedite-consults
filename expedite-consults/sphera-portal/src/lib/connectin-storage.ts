@@ -319,6 +319,7 @@ const USER_CREATED_POSTS_KEY = 'connectin_user_created_posts_v2'
 function isRealUserCreatedPost(p: Post): boolean {
   if (!p || !p.id) return false
   if (p.id.startsWith('harvest_post_')) return false
+  if (p.isCloudSharedPost && p.author?.connectionDegree !== 'You') return false
   if (p.isUserCreated || p.id.startsWith('user_post_') || p.id.startsWith('post_story_share_')) return true
   if (
     p.author?.connectionDegree === 'You' &&
@@ -384,7 +385,12 @@ export function loadStoredPosts(explicitUser?: UserProfile | null): Post[] {
 
     const combinedList = [...userCreatedList, ...tieredPosts, ...remainingPosts]
     return combinedList.map(p => {
-      if (!p.id.startsWith('harvest_post_') && (p.author?.connectionDegree === 'You' || p.isUserCreated)) {
+      const isOwnedLocalPost =
+        !p.id.startsWith('harvest_post_') &&
+        (p.isCloudSharedPost
+          ? p.author?.connectionDegree === 'You'
+          : p.author?.connectionDegree === 'You' || p.isUserCreated)
+      if (isOwnedLocalPost) {
         return {
           ...p,
           author: {

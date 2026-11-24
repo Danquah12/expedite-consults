@@ -1989,5 +1989,1512 @@ export const PROFESSION_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       'Log Near Misses Immediately: Almost every severe injury was preceded by minor unaddressed near misses—fixing the root trap saves lives.'
     ],
     fieldTip: 'Do a 30-second "SLAM" check before every task (Stop, Look, Assess hazards, Manage safely)—no schedule rush justifies bypassing guards or fall tie-offs.'
+  },
+
+  // ─── EXPANDED VERIFIED TRADE & PROFESSION LESSONS (#68–102) ───────────────
+  {
+    id: 'lbd_welding_walk_cup_68',
+    lessonNumber: 68,
+    videoLabel: 'Video 68: Pipe & Plate TIG Walk the Cup',
+    title: 'How to Walk the Cup on Plate and Pipe (TIG Welding)',
+    category: 'Welding',
+    enclaveId: 'trades_construction',
+    professionId: 'welder',
+    level: 'Intermediate',
+    originalCreator: 'weldingtipsandtricks',
+    creatorDomain: 'youtube.com',
+    description:
+      'Step-by-step Jody Collier shop demonstration breaking down tungsten extension, alumina cup angle, wrist pivot rhythm, and consistent bead weave while walking the cup on carbon steel plate and pipe.',
+    skillsCovered: [
+      'Alumina Cup Sizing & Stick-Out Setup',
+      'Synchronized Wrist Pivot Weaving Motion',
+      'Root & Cap Puddle Wet-In Control',
+      'Avoiding Undercut Along Pipe Bevels'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=lPeV7i56qSU',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=lPeV7i56qSU',
+    youtubeId: 'lPeV7i56qSU',
+    embedAvailable: true,
+    duration: '8:45',
+    thumbnailUrl: 'https://i.ytimg.com/vi/lPeV7i56qSU/hqdefault.jpg',
+    practiceActivity:
+      'Practice walking a #6 or #7 alumina cup along a dry soapstone line on scrap pipe or angle iron before striking an arc to dial in uniform step spacing.',
+    practiceDeliverablePrompt:
+      'Record your cup size, tungsten stick-out length, and how stepping too wide vs. too narrow changes weave spacing and edge fusion.',
+    knowledgeCheck: {
+      question:
+        'Why should you maintain light, balanced cup pressure against the bevel or fillet walls while walking the cup?',
+      options: [
+        'Controlled two-point cup contact pivots smoothly edge-to-edge, maintaining steady arc length and repeatable heat distribution',
+        'Locking the cup with maximum force snaps the tungsten tip on every weave',
+        'Floating the cup 2 inches above the weld removes shielding gas coverage',
+        'Shaking rapidly forward prevents filler metal from melting'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Resting the ceramic nozzle gently against the bevel shoulders lets you trace tiny figure-8 or side-to-side arcs with constant tungsten stand-off.'
+    }
+  },
+  {
+    id: 'lbd_welding_aluminum_corner_69',
+    lessonNumber: 69,
+    videoLabel: 'Video 69: Aluminum TIG 1F & 2F Corners',
+    title: 'Aluminum TIG Welding 1F & 2F Outside Corner Joints',
+    category: 'Welding',
+    enclaveId: 'trades_construction',
+    professionId: 'welder',
+    level: 'Intermediate',
+    originalCreator: 'weldingtipsandtricks',
+    creatorDomain: 'youtube.com',
+    description:
+      'AC TIG aluminum training covering oxide removal, AC balance settings, torch angle on outside corner joints, and feeding ER4043/ER5356 filler cleanly into bright molten aluminum.',
+    skillsCovered: [
+      'AC Balance & Cleaning Action Tuning',
+      'Stainless Wire Brushing & Acetone Prep',
+      'Feeding Aluminum Filler Without Freezing',
+      '1F Flat vs. 2F Horizontal Heat Control'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=UCFmhUChDws',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=UCFmhUChDws',
+    youtubeId: 'UCFmhUChDws',
+    embedAvailable: true,
+    duration: '10:15',
+    thumbnailUrl: 'https://i.ytimg.com/vi/UCFmhUChDws/hqdefault.jpg',
+    practiceActivity:
+      'Tack a pair of 1/8" 6061 aluminum strips at 90 degrees for an outside corner joint, establish a dime-sized bright puddle, and dab filler rhythmically before aluminum heatsinks away.',
+    practiceDeliverablePrompt:
+      'Explain why tapering amperage slightly near the end of an aluminum pass prevents crater cracks.',
+    knowledgeCheck: {
+      question:
+        'What surface prep step must be performed with a dedicated stainless brush before AC TIG welding aluminum?',
+      options: [
+        'Break up the high-melting-point aluminum oxide layer (>2000°C) with clean stainless bristles and degrease joints with acetone',
+        'Coat the aluminum seam with heavy machine oil before striking an arc',
+        'Use a carbon steel grinder wheel contaminated with mild steel sparks',
+        'Preheat aluminum cherry-red at 900°C before brushing'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Removing surface grease and thick oxide films ensures smooth AC cathodic cleaning, bright puddles, and contamination-free aluminum welds.'
+    }
+  },
+  {
+    id: 'lbd_plumbing_venting_70',
+    lessonNumber: 70,
+    videoLabel: 'Video 70: Plumbing Drain Venting Principles',
+    title: 'Why Your Plumbing Needs to Be Vented (DWV Science)',
+    category: 'Plumbing',
+    enclaveId: 'trades_construction',
+    professionId: 'plumber',
+    level: 'Beginner',
+    originalCreator: 'Got2Learn',
+    creatorDomain: 'youtube.com',
+    description:
+      'Clear cutaway demonstration showing how Drain-Waste-Vent (DWV) piping equalizes air pressure behind flowing wastewater so P-trap water seals are never siphoned dry into living spaces.',
+    skillsCovered: [
+      'Preventing P-Trap Siphonage via Venting',
+      'Wet Venting vs. Dry Vent Stacks',
+      'Sanitary Tee vs. Wye Vent Orientation',
+      'Eliminating Sewer Gas & Gurgling Drains'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=l8x3LrgHn9Y',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=l8x3LrgHn9Y',
+    youtubeId: 'l8x3LrgHn9Y',
+    embedAvailable: true,
+    duration: '9:12',
+    thumbnailUrl: 'https://i.ytimg.com/vi/l8x3LrgHn9Y/hqdefault.jpg',
+    practiceActivity:
+      'Sketch a bathroom group layout (sink, toilet, tub/shower) tracing how atmospheric vent air feeds behind each trap weir before tying above the flood-level rim.',
+    practiceDeliverablePrompt:
+      'Identify why S-traps lose their water seal quickly and how a vented P-trap with a vent connection above trap grade prevents suction.',
+    knowledgeCheck: {
+      question:
+        'What hazardous condition occurs when an unvented fixture drain siphons the water seal out of a P-trap?',
+      options: [
+        'Sewer gases (including methane and hydrogen sulfide) can enter the building freely through the open dry trap',
+        'Supply water pressure doubles above 160 PSI',
+        'Copper supply manifolds immediately freeze',
+        'Roof flashing seals tighter automatically'
+      ],
+      correctIndex: 0,
+      explanation:
+        'A vented DWV system admits air behind draining slugs of water so every P-trap retains its protective 2-inch water barrier against sewer odor and gas.'
+    }
+  },
+  {
+    id: 'lbd_electrical_multimeter_71',
+    lessonNumber: 71,
+    videoLabel: 'Video 71: Master Multimeter Selection & Safety',
+    title: 'Before You Buy Your First Multimeter: CAT Ratings & Testing',
+    category: 'Electrical Fundamentals',
+    enclaveId: 'trades_construction',
+    professionId: 'electrician',
+    level: 'Beginner',
+    originalCreator: 'Electrician U',
+    creatorDomain: 'youtube.com',
+    description:
+      'Dustin Stelzer walks through True-RMS accuracy, CAT III/CAT IV overvoltage safety classifications, fuse protection, and Live-Dead-Live voltage verification every field electrician relies on.',
+    skillsCovered: [
+      'CAT III & CAT IV Safety Ratings Explained',
+      'True-RMS Voltage & Continuity Mode',
+      'Live-Dead-Live Three-Step Verification',
+      'Lead Port Selection (V/Ω vs. Amperage Jacks)'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=A7lu-27bj1U',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=A7lu-27bj1U',
+    youtubeId: 'A7lu-27bj1U',
+    embedAvailable: true,
+    duration: '12:04',
+    thumbnailUrl: 'https://i.ytimg.com/vi/A7lu-27bj1U/hqdefault.jpg',
+    practiceActivity:
+      'Inspect a multimeter dial, verify CAT rating stamps on both body and probes, and document the exact Live-Dead-Live test order before touching any branch conductors.',
+    practiceDeliverablePrompt:
+      'Explain why plugging test leads into an Amperage (A) jack and measuring across a live voltage source blows the internal HRC fuse or causes an arc flash.',
+    knowledgeCheck: {
+      question:
+        'What does the "Live-Dead-Live" multimeter procedure verify before servicing an isolated circuit?',
+      options: [
+        'Test a known live source first, confirm zero voltage on the isolated circuit, then re-test the known live source to prove the meter didn’t fail mid-check',
+        'Leave circuits energized while cutting sheathing',
+        'Measure resistance on live 480V busbars',
+        'Short hot to neutral twice before removing PPE'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Proving your meter works before and after checking dead protects against dead meter batteries or blown probe fuses showing a false zero-volt reading.'
+    }
+  },
+  {
+    id: 'lbd_hvac_multi_rtu_diag_72',
+    lessonNumber: 72,
+    videoLabel: 'Video 72: Commercial AC Multi-Unit Troubleshooting',
+    title: 'Commercial Dining HVAC Multi-Unit Down Diagnostics',
+    category: 'HVAC',
+    enclaveId: 'trades_construction',
+    professionId: 'hvac_technician',
+    level: 'Intermediate',
+    originalCreator: 'HVACR VIDEOS',
+    creatorDomain: 'youtube.com',
+    description:
+      'Real commercial field troubleshooting on a restaurant rooftop where multiple cooling units tripped out—tracing 24VAC control power, thermostat interlocks, safeties, and condenser faults systematically.',
+    skillsCovered: [
+      'Tracing Shared 24VAC Control Power Issues',
+      'Isolating Low-Voltage Thermostat & Board Faults',
+      'High/Low Pressure & Float Switch Interlocks',
+      'Subcooling & Superheat Verification Under Load'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=Q60_aRbd5Lo',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=Q60_aRbd5Lo',
+    youtubeId: 'Q60_aRbd5Lo',
+    embedAvailable: true,
+    duration: '18:20',
+    thumbnailUrl: 'https://i.ytimg.com/vi/Q60_aRbd5Lo/hqdefault.jpg',
+    practiceActivity:
+      'Build a step-by-step RTU no-cool flowchart checking primary supply power (L1/L2/L3), secondary 24V transformer output (R-C), and safety switch loop continuity (Y1/Y2).',
+    practiceDeliverablePrompt:
+      'Identify why a technician checks R-to-C 24VAC control voltage before swapping thermostats or contactors blindly.',
+    knowledgeCheck: {
+      question:
+        'If four rooftop units connected through a shared zone panel or breaker simultaneously show zero thermostat display power, what should a tech inspect first?',
+      options: [
+        'Verify incoming line power, low-voltage transformer secondary voltage (R-to-C), and any shared safety/EMS interlock relays before ordering compressors',
+        'Immediately add extra R-410A refrigerant to all four condensers',
+        'Replace every indoor TXV valve simultaneously',
+        'Disconnect condenser fan motors permanently'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Checking common supply feeds, control transformers, and building interlocks isolates shared root causes in minutes.'
+    }
+  },
+  {
+    id: 'lbd_masonry_shower_pan_73',
+    lessonNumber: 73,
+    videoLabel: 'Video 73: Dry Pack Shower Pan & Screed Slope',
+    title: 'How to Dry Pack a Sloped Shower Pan Using Screed Guides',
+    category: 'Masonry & Tile',
+    enclaveId: 'trades_construction',
+    professionId: 'construction_worker',
+    level: 'Intermediate',
+    originalCreator: 'TileCoach',
+    creatorDomain: 'youtube.com',
+    description:
+      'Precision tile installation training demonstrating deck mud water-to-sand mix ratios, perimeter screed leveling, 1/4-inch-per-foot drainage slope, and packing a rock-solid shower mortar bed.',
+    skillsCovered: [
+      'Deck Mud Hydration ("Snowball" Consistency)',
+      'Setting Perimeter Screed Strips Level',
+      'Checking 1/4" per Foot Drain Pitch',
+      'Wood Float Compacting Around Drain Flange'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=ORGngcaJXi4',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=ORGngcaJXi4',
+    youtubeId: 'ORGngcaJXi4',
+    embedAvailable: true,
+    duration: '14:15',
+    thumbnailUrl: 'https://i.ytimg.com/vi/ORGngcaJXi4/hqdefault.jpg',
+    practiceActivity:
+      'Calculate perimeter mortar heights around a shower footprint so every wall corner sits level while pitching cleanly at 1/4" per foot toward an off-center drain.',
+    practiceDeliverablePrompt:
+      'Explain why tile shower "deck mud" uses far less water than concrete pour mixes.',
+    knowledgeCheck: {
+      question:
+        'What is the standard code drainage slope target across a tiled shower pan mortar bed toward the drain?',
+      options: [
+        'Approximately 1/4 inch drop per linear foot (about 2%) uniformly around the perimeter to the drain',
+        'Dead-flat 0 slope everywhere',
+        '2 inches up per inch near the drain',
+        'Slope away from the drain toward the bathroom carpet'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Consistent 1/4" per foot pitch guarantees positive drainage to the clamping drain weep holes without making footing feel steep.'
+    }
+  },
+  {
+    id: 'lbd_masonry_parging_stucco_74',
+    lessonNumber: 74,
+    videoLabel: 'Video 74: Rules of Parging, Render & Stucco',
+    title: 'Rules of Parging, Plaster, Rendering & Stucco Over Block',
+    category: 'Masonry & Tile',
+    enclaveId: 'trades_construction',
+    professionId: 'local_artisan',
+    level: 'Beginner',
+    originalCreator: 'Mike Haduck Masonry',
+    creatorDomain: 'youtube.com',
+    description:
+      'Veteran masonry field guide explaining substrate prep, damp-pre-wetting masonry block, scratch/finish coat layering, and avoiding bond failure when parging foundation walls.',
+    skillsCovered: [
+      'Cleaning & Pre-Dampening Block Substrates',
+      'Bonding Slurry vs. Scratch Coat Mechanics',
+      'Avoiding Trowel Overworking & Crazing Cracks',
+      'Sponge Floating Smooth Exterior Finishes'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=Eyaag6y5fb0',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=Eyaag6y5fb0',
+    youtubeId: 'Eyaag6y5fb0',
+    embedAvailable: true,
+    duration: '11:40',
+    thumbnailUrl: 'https://i.ytimg.com/vi/Eyaag6y5fb0/hqdefault.jpg',
+    practiceActivity:
+      'Detail a 4-step parging checklist for an exterior concrete block foundation covering wire brushing loose paint, misting suction, applying thin scratch keys, and damp curing.',
+    practiceDeliverablePrompt:
+      'Explain why bone-dry concrete block steals moisture from fresh parge mortar and weakens bond strength.',
+    knowledgeCheck: {
+      question:
+        'Why should dry masonry block or brick be lightly pre-dampened (never dripping wet) before troweling on parge mortar?',
+      options: [
+        'So dry masonry suction doesn’t pull mix water instantly out of the cement before hydration and bond crystal formation occur',
+        'So mortar slides straight onto the dirt without touching the wall',
+        'To prevent Portland cement from ever curing',
+        'To dissolve aggregates out of sand'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Controlling substrate suction prevents powdery flashing and delamination, creating a dense, durable parged seal.'
+    }
+  },
+  {
+    id: 'lbd_roofing_metal_panel_75',
+    lessonNumber: 75,
+    videoLabel: 'Video 75: Standing Seam Metal Roof Installation',
+    title: 'Installing Lifetime Standing-Seam Metal Roof Panels',
+    category: 'Roofing & Drywall',
+    enclaveId: 'trades_construction',
+    professionId: 'roofer',
+    level: 'Intermediate',
+    originalCreator: 'RR Buildings',
+    creatorDomain: 'youtube.com',
+    description:
+      'Step-by-step post-frame and residential roofing execution covering eave trim squaring, concealed clip fastening, ridge closure ventilation, and checking panel creep across long runs.',
+    skillsCovered: [
+      'Squaring First Eave Panel Layout',
+      'Thermal Expansion & Fastener Placement',
+      'Synthetic Underlayment & Eave Drip Flashings',
+      'Checking Parallel Overlap Every 4–5 Panels'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=US2n29hLsHk',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=US2n29hLsHk',
+    youtubeId: 'US2n29hLsHk',
+    embedAvailable: true,
+    duration: '19:45',
+    thumbnailUrl: 'https://i.ytimg.com/vi/US2n29hLsHk/hqdefault.jpg',
+    practiceActivity:
+      'Outline a 3-4-5 square check method on a gable roof plane to guarantee the first metal panel drops perpendicular to the eave before fastening.',
+    practiceDeliverablePrompt:
+      'Explain how "growth" (panel creep) happens across a 40-foot metal roof run and how periodic tape checks stop saw-tooth eaves.',
+    knowledgeCheck: {
+      question:
+        'Why do metal roofers measure from the gable edge to both eave and ridge every 3–5 panels during installation?',
+      options: [
+        'To catch slight seam width "creep" early and keep panels running parallel instead of opening a wedge gap at the finish rake',
+        'Because steel sheets shrink in half every hour',
+        'So fasteners miss purlins completely',
+        'To eliminate overlap seams completely'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Even 1/16" rib spread per sheet adds over an inch across 20 panels; periodic parallel checks ensure crisp trims and watertight seams.'
+    }
+  },
+  {
+    id: 'lbd_roofing_window_snaploc_76',
+    lessonNumber: 76,
+    videoLabel: 'Video 76: Window Flashing & Snap-Loc Roof Prep',
+    title: 'Window Framing, Flashing Integration & Snap-Loc Roofing',
+    category: 'Roofing & Drywall',
+    enclaveId: 'trades_construction',
+    professionId: 'construction_worker',
+    level: 'Beginner',
+    originalCreator: 'RR Buildings',
+    creatorDomain: 'youtube.com',
+    description:
+      'Weatherproofing details linking window sill pans, shingle-style flashing tape lapping, J-channel perimeter drainage, and structural framing alignment ahead of steel roofing.',
+    skillsCovered: [
+      'Bottom-to-Top Shingle-Lap Flashing Tape',
+      'Sloped Sill Pan Water Management',
+      'Window J-Channel & Rake Alignment',
+      'Structural Frame Opening Squareness'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=O0DmefOdnSI',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=O0DmefOdnSI',
+    youtubeId: 'O0DmefOdnSI',
+    embedAvailable: true,
+    duration: '16:30',
+    thumbnailUrl: 'https://i.ytimg.com/vi/O0DmefOdnSI/hqdefault.jpg',
+    practiceActivity:
+      'Sequence window flashing tape application (sill pan → jamb strips → head flashing → WRB housewrap flap) in gravity-shedding order.',
+    practiceDeliverablePrompt:
+      'Identify what happens if the top housewrap flap is taped BEHIND the top window flange instead of lapped OVER it.',
+    knowledgeCheck: {
+      question:
+        'In what order must flashing tapes and weather-resistive barrier flaps be layered around an exterior window opening?',
+      options: [
+        'Bottom sill pan first, then side jambs, then head flashing with top WRB lapped shingle-style OVER the top flange',
+        'Top flange taped behind bottom tape so water drains inside wall framing',
+        'Seal the bottom flange completely airtight so trapped water cannot weep out',
+        'Skip sill flashing altogether on south walls'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Water obeys gravity: every upper layer sheds outside the layer below it, while an unsealed lower weep gap lets any wind-driven moisture escape.'
+    }
+  },
+  {
+    id: 'lbd_solar_mobile_10kw_77',
+    lessonNumber: 77,
+    videoLabel: 'Video 77: 10kW Modular Off-Grid Solar Build',
+    title: 'Building a 10kW Modular Off-Grid Solar & Inverter System',
+    category: 'Solar & Energy',
+    enclaveId: 'energy_utilities_environment',
+    professionId: 'solar_installer',
+    level: 'Intermediate',
+    originalCreator: 'DIY Solar Power with Will Prowse',
+    creatorDomain: 'youtube.com',
+    description:
+      'Hands-on high-output off-grid system wiring walkthrough covering 48V LiFePO4 battery sizing, inverter-charger MPPT limits, DC overcurrent breakers, and safe copper lug torque.',
+    skillsCovered: [
+      '48V DC Busbar & Overcurrent Sizing',
+      'Hybrid Inverter PV Voc Margin Limits',
+      'Torque-Calibrated Copper Lugs',
+      'Portable Split-Phase Backup Wiring'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=f7Mxbc8p3es',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=f7Mxbc8p3es',
+    youtubeId: 'f7Mxbc8p3es',
+    embedAvailable: true,
+    duration: '15:10',
+    thumbnailUrl: 'https://i.ytimg.com/vi/f7Mxbc8p3es/hqdefault.jpg',
+    practiceActivity:
+      'Size a main Class-T DC fuse and copper cable gauge for a 48V 10kW inverter operating at full continuous surge.',
+    practiceDeliverablePrompt:
+      'Explain why PV Open-Circuit Voltage (Voc) rises in freezing morning temperatures and how much headroom you must keep below an MPPT input limit.',
+    knowledgeCheck: {
+      question:
+        'Why are 48V battery banks preferred over 12V banks for high-wattage (5kW–10kW) solar inverters?',
+      options: [
+        'Higher voltage quarters DC amperage for the same power, allowing thinner copper cables, lower resistive losses, and cooler terminals',
+        '48V batteries hold zero stored energy',
+        '12V systems do not require fuses or breakers',
+        '48V inverters bypass MPPT voltage ratings automatically'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Because Watts = Volts × Amps, jumping from 12V to 48V drops current by 4x and resistive I²R cable heat by 16x.'
+    }
+  },
+  {
+    id: 'lbd_solar_battery_safety_78',
+    lessonNumber: 78,
+    videoLabel: 'Video 78: LiFePO4 Battery Cell Health & BMS',
+    title: 'Inspecting Swollen Energy Storage Cells & BMS Safety Cutoffs',
+    category: 'Solar & Energy',
+    enclaveId: 'energy_utilities_environment',
+    professionId: 'solar_installer',
+    level: 'Intermediate',
+    originalCreator: 'DIY Solar Power with Will Prowse',
+    creatorDomain: 'youtube.com',
+    description:
+      'Technical safety inspection showing how overcharge/compression failure affects stationary solar battery packs, how BMS cell-balance monitors catch early drift, and safe isolation procedures.',
+    skillsCovered: [
+      'Cell Delta Voltage & Compression Fixture Check',
+      'Battery Management System (BMS) Protection Trips',
+      'Isolating & Depowering Faulty ESS Modules',
+      'Proper Torque & Busbar Thermal Inspection'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=komkFokUdPo',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=komkFokUdPo',
+    youtubeId: 'komkFokUdPo',
+    embedAvailable: true,
+    duration: '13:20',
+    thumbnailUrl: 'https://i.ytimg.com/vi/komkFokUdPo/hqdefault.jpg',
+    practiceActivity:
+      'Write a preventative quarterly inspection sheet for a stationary lithium battery cabinet covering cell voltage delta (mV), ambient cooling clearance, and IR thermometer terminal spot-checks.',
+    practiceDeliverablePrompt:
+      'State two early warning indicators that a stationary LiFePO4 battery module needs immediate service or isolation.',
+    knowledgeCheck: {
+      question:
+        'What does an unusually large voltage difference ("high delta") across cells inside a solar battery pack at top-of-charge indicate?',
+      options: [
+        'At least one cell is out of balance, aged, or failing and needs diagnostic inspection before high-current cycling continues',
+        'The solar panels are pointed too cleanly at noon sun',
+        'The DC disconnect handle was painted yellow',
+        'Inverter AC output frequency changed from 60Hz to 120Hz'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Tracking per-cell millivolt spread exposes weak cells and premature BMS high-voltage cutoffs well before thermal stress occurs.'
+    }
+  },
+  {
+    id: 'lbd_auto_coolant_leak_79',
+    lessonNumber: 79,
+    videoLabel: 'Video 79: Cooling System Leak Diagnostics & Fix',
+    title: 'How to Safely Diagnose & Repair an Automotive Coolant Leak',
+    category: 'Auto Mechanics',
+    enclaveId: 'automotive_mechanics',
+    professionId: 'auto_mechanic',
+    level: 'Beginner',
+    originalCreator: 'ChrisFix',
+    creatorDomain: 'youtube.com',
+    description:
+      'Practical cooling system inspection by ChrisFix walking through safe cold depressurization, radiator/hose leak tracing, emergency clamp repairs, and proper coolant burping to prevent overheating.',
+    skillsCovered: [
+      'Safe Cold Radiator Cap Depressurization',
+      'Tracing Pinholes in Hoses, Clamps & Plastic T-Fittings',
+      'Emergency Roadside Hose/Bypass Containment',
+      'Proper Coolant Refill & Air-Pocket Bleed'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=dbqXDnLlsf4',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=dbqXDnLlsf4',
+    youtubeId: 'dbqXDnLlsf4',
+    embedAvailable: true,
+    duration: '12:50',
+    thumbnailUrl: 'https://i.ytimg.com/vi/dbqXDnLlsf4/hqdefault.jpg',
+    practiceActivity:
+      'Inspect a cold engine bay by hand and flashlight: trace upper/lower radiator hoses, heater core T-fittings, and water pump weep holes for crusty dried coolant residue.',
+    practiceDeliverablePrompt:
+      'Explain why opening a pressurized radiator cap on a hot engine is severely dangerous and causes flash boiling.',
+    knowledgeCheck: {
+      question:
+        'Why must you NEVER twist open a radiator pressure cap while the engine cooling system is still hot and pressurized?',
+      options: [
+        'Dropping pressure suddenly causes superheated coolant above 100°C to boil violently and spray scald burns upward',
+        'Cold air causes steel cylinder heads to melt instantly',
+        'It reverses alternator charging polarity',
+        'Power steering fluid leaks out of the tailpipe'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Cooling system pressure raises coolant boiling point; releasing pressure while hot triggers explosive steam flash burns.'
+    }
+  },
+  {
+    id: 'lbd_machining_shaper_setup_80',
+    lessonNumber: 80,
+    videoLabel: 'Video 80: Precision Shaper Machining & Workholding',
+    title: 'Precision Metal Shaper Machining, Feeds & Squaring Stock',
+    category: 'Machining & Repair',
+    enclaveId: 'manufacturing_industrial',
+    professionId: 'cnc_machinist',
+    level: 'Intermediate',
+    originalCreator: 'Blondihacks',
+    creatorDomain: 'youtube.com',
+    description:
+      'Hands-on machine shop walkthrough demonstrating clapper-box relief, single-point HSS tool grinding geometry, vise tramming with a dial test indicator, and dialing flat mechanical slides.',
+    skillsCovered: [
+      'Vise Jaw Squaring & Dial Indicator Tramming',
+      'Single-Point High-Speed Steel Tool Geometry',
+      'Clapper Box Relief & Return-Stroke Protection',
+      'Reading Micrometer Chips & Surface Finish'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=7M1DpsWCEQs',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=7M1DpsWCEQs',
+    youtubeId: '7M1DpsWCEQs',
+    embedAvailable: true,
+    duration: '22:15',
+    thumbnailUrl: 'https://i.ytimg.com/vi/7M1DpsWCEQs/hqdefault.jpg',
+    practiceActivity:
+      'Document a 4-step machine vise alignment checklist using a dial test indicator across the fixed jaw before taking a finishing cut on steel bar stock.',
+    practiceDeliverablePrompt:
+      'Explain why machinists reference off the FIXED jaw of a vise rather than the movable jaw when precision-squaring parts.',
+    knowledgeCheck: {
+      question:
+        'Which jaw of a precision milling or shaping vise is used as the true datum surface when seating parallels and dialing parts square?',
+      options: [
+        'The stationary fixed jaw bolted directly to the rigid vise casting',
+        'The loose movable jaw that tilts slightly under screw load',
+        'A plastic shop hammer handle',
+        'The floor chip pan beneath the machine'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Only the fixed vise jaw remains rigid relative to the machine table ways; clamping against it guarantees repeatable squareness.'
+    }
+  },
+  {
+    id: 'lbd_agri_compost_soil_81',
+    lessonNumber: 81,
+    videoLabel: 'Video 81: Organic Composting & Soil Enrichment',
+    title: 'Carbon-to-Nitrogen Soil Building Using Kitchen & Yard Waste',
+    category: 'Agriculture & Landscaping',
+    enclaveId: 'agriculture_natural_resources',
+    professionId: 'agronomist',
+    level: 'Beginner',
+    originalCreator: 'Epic Gardening',
+    creatorDomain: 'youtube.com',
+    description:
+      'Agronomy breakdown of aerobic hot composting, balancing carbon "browns" and nitrogen "greens", moisture target checks, and feeding vigorous garden beds without synthetic salt buildup.',
+    skillsCovered: [
+      'Carbon-to-Nitrogen (30:1) Compost Ratios',
+      'Aerobic Turning & Pile Core Temperature',
+      'Squeeze-Test Soil & Compost Moisture Check',
+      'Top-Dressing Vegetable & Landscape Beds'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=Ye3OEDeZn5w',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=Ye3OEDeZn5w',
+    youtubeId: 'Ye3OEDeZn5w',
+    embedAvailable: true,
+    duration: '10:35',
+    thumbnailUrl: 'https://i.ytimg.com/vi/Ye3OEDeZn5w/hqdefault.jpg',
+    practiceActivity:
+      'Audit available green waste (scraps, fresh grass) and brown waste (shredded leaves, cardboard) on a property and balance them cleanly into a breathable aerobic pile.',
+    practiceDeliverablePrompt:
+      'Explain why an overly wet, un-turned pile smelling like rotten eggs needs coarse dry carbon browns and aeration.',
+    knowledgeCheck: {
+      question:
+        'What is the ideal moisture level of an active aerobic compost pile when squeezed firmly in your gloved hand?',
+      options: [
+        'Like a wrung-out sponge: damp to the touch without dripping streams of water between your fingers',
+        'Bone-dry dust that blows away in light wind',
+        'Submerged completely underwater like a stagnant pond',
+        'Mixed 50/50 with asphalt shingle grit'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Microbes need moisture films and oxygen pores simultaneously; wrung-out sponge dampness fuels rapid thermophilic breakdown without anaerobic odor.'
+    }
+  },
+  {
+    id: 'lbd_tailoring_patch_pocket_82',
+    lessonNumber: 82,
+    videoLabel: 'Video 82: Pattern Drafting & Patch Pocket Assembly',
+    title: 'Patch Pocket Pattern Drafting, Pressing & Precision Topstitch',
+    category: 'Tailoring & Sewing',
+    enclaveId: 'trades_construction',
+    professionId: 'tailor',
+    level: 'Beginner',
+    originalCreator: 'Professor Pincushion',
+    creatorDomain: 'youtube.com',
+    description:
+      'Clear garment construction walkthrough covering custom cardboard pressing templates, mitered top hem allowances, crisp curved corner shaping, and symmetrical bar-tacked topstitching.',
+    skillsCovered: [
+      'Drafting Seam-Allowance Cardboard Templates',
+      'Double-Turned Upper Pocket Hemming',
+      'Steaming Curves Smooth With Ease Stitches',
+      'Reinforced Corner Back-Tacks / Triangles'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=MPufcrqJpFU',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=MPufcrqJpFU',
+    youtubeId: 'MPufcrqJpFU',
+    embedAvailable: true,
+    duration: '13:45',
+    thumbnailUrl: 'https://i.ytimg.com/vi/MPufcrqJpFU/hqdefault.jpg',
+    practiceActivity:
+      'Cut a rigid cardstock pattern finished-size template, press seam allowances crisply around it with steam, and practice edgestitching a balanced patch pocket at 1/8" margin.',
+    practiceDeliverablePrompt:
+      'Explain why adding triangle or bar-tack reinforcement at the two top corners prevents shirt and workwear pockets from tearing down.',
+    knowledgeCheck: {
+      question:
+        'Why do tailors fold and steam-press patch pocket edges around a cardstock template before pinning them onto the garment?',
+      options: [
+        'The rigid template produces perfectly crisp, symmetrical folded edges and identical left-right pocket curves before topstitching',
+        'To melt polyester thread completely away',
+        'So you never have to thread the bobbin',
+        'To stretch knit fabric randomly in every direction'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Pressing over an exact finished-dimension template locks symmetry and prevents uneven raw seams from peeking out along curves.'
+    }
+  },
+  {
+    id: 'lbd_barber_360waves_83',
+    lessonNumber: 83,
+    videoLabel: 'Video 83: Textured Grain Cutting & 360 Waves Care',
+    title: 'Barber Tutorial: Cutting 360 Waves Along the Natural Crown',
+    category: 'Barbering & Beauty',
+    enclaveId: 'personal_services_wellness',
+    professionId: 'barber',
+    level: 'Beginner',
+    originalCreator: '360Jeezy',
+    creatorDomain: 'youtube.com',
+    description:
+      'Detailed master barber breakdown showing how to map crown swirl patterns, select safe "with-the-grain" guard lengths, blend temple tapers evenly, and finish razor-sharp hairlines cleanly.',
+    skillsCovered: [
+      'Mapping Crown Swirl & Hair Grain Direction',
+      'With-the-Grain Lever & Guard Selection',
+      'Blending Temple & Nape Taper Zones',
+      'Sanitized Foil Shaver & Liner Finishing'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=8CEXjpBOgMc',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=8CEXjpBOgMc',
+    youtubeId: '8CEXjpBOgMc',
+    embedAvailable: true,
+    duration: '11:28',
+    thumbnailUrl: 'https://i.ytimg.com/vi/8CEXjpBOgMc/hqdefault.jpg',
+    practiceActivity:
+      'Inspect a textured hair growth pattern in 4 quadrants around the crown swirl and note how cutting direction shifts around the swirl center.',
+    practiceDeliverablePrompt:
+      'Explain why cutting against the grain on wave-patterned hair cuts shorter than the same guard used with the grain.',
+    knowledgeCheck: {
+      question:
+        'When shaping wave-trained hair on top, why should clippers follow the exact brush/growth pattern out from the crown rather than cutting against it?',
+      options: [
+        'Cutting with the grain preserves wave definition and depth at an even uniform height without accidentally gapping thin areas',
+        'Cutting against the grain makes hair grow faster',
+        'Guards only latch onto clippers backward',
+        'Brushing always starts from the chin upward'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Respecting radial crown grain keeps wave curls laid down smoothly and avoids uneven patches around natural swirls.'
+    }
+  },
+  {
+    id: 'lbd_barber_highlow_taper_84',
+    lessonNumber: 84,
+    videoLabel: 'Video 84: Step-by-Step High-Low Taper Blending',
+    title: 'Full Beginner Barber Tutorial: Clean High-Low Taper Fade',
+    category: 'Barbering & Beauty',
+    enclaveId: 'personal_services_wellness',
+    professionId: 'esthetician',
+    level: 'Beginner',
+    originalCreator: '360Jeezy',
+    creatorDomain: 'youtube.com',
+    description:
+      'Structured guideline-by-guideline tutorial walking beginners through setting even bald lines, lever-open fades, corner-of-blade detail flicking, and natural neck taper symmetry.',
+    skillsCovered: [
+      'Establishing Symmetrical Baseline Guidelines',
+      'Clipper Lever Half-Click Blend Progression',
+      'Corner-Blade Detailing Dark Weight Spots',
+      'Clipper Disinfection Between Every Client'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=Y3yj3wsLQms',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=Y3yj3wsLQms',
+    youtubeId: 'Y3yj3wsLQms',
+    embedAvailable: true,
+    duration: '14:05',
+    thumbnailUrl: 'https://i.ytimg.com/vi/Y3yj3wsLQms/hqdefault.jpg',
+    practiceActivity:
+      'Map out a 4-guideline fade sequence (Trimmer Zero → 0.5 Open → #1 Guard → 1.5 Blend) and document how blade-corner flicking erases stubborn horizontal weight lines.',
+    practiceDeliverablePrompt:
+      'Describe how using the outer 2–3 teeth corner of your clipper blade removes small dark patches without digging a hole higher into the blend.',
+    knowledgeCheck: {
+      question:
+        'How does tilting and cutting with only the outer corner of the clipper blade improve a fade transition?',
+      options: [
+        'It softens concentrated dark spots selectively over a narrow area without pushing the entire fade guideline higher up the head',
+        'It doubles blade motor speed immediately',
+        'It eliminates the need to sterilize metal guards',
+        'It pulls scalp skin away from guards'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Precision corner work lets you polish small shadow patches locally while keeping your overall fade silhouette crisp and even.'
+    }
+  },
+  {
+    id: 'lbd_cleaning_bathroom_sanitation_85',
+    lessonNumber: 85,
+    videoLabel: 'Video 85: Surface Chemistry & Restroom Sanitation',
+    title: 'Professional Surface Cleaning & Restroom Sanitation Workflow',
+    category: 'Safety & Civic Ops',
+    enclaveId: 'community_civic_security',
+    professionId: 'safety_officer',
+    level: 'Beginner',
+    originalCreator: 'Clean My Space',
+    creatorDomain: 'youtube.com',
+    description:
+      'Structured facility-care workflow matching color-coded microfiber tools, neutral vs. acidic cleaners, disinfectant dwell time, and safe high-to-low restroom sanitation sequencing.',
+    skillsCovered: [
+      'Color-Coded Cloth Cross-Contamination Control',
+      'Disinfectant Wet Dwell Time Compliance',
+      'Matching Neutral vs. Descaling Chemistry',
+      'Dry Dusting Before Wet Wipe-Down Order'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=9rDdFV1M3PE',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=9rDdFV1M3PE',
+    youtubeId: '9rDdFV1M3PE',
+    embedAvailable: true,
+    duration: '6:10',
+    thumbnailUrl: 'https://i.ytimg.com/vi/9rDdFV1M3PE/hqdefault.jpg',
+    practiceActivity:
+      'Design a 4-color microfiber kit (blue = glass/mirrors, green = general surfaces, yellow = sinks, red = toilets) plus required wet contact dwell times before wiping dry.',
+    practiceDeliverablePrompt:
+      'Explain why acidic cleaners should NEVER touch natural marble/travertine stone or be mixed with chlorine bleach.',
+    knowledgeCheck: {
+      question:
+        'What is "dwell time" (contact time) when using a commercial EPA-registered disinfectant spray on high-touch fixtures?',
+      options: [
+        'The number of minutes the surface must stay visibly wet with solution before wiping so pathogens are reliably inactivated',
+        'The time spent driving to the jobsite',
+        'Mixing two random chemicals inside a hot bucket',
+        'Buffing dry mirrors immediately after misting within 1 second'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Wiping disinfectant off instantly prevents it from working; clean soil off first, then allow full label dwell time before drying.'
+    }
+  },
+  {
+    id: 'lbd_cleaning_room_workflow_86',
+    lessonNumber: 86,
+    videoLabel: 'Video 86: Commercial Room Turnover Workflow',
+    title: 'Organizing a Hospitality-Standard Room Cleaning Workflow',
+    category: 'Safety & Civic Ops',
+    enclaveId: 'community_civic_security',
+    professionId: 'safety_officer',
+    level: 'Beginner',
+    originalCreator: 'Clean My Space',
+    creatorDomain: 'youtube.com',
+    description:
+      'Time-saving top-to-bottom, clockwise room workflow combining pre-soak chemical staging, crisp linen folding, dust-capture sequence, and final inspection from the doorway.',
+    skillsCovered: [
+      'Top-to-Bottom Clockwise Room Circuit',
+      'Staging Pre-Treat Dwelling Before Scrubbing',
+      'Linen Handling & Corner Tension Checks',
+      'Doorway Lighting Inspection Scan'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=jG7gmU8MO7A',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=jG7gmU8MO7A',
+    youtubeId: 'jG7gmU8MO7A',
+    embedAvailable: true,
+    duration: '5:45',
+    thumbnailUrl: 'https://i.ytimg.com/vi/jG7gmU8MO7A/hqdefault.jpg',
+    practiceActivity:
+      'Time yourself executing a strict top-to-bottom clockwise room pass: air/trash out, spray wet zones to dwell, high-dust, polish glass/surfaces, then vacuum/mop out the door.',
+    practiceDeliverablePrompt:
+      'Explain why vacuuming and mopping are always the FINAL physical step when exiting a room.',
+    knowledgeCheck: {
+      question:
+        'In a systematic professional room-cleaning workflow, why should floor vacuuming and mopping always wait until upper dusting and counters are finished?',
+      options: [
+        'Because upper dust and crumbs drop downward—doing floors last captures fallen debris in a single exit pass without re-dirtying wet floors',
+        'Because mops scratch ceiling fans',
+        'Because trash should be emptied onto clean wet tile',
+        'So streaks dry unevenly across footprints'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Top-to-bottom, back-to-door sequencing eliminates wasted double-work and prevents footprints across freshly mopped floors.'
+    }
+  },
+  {
+    id: 'lbd_safety_airway_checklist_87',
+    lessonNumber: 87,
+    videoLabel: 'Video 87: Emergency Response Checklists & Protocols',
+    title: 'Critical Airway & Post-Intervention Safety Checklist Training',
+    category: 'Safety & Civic Ops',
+    enclaveId: 'community_civic_security',
+    professionId: 'safety_officer',
+    level: 'Intermediate',
+    originalCreator: 'PrepMedic',
+    creatorDomain: 'youtube.com',
+    description:
+      'Structured pre-hospital & critical-care safety training emphasizing spoken team checklists, continuous waveform capnography confirmation, equipment readiness, and calm handover briefings.',
+    skillsCovered: [
+      'Challenge-Response Safety Checklists',
+      'Backup Contingency Equipment Staging',
+      'Post-Intervention Vital Re-Verification',
+      'Clear Closed-Loop Team Communication'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=dIfgMkQcGcQ',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=dIfgMkQcGcQ',
+    youtubeId: 'dIfgMkQcGcQ',
+    embedAvailable: true,
+    duration: '12:40',
+    thumbnailUrl: 'https://i.ytimg.com/vi/dIfgMkQcGcQ/hqdefault.jpg',
+    practiceActivity:
+      'Write a 6-point challenge-response pre-action checklist and rehearse speaking verbal call-and-readback confirmations with a teammate.',
+    practiceDeliverablePrompt:
+      'Explain why closed-loop verbal readbacks prevent critical step omissions during high-stress emergency operations.',
+    knowledgeCheck: {
+      question:
+        'Why do emergency medical, aviation, and civic safety teams rely on standardized challenge-response checklists under pressure?',
+      options: [
+        'Structured checklists prevent stress-induced memory slips and synchronize closed-loop team verification across critical steps',
+        'Checklists slow down teams intentionally past safe windows',
+        'Paperwork replaces primary equipment readiness',
+        'Teams should improvise unverified steps silently'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Even elite specialists miss steps under cognitive overload—standard checklists protect life-safety consistency.'
+    }
+  },
+  {
+    id: 'lbd_carpentry_furniture_restoration_88',
+    lessonNumber: 88,
+    videoLabel: 'Video 88: Antique Chair & Furniture Restoration',
+    title: 'Furniture Restoration: Assessing Joints, Repairs & Finishes',
+    category: 'Carpentry',
+    enclaveId: 'trades_construction',
+    professionId: 'carpenter',
+    level: 'Intermediate',
+    originalCreator: 'Thomas Johnson Antique Furniture Restoration',
+    creatorDomain: 'youtube.com',
+    description:
+      'Master furniture conservator diagnostic walkthrough showing how to evaluate unstable past repairs, gently disassemble loose mortise joints, clean old glue lines, and match period shellac/lacquer finishes.',
+    skillsCovered: [
+      'Inspecting Old Glue & Splint Repairs Safely',
+      'Disassembling Loose Tenons Without Splitting Grain',
+      'Cleaning Old Adhesive for Tight Wood-to-Wood Reglue',
+      'Color Toning & Patina-Preserving Topcoats'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=paJCj43oEB8',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=paJCj43oEB8',
+    youtubeId: 'paJCj43oEB8',
+    embedAvailable: true,
+    duration: '24:10',
+    thumbnailUrl: 'https://i.ytimg.com/vi/paJCj43oEB8/hqdefault.jpg',
+    practiceActivity:
+      'Assess an older wooden chair or side table from top to bottom: log loose dowels/tenons, prior nail/screw hacks, veneer bubbles, and test solvent compatibility on an inconspicuous underside spot.',
+    practiceDeliverablePrompt:
+      'Explain why hammering dry nails or squirting PVA glue over old dried hide glue fails to hold structural furniture joints.',
+    knowledgeCheck: {
+      question:
+        'When regluing a wobbly antique chair mortise-and-tenon joint, why must old brittle adhesive residue be carefully scraped clean before clamping?',
+      options: [
+        'Modern wood glues bond cleanly only to bare wood fibers—gluing directly over old cured glue or oil creates a weak failure plane',
+        'Scraping glue away makes joints twice as loose',
+        'New glue dissolves solid oak tenons on contact',
+        'Clamps should never touch furniture frames'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Removing failed adhesive and shimming sloppy tenons restores tight wood-to-wood contact that lasts decades without destructive screws.'
+    }
+  },
+  {
+    id: 'lbd_carpentry_combo_square_89',
+    lessonNumber: 89,
+    videoLabel: 'Video 89: Layout Square Tuning & Calibration',
+    title: 'Maintaining & Truing Your Combination Square (Paul Sellers)',
+    category: 'Carpentry',
+    enclaveId: 'trades_construction',
+    professionId: 'carpenter',
+    level: 'Beginner',
+    originalCreator: 'Paul Sellers',
+    creatorDomain: 'youtube.com',
+    description:
+      'Fine joinery bench lesson teaching how to test a combination square with the flip-line check, safely file internal anvil burs, lubricate locking threads, and scribe laser-accurate layout lines.',
+    skillsCovered: [
+      'Performing the Reversible Flip-Line Square Test',
+      'Filing Cast-Iron Seat Burs Without Overshooting',
+      'Blade Cleaning & Rust-Prevention Waxing',
+      'Knife-Wall & Pencil Accuracy on Rough Stock'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=k7U1w9duv50',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=k7U1w9duv50',
+    youtubeId: 'k7U1w9duv50',
+    embedAvailable: true,
+    duration: '12:55',
+    thumbnailUrl: 'https://i.ytimg.com/vi/k7U1w9duv50/hqdefault.jpg',
+    practiceActivity:
+      'Test your own try square or combination square against a jointed straight board edge by striking a fine knife line, flipping 180°, and inspecting any divergence.',
+    practiceDeliverablePrompt:
+      'Calculate why a 1/32" error on a square flip test equals a 1/64" true square error—and how Paul Sellers corrects it.',
+    knowledgeCheck: {
+      question:
+        'How does flipping a square 180° along a straight edge expose whether the tool is truly 90°?',
+      options: [
+        'Any out-of-square angle doubles visually between the two flipped pencil/knife lines, revealing exact error direction',
+        'Flipping bends the hardened steel blade back flat',
+        'Wood grain moves 90 degrees overnight automatically',
+        'It sharpens dull chisels automatically'
+      ],
+      correctIndex: 0,
+      explanation:
+        'The classic flip-line calibration test magnifies tiny square errors by 2x, letting craftspeople verify layout tools in 10 seconds.'
+    }
+  },
+  {
+    id: 'lbd_culinary_technique_90',
+    lessonNumber: 90,
+    videoLabel: 'Video 90: Master Kitchen Technique & Emulsions',
+    title: '60 Years of Culinary Mastery: Texture, Emulsion & Seasoning',
+    category: 'Culinary & Hospitality',
+    enclaveId: 'culinary_hospitality_events',
+    professionId: 'chef',
+    level: 'Beginner',
+    originalCreator: 'Chef Jean-Pierre',
+    creatorDomain: 'youtube.com',
+    description:
+      'Master Chef Jean-Pierre demonstrates moisture evaporation control, warm fat/dairy emulsion timing, food-mill smoothness vs. overworking starches, and layered tasting calibration.',
+    skillsCovered: [
+      'Steam-Drying Moisture Before Emulsifying',
+      'Controlling Starch Shear vs. Creamy Texture',
+      'Tempering Warm Butter & Cream Slowly',
+      'Layered Salt & Acid Tasting Calibration'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=NGdq6lCRZFY',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=NGdq6lCRZFY',
+    youtubeId: 'NGdq6lCRZFY',
+    embedAvailable: true,
+    duration: '15:18',
+    thumbnailUrl: 'https://i.ytimg.com/vi/NGdq6lCRZFY/hqdefault.jpg',
+    practiceActivity:
+      'Prepare a classic puree side while testing two critical variables: evaporating surface water off hot cooked produce for 60 seconds and folding in warm rather than ice-cold dairy.',
+    practiceDeliverablePrompt:
+      'Explain why tearing high-starch cells aggressively in a food processor produces a gummy glue texture compared to passing through a ricer or food mill.',
+    knowledgeCheck: {
+      question:
+        'Why should boiled root vegetables be steam-dried briefly before folding in warm butter and cream?',
+      options: [
+        'Driving off excess surface water prevents soggy wateriness and lets lipids coat dry starch cleanly for a rich, silky emulsion',
+        'Because butter boils at 10°C above ice',
+        'So salt granules never dissolve into the dish',
+        'To turn starch into cold raw crystals'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Managing residual steam and temperature makes simple staple ingredients taste restaurant-quality every service.'
+    }
+  },
+  {
+    id: 'lbd_nursing_maternity_91',
+    lessonNumber: 91,
+    videoLabel: 'Video 91: Clinical Maternal Assessment & Fetal Lie',
+    title: 'Maternity Nursing Review: Fetal Lie, Presentation & Assessment',
+    category: 'Healthcare & Nursing',
+    enclaveId: 'healthcare_medicine',
+    professionId: 'nurse',
+    level: 'Intermediate',
+    originalCreator: 'RegisteredNurseRN',
+    creatorDomain: 'youtube.com',
+    description:
+      'RegisteredNurseRN clinical teaching clarifying longitudinal, transverse, and oblique fetal lie, Leopold’s maneuvers assessment landmarks, and safe labor-triage communication.',
+    skillsCovered: [
+      'Longitudinal vs. Transverse vs. Oblique Lie',
+      'Distinguishing Fetal Lie from Presentation',
+      'Clinical Triage Charting Terminology',
+      'Safe Labor & Delivery Nursing Escalation'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=pD7RJa-EUS4',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=pD7RJa-EUS4',
+    youtubeId: 'pD7RJa-EUS4',
+    embedAvailable: true,
+    duration: '9:32',
+    thumbnailUrl: 'https://i.ytimg.com/vi/pD7RJa-EUS4/hqdefault.jpg',
+    practiceActivity:
+      'Create a concise visual flashcard chart comparing maternal spine orientation vs. fetal spine alignment for Longitudinal, Transverse, and Oblique lies.',
+    practiceDeliverablePrompt:
+      'Explain the difference between fetal "Lie" (spine-to-spine axis) and fetal "Presentation" (which anatomical part enters the pelvic inlet first).',
+    knowledgeCheck: {
+      question:
+        'In clinical obstetric nursing terminology, what defines a "Longitudinal" fetal lie?',
+      options: [
+        'The fetal spine runs parallel (vertical axis) alongside the maternal spine—covering either cephalic or breech presentations',
+        'The fetus lies completely horizontal across the abdomen at 90 degrees',
+        'Only multiple-gestation deliveries qualify',
+        'It describes placental edge curvature only'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Distinguishing axis alignment ("lie") from presenting part ("cephalic/breech/shoulder") ensures exact multidisciplinary shift communication.'
+    }
+  },
+  {
+    id: 'lbd_software_dsa_python_92',
+    lessonNumber: 92,
+    videoLabel: 'Video 92: Data Structures & Algorithms in Python',
+    title: 'Learn Data Structures & Algorithms in Python with Visualizations',
+    category: 'Software & AI',
+    enclaveId: 'tech_software',
+    professionId: 'software_engineer',
+    level: 'Intermediate',
+    originalCreator: 'freeCodeCamp.org',
+    creatorDomain: 'youtube.com',
+    description:
+      'Visual engineering course breaking down Big-O time/space complexity, arrays, hash maps, linked lists, trees, and graph traversal patterns for reliable production software.',
+    skillsCovered: [
+      'Big-O Time & Space Tradeoff Reasoning',
+      'Hash Tables vs. Binary Search Lookup Speed',
+      'Queue (BFS) & Stack/Recursion (DFS) Traversals',
+      'Clean Python Implementation & Edge Cases'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=ybe6EGe_wjo',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=ybe6EGe_wjo',
+    youtubeId: 'ybe6EGe_wjo',
+    embedAvailable: true,
+    duration: '1:58:00',
+    thumbnailUrl: 'https://i.ytimg.com/vi/ybe6EGe_wjo/hqdefault.jpg',
+    practiceActivity:
+      'Benchmark a list linear scan (`O(n)`) against a dictionary/set lookup (`O(1)`) on 100,000 IDs in Python and document the speedup.',
+    practiceDeliverablePrompt:
+      'Describe a real UI or backend endpoint scenario where switching from nested loops (`O(n^2)`) to a Map lookup (`O(n)`) eliminates request timeouts.',
+    knowledgeCheck: {
+      question:
+        'Which data structure provides average O(1) constant-time membership checks when deduplicating 100,000 user or video IDs?',
+      options: [
+        'A Hash Set / Dictionary (`set` or `Map`) keyed cleanly by ID',
+        'An unsorted singly linked list scanned end-to-end per lookup',
+        'Bubble sort re-run inside every loop iteration',
+        'Writing temporary CSV files per record comparison'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Hash-based Sets and Maps reduce deduplication across large datasets from quadratic `O(n²)` to fast linear `O(n)` time.'
+    }
+  },
+  {
+    id: 'lbd_ai_vector_databases_93',
+    lessonNumber: 93,
+    videoLabel: 'Video 93: Vector Databases & Semantic Search (RAG)',
+    title: 'Vector Databases Full Course: Embeddings, Similarity & RAG',
+    category: 'Software & AI',
+    enclaveId: 'tech_software',
+    professionId: 'ai_engineer',
+    level: 'Intermediate',
+    originalCreator: 'freeCodeCamp.org',
+    creatorDomain: 'youtube.com',
+    description:
+      'Practical AI engineering course teaching dense text embeddings, cosine similarity vs. Euclidean distance, chunking strategies, metadata filtering, and grounded Retrieval-Augmented Generation (RAG).',
+    skillsCovered: [
+      'Text Embeddings & Latent Semantic Space',
+      'Cosine Similarity vs. Dot Product Search',
+      'Document Chunking & Overlap Tuning',
+      'Hybrid Metadata + Vector Filtering'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=lR931Iz8Z6U',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=lR931Iz8Z6U',
+    youtubeId: 'lR931Iz8Z6U',
+    embedAvailable: true,
+    duration: '2:12:00',
+    thumbnailUrl: 'https://i.ytimg.com/vi/lR931Iz8Z6U/hqdefault.jpg',
+    practiceActivity:
+      'Design a chunking and metadata schema for a technical manual RAG pipeline (including `docId`, `sectionTitle`, `version`, and `chunkIndex`) so search stays accurate and cited.',
+    practiceDeliverablePrompt:
+      'Explain why splitting documents arbitrarily mid-sentence degrades retrieval precision compared to semantic section chunking with overlap.',
+    knowledgeCheck: {
+      question:
+        'In a Retrieval-Augmented Generation (RAG) architecture, why do engineers combine semantic vector search with structured metadata filters?',
+      options: [
+        'To retrieve conceptually matching passages while strictly scoping results to valid permissions, dates, categories, or product versions',
+        'To force LLMs to hallucinate unverified citations',
+        'Because embeddings erase every numeric digit permanently',
+        'To turn vectors back into unindexed GIF images'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Hybrid retrieval (semantic similarity + metadata pre-filtering) keeps AI answers both context-aware and permission-safe.'
+    }
+  },
+  {
+    id: 'lbd_cyber_zero_trust_94',
+    lessonNumber: 94,
+    videoLabel: 'Video 94: Zero Trust Security Architecture',
+    title: 'Zero Trust Architecture Explained (CompTIA Security+)',
+    category: 'Cybersecurity & IT',
+    enclaveId: 'tech_cybersecurity',
+    professionId: 'security_analyst',
+    level: 'Beginner',
+    originalCreator: 'Professor Messer',
+    creatorDomain: 'youtube.com',
+    description:
+      'Clear Professor Messer CompTIA Security+ module dissecting "Never Trust, Always Verify", control-plane vs. data-plane separation, microsegmentation, and adaptive device-posture policies.',
+    skillsCovered: [
+      'Explicit Continuous Identity & Device Verification',
+      'Control Plane Policy Engine vs. Data Plane PEP',
+      'East-West Lateral Microsegmentation',
+      'Eliminating Implicit Internal VPN Trust'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=JQo9OBdKJsw',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=JQo9OBdKJsw',
+    youtubeId: 'JQo9OBdKJsw',
+    embedAvailable: true,
+    duration: '7:48',
+    thumbnailUrl: 'https://i.ytimg.com/vi/JQo9OBdKJsw/hqdefault.jpg',
+    practiceActivity:
+      'Diagram how a Policy Engine and Policy Enforcement Point verify user identity, MFA state, and device patch compliance before permitting access to a production database.',
+    practiceDeliverablePrompt:
+      'Explain why legacy "castle-and-moat" perimeter networks fail once an attacker compromises a single internal laptop.',
+    knowledgeCheck: {
+      question:
+        'What is the core guiding premise of Zero Trust network architecture?',
+      options: [
+        'Never implicitly trust any user or device by network location alone—continuously authenticate, verify device posture, and enforce least-privilege access per request',
+        'Turn off all firewalls inside company Wi-Fi',
+        'Share one root administrator password across every department',
+        'Disable HTTPS TLS encryption internally to boost ping'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Zero Trust contains blast radius by demanding explicit, least-privilege verification across every microservice, user, and API call.'
+    }
+  },
+  {
+    id: 'lbd_cyber_cia_triad_95',
+    lessonNumber: 95,
+    videoLabel: 'Video 95: The CIA Triad & Security Controls',
+    title: 'Confidentiality, Integrity & Availability: The CIA Triad',
+    category: 'Cybersecurity & IT',
+    enclaveId: 'tech_cybersecurity',
+    professionId: 'soc_analyst',
+    level: 'Beginner',
+    originalCreator: 'Professor Messer',
+    creatorDomain: 'youtube.com',
+    description:
+      'Foundational security operations briefing explaining Confidentiality (encryption & ACLs), Integrity (hashes & digital signatures), Availability (redundancy & DDoS resilience), plus non-repudiation.',
+    skillsCovered: [
+      'Confidentiality via Encryption & Least Privilege',
+      'Integrity Verification with Cryptographic Hashes',
+      'Availability via Failover & Backup Resilience',
+      'Mapping Controls During Incident Triage'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=dtxmcv1lBKk',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=dtxmcv1lBKk',
+    youtubeId: 'dtxmcv1lBKk',
+    embedAvailable: true,
+    duration: '6:12',
+    thumbnailUrl: 'https://i.ytimg.com/vi/dtxmcv1lBKk/hqdefault.jpg',
+    practiceActivity:
+      'Classify 6 real security controls (AES-256 TLS, SHA-256 checksums, multi-AZ replicas, RBAC permissions, immutable backups, HMAC signatures) into C, I, or A.',
+    practiceDeliverablePrompt:
+      'Identify which pillar of the CIA Triad is primarily violated by ransomware file tampering vs. a pure volumetric DDoS flood.',
+    knowledgeCheck: {
+      question:
+        'When downloading a critical firmware update, checking its published SHA-256 checksum directly protects which CIA Triad pillar?',
+      options: [
+        'Integrity—confirming the binary has not been altered or corrupted in transit',
+        'Confidentiality only',
+        'Physical generator wattage',
+        'Cooling fan RPM tuning'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Cryptographic digests prove data integrity by changing completely if even a single bit of the payload is tampered with.'
+    }
+  },
+  {
+    id: 'lbd_telecom_terminal_protocols_96',
+    lessonNumber: 96,
+    videoLabel: 'Video 96: Network Protocols & SSH Terminal Streams',
+    title: 'Terminal Network Protocols, Sockets & Real-Time Streaming',
+    category: 'Telecom & Fiber Optics',
+    enclaveId: 'telecom_digital_infrastructure',
+    professionId: 'network_technician',
+    level: 'Intermediate',
+    originalCreator: 'NetworkChuck',
+    creatorDomain: 'youtube.com',
+    description:
+      'NetworkChuck deep-dive exploring TCP socket communication, ANSI frame transport, bandwidth efficiency, and remote SSH stream architectures that engineers debug across real networks.',
+    skillsCovered: [
+      'TCP Socket Connections & Stream Framing',
+      'SSH Encrypted Remote Tunnel Operations',
+      'Throughput vs. Packet Latency Measurement',
+      'Troubleshooting Port Binding & Firewalls'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=oHLQj750M9U',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=oHLQj750M9U',
+    youtubeId: 'oHLQj750M9U',
+    embedAvailable: true,
+    duration: '14:20',
+    thumbnailUrl: 'https://i.ytimg.com/vi/oHLQj750M9U/hqdefault.jpg',
+    practiceActivity:
+      'Trace open listening TCP sockets on a workstation or lab server and inspect round-trip latency (`ping`/`ss`/`netstat`) while streaming data.',
+    practiceDeliverablePrompt:
+      'Explain why stateful firewall timeouts and MTU fragmentation affect long-lived TCP/SSH streams over WAN links.',
+    knowledgeCheck: {
+      question:
+        'What standard port and encrypted transport protocol allow system and network engineers to administer remote Linux infrastructure securely over untrusted networks?',
+      options: [
+        'SSH (Secure Shell) over encrypted TCP port 22',
+        'Unencrypted Telnet over port 23 in plain text',
+        'Cleartext HTTP port 80 for root shells',
+        'Open anonymous FTP uploads'
+      ],
+      correctIndex: 0,
+      explanation:
+        'SSH provides public-key authentication and encrypted session channels, replacing insecure cleartext remote management protocols.'
+    }
+  },
+  {
+    id: 'lbd_finance_valuation_metrics_97',
+    lessonNumber: 97,
+    videoLabel: 'Video 97: Equity Valuation & Financial Ratios',
+    title: 'How to Evaluate Market Valuations: P/E, Cash Flow & Risk',
+    category: 'Finance & Business',
+    enclaveId: 'finance_accounting',
+    professionId: 'accountant',
+    level: 'Intermediate',
+    originalCreator: 'The Plain Bagel',
+    creatorDomain: 'youtube.com',
+    description:
+      'Clear financial analyst breakdown comparing trailing vs. forward P/E ratios, Shiller CAPE cyclically adjusted multiples, interest-rate discount effects, and free cash flow durability.',
+    skillsCovered: [
+      'Trailing vs. Forward Earnings Multiples',
+      'Interest Rate Impact on Discounted Cash Flows',
+      'Comparing Historical CAPE Ratios Accurately',
+      'Distinguishing Speculation From Cash Yield'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=0ZCVKL_PDsg',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=0ZCVKL_PDsg',
+    youtubeId: '0ZCVKL_PDsg',
+    embedAvailable: true,
+    duration: '13:05',
+    thumbnailUrl: 'https://i.ytimg.com/vi/0ZCVKL_PDsg/hqdefault.jpg',
+    practiceActivity:
+      'Compare two businesses in the same industry using Price-to-Free-Cash-Flow, debt-to-equity, and gross operating margin to decide which multiple reflects stronger fundamentals.',
+    practiceDeliverablePrompt:
+      'Explain why looking purely at headline share price ($5 vs. $500) tells you nothing without share count and market capitalization.',
+    knowledgeCheck: {
+      question:
+        'Why can a high Price-to-Earnings (P/E) multiple sometimes look artificially elevated right after a temporary earnings dip?',
+      options: [
+        'Because trailing 12-month earnings ("E" in the denominator) shrink temporarily during one-off restructuring or downturns, inflating the P/E ratio',
+        'Because stock splits triple revenue instantly',
+        'Because zero-debt companies lose balance sheets automatically',
+        'Because dividends erase all market capitalization'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Pair P/E ratios with Normalized Free Cash Flow, Forward Margins, and balance sheet leverage so temporary distortions never mislead analysis.'
+    }
+  },
+  {
+    id: 'lbd_law_citation_verification_98',
+    lessonNumber: 98,
+    videoLabel: 'Video 98: Legal Citation & Rule 11 Sanctions Ethics',
+    title: 'Courtroom Citation Verification, AI Risk & Legal Ethics',
+    category: 'Law & Legal',
+    enclaveId: 'law_gov_defense',
+    professionId: 'lawyer',
+    level: 'Intermediate',
+    originalCreator: 'LegalEagle',
+    creatorDomain: 'youtube.com',
+    description:
+      'Attorney analysis of real federal courtroom sanctions involving unverified citations, Rule 11 duty of candor to the tribunal, and mandatory human citator review before filing briefs.',
+    skillsCovered: [
+      'Federal Rule 11 Verification Duties',
+      'Checking Primary Reporters & Reporter Pins',
+      'Duty of Supervision Over Draft Filings',
+      'Mitigating AI Hallucination Malpractice Risk'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=skb3Zr5i-Xg',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=skb3Zr5i-Xg',
+    youtubeId: 'skb3Zr5i-Xg',
+    embedAvailable: true,
+    duration: '16:15',
+    thumbnailUrl: 'https://i.ytimg.com/vi/skb3Zr5i-Xg/hqdefault.jpg',
+    practiceActivity:
+      'Build a 4-point pre-filing verification checklist requiring counsel or paralegals to pull full-text opinions and confirm every pinpoint quote and Shepard’s/KeyCite status.',
+    practiceDeliverablePrompt:
+      'Explain why an attorney remains personally accountable under ethics rules even if a junior tool or external vendor drafted an erroneous motion.',
+    knowledgeCheck: {
+      question:
+        'Under legal ethics and Federal Rule of Civil Procedure 11, what duty does signing a court brief impose on counsel?',
+      options: [
+        'Counsel certifies after reasonable inquiry that factual contentions and legal citations exist, are warranted by law, and are accurately represented',
+        'Signing waives all responsibility for nonexistent case citations',
+        'Judges must accept fabricated quotes if an AI generated them',
+        'Only appellate briefs require real statutes'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Every legal professional signing a filing must independently read and verify every cited authority in official reporters or trusted legal databases.'
+    }
+  },
+  {
+    id: 'lbd_media_3d_blender_99',
+    lessonNumber: 99,
+    videoLabel: 'Video 99: 3D Hard-Surface & Industrial Modeling',
+    title: '3D Industrial & Aviation Hard-Surface Modeling in Blender',
+    category: 'Creative Media & Design',
+    enclaveId: 'creative_media_arts',
+    professionId: 'video_editor',
+    level: 'Intermediate',
+    originalCreator: 'Blender Guru',
+    creatorDomain: 'youtube.com',
+    description:
+      'Andrew Price demonstrates professional reference-plane alignment, clean quad edge-flow topology, Subdivision Surface bevel weighting, and Cycles lighting for realistic industrial renders.',
+    skillsCovered: [
+      'Orthographic Reference Alignment & Blocking',
+      'Clean Quad Topology & Edge-Flow Loops',
+      'Subdivision Surface Supporting Bevels',
+      'Physical PBR Materials & HDRI Studio Light'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=4wxmKLDhsnQ',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=4wxmKLDhsnQ',
+    youtubeId: '4wxmKLDhsnQ',
+    embedAvailable: true,
+    duration: '18:30',
+    thumbnailUrl: 'https://i.ytimg.com/vi/4wxmKLDhsnQ/hqdefault.jpg',
+    practiceActivity:
+      'Block out a streamlined product silhouette from side/top orthographic views using clean quad loops before applying Subdivision Surface modifiers.',
+    practiceDeliverablePrompt:
+      'Explain why starting with coarse primitive forms and locking primary proportions first prevents messy mesh artifacts later.',
+    knowledgeCheck: {
+      question:
+        'Why do 3D hard-surface artists rely on supporting edge loops or bevel modifiers before applying Subdivision Surface smoothing?',
+      options: [
+        'Without holding edges near corners, subdivision collapses crisp mechanical lines into soft blobs and creates shading pinching',
+        'Bevels delete all UV texture coordinates automatically',
+        'Subdivision requires triangles with zero edge loops',
+        'Supporting edges disable light shadows in Cycles'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Controlled edge spacing dictates curve tightness cleanly while preserving smooth metallic specular highlights.'
+    }
+  },
+  {
+    id: 'lbd_aviation_takeoff_safety_100',
+    lessonNumber: 100,
+    videoLabel: 'Video 100: Commercial Flight Deck Takeoff Safety',
+    title: 'Flight Deck Case Study: Takeoff Performance, V1 & CRM',
+    category: 'Aviation & Maritime',
+    enclaveId: 'aviation_aerospace_maritime',
+    professionId: 'pilot',
+    level: 'Intermediate',
+    originalCreator: 'Mentour Pilot',
+    creatorDomain: 'youtube.com',
+    description:
+      'Captain Petter breaks down Crew Resource Management (CRM), flight-management-computer weight cross-checks, thrust setting verification, and why independent human crosschecks prevent takeoff incidents.',
+    skillsCovered: [
+      'Takeoff Weight & V-Speed Crosscheck Discipline',
+      'Crew Resource Management (CRM) Mutual Verification',
+      'Runway Length vs. Flex Thrust Margins',
+      'Standard Operating Callouts During Roll'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=D2QmaOglMb4',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=D2QmaOglMb4',
+    youtubeId: 'D2QmaOglMb4',
+    embedAvailable: true,
+    duration: '24:00',
+    thumbnailUrl: 'https://i.ytimg.com/vi/D2QmaOglMb4/hqdefault.jpg',
+    practiceActivity:
+      'Draft a two-crew pre-takeoff verification flow comparing independent load-sheet calculations (`ZFW`, `TOW`, `V1/VR/V2`) before brake release.',
+    practiceDeliverablePrompt:
+      'Explain why entering zero-fuel weight instead of takeoff gross weight into a performance computer creates dangerous under-calculated rotation speeds.',
+    knowledgeCheck: {
+      question:
+        'Why must both flight crew members verify takeoff weight and V-speeds independently from primary dispatch figures before takeoff?',
+      options: [
+        'Independent crosschecking catches fat-finger data entry or wrong runway performance numbers before runway acceleration begins',
+        'Because airspeed indicators turn off above V1',
+        'Fuel weight drops to zero during boarding',
+        'Crew should never question computer presets'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Cross-verification between Pilot Flying and Pilot Monitoring is a core pillar of modern aviation safety.'
+    }
+  },
+  {
+    id: 'lbd_science_materials_viscosity_101',
+    lessonNumber: 101,
+    videoLabel: 'Video 101: MIT Materials Science & Lab Measurement',
+    title: 'MIT Lab Lecture: Glass Viscosity, Thermal Curves & Testing',
+    category: 'Science & Lab Tech',
+    enclaveId: 'science_laboratory_research',
+    professionId: 'lab_technician',
+    level: 'Intermediate',
+    originalCreator: 'MIT OpenCourseWare',
+    creatorDomain: 'youtube.com',
+    description:
+      'MIT laboratory materials lecture demonstrating viscosity measurement across decades of temperature change, Arrhenius activation behavior, annealing stress relief, and precision lab instrumentation.',
+    skillsCovered: [
+      'Dynamic Viscosity Units (Poise & Pascal-Seconds)',
+      'Working, Softening & Annealing Temperature Points',
+      'Linearizing Arrhenius Exponential Lab Data',
+      'Thermal Stress Testing & Lab Recording'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=8hiGWBQ94WU',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=8hiGWBQ94WU',
+    youtubeId: '8hiGWBQ94WU',
+    embedAvailable: true,
+    duration: '28:15',
+    thumbnailUrl: 'https://i.ytimg.com/vi/8hiGWBQ94WU/hqdefault.jpg',
+    practiceActivity:
+      'Plot log(viscosity) vs. `1/T` (Kelvin) for two industrial silicate compositions and identify the safe annealing strain-relief band vs. hot-working range.',
+    practiceDeliverablePrompt:
+      'Explain why glass cools into an amorphous solid without a sharp crystalline melting jump and why slow controlled annealing prevents thermal shattering.',
+    knowledgeCheck: {
+      question:
+        'Why do laboratory glassblowers and industrial optics technicians anneal shaped glassware inside a controlled kiln before room-temperature handling?',
+      options: [
+        'Holding at the annealing temperature lets internal thermal stresses relax evenly before slow cooling prevents spontaneous cracking',
+        'Annealing lowers refractive index to zero',
+        'Kilns freeze moisture onto cold glass edges',
+        'It melts finished optical lenses back into sand'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Even cooling through the glass transition prevents frozen residual tension gradients from fracturing laboratory vessels.'
+    }
+  },
+  {
+    id: 'lbd_edu_instructional_design_102',
+    lessonNumber: 102,
+    videoLabel: 'Video 102: Visual Systems Storytelling & Curriculum',
+    title: 'Visual Curriculum Design: Teaching Complex Earth Systems Clearly',
+    category: 'Education & Training',
+    enclaveId: 'education_workforce',
+    professionId: 'educator',
+    level: 'Beginner',
+    originalCreator: 'CrashCourse',
+    creatorDomain: 'youtube.com',
+    description:
+      'Structured instructional modeling showcasing how great technical educators turn abstract evidence—like planetary stratigraphy, crater dating, and core samples—into memorable visual mental models.',
+    skillsCovered: [
+      'Teaching Through Comparative Evidence & Models',
+      'Pacing Micro-Segments for Active Retention',
+      'Connecting Observable Features to Underlying Process',
+      'Checking Learner Intuition With Real Examples'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=TMTLNFv5MQE',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=TMTLNFv5MQE',
+    youtubeId: 'TMTLNFv5MQE',
+    embedAvailable: true,
+    duration: '12:25',
+    thumbnailUrl: 'https://i.ytimg.com/vi/TMTLNFv5MQE/hqdefault.jpg',
+    practiceActivity:
+      'Break a complex technical trade concept into 3 progressive visual explanations: (1) everyday physical analogy, (2) labeled diagram, and (3) real troubleshooting example.',
+    practiceDeliverablePrompt:
+      'Explain why pairing physical evidence comparisons with clear conceptual analogies cuts beginner comprehension time in half.',
+    knowledgeCheck: {
+      question:
+        'What instructional technique keeps learners engaged when explaining dense scientific or trade systems?',
+      options: [
+        'Anchor abstract rules immediately to concrete observable examples, visual comparisons, and short structured segments',
+        'Read unformatted regulations straight aloud for 90 minutes with zero diagrams',
+        'Skip foundational definitions and jump straight to obscure exceptions',
+        'Avoid checking understanding until end-of-year exams'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Concrete comparisons and well-paced visuals give apprentices intuitive hooks to remember technical principles on the job.'
+    }
   }
 ]

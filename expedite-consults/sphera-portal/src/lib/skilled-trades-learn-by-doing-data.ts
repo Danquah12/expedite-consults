@@ -1860,6 +1860,20 @@ export function loadAllLearnByDoingTelemetry(): Record<string, LearnByDoingLesso
         initialMap[lesson.id] = merged
       }
     }
+    // Preserve saved telemetry for dynamically 24h-synced lessons (`lbd_sync_*`)
+    for (const [savedId, saved] of Object.entries(parsed)) {
+      if (saved && savedId.startsWith('lbd_sync_') && !initialMap[savedId]) {
+        const merged: LearnByDoingLessonTelemetry = {
+          ...createInitialLessonTelemetry(savedId),
+          ...saved,
+          lessonId: savedId
+        }
+        const computed = computeLessonProgress(merged)
+        merged.progressPercent = computed.progressPercent
+        merged.isCompleted = computed.isCompleted
+        initialMap[savedId] = merged
+      }
+    }
     return initialMap
   } catch {
     return initialMap
@@ -2131,7 +2145,7 @@ export const PROPOSED_NEXT_TRADE_PROFESSIONS: ProposedTradeProfessionTopic[] = [
     secondVideoTopic: 'Organizing a room-cleaning workflow',
     suggestedPracticePreview:
       'Match microfiber cloths, non-abrasive pads, and neutral cleaners to glass, wood, stone, and tile, and map a top-to-bottom room workflow.',
-    status: 'Proposed Topic · Video Selection Pending'
+    status: 'Live Now · Available Above'
   },
   {
     id: 'prop_cooking_catering',
@@ -2151,7 +2165,7 @@ export const PROPOSED_NEXT_TRADE_PROFESSIONS: ProposedTradeProfessionTopic[] = [
     secondVideoTopic: 'Surface preparation and finishing options',
     suggestedPracticePreview:
       'Inspect a wooden furniture piece for loose joints, veneer lifting, and existing finish type, then outline a gentle prep and finish plan.',
-    status: 'Proposed Topic · Video Selection Pending'
+    status: 'Live Now · Available Above'
   },
   {
     id: 'prop_small_business_trades',

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
@@ -133,6 +133,13 @@ import {
 } from "@/lib/connectin-media-harvester"
 import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen, ExternalLink, ChevronDown, ChevronUp, RefreshCw } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
+import {
+  applyInteractionToPost,
+  getCurrentUserReactionKey,
+  mergeCloudPostsAndInteractions,
+  type PostBaselineSnapshot,
+} from "@/lib/connectln-post-sync"
+import type { PersistedPostInteractionDoc } from "@/lib/connectln-mongodb"
 
 export default function ConnectLnPage() {
   const { t } = useLanguage()
@@ -592,6 +599,73 @@ export default function ConnectLnPage() {
       setIsSyncingFeedVideos(false)
     }
   }
+
+  const baselinePostStatsRef = useRef<Map<string, PostBaselineSnapshot>>(new Map())
+  const latestInteractionsRef = useRef<Record<string, PersistedPostInteractionDoc>>({})
+  const lastPostInteractionWriteMsRef = useRef<Record<string, number>>({})
+
+  // Cross-User Cloud Feed Sync (Posts, Comments, Replies, Reactions & Comment Likes) via MongoDB Atlas
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    let cancelled = false
+
+    const syncFeedPostsFromCloud = async () => {
+      try {
+        const res = await fetch("/api/connectin/posts", { cache: "no-store" })
+        if (!res.ok || cancelled) return
+        const data = await res.json()
+        const cloudPosts: Record<string, any>[] = Array.isArray(data?.posts) ? data.posts : []
+        const interactions: Record<string, PersistedPostInteractionDoc> =
+          data?.interactions && typeof data.interactions === "object" ? data.interactions : {}
+        latestInteractionsRef.current = interactions
+
+        const nowMs = Date.now()
+        const skipPostIds = new Set<string>()
+        for (const [pid, lastWriteMs] of Object.entries(lastPostInteractionWriteMsRef.current)) {
+          const srvUpdated = Number(interactions[pid]?.updatedAtMs || 0)
+          if (nowMs - lastWriteMs <= 4000 && srvUpdated < lastWriteMs) {
+            skipPostIds.add(pid)
+          }
+        }
+
+        if (cloudPosts.length === 0 && Object.keys(interactions).length === 0) return
+
+        setPosts((prev) => {
+          const merged = mergeCloudPostsAndInteractions({
+            localPosts: prev,
+            cloudPosts,
+            interactions,
+            baselineMap: baselinePostStatsRef.current,
+            currentUser: userData,
+            skipPostIds,
+          })
+          saveStoredPosts(merged)
+          return merged
+        })
+      } catch {
+        // ignore transient offline/network errors
+      }
+    }
+
+    void syncFeedPostsFromCloud()
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === "visible") {
+        void syncFeedPostsFromCloud()
+      }
+    }
+    window.addEventListener("focus", handleVisibilityOrFocus)
+    const intervalId = window.setInterval(() => {
+      if (typeof document === "undefined" || document.visibilityState === "visible") {
+        void syncFeedPostsFromCloud()
+      }
+    }, 15000)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener("focus", handleVisibilityOrFocus)
+      window.clearInterval(intervalId)
+    }
+  }, [userData.email, userData.id, userData.name])
 
   // Global 24-Hour Additive Media Scheduler — adds new videos every 24 hours and preserves all existing videos
   useEffect(() => {
@@ -1633,11 +1707,17 @@ export default function ConnectLnPage() {
     const newPost: Post = {
       ...newPostData,
       isUserCreated: true,
+      authorEmail: userData.email,
+      createdAtMs: Date.now(),
       professionId: newPostData.professionId || currentProfId,
       professionEnclave: newPostData.professionEnclave || effectiveEnclave,
       feedCategory: newPostData.feedCategory || 'for_you',
       feedSubCategory: newPostData.feedSubCategory || 'All',
       id: newPostId,
+      author: {
+        ...newPostData.author,
+        email: userData.email,
+      },
       timestamp: 'Just now · 🌐',
       stats: {
         likesCount: 1,
@@ -1668,6 +1748,24 @@ export default function ConnectLnPage() {
       saveStoredPosts(updated)
       return updated
     })
+
+    // Persist newly created post to MongoDB Atlas so every ConnectLn user sees it in their feed
+    fetch('/api/connectin/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        post: newPost,
+        authorId: userData.id,
+        authorName: newPost.author.name,
+        authorEmail: userData.email,
+        authorHeadline: newPost.author.headline,
+        authorAvatar: newPost.author.avatar,
+        content: newPost.content,
+        feedCategory: newPost.feedCategory,
+        feedSubCategory: newPost.feedSubCategory,
+        hashtags: newPost.hashtags || [],
+      }),
+    }).catch(() => {})
 
     if (typeof window !== 'undefined') {
       setTimeout(() => {
@@ -1703,6 +1801,9 @@ export default function ConnectLnPage() {
       saveStoredPosts(updated)
       return updated
     })
+    fetch(`/api/connectin/posts?id=${encodeURIComponent(postId)}`, {
+      method: 'DELETE',
+    }).catch(() => {})
   }
 
   // Share any video from The Wheel or Media Hub directly to the ConnectLn Feed with the user's Profile Picture + ConnectLn Logo Card
@@ -1763,8 +1864,29 @@ export default function ConnectLnPage() {
   }
 
   // Handle Reactions (Like, Celebrate, Support, Love, Insightful, Funny)
+  const applySingleServerInteraction = (postId: string, interaction?: PersistedPostInteractionDoc | null) => {
+    if (!interaction) return
+    latestInteractionsRef.current = {
+      ...latestInteractionsRef.current,
+      [postId]: interaction,
+    }
+    const myKey = getCurrentUserReactionKey(userData)
+    const myEmail = String(userData.email || '').trim().toLowerCase()
+    const myName = String(userData.name || '').trim().toLowerCase()
+    setPosts(prev => {
+      const updated = prev.map(p =>
+        p.id === postId
+          ? applyInteractionToPost(p, interaction, baselinePostStatsRef.current, myKey, myEmail, myName)
+          : p
+      )
+      saveStoredPosts(updated)
+      return updated
+    })
+  }
+
   const handleToggleReaction = (postId: string, reaction: ReactionType | null) => {
     const targetPost = posts.find(p => p.id === postId)
+    lastPostInteractionWriteMsRef.current[postId] = Date.now()
     if (reaction && userData?.name) {
       recordLiveContentReach({
         userName: userData.name,
@@ -1781,8 +1903,8 @@ export default function ConnectLnPage() {
         })
       }
     }
-    setPosts(prev =>
-      prev.map(p => {
+    setPosts(prev => {
+      const updated = prev.map(p => {
         if (p.id !== postId) return p
 
         const oldReaction = p.userReaction
@@ -1808,12 +1930,36 @@ export default function ConnectLnPage() {
           }
         }
       })
-    )
+      saveStoredPosts(updated)
+      return updated
+    })
+
+    fetch('/api/connectin/posts', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'react',
+        postId,
+        reaction,
+        userId: userData.id,
+        userName: userData.name,
+        userEmail: userData.email,
+      }),
+    })
+      .then(async (res) => {
+        if (!res.ok) return
+        const data = await res.json()
+        if (data?.interaction) {
+          applySingleServerInteraction(postId, data.interaction)
+        }
+      })
+      .catch(() => {})
   }
 
   // Handle Comments & Replies
   const handleAddComment = (postId: string, commentText: string, parentCommentId?: string) => {
     const targetPost = posts.find(p => p.id === postId)
+    lastPostInteractionWriteMsRef.current[postId] = Date.now()
     if (userData?.name) {
       recordLiveContentReach({
         userName: userData.name,
@@ -1830,22 +1976,26 @@ export default function ConnectLnPage() {
         })
       }
     }
+    const clientCommentId = `c_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+    const resolvedAuthorAvatar = resolveUserProfilePicture(userData)
     const newComment = {
-      id: 'c_' + Date.now(),
+      id: clientCommentId,
       author: {
         name: userData.name,
         headline: userData.headline,
-        avatar: userData.avatar,
+        avatar: resolvedAuthorAvatar,
+        email: userData.email,
         connectionDegree: 'You' as const
       },
       content: commentText,
       timestamp: 'Just now',
+      createdAtMs: Date.now(),
       likesCount: 0,
       isLiked: false
     }
 
-    setPosts(prev =>
-      prev.map(p => {
+    setPosts(prev => {
+      const updated = prev.map(p => {
         if (p.id !== postId) return p
 
         if (parentCommentId) {
@@ -1872,7 +2022,83 @@ export default function ConnectLnPage() {
           comments: [newComment, ...p.comments]
         }
       })
-    )
+      saveStoredPosts(updated)
+      return updated
+    })
+
+    fetch('/api/connectin/posts', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'comment',
+        postId,
+        commentId: clientCommentId,
+        content: commentText,
+        parentCommentId,
+        author: {
+          name: userData.name,
+          headline: userData.headline,
+          avatar: resolvedAuthorAvatar,
+          email: userData.email,
+        },
+        userId: userData.id,
+        userName: userData.name,
+        userEmail: userData.email,
+      }),
+    })
+      .then(async (res) => {
+        if (!res.ok) return
+        const data = await res.json()
+        if (data?.interaction) {
+          applySingleServerInteraction(postId, data.interaction)
+        }
+      })
+      .catch(() => {})
+  }
+
+  // Handle Persistent Comment Likes across users
+  const handleLikeComment = (postId: string, commentId: string) => {
+    lastPostInteractionWriteMsRef.current[postId] = Date.now()
+    setPosts(prev => {
+      const updated = prev.map(p => {
+        if (p.id !== postId) return p
+        return {
+          ...p,
+          comments: p.comments.map(c => {
+            if (c.id !== commentId) return c
+            const nextLiked = !c.isLiked
+            return {
+              ...c,
+              isLiked: nextLiked,
+              likesCount: Math.max(0, Number(c.likesCount || 0) + (nextLiked ? 1 : -1)),
+            }
+          }),
+        }
+      })
+      saveStoredPosts(updated)
+      return updated
+    })
+
+    fetch('/api/connectin/posts', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'like_comment',
+        postId,
+        commentId,
+        userId: userData.id,
+        userName: userData.name,
+        userEmail: userData.email,
+      }),
+    })
+      .then(async (res) => {
+        if (!res.ok) return
+        const data = await res.json()
+        if (data?.interaction) {
+          applySingleServerInteraction(postId, data.interaction)
+        }
+      })
+      .catch(() => {})
   }
 
   // Handle Poll Vote in Live Feed
@@ -2866,6 +3092,7 @@ export default function ConnectLnPage() {
                       currentUser={userData}
                       onToggleReaction={handleToggleReaction}
                       onAddComment={handleAddComment}
+                      onLikeComment={handleLikeComment}
                       onToggleSave={handleToggleSave}
                       onVotePoll={handleVotePoll}
                       onSelectMember={handleInspectMember}
@@ -2893,6 +3120,7 @@ export default function ConnectLnPage() {
                       currentUser={userData}
                       onToggleReaction={handleToggleReaction}
                       onAddComment={handleAddComment}
+                      onLikeComment={handleLikeComment}
                       onToggleSave={handleToggleSave}
                       onVotePoll={handleVotePoll}
                       onSelectMember={handleInspectMember}
@@ -3360,6 +3588,7 @@ export default function ConnectLnPage() {
                     currentUser={userData}
                     onToggleReaction={handleToggleReaction}
                     onAddComment={handleAddComment}
+                    onLikeComment={handleLikeComment}
                     onToggleSave={handleToggleSave}
                     onVotePoll={handleVotePoll}
                     onSelectMember={handleInspectMember}

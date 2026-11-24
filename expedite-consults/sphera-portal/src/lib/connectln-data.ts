@@ -90,10 +90,12 @@ export interface Comment {
     name: string
     headline: string
     avatar: string
+    email?: string
     connectionDegree: '1st' | '2nd' | '3rd' | 'Following' | 'You'
   }
   content: string
   timestamp: string
+  createdAtMs?: number
   likesCount: number
   isLiked?: boolean
   replies?: Comment[]
@@ -142,6 +144,9 @@ export interface EmbeddedProductData {
 export interface Post {
   id: string
   isUserCreated?: boolean
+  isCloudSharedPost?: boolean
+  authorEmail?: string
+  createdAtMs?: number
   professionId?: string
   professionEnclave?: string
   targetProfessions?: string[]
@@ -151,6 +156,7 @@ export interface Post {
     name: string
     headline: string
     avatar: string
+    email?: string
     connectionDegree: '1st' | '2nd' | '3rd' | 'You' | 'Following'
     isFollowing?: boolean
     followersText?: string

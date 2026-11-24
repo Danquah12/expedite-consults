@@ -63,6 +63,7 @@ interface FeedPostCardProps {
   currentUser: UserProfile
   onToggleReaction: (postId: string, reaction: ReactionType | null) => void
   onAddComment: (postId: string, commentText: string, parentCommentId?: string) => void
+  onLikeComment?: (postId: string, commentId: string) => void
   onToggleSave: (postId: string) => void
   onFollowToggle?: (authorId: string) => void
   onVotePoll?: (postId: string, optionId: string) => void
@@ -85,6 +86,7 @@ export function FeedPostCard({
   currentUser,
   onToggleReaction,
   onAddComment,
+  onLikeComment,
   onToggleSave,
   onFollowToggle,
   onVotePoll,
@@ -1727,22 +1729,40 @@ export function FeedPostCard({
                     </div>
 
                     <div className="flex items-center gap-3 px-2 pt-1 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setLikedCommentIds((prev) => ({
-                            ...prev,
-                            [comment.id]: !prev[comment.id],
-                          }))
-                        }
-                        className={`cursor-pointer hover:text-[#0A66C2] ${
-                          likedCommentIds[comment.id] ? "text-[#0A66C2] font-bold" : ""
-                        }`}
-                      >
-                        {likedCommentIds[comment.id] ? "👍 Liked" : "Like"}{" "}
-                        {comment.likesCount + (likedCommentIds[comment.id] ? 1 : 0) > 0 &&
-                          `· ${comment.likesCount + (likedCommentIds[comment.id] ? 1 : 0)}`}
-                      </button>
+                      {(() => {
+                        const isCommentLiked = onLikeComment
+                          ? Boolean(comment.isLiked)
+                          : Boolean(likedCommentIds[comment.id] ?? comment.isLiked)
+                        const displayCommentLikes = onLikeComment
+                          ? Number(comment.likesCount || 0)
+                          : Number(comment.likesCount || 0) +
+                            (likedCommentIds[comment.id] && !comment.isLiked
+                              ? 1
+                              : likedCommentIds[comment.id] === false && comment.isLiked
+                              ? -1
+                              : 0)
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (onLikeComment) {
+                                onLikeComment(post.id, comment.id)
+                              } else {
+                                setLikedCommentIds((prev) => ({
+                                  ...prev,
+                                  [comment.id]: !(prev[comment.id] ?? Boolean(comment.isLiked)),
+                                }))
+                              }
+                            }}
+                            className={`cursor-pointer hover:text-[#0A66C2] ${
+                              isCommentLiked ? "text-[#0A66C2] font-bold" : ""
+                            }`}
+                          >
+                            {isCommentLiked ? "👍 Liked" : "Like"}{" "}
+                            {displayCommentLikes > 0 && `· ${displayCommentLikes}`}
+                          </button>
+                        )
+                      })()}
                       <span>·</span>
                       <button
                         onClick={() => setReplyToId(replyToId === comment.id ? null : comment.id)}
