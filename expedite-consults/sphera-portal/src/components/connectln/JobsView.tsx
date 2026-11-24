@@ -21,7 +21,10 @@ import {
   Users,
   Target,
   Clock,
-  FolderOpen
+  FolderOpen,
+  SlidersHorizontal,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react"
 import {
   COUNTRIES_CONFIG,
@@ -521,6 +524,7 @@ export function JobsView({
     }
   })
   const [isDirectoryOpen, setIsDirectoryOpen] = useState<boolean>(false)
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState<boolean>(false)
   const [searchQuery, setSearchQuery] = useState(() => {
     if (typeof window === "undefined") return ""
     try {
@@ -529,6 +533,16 @@ export function JobsView({
     } catch {}
     return ""
   })
+  const activeFilterCount = [
+    selectedCountryCode !== 'US',
+    selectedHub !== 'All Hubs',
+    selectedEnclave !== 'all',
+    selectedPillar !== 'all',
+    selectedTradeFolderNumber !== 'all',
+    selectedProfessionId !== 'all',
+    selectedDomain !== 'All',
+    searchQuery.trim() !== ''
+  ].filter(Boolean).length
   // Seed with the instant local catalog so the page never opens empty while the live API (several MB) loads
   const [jobs, setJobs] = useState<GlobalJobItem[]>(() => {
     try {
@@ -1599,18 +1613,18 @@ export function JobsView({
   })
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-20">
+    <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6 pb-8 sm:pb-20">
       {/* 1. TOP JOBS BANNER & 4-MODE SWITCHER */}
-      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-3 py-0.5 text-xs font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-1.5">
-                <Briefcase className="h-3.5 w-3.5" />
-                ConnectIn 20-Enclave · 42-Category Live Job Network
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3.5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-5">
+          <div className="space-y-1.5 min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-2.5 sm:px-3 py-0.5 text-[11px] sm:text-xs font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-1.5">
+                <Briefcase className="h-3.5 w-3.5 shrink-0" />
+                <span>20-Enclave · 42-Category Live Jobs</span>
               </span>
-              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 {currentCountry.flag} {currentCountry.name} ·{' '}
                 {isLoadingJobs && displayedJobs.length === 0
                   ? 'syncing live roles…'
@@ -1619,7 +1633,7 @@ export function JobsView({
               <button
                 type="button"
                 onClick={() => setIsTradeFoldersDrawerOpen(prev => !prev)}
-                className={`rounded-full px-3 py-0.5 text-xs font-bold border flex items-center gap-1.5 transition-colors cursor-pointer ${
+                className={`hidden sm:flex rounded-full px-3 py-0.5 text-xs font-bold border items-center gap-1.5 transition-colors cursor-pointer ${
                   isTradeFoldersDrawerOpen || selectedTradeFolderNumber !== 'all'
                     ? 'bg-[#0A66C2] text-white border-[#0A66C2] shadow-xs'
                     : 'bg-sky-50 dark:bg-sky-950/50 hover:bg-sky-100 text-[#0A66C2] dark:text-sky-300 border-sky-200/80 dark:border-sky-800/60'
@@ -1633,14 +1647,14 @@ export function JobsView({
               <button
                 type="button"
                 onClick={() => setIsDirectoryOpen(prev => !prev)}
-                className="rounded-full bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 dark:hover:bg-amber-900/60 px-3 py-0.5 text-xs font-bold text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="hidden sm:flex rounded-full bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 dark:hover:bg-amber-900/60 px-3 py-0.5 text-xs font-bold text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <span>🧭</span>
                 <span>{isDirectoryOpen ? "Hide 42-Category Profession Directory" : `Browse All 42 Categories & ${ALL_PROFESSIONS.length} Professions`}</span>
               </button>
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 leading-snug">
               {masterMode === 'resumeprep'
                 ? '✨ Expedite CareerSuite™ — AI Resume Preparation & Tailoring Studio'
                 : masterMode === 'applications'
@@ -1667,19 +1681,19 @@ export function JobsView({
           </div>
 
           {/* Mode Switcher Buttons */}
-          <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 p-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 shrink-0 flex-wrap">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap lg:flex-nowrap items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 p-1.5 rounded-2xl lg:rounded-full border border-zinc-200 dark:border-zinc-700 w-full lg:w-auto shrink-0">
             <button
               type="button"
               aria-pressed={masterMode === 'find'}
               onClick={() => setMasterMode('find')}
               style={masterMode === 'find' ? { color: '#FFFFFF' } : undefined}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`min-h-[40px] sm:min-h-[34px] justify-center px-2.5 sm:px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-xl lg:rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 masterMode === 'find'
                   ? "bg-[#0A66C2] text-white shadow-sm ring-2 ring-[#0A66C2]/25"
                   : "bg-transparent text-zinc-700 dark:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
-              <Search className="h-3.5 w-3.5" />
+              <Search className="h-3.5 w-3.5 shrink-0" />
               <span>Find Jobs</span>
             </button>
 
@@ -1688,14 +1702,15 @@ export function JobsView({
               aria-pressed={masterMode === 'resumeprep'}
               onClick={() => setMasterMode('resumeprep')}
               style={masterMode === 'resumeprep' ? { color: '#FFFFFF' } : undefined}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`min-h-[40px] sm:min-h-[34px] justify-center px-2.5 sm:px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-xl lg:rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 masterMode === 'resumeprep'
                   ? "bg-[#0A66C2] text-white shadow-sm ring-2 ring-[#0A66C2]/25"
                   : "bg-transparent text-zinc-700 dark:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
-              <Sparkles className={`h-3.5 w-3.5 ${masterMode === 'resumeprep' ? 'text-amber-300' : 'text-amber-500'}`} />
-              <span>Resume Prep App</span>
+              <Sparkles className={`h-3.5 w-3.5 shrink-0 ${masterMode === 'resumeprep' ? 'text-amber-300' : 'text-amber-500'}`} />
+              <span className="sm:hidden">Resume Prep</span>
+              <span className="hidden sm:inline">Resume Prep App</span>
             </button>
 
             <button
@@ -1703,14 +1718,15 @@ export function JobsView({
               aria-pressed={masterMode === 'applications'}
               onClick={() => setMasterMode('applications')}
               style={masterMode === 'applications' ? { color: '#FFFFFF' } : undefined}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`min-h-[40px] sm:min-h-[34px] justify-center px-2.5 sm:px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-xl lg:rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 masterMode === 'applications'
                   ? "bg-[#0A66C2] text-white shadow-sm ring-2 ring-[#0A66C2]/25"
                   : "bg-transparent text-zinc-700 dark:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
-              <FileText className="h-3.5 w-3.5" />
-              <span>My Applications ({applications.length})</span>
+              <FileText className="h-3.5 w-3.5 shrink-0" />
+              <span className="sm:hidden">Apps ({applications.length})</span>
+              <span className="hidden sm:inline">My Applications ({applications.length})</span>
             </button>
 
             <button
@@ -1718,23 +1734,24 @@ export function JobsView({
               aria-pressed={masterMode === 'recruiting'}
               onClick={() => setMasterMode('recruiting')}
               style={masterMode === 'recruiting' ? { color: '#FFFFFF' } : undefined}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`min-h-[40px] sm:min-h-[34px] justify-center px-2.5 sm:px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-xl lg:rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 masterMode === 'recruiting'
                   ? "bg-[#0A66C2] text-white shadow-sm ring-2 ring-[#0A66C2]/25"
                   : "bg-transparent text-zinc-700 dark:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
-              <Users className="h-3.5 w-3.5" />
-              <span>Recruiting Hub</span>
+              <Users className="h-3.5 w-3.5 shrink-0" />
+              <span className="sm:hidden">Recruiting</span>
+              <span className="hidden sm:inline">Recruiting Hub</span>
             </button>
 
             <button
               type="button"
               onClick={handleOpenPostJobModal}
               style={{ color: '#FFFFFF' }}
-              className="px-3.5 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+              className="col-span-2 sm:col-span-1 min-h-[40px] sm:min-h-[34px] justify-center px-3.5 py-2 sm:py-1.5 text-xs font-bold rounded-xl lg:rounded-full transition-all flex items-center gap-1.5 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
             >
-              <PlusCircle className="h-3.5 w-3.5" />
+              <PlusCircle className="h-3.5 w-3.5 shrink-0" />
               <span>+ Publish a Job</span>
             </button>
           </div>
@@ -1742,14 +1759,90 @@ export function JobsView({
 
         {/* Live 1-Minute Auto-Pulled Employer Video Briefings & Workplace Visuals (Find Jobs view only so switched sub-tabs appear immediately at top) */}
         {masterMode === 'find' && (
-          <div className="mt-4">
-            <LiveHarvestedMediaShowcase destination="jobs" />
+          <div className="mt-3 sm:mt-4">
+            <LiveHarvestedMediaShowcase destination="jobs" defaultCollapsedOnMobile={true} />
           </div>
         )}
 
         {/* Organized Structured Job Explorer Filter Bar */}
         {masterMode === 'find' && (
-          <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
+          <div className="mt-3.5 sm:mt-4 pt-3.5 sm:pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
+            {/* Mobile Compact Filter Summary & Toggle Bar (< md) */}
+            <div className="md:hidden flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-200 truncate block">
+                  {currentCountry.flag} {currentCountry.code} · {selectedHub} · {currentEnclaveObj ? currentEnclaveObj.shortName : 'All Enclaves'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {activeFilterCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCountryCode('US')
+                      setSelectedHub('All Hubs')
+                      setSelectedEnclave('all')
+                      setSelectedPillar('all')
+                      setSelectedTradeFolderNumber('all')
+                      setSelectedProfessionId('all')
+                      setSelectedDomain('All')
+                      setSearchQuery('')
+                    }}
+                    className="rounded-lg px-2.5 min-h-[38px] text-[11px] font-bold border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                )}
+                <button
+                  type="button"
+                  aria-label="Toggle mobile job filters"
+                  aria-expanded={isMobileFiltersOpen}
+                  onClick={() => setIsMobileFiltersOpen((prev) => !prev)}
+                  className={`rounded-lg px-3 min-h-[38px] text-xs font-bold border flex items-center gap-1.5 transition-colors cursor-pointer ${
+                    isMobileFiltersOpen || activeFilterCount > 0
+                      ? 'bg-[#0A66C2] text-white border-[#0A66C2] shadow-xs'
+                      : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 border-zinc-300 dark:border-zinc-700'
+                  }`}
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
+                  <span>Filters</span>
+                  {activeFilterCount > 0 && (
+                    <span className="rounded-full bg-white text-[#0A66C2] px-1.5 py-0.5 text-[10px] font-extrabold leading-none">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                  {isMobileFiltersOpen ? <ChevronUp className="h-3.5 w-3.5 shrink-0" /> : <ChevronDown className="h-3.5 w-3.5 shrink-0" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Horizontal Job Categories Pill Strip (< md) */}
+            <div
+              aria-label="Mobile job categories"
+              className="md:hidden flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5"
+            >
+              {DOMAIN_CATEGORIES.map((dom) => {
+                const isSelected = selectedDomain === dom.id
+                return (
+                  <button
+                    key={dom.id}
+                    type="button"
+                    onClick={() => handleDomainCategorySelect(dom.id)}
+                    className={`min-h-[36px] shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-[#0A66C2] text-white border-[#0A66C2] shadow-2xs'
+                        : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100'
+                    }`}
+                  >
+                    <span>{dom.icon}</span>
+                    <span>{dom.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Desktop Always-Visible / Mobile Collapsible Filter Controls */}
+            <div className={`${isMobileFiltersOpen ? 'block' : 'hidden'} md:block space-y-3`}>
             {/* Compact Filter Header & Quick Drawers Bar */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
@@ -1762,24 +1855,24 @@ export function JobsView({
                 </span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-stretch sm:items-center gap-1.5 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setIsTradeFoldersDrawerOpen((prev) => !prev)}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  className={`rounded-lg px-2.5 min-h-[38px] sm:min-h-0 py-1.5 sm:py-1 text-[11px] font-bold border transition-colors cursor-pointer flex items-center justify-center sm:justify-start gap-1.5 ${
                     isTradeFoldersDrawerOpen || selectedTradeFolderNumber !== 'all'
                       ? 'bg-[#0A66C2] text-white border-[#0A66C2]'
                       : 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                   }`}
                 >
-                  <FolderOpen className="h-3.5 w-3.5" />
+                  <FolderOpen className="h-3.5 w-3.5 shrink-0" />
                   <span>{isTradeFoldersDrawerOpen ? 'Hide 20 Trade Folders' : 'Browse 20 Trade Folders (250)'}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setIsClinicalRolesOpen((prev) => !prev)}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  className={`rounded-lg px-2.5 min-h-[38px] sm:min-h-0 py-1.5 sm:py-1 text-[11px] font-bold border transition-colors cursor-pointer flex items-center justify-center sm:justify-start gap-1.5 ${
                     isClinicalRolesOpen || selectedEnclave === 'healthcare_medicine'
                       ? 'bg-teal-700 text-white border-teal-700'
                       : 'bg-white dark:bg-zinc-900 text-teal-800 dark:text-teal-300 border-teal-300 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-950/40'
@@ -1787,6 +1880,15 @@ export function JobsView({
                 >
                   <span>🏥</span>
                   <span>{isClinicalRolesOpen ? 'Hide Clinical Roles' : 'Medicine & Clinical Roles (21)'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsDirectoryOpen((prev) => !prev)}
+                  className="sm:hidden rounded-lg px-2.5 min-h-[38px] py-1.5 text-[11px] font-bold border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <span>🧭</span>
+                  <span>{isDirectoryOpen ? 'Hide 42-Category Directory' : `Browse 42 Categories & ${ALL_PROFESSIONS.length} Roles`}</span>
                 </button>
 
                 {(selectedEnclave !== 'all' ||
@@ -1808,7 +1910,7 @@ export function JobsView({
                       setSelectedDomain('All')
                       setSearchQuery('')
                     }}
-                    className="rounded-lg px-2.5 py-1 text-[11px] font-bold border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer"
+                    className="rounded-lg px-2.5 min-h-[38px] sm:min-h-0 py-1.5 sm:py-1 text-[11px] font-bold border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer flex items-center justify-center"
                   >
                     Reset All
                   </button>
@@ -1827,7 +1929,7 @@ export function JobsView({
                   aria-label="Select country or global region"
                   value={selectedCountryCode}
                   onChange={(e) => handleCountryChange(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
+                  className="w-full min-h-[42px] sm:min-h-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-sm sm:text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
                 >
                   {COUNTRIES_CONFIG.map((c) => (
                     <option key={c.code} value={c.code}>
@@ -1846,7 +1948,7 @@ export function JobsView({
                   aria-label="Select industry enclave"
                   value={selectedEnclave}
                   onChange={(e) => handleEnclaveChange(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
+                  className="w-full min-h-[42px] sm:min-h-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-sm sm:text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
                 >
                   <option value="all">🌐 All {PROFESSION_ENCLAVES.length} Industry Enclaves</option>
                   {[
@@ -1872,7 +1974,7 @@ export function JobsView({
                     const v = e.target.value
                     handleSelectTradeFolder(v === 'all' ? 'all' : Number(v))
                   }}
-                  className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
+                  className="w-full min-h-[42px] sm:min-h-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-sm sm:text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
                 >
                   <option value="all">📂 All 20 Folders (250 Trade Roles)</option>
                   {HANDYMAN_250_FOLDERS.map((folder) => (
@@ -1897,7 +1999,7 @@ export function JobsView({
                     aria-label="Select role inside trade folder"
                     value={selectedProfessionId}
                     onChange={(e) => setSelectedProfessionId(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
+                    className="w-full min-h-[42px] sm:min-h-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-sm sm:text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
                   >
                     <option value="all">All {activeTradeFolderObj.roles.length} Roles in Folder #{activeTradeFolderObj.folderNumber}</option>
                     {activeTradeFolderObj.roles.map((r) => (
@@ -1911,7 +2013,7 @@ export function JobsView({
                     aria-label="Select profession inside enclave"
                     value={selectedProfessionId}
                     onChange={(e) => setSelectedProfessionId(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
+                    className="w-full min-h-[42px] sm:min-h-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-sm sm:text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
                   >
                     <option value="all">All {currentEnclaveObj.professions.length} {currentEnclaveObj.shortName} Roles</option>
                     {currentEnclaveObj.professions.map((prof) => (
@@ -1925,7 +2027,7 @@ export function JobsView({
                     aria-label="Select career pathway"
                     value={selectedPillar}
                     onChange={(e) => handlePillarChange(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
+                    className="w-full min-h-[42px] sm:min-h-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-sm sm:text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
                   >
                     <option value="all">🌍 All Career Pathways</option>
                     {CONNECTIN_WORKER_PILLARS.map((pillar) => (
@@ -1936,6 +2038,26 @@ export function JobsView({
                   </select>
                 )}
               </div>
+
+              {/* 5. Mobile Regional Hub Selector (< md) */}
+              <div className="space-y-1 md:hidden">
+                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                  Regional Hub ({currentCountry.name})
+                </label>
+                <select
+                  aria-label="Select regional hub"
+                  value={selectedHub}
+                  onChange={(e) => setSelectedHub(e.target.value)}
+                  className="w-full min-h-[42px] rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
+                >
+                  {currentCountry.hubs.map((hub) => (
+                    <option key={hub} value={hub}>
+                      {hub}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             </div>
 
             {/* CLEAN COLLAPSIBLE 20 TRADE & SERVICE FOLDERS GRID */}
@@ -1975,7 +2097,7 @@ export function JobsView({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 max-h-72 sm:max-h-none overflow-y-auto pr-0.5">
                   {HANDYMAN_250_FOLDERS.map((folder) => {
                     const active = selectedTradeFolderNumber === folder.folderNumber
                     return (
@@ -2065,7 +2187,7 @@ export function JobsView({
                     Hide ×
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5 max-h-56 sm:max-h-none overflow-y-auto">
                   {[
                     { id: 'all_med', label: '🏥 All Medicine & Healthcare', profId: 'all', domain: 'All' },
                     { id: 'pharmacist', label: '💊 Pharmacists (PharmD)', profId: 'pharmacist', domain: 'All' },
@@ -2204,8 +2326,8 @@ export function JobsView({
       {/* ========================================================================= */}
       {masterMode === 'find' && (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-          {/* Left Rail: Domain Categories & Hubs */}
-          <div className="md:col-span-4 lg:col-span-3 space-y-4">
+          {/* Left Rail: Domain Categories & Hubs (desktop & tablet >= md; moved to horizontal bar & Hub select on mobile) */}
+          <div className="hidden md:block md:col-span-4 lg:col-span-3 space-y-4">
             {/* Resume Preparation App Card (Top of Left Rail) — Embedded Single Portal */}
             <div className="rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50/90 via-teal-50/70 to-sky-50/80 p-4 shadow-xs dark:border-emerald-900/50 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-sky-950/30 space-y-2.5">
               <div className="flex items-center justify-between">
@@ -2292,11 +2414,11 @@ export function JobsView({
           </div>
 
           {/* Main Job Results Feed */}
-          <div className="md:col-span-8 lg:col-span-9 space-y-4">
+          <div className="md:col-span-8 lg:col-span-9 flex flex-col gap-4">
             {/* Top Job Search Alert Toggle Bar */}
             <div
               id="connectln-job-search-alert-top-bar"
-              className={`rounded-2xl border-2 p-3.5 sm:p-4 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs ${
+              className={`order-2 md:order-1 rounded-2xl border-2 p-3.5 sm:p-4 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs ${
                 jobSearchAlertEnabled
                   ? 'border-[#0A66C2] bg-blue-50/80 dark:bg-blue-950/30 dark:border-blue-700'
                   : 'border-zinc-200 bg-white dark:bg-zinc-900 dark:border-zinc-800'
@@ -2306,7 +2428,7 @@ export function JobsView({
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0A66C2] text-white text-xs font-black shrink-0 mt-0.5">
                   🔔
                 </div>
-                <div className="space-y-0.5">
+                <div className="space-y-0.5 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
                       Job search alert for{' '}
@@ -2336,11 +2458,11 @@ export function JobsView({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-blue-200/60 dark:border-blue-800/50 shrink-0">
                 <select
                   value={jobAlertFrequency}
                   onChange={(e) => setJobAlertFrequency(e.target.value as any)}
-                  className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-800 dark:text-zinc-200"
+                  className="flex-1 sm:flex-initial min-h-[38px] sm:min-h-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-800 dark:text-zinc-200"
                 >
                   <option value="Instant">Instant Alerts</option>
                   <option value="Daily">Daily Digest</option>
@@ -2352,7 +2474,7 @@ export function JobsView({
                   role="switch"
                   aria-checked={jobSearchAlertEnabled}
                   onClick={handleToggleJobSearchAlert}
-                  className="flex items-center gap-2 cursor-pointer"
+                  className="flex items-center gap-2 cursor-pointer shrink-0"
                 >
                   <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
                     {jobSearchAlertEnabled ? 'On' : 'Off'}
@@ -2373,16 +2495,16 @@ export function JobsView({
             </div>
 
             {/* Search Header */}
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3">
+            <div className="order-1 md:order-2 rounded-xl border border-zinc-200 bg-white p-3 sm:p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3">
               <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2">
-                <div className="relative flex-1 flex items-center rounded-lg bg-zinc-50 px-3 py-2 border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800/80">
+                <div className="min-h-[42px] relative flex-1 flex items-center rounded-lg bg-zinc-50 px-3 py-2 border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800/80">
                   <Search className="h-4 w-4 text-zinc-400 mr-2 shrink-0" />
                   <input
                     type="text"
                     placeholder={getEnclaveSearchPlaceholder(selectedEnclave, currentCountry.name)}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-transparent text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100"
+                    className="w-full bg-transparent text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100"
                   />
                   {searchQuery && (
                     <button
@@ -2398,24 +2520,27 @@ export function JobsView({
                   )}
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={isLoadingJobs}
-                  className="rounded-lg bg-[#0A66C2] px-5 py-2 text-xs sm:text-sm font-bold text-white hover:bg-[#004182] transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-                >
-                  {isLoadingJobs ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                  <span>Search</span>
-                </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    type="submit"
+                    disabled={isLoadingJobs}
+                    className="flex-1 sm:flex-initial min-h-[42px] rounded-lg bg-[#0A66C2] px-5 py-2 text-xs sm:text-sm font-bold text-white hover:bg-[#004182] transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    {isLoadingJobs ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                    <span>Search</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => fetchJobs(selectedEnclave, selectedCountryCode, selectedHub, searchQuery, selectedDomain)}
-                  title="Sync latest live job openings"
-                  className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${isLoadingJobs ? "animate-spin text-[#0A66C2]" : ""}`} />
-                  <span className="hidden sm:inline">Sync Live</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => fetchJobs(selectedEnclave, selectedCountryCode, selectedHub, searchQuery, selectedDomain)}
+                    title="Sync latest live job openings"
+                    className="min-h-[42px] rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3.5 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 transition-colors flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${isLoadingJobs ? "animate-spin text-[#0A66C2]" : ""}`} />
+                    <span className="sm:hidden">Sync</span>
+                    <span className="hidden sm:inline">Sync Live</span>
+                  </button>
+                </div>
               </form>
 
               <div key={currentCountry.code} className="flex items-center justify-between pt-1 border-t border-zinc-100 dark:border-zinc-800 text-xs text-zinc-500 flex-wrap gap-2">
@@ -2437,7 +2562,7 @@ export function JobsView({
             </div>
 
             {/* Jobs List */}
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
+            <div className="order-3 rounded-xl border border-zinc-200 bg-white p-3 sm:p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
               {displayedJobs.length === 0 ? (
                 <div className="py-12 text-center space-y-2">
                   <p className="text-base font-bold text-zinc-800 dark:text-zinc-200">
@@ -2483,87 +2608,109 @@ export function JobsView({
                     return (
                       <div
                         key={job.id}
-                        className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-start justify-between gap-4 group"
+                        className="py-4 first:pt-0 last:pb-0 flex flex-col lg:flex-row lg:items-start justify-between gap-3.5 lg:gap-4 group"
                       >
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <img
-                            src={resolveJobLogoUrl(job.companyLogo, job.professionEnclave)}
-                            alt={job.company}
-                            onError={(e) => {
-                              e.currentTarget.onerror = null
-                              e.currentTarget.src = TRADE_ENCLAVE_LOGO.trades_construction
-                            }}
-                            className="h-12 w-12 rounded-lg object-cover border border-zinc-200 shrink-0 dark:border-zinc-800"
-                          />
+                        <div className="flex-1 min-w-0 space-y-2.5">
+                          {/* Identity Header Row: Logo + Title/Company/Meta + Mobile Top-Right Bookmark */}
+                          <div className="flex items-start gap-3">
+                            <img
+                              src={resolveJobLogoUrl(job.companyLogo, job.professionEnclave)}
+                              alt={job.company}
+                              onError={(e) => {
+                                e.currentTarget.onerror = null
+                                e.currentTarget.src = TRADE_ENCLAVE_LOGO.trades_construction
+                              }}
+                              className="h-11 w-11 sm:h-12 sm:w-12 rounded-xl object-cover border border-zinc-200 shrink-0 dark:border-zinc-800"
+                            />
 
-                          <div className="space-y-1 min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="min-w-0 flex-1 space-y-1">
                               <h4
                                 onClick={() => handleOpenJobDetail(job)}
                                 className="font-bold text-sm sm:text-base text-zinc-900 hover:text-[#0A66C2] hover:underline cursor-pointer dark:text-zinc-100 leading-snug"
                               >
                                 {job.title}
                               </h4>
-                              {tradeFolderMeta && (
-                                <span className="rounded-md bg-sky-100/80 dark:bg-sky-950/70 px-2 py-0.5 text-[10px] font-extrabold text-[#0A66C2] dark:text-sky-300 border border-sky-300/70 dark:border-sky-700">
-                                  {tradeFolderMeta.folderIcon} Folder {tradeFolderMeta.folderNumber}: {tradeFolderMeta.folderName} · #{tradeFolderMeta.roleNumber}
+
+                              <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
+                                {job.company} · <span className="text-zinc-400">{job.source}</span>
+                              </p>
+
+                              <div className="flex items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400 flex-wrap">
+                                <span className="flex items-center gap-1 font-medium text-zinc-700 dark:text-zinc-300">
+                                  <MapPin className="h-3.5 w-3.5 text-[#0A66C2] shrink-0" />
+                                  {job.location}
                                 </span>
-                              )}
-                              {jobEnclaveObj && (
-                                <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#0A66C2] border border-blue-200 dark:bg-blue-950/60 dark:border-blue-800 dark:text-sky-300">
-                                  {jobEnclaveObj.icon} {jobEnclaveObj.shortName}
-                                </span>
-                              )}
-                              {job.clearanceRequired && (
-                                <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-300 dark:bg-amber-950 dark:text-amber-300">
-                                  🛡️ {job.clearanceRequired}
-                                </span>
-                              )}
-                              {job.isLiveFeed && (
-                                <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-300">
-                                  ⚡ Live Feed
-                                </span>
-                              )}
+                                {job.salaryRange && (
+                                  <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                                    {formatJobSalaryForCountry(job.salaryRange, currentCountry, job.location)}
+                                  </span>
+                                )}
+                                <span>{job.postedTime}</span>
+                              </div>
                             </div>
 
-                            <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
-                              {job.company} · <span className="text-zinc-400">{job.source}</span>
-                            </p>
+                            <button
+                              type="button"
+                              onClick={() => toggleSaveJob(job.id)}
+                              aria-label={job.isSaved ? "Remove saved job" : "Save job"}
+                              className={`lg:hidden shrink-0 flex h-9 w-9 items-center justify-center rounded-full border transition-colors cursor-pointer ${
+                                job.isSaved
+                                  ? "text-[#0A66C2] bg-sky-50 border-sky-200 dark:bg-sky-950 dark:border-sky-800"
+                                  : "text-zinc-500 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 hover:text-zinc-700"
+                              }`}
+                            >
+                              <Bookmark className={`h-4 w-4 ${job.isSaved ? "fill-[#0A66C2]" : ""}`} />
+                            </button>
+                          </div>
 
-                            <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400 flex-wrap">
-                              <span className="flex items-center gap-1 font-medium text-zinc-700 dark:text-zinc-300">
-                                <MapPin className="h-3.5 w-3.5 text-[#0A66C2]" />
-                                {job.location}
-                              </span>
-                              {job.salaryRange && (
-                                <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                                  {formatJobSalaryForCountry(job.salaryRange, currentCountry, job.location)}
-                                </span>
-                              )}
-                              <span>{job.postedTime}</span>
-                            </div>
+                          {/* Full-Width Details Block */}
+                          <div className="space-y-2 lg:pl-[60px]">
+                            {(tradeFolderMeta || jobEnclaveObj || job.clearanceRequired || job.isLiveFeed) && (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {tradeFolderMeta && (
+                                  <span className="rounded-md bg-sky-100/80 dark:bg-sky-950/70 px-2 py-0.5 text-[10px] font-extrabold text-[#0A66C2] dark:text-sky-300 border border-sky-300/70 dark:border-sky-700">
+                                    {tradeFolderMeta.folderIcon} Folder {tradeFolderMeta.folderNumber}: {tradeFolderMeta.folderName} · #{tradeFolderMeta.roleNumber}
+                                  </span>
+                                )}
+                                {jobEnclaveObj && (
+                                  <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#0A66C2] border border-blue-200 dark:bg-blue-950/60 dark:border-blue-800 dark:text-sky-300">
+                                    {jobEnclaveObj.icon} {jobEnclaveObj.shortName}
+                                  </span>
+                                )}
+                                {job.clearanceRequired && (
+                                  <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-300 dark:bg-amber-950 dark:text-amber-300">
+                                    🛡️ {job.clearanceRequired}
+                                  </span>
+                                )}
+                                {job.isLiveFeed && (
+                                  <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-300">
+                                    ⚡ Live Feed
+                                  </span>
+                                )}
+                              </div>
+                            )}
 
                             {/* 🔥 PROFESSION-ALIGNED SKILL, CREDENTIAL & LEARNING CONNECTION */}
-                            <div className="rounded-lg bg-gradient-to-r from-purple-50/70 to-sky-50/70 border border-purple-200/80 p-2.5 my-2 dark:bg-purple-950/20 dark:border-purple-900/40 space-y-1.5">
+                            <div className="rounded-lg bg-gradient-to-r from-purple-50/70 to-sky-50/70 border border-purple-200/80 p-2.5 sm:p-3 dark:bg-purple-950/20 dark:border-purple-900/40 space-y-1.5">
                               <div className="flex items-center justify-between text-[11px] flex-wrap gap-1">
                                 <span className="font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1.5">
-                                  <Zap className="h-3.5 w-3.5 text-amber-500" />
+                                  <Zap className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                                   Credential &amp; Skill Connection:
                                 </span>
                                 <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
                                   {flywheel.badgeText}
                                 </span>
                               </div>
-                              <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                              <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
                                 This employer recommends proficiency in <strong>{flywheel.primarySkill}</strong> or <strong>{flywheel.secondarySkill}</strong>.
                               </p>
-                              <div className="flex items-center gap-2 pt-0.5 flex-wrap">
+                              <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-stretch sm:items-center gap-1.5 pt-0.5">
                                 <button
                                   type="button"
                                   onClick={() => {
                                     if (onNavigateLearning) onNavigateLearning()
                                   }}
-                                  className="rounded bg-white px-2 py-0.5 text-[10px] font-bold text-[#0A66C2] border border-blue-200 shadow-2xs hover:bg-sky-50 dark:bg-zinc-800 dark:border-zinc-700 cursor-pointer"
+                                  className="min-h-[34px] sm:min-h-0 rounded bg-white px-2.5 py-1.5 sm:py-0.5 text-[11px] sm:text-[10px] font-bold text-[#0A66C2] border border-blue-200 shadow-2xs hover:bg-sky-50 dark:bg-zinc-800 dark:border-zinc-700 text-left sm:text-center cursor-pointer"
                                 >
                                   🎓 Take Masterclass →
                                 </button>
@@ -2572,7 +2719,7 @@ export function JobsView({
                                   onClick={() => {
                                     if (onNavigateMarketplace) onNavigateMarketplace()
                                   }}
-                                  className="rounded bg-white px-2 py-0.5 text-[10px] font-bold text-purple-700 border border-purple-200 shadow-2xs hover:bg-purple-50 dark:bg-zinc-800 dark:border-zinc-700 cursor-pointer"
+                                  className="min-h-[34px] sm:min-h-0 rounded bg-white px-2.5 py-1.5 sm:py-0.5 text-[11px] sm:text-[10px] font-bold text-purple-700 border border-purple-200 shadow-2xs hover:bg-purple-50 dark:bg-zinc-800 dark:border-zinc-700 text-left sm:text-center cursor-pointer"
                                 >
                                   🛍️ Explore Tools in Marketplace →
                                 </button>
@@ -2585,7 +2732,7 @@ export function JobsView({
 
                             {/* Tags */}
                             {job.tags && (
-                              <div className="flex flex-wrap gap-1 pt-1">
+                              <div className="flex flex-wrap gap-1.5 pt-1">
                                 {job.tags.map((t) => (
                                   <span
                                     key={t}
@@ -2599,17 +2746,17 @@ export function JobsView({
                           </div>
                         </div>
 
-                        {/* Actions Right Side */}
-                        <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0 flex-wrap">
-                          <div className="flex items-center gap-1.5 flex-wrap">
+                        {/* Actions Footer (Mobile-first 2x2 stacked primary + secondary; Desktop right-aligned column) */}
+                        <div className="flex flex-col gap-2 w-full lg:w-auto lg:items-end lg:shrink-0 pt-1 lg:pt-0">
+                          <div className="order-2 lg:order-1 grid grid-cols-2 lg:flex lg:items-center gap-2 w-full lg:w-auto">
                             <button
                               type="button"
                               onClick={() => handleTailorResumeForJob(job)}
-                              className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300 transition-all flex items-center gap-1 cursor-pointer"
+                              className="min-h-[36px] lg:min-h-0 justify-center rounded-full bg-emerald-50 px-3 py-1.5 lg:py-1 text-xs font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300 transition-all flex items-center gap-1 cursor-pointer"
                               title="Tailor your resume & cover letter for this job using the embedded Resume Preparation App"
                             >
-                              <FileText className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                              <span>Tailor Resume</span>
+                              <FileText className="h-3.5 w-3.5 lg:h-3 lg:w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                              <span className="truncate">Tailor Resume</span>
                             </button>
 
                             <button
@@ -2618,17 +2765,19 @@ export function JobsView({
                                 setCareerTwinJob(job)
                                 setIsCareerTwinOpen(true)
                               }}
-                              className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 border border-purple-200 hover:bg-purple-100 dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-300 transition-all flex items-center gap-1 cursor-pointer"
+                              className="min-h-[36px] lg:min-h-0 justify-center rounded-full bg-purple-50 px-3 py-1.5 lg:py-1 text-xs font-bold text-purple-700 border border-purple-200 hover:bg-purple-100 dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-300 transition-all flex items-center gap-1 cursor-pointer"
                               title="Noctis AI Interview Prep: 25+ Tailored Interview Questions & Sample Answers for this Job"
                             >
-                              <Sparkles className="h-3 w-3 text-amber-500" />
-                              <span>CareerTwin™ Prep (25+ Qs)</span>
+                              <Sparkles className="h-3.5 w-3.5 lg:h-3 lg:w-3 text-amber-500 shrink-0" />
+                              <span className="sm:hidden truncate">CareerTwin Prep</span>
+                              <span className="hidden sm:inline">CareerTwin™ Prep (25+ Qs)</span>
                             </button>
 
                             <button
                               type="button"
                               onClick={() => toggleSaveJob(job.id)}
-                              className={`rounded-full p-1.5 transition-colors cursor-pointer ${
+                              aria-label={job.isSaved ? "Remove saved job" : "Save job"}
+                              className={`hidden lg:inline-flex rounded-full p-1.5 transition-colors cursor-pointer ${
                                 job.isSaved
                                   ? "text-[#0A66C2] bg-sky-50 dark:bg-sky-950"
                                   : "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
@@ -2638,22 +2787,23 @@ export function JobsView({
                             </button>
                           </div>
 
-                          <div className="flex items-center gap-1.5 flex-wrap">
+                          <div className={`order-1 lg:order-2 grid ${job.applyUrl ? 'grid-cols-2' : 'grid-cols-1'} lg:flex lg:items-center gap-2 w-full lg:w-auto`}>
                             {isApplied ? (
                               <button
                                 type="button"
                                 onClick={() => handleOpenApply(job)}
                                 title="Click to view Official ATS Confirmation Receipt & Audit Evidence"
-                                className="rounded-full bg-emerald-50 px-3.5 py-1.5 text-xs font-bold text-emerald-700 border border-emerald-300 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 flex items-center gap-1 cursor-pointer transition-colors"
+                                className="min-h-[40px] lg:min-h-0 justify-center rounded-full bg-emerald-50 px-3.5 py-2 lg:py-1.5 text-xs font-bold text-emerald-700 border border-emerald-300 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 flex items-center gap-1 cursor-pointer transition-colors"
                               >
-                                <Check className="h-3 w-3" />
-                                <span>Applied by Noctis · View Receipt</span>
+                                <Check className="h-3.5 w-3.5 lg:h-3 lg:w-3 shrink-0" />
+                                <span className="sm:hidden truncate">Applied · Receipt</span>
+                                <span className="hidden sm:inline">Applied by Noctis · View Receipt</span>
                               </button>
                             ) : (
                               <button
                                 type="button"
                                 onClick={() => handleOpenApply(job)}
-                                className="rounded-full bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 px-3.5 py-1.5 text-xs font-bold text-[#0A66C2] dark:text-sky-300 hover:bg-sky-100 transition-colors cursor-pointer"
+                                className="min-h-[40px] lg:min-h-0 justify-center rounded-full bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 px-3.5 py-2 lg:py-1.5 text-xs font-bold text-[#0A66C2] dark:text-sky-300 hover:bg-sky-100 transition-colors cursor-pointer flex items-center"
                               >
                                 Easy Apply
                               </button>
@@ -2664,10 +2814,10 @@ export function JobsView({
                                 href={resolveExternalJobApplyUrl(job)}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#004182] transition-colors flex items-center gap-1 shadow-xs"
+                                className="min-h-[40px] lg:min-h-0 justify-center rounded-full bg-[#0A66C2] px-4 py-2 lg:py-1.5 text-xs font-bold text-white hover:bg-[#004182] transition-colors flex items-center gap-1 shadow-xs"
                               >
                                 <span>Apply on Site</span>
-                                <ExternalLink className="h-3 w-3" />
+                                <ExternalLink className="h-3 w-3 shrink-0" />
                               </a>
                             )}
                           </div>
@@ -2729,11 +2879,11 @@ export function JobsView({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-blue-200/60 dark:border-blue-800/50 shrink-0">
                       <select
                         value={jobAlertFrequency}
                         onChange={(e) => setJobAlertFrequency(e.target.value as any)}
-                        className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-800 dark:text-zinc-200"
+                        className="flex-1 sm:flex-initial min-h-[38px] sm:min-h-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-800 dark:text-zinc-200"
                       >
                         <option value="Instant">Instant Alerts</option>
                         <option value="Daily">Daily Digest</option>
@@ -2745,7 +2895,7 @@ export function JobsView({
                         role="switch"
                         aria-checked={jobSearchAlertEnabled}
                         onClick={handleToggleJobSearchAlert}
-                        className="flex items-center gap-2 cursor-pointer"
+                        className="flex items-center gap-2 cursor-pointer shrink-0"
                       >
                         <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
                           {jobSearchAlertEnabled ? 'On' : 'Off'}
@@ -2788,7 +2938,7 @@ export function JobsView({
             </div>
 
             {/* Stage Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs">
               {[
                 { id: 'all', label: `All (${applications.length})` },
                 { id: 'applied', label: `Applied (${applications.filter(a => a.stage === 'applied').length})` },
@@ -2799,7 +2949,7 @@ export function JobsView({
                 <button
                   key={pill.id}
                   onClick={() => setAppStageFilter(pill.id as any)}
-                  className={`rounded-full px-3 py-1 font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  className={`min-h-[34px] shrink-0 rounded-full px-3 py-1 font-bold transition-all whitespace-nowrap cursor-pointer ${
                     appStageFilter === pill.id
                       ? "bg-[#0A66C2] text-white shadow-2xs"
                       : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
@@ -2950,8 +3100,8 @@ export function JobsView({
                   </div>
 
                   {/* Bottom Actions */}
-                  <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                  <div className="pt-2.5 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-2">
+                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full">
                       <button
                         type="button"
                         onClick={() => {
@@ -2964,10 +3114,10 @@ export function JobsView({
                           })
                           setIsCareerTwinOpen(true)
                         }}
-                        className="rounded-full bg-purple-50 px-2.5 py-1 text-[11px] font-bold text-purple-700 hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 flex items-center gap-1 cursor-pointer"
+                        className="min-h-[36px] justify-center rounded-full bg-purple-50 px-2.5 py-1 text-[11px] font-bold text-purple-700 hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 flex items-center gap-1 cursor-pointer"
                       >
-                        <Sparkles className="h-3 w-3 text-amber-500" />
-                        <span>Interview Prep</span>
+                        <Sparkles className="h-3 w-3 text-amber-500 shrink-0" />
+                        <span className="truncate">Interview Prep</span>
                       </button>
 
                       <button
@@ -2998,17 +3148,17 @@ export function JobsView({
                             tags: app.productVerifiedMatch ? [app.productVerifiedMatch] : []
                           })
                         }}
-                        className="rounded-full bg-sky-50 border border-sky-200 px-2.5 py-1 text-[11px] font-bold text-[#0A66C2] hover:bg-sky-100 cursor-pointer"
+                        className="min-h-[36px] justify-center rounded-full bg-sky-50 border border-sky-200 px-2.5 py-1 text-[11px] font-bold text-[#0A66C2] hover:bg-sky-100 flex items-center cursor-pointer"
                       >
-                        ✨ Tailor Resume
+                        <span className="truncate">✨ Tailor Resume</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => handleDownloadApplicationReceipt(app)}
-                        className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300 cursor-pointer"
+                        className="min-h-[36px] justify-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300 flex items-center cursor-pointer"
                       >
-                        📄 Receipt
+                        <span className="truncate">📄 Receipt</span>
                       </button>
 
                       {onNavigateMessaging && (
@@ -3029,9 +3179,9 @@ export function JobsView({
                             } catch {}
                             onNavigateMessaging()
                           }}
-                          className="rounded-full bg-indigo-50 border border-indigo-200 px-2.5 py-1 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 cursor-pointer"
+                          className="min-h-[36px] justify-center rounded-full bg-indigo-50 border border-indigo-200 px-2.5 py-1 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 flex items-center cursor-pointer"
                         >
-                          💬 View in Messaging
+                          <span className="truncate">💬 Messaging</span>
                         </button>
                       )}
                     </div>
@@ -3063,29 +3213,29 @@ export function JobsView({
               </p>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <div className="grid grid-cols-2 sm:flex w-full sm:w-auto items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => setMasterMode('find')}
-                className="rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 px-3.5 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer"
+                className="min-h-[38px] justify-center flex items-center rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 px-3 sm:px-3.5 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer"
               >
-                ← Back to Find Jobs
+                <span className="truncate">← Back to Jobs</span>
               </button>
               <button
                 type="button"
                 onClick={handleOpenPostJobModal}
                 style={{ color: '#FFFFFF' }}
-                className="rounded-xl bg-[#0A66C2] px-4 py-2 text-xs sm:text-sm font-bold text-white hover:bg-[#004182] transition-colors flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
+                className="min-h-[38px] justify-center rounded-xl bg-[#0A66C2] px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold text-white hover:bg-[#004182] transition-colors flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
               >
-                <PlusCircle className="h-4 w-4" />
-                <span>Post New Job Opening</span>
+                <PlusCircle className="h-4 w-4 shrink-0" />
+                <span className="truncate">Post Job</span>
               </button>
             </div>
           </div>
 
           {/* Candidate Filter Ribbon & Search */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
-            <div className="flex items-center gap-2 overflow-x-auto">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
               <span className="font-bold text-zinc-400 uppercase text-[10px] shrink-0">Filter Talent:</span>
               {[
                 { id: 'All', label: `All Verified Candidates (${candidates.length})` },
@@ -3095,7 +3245,7 @@ export function JobsView({
                 <button
                   key={f.id}
                   onClick={() => setSelectedRecruitingFilter(f.id)}
-                  className={`rounded-full px-3 py-1 font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  className={`min-h-[34px] shrink-0 rounded-full px-3 py-1 font-bold transition-all whitespace-nowrap cursor-pointer ${
                     selectedRecruitingFilter === f.id
                       ? "bg-[#0A66C2] text-white shadow-2xs"
                       : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
@@ -3110,7 +3260,7 @@ export function JobsView({
               value={recruitingSearchQuery}
               onChange={(e) => setRecruitingSearchQuery(e.target.value)}
               placeholder="Search candidates by skill, license, city..."
-              className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 sm:w-64"
+              className="w-full sm:w-64 min-h-[38px] rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200"
             />
           </div>
 
@@ -3137,17 +3287,17 @@ export function JobsView({
               {filteredCandidates.map((cand) => (
               <div
                 key={cand.id}
-                className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs hover:border-purple-500/50 hover:shadow-lg transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between space-y-3"
+                className="rounded-xl border border-zinc-200 bg-white p-3.5 sm:p-5 shadow-xs hover:border-purple-500/50 hover:shadow-lg transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between space-y-3"
               >
                 <div className="space-y-2.5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
                       <img
                         src={cand.avatar}
                         alt={cand.name}
                         className="h-12 w-12 rounded-full object-cover border-2 border-purple-200 shrink-0"
                       />
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
                             {cand.name}
@@ -3201,30 +3351,30 @@ export function JobsView({
                 </div>
 
                 {/* Recruiter Action Buttons */}
-                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
+                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   <span className="text-[11px] text-zinc-500 font-medium">
                     Certifications: {cand.certifications.join(', ')}
                   </span>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto shrink-0">
                     {reachedOutCandidateIds.includes(cand.id) && (
                       <button
                         type="button"
                         onClick={() => handleJumpToRecruitingThread(cand.name)}
                         style={{ color: '#FFFFFF' }}
-                        className="rounded-full bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                        className="flex-1 sm:flex-initial justify-center min-h-[38px] rounded-full bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
                       >
-                        <Check className="h-3.5 w-3.5" />
-                        <span>💬 Open in Recruiting Messages</span>
+                        <Check className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">💬 Recruiting Messages</span>
                       </button>
                     )}
                     <button
                       type="button"
                       onClick={() => handleOpenCandidateOutreach(cand)}
                       style={{ color: '#FFFFFF' }}
-                      className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 shadow-2xs"
+                      className="flex-1 sm:flex-initial justify-center min-h-[38px] rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 shadow-2xs"
                     >
-                      <Send className="h-3 w-3" />
+                      <Send className="h-3 w-3 shrink-0" />
                       <span>{reachedOutCandidateIds.includes(cand.id) ? "Message Again" : "Reach Out"}</span>
                     </button>
                   </div>
@@ -3246,9 +3396,17 @@ export function JobsView({
               ? "fixed inset-0 z-50 bg-zinc-950/95 p-3 sm:p-5 flex flex-col gap-3 overflow-hidden"
               : "space-y-4"
           }
+          style={
+            isResumeFullscreen
+              ? {
+                  paddingTop: "max(env(safe-area-inset-top, 0px), 12px)",
+                  paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)",
+                }
+              : undefined
+          }
         >
           {/* Control Header Bar */}
-          <div className="rounded-2xl border border-emerald-200/90 dark:border-emerald-900/60 bg-gradient-to-r from-emerald-50/90 via-teal-50/80 to-sky-50/90 dark:from-emerald-950/50 dark:via-teal-950/40 dark:to-sky-950/40 p-4 shadow-xs">
+          <div className="rounded-2xl border border-emerald-200/90 dark:border-emerald-900/60 bg-gradient-to-r from-emerald-50/90 via-teal-50/80 to-sky-50/90 dark:from-emerald-950/50 dark:via-teal-950/40 dark:to-sky-950/40 p-3.5 sm:p-4 shadow-xs">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -3265,7 +3423,7 @@ export function JobsView({
                 </h2>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap w-full lg:w-auto">
                 {/* Quick Job Selector to Copy Job Description for Tailoring */}
                 <select
                   value={tailorTargetJob?.id || ""}
@@ -3277,7 +3435,7 @@ export function JobsView({
                       handleTailorResumeForJob(found)
                     }
                   }}
-                  className="rounded-full border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-800 dark:text-zinc-200 max-w-[260px] truncate"
+                  className="w-full sm:w-auto sm:max-w-[260px] min-h-[38px] truncate rounded-full border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-800 dark:text-zinc-200"
                 >
                   <option value="">⚡ Select a job to copy for tailoring...</option>
                   {(jobs.length > 0 ? jobs : GLOBAL_JOBS_CATALOG).map((j) => (
@@ -3293,7 +3451,7 @@ export function JobsView({
                     setIsResumeFullscreen(false)
                     setMasterMode('find')
                   }}
-                  className="rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+                  className="min-h-[36px] rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
                 >
                   ← Back to Find Jobs
                 </button>
@@ -3301,7 +3459,7 @@ export function JobsView({
                 <button
                   type="button"
                   onClick={() => setResumeIframeKey((prev) => prev + 1)}
-                  className="rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="min-h-[36px] rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
                   title="Reload Resume Preparation App"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
@@ -3311,7 +3469,7 @@ export function JobsView({
                 <button
                   type="button"
                   onClick={() => setIsResumeFullscreen((prev) => !prev)}
-                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-1.5 text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                  className="min-h-[36px] rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-1.5 text-xs font-bold transition-colors cursor-pointer shadow-xs"
                 >
                   {isResumeFullscreen ? "Exit Fullscreen" : "⛶ Expand Fullscreen"}
                 </button>
@@ -3331,16 +3489,16 @@ export function JobsView({
                     </span>
                     <span className="text-xs text-zinc-500">at {tailorTargetJob.company}</span>
                   </div>
-                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 truncate">
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-2 sm:truncate">
                     Paste the copied job description into <strong>Resume Tailor → Step 2 (Target Job Description)</strong> below to generate your ATS-optimized resume &amp; cover letter.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
                   <button
                     type="button"
                     onClick={() => handleTailorResumeForJob(tailorTargetJob)}
-                    className="rounded-full bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                    className="flex-1 sm:flex-initial justify-center min-h-[36px] rounded-full bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
                   >
                     {copiedJobDesc ? (
                       <>
@@ -3380,7 +3538,7 @@ export function JobsView({
 
       {/* JOB DETAILS & DIRECT APPLICATION MODAL */}
       <Dialog open={isJobDetailOpen} onOpenChange={setIsJobDetailOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] max-h-[88dvh] overflow-y-auto p-4 sm:p-6 rounded-2xl">
           {selectedJob && (
             <>
               <DialogHeader>
@@ -3424,27 +3582,27 @@ export function JobsView({
                   </div>
                 )}
 
-                <div className="flex items-center justify-between gap-2 pt-4 border-t border-zinc-200 dark:border-zinc-800 flex-wrap">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 border-t border-zinc-200 dark:border-zinc-800">
                   <button
                     type="button"
                     onClick={() => {
                       setIsJobDetailOpen(false)
                       handleTailorResumeForJob(selectedJob)
                     }}
-                    className="rounded-full bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 flex items-center gap-1.5 cursor-pointer"
+                    className="w-full sm:w-auto justify-center min-h-[40px] rounded-full bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 flex items-center gap-1.5 cursor-pointer"
                   >
                     <FileText className="h-3.5 w-3.5" />
                     <span>Tailor Resume in Prep App</span>
                   </button>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
                     <button
                       type="button"
                       onClick={() => {
                         setIsJobDetailOpen(false)
                         handleOpenApply(selectedJob)
                       }}
-                      className="rounded-full bg-sky-50 border border-sky-200 px-4 py-2 text-xs font-bold text-[#0A66C2] hover:bg-sky-100 cursor-pointer"
+                      className="w-full sm:w-auto justify-center min-h-[40px] rounded-full bg-sky-50 border border-sky-200 px-4 py-2 text-xs font-bold text-[#0A66C2] hover:bg-sky-100 flex items-center cursor-pointer"
                     >
                       Easy Apply on ConnectIn
                     </button>
@@ -3454,7 +3612,7 @@ export function JobsView({
                         href={resolveExternalJobApplyUrl(selectedJob)}
                         target="_blank"
                         rel="noreferrer"
-                        className="rounded-full bg-[#0A66C2] px-5 py-2 text-xs font-bold text-white hover:bg-[#004182] flex items-center gap-1.5 shadow-xs"
+                        className="w-full sm:w-auto justify-center min-h-[40px] rounded-full bg-[#0A66C2] px-5 py-2 text-xs font-bold text-white hover:bg-[#004182] flex items-center gap-1.5 shadow-xs"
                       >
                         <span>Apply on Employer Site</span>
                         <ExternalLink className="h-3.5 w-3.5" />
@@ -3470,7 +3628,7 @@ export function JobsView({
 
       {/* POST NEW JOB MODAL */}
       <Dialog open={isPostJobOpen} onOpenChange={setIsPostJobOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg w-[calc(100vw-1.5rem)] max-h-[88dvh] overflow-y-auto p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <PlusCircle className="h-5 w-5 text-[#0A66C2]" />
@@ -3504,7 +3662,7 @@ export function JobsView({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="font-bold text-zinc-700 dark:text-zinc-300">Country / Region</label>
                   <select
@@ -3543,7 +3701,7 @@ export function JobsView({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="font-bold text-zinc-700 dark:text-zinc-300">Company</label>
                   <input
@@ -3566,7 +3724,7 @@ export function JobsView({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="font-bold text-zinc-700 dark:text-zinc-300">Workplace Type</label>
                   <select
@@ -3593,7 +3751,7 @@ export function JobsView({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="font-bold text-zinc-700 dark:text-zinc-300">Location / City</label>
                   <input
@@ -3652,17 +3810,17 @@ export function JobsView({
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                 <button
                   type="button"
                   onClick={() => setIsPostJobOpen(false)}
-                  className="rounded-full px-4 py-1.5 font-bold text-zinc-600 hover:bg-zinc-100"
+                  className="w-full sm:w-auto min-h-[40px] rounded-full px-4 py-1.5 font-bold text-zinc-600 hover:bg-zinc-100 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-[#0A66C2] px-5 py-2 font-bold text-white hover:bg-[#004182] cursor-pointer"
+                  className="w-full sm:w-auto min-h-[40px] rounded-full bg-[#0A66C2] px-5 py-2 font-bold text-white hover:bg-[#004182] cursor-pointer"
                 >
                   Publish &amp; Sync Immediately
                 </button>
@@ -3674,7 +3832,7 @@ export function JobsView({
 
       {/* EASY APPLY MODAL — NOCTIS AUTONOMOUS APPLICATION AGENT */}
       <Dialog open={isApplyModalOpen} onOpenChange={setIsApplyModalOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-xl w-[calc(100vw-1.5rem)] max-h-[88dvh] overflow-y-auto p-4 sm:p-6 rounded-2xl">
           {selectedJob && (() => {
             const jobFlywheel = getJobFlywheelRecommendation(selectedJob)
             const previewDirectAts = isDirectConnectlnAtsJob(selectedJob)
@@ -3704,7 +3862,7 @@ export function JobsView({
                 {applyStep === 'form' ? (
                   <form onSubmit={handleSubmitApplication} className="space-y-3.5 pt-1 text-xs">
                     <div className="rounded-xl bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 dark:from-indigo-950/50 dark:via-sky-950/40 dark:to-emerald-950/40 border border-sky-200 dark:border-sky-800 p-3 space-y-1.5">
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <span className="font-extrabold text-zinc-900 dark:text-zinc-100">
                           {previewDirectAts
                             ? '🤖 Noctis™ Will Deliver Directly to Hiring Inbox & ConnectLn ATS'
@@ -3835,7 +3993,7 @@ export function JobsView({
                       />
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex-wrap">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                       {selectedJob.applyUrl ? (
                         <a
                           href={resolveExternalJobApplyUrl(selectedJob)}
@@ -3844,24 +4002,24 @@ export function JobsView({
                           className="text-xs font-semibold text-[#0A66C2] hover:underline flex items-center gap-1"
                         >
                           <span>Or apply manually on {selectedJob.company}</span>
-                          <ExternalLink className="h-3 w-3" />
+                          <ExternalLink className="h-3 w-3 shrink-0" />
                         </a>
                       ) : <span />}
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                         <button
                           type="button"
                           onClick={() => setIsApplyModalOpen(false)}
-                          className="rounded-full px-4 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-100 cursor-pointer"
+                          className="w-full sm:w-auto justify-center min-h-[40px] rounded-full px-4 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-100 flex items-center cursor-pointer"
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
                           style={{ color: '#FFFFFF' }}
-                          className="rounded-full bg-[#0A66C2] px-5 py-2 text-xs font-bold text-white hover:bg-[#004182] flex items-center gap-1.5 shadow-xs cursor-pointer"
+                          className="w-full sm:w-auto justify-center min-h-[40px] rounded-full bg-[#0A66C2] px-5 py-2 text-xs font-bold text-white hover:bg-[#004182] flex items-center gap-1.5 shadow-xs cursor-pointer"
                         >
-                          <Sparkles className="h-3.5 w-3.5" />
+                          <Sparkles className="h-3.5 w-3.5 shrink-0" />
                           <span>
                             {previewDirectAts
                               ? '🤖 Deliver Directly via Noctis™ ATS'
@@ -3982,14 +4140,14 @@ export function JobsView({
                       </div>
                     )}
 
-                    <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
+                    <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-stretch sm:items-center justify-center gap-2 pt-1">
                       {lastSubmittedApplication?.noctisCoverBrief && (
                         <button
                           type="button"
                           onClick={() => {
                             navigator.clipboard?.writeText(lastSubmittedApplication.noctisCoverBrief || '').catch(() => {})
                           }}
-                          className="rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 px-3.5 py-2 text-xs font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer"
+                          className="justify-center min-h-[38px] rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 px-3.5 py-2 text-xs font-bold text-zinc-800 dark:text-zinc-200 flex items-center cursor-pointer"
                         >
                           📋 Copy Cover Brief
                         </button>
@@ -3998,7 +4156,7 @@ export function JobsView({
                         <button
                           type="button"
                           onClick={() => handleDownloadApplicationReceipt(lastSubmittedApplication)}
-                          className="rounded-full bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2 text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer"
+                          className="justify-center min-h-[38px] rounded-full bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2 text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer"
                         >
                           <span>📄 Download Official Receipt (.txt)</span>
                         </button>
@@ -4020,7 +4178,7 @@ export function JobsView({
                           setIsApplyModalOpen(false)
                           onNavigateMessaging?.()
                         }}
-                        className="rounded-full bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 px-3.5 py-2 text-xs font-bold text-indigo-700 cursor-pointer"
+                        className="justify-center min-h-[38px] rounded-full bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 px-3.5 py-2 text-xs font-bold text-indigo-700 flex items-center cursor-pointer"
                       >
                         💬 View Response in Messaging →
                       </button>
@@ -4030,7 +4188,7 @@ export function JobsView({
                           setIsApplyModalOpen(false)
                           setMasterMode('applications')
                         }}
-                        className="rounded-full bg-sky-50 border border-sky-200 hover:bg-sky-100 px-3.5 py-2 text-xs font-bold text-[#0A66C2] cursor-pointer"
+                        className="justify-center min-h-[38px] rounded-full bg-sky-50 border border-sky-200 hover:bg-sky-100 px-3.5 py-2 text-xs font-bold text-[#0A66C2] flex items-center cursor-pointer"
                       >
                         📋 View in My Applications ({applications.length})
                       </button>
@@ -4039,16 +4197,16 @@ export function JobsView({
                           href={resolveExternalJobApplyUrl(selectedJob)}
                           target="_blank"
                           rel="noreferrer"
-                          className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-3.5 py-2 text-xs font-bold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 flex items-center gap-1"
+                          className="justify-center min-h-[38px] rounded-full bg-zinc-100 dark:bg-zinc-800 px-3.5 py-2 text-xs font-bold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 flex items-center gap-1"
                         >
                           <span>Open Employer Portal</span>
-                          <ExternalLink className="h-3 w-3" />
+                          <ExternalLink className="h-3 w-3 shrink-0" />
                         </a>
                       )}
                       <button
                         type="button"
                         onClick={() => setIsApplyModalOpen(false)}
-                        className="rounded-full bg-[#0A66C2] px-5 py-2 text-xs font-bold text-white hover:bg-[#004182] cursor-pointer"
+                        className="justify-center min-h-[38px] rounded-full bg-[#0A66C2] px-5 py-2 text-xs font-bold text-white hover:bg-[#004182] flex items-center cursor-pointer"
                       >
                         Done
                       </button>
@@ -4063,7 +4221,7 @@ export function JobsView({
 
       {/* RECRUITER DIRECT OUTREACH & INTERVIEW INVITATION MODAL */}
       <Dialog open={isOutreachModalOpen} onOpenChange={setIsOutreachModalOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg w-[calc(100vw-1.5rem)] max-h-[88dvh] overflow-y-auto p-4 sm:p-6 rounded-2xl">
           {outreachCandidate && (
             <>
               <DialogHeader>
@@ -4143,7 +4301,7 @@ export function JobsView({
                   </div>
 
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
                       <label className="font-bold text-zinc-700 dark:text-zinc-300">
                         Direct Recruiter InMail &amp; Calendar Invitation
                       </label>
@@ -4169,20 +4327,20 @@ export function JobsView({
                     />
                   </div>
 
-                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
                     <button
                       type="button"
                       onClick={() => setIsOutreachModalOpen(false)}
-                      className="rounded-full px-4 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-100 cursor-pointer"
+                      className="w-full sm:w-auto justify-center min-h-[40px] rounded-full px-4 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-100 flex items-center cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       style={{ color: '#FFFFFF' }}
-                      className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-5 py-2 text-xs font-bold text-white flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                      className="w-full sm:w-auto justify-center min-h-[40px] rounded-full bg-[#0A66C2] hover:bg-[#004182] px-5 py-2 text-xs font-bold text-white flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                     >
-                      <Send className="h-3.5 w-3.5" />
+                      <Send className="h-3.5 w-3.5 shrink-0" />
                       <span>Send &amp; Open in Recruiting Messages →</span>
                     </button>
                   </div>

@@ -164,6 +164,7 @@ interface LiveHarvestedMediaShowcaseProps {
   onSelectForMediaStage?: (item: HarvestedMediaItem) => void
   onShareItemToFeed?: (item: HarvestedMediaItem) => void
   compact?: boolean
+  defaultCollapsedOnMobile?: boolean
 }
 
 const HEADER_CONFIG: Record<
@@ -213,6 +214,7 @@ export function LiveHarvestedMediaShowcase({
   onSelectForMediaStage,
   onShareItemToFeed,
   compact = false,
+  defaultCollapsedOnMobile = false,
 }: LiveHarvestedMediaShowcaseProps) {
   const [items, setItems] = useState<HarvestedMediaItem[]>(() =>
     getStoredHarvestedItemsForDestination(destination)
@@ -228,6 +230,12 @@ export function LiveHarvestedMediaShowcase({
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [isSyncingNow, setIsSyncingNow] = useState<boolean>(false)
   const [isExpanded, setIsExpanded] = useState<boolean>(true)
+
+  useEffect(() => {
+    if (defaultCollapsedOnMobile && typeof window !== "undefined" && window.innerWidth < 768) {
+      setIsExpanded(false)
+    }
+  }, [defaultCollapsedOnMobile])
   const [showAllItems, setShowAllItems] = useState<boolean>(false)
   const [secondsToNextAutoPull, setSecondsToNextAutoPull] = useState<number>(86400)
   const [appliedIds, setAppliedIds] = useState<string[]>([])
@@ -400,15 +408,19 @@ export function LiveHarvestedMediaShowcase({
   if (visibleItems.length === 0) return null
 
   return (
-    <div className="rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-xs space-y-3">
+    <div className="rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 sm:p-4 shadow-xs space-y-3">
       {/* Clean Editorial Section Header — Zero Cluttered Telemetry Pills */}
       <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <div className="min-w-0 flex-1 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setIsExpanded((prev) => !prev)}
+          className="min-w-0 flex-1 flex items-center gap-2 text-left cursor-pointer"
+        >
           <HeaderIcon className="h-4 w-4 text-zinc-700 dark:text-zinc-300 shrink-0" />
-          <h3 className="text-[14.5px] font-bold text-[#191919] dark:text-white truncate">
+          <h3 className="text-[13.5px] sm:text-[14.5px] font-bold text-[#191919] dark:text-white line-clamp-2 sm:truncate text-left">
             {cfg.title}
           </h3>
-        </div>
+        </button>
 
         <div className="flex items-center gap-1.5 flex-wrap shrink-0">
           {canAccessAdminBackend && (
