@@ -245,11 +245,22 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
         const norm = normalizeDialablePhone(data.phone)
         if (deletedPhones.has(norm)) continue
         const existing = cache.get(norm)
+        const isProtectedEsther = norm === "+14108418358"
+        const rawDataName = String(data.name || "").trim()
+        const rawDataEmail = String(data.email || "").trim().toLowerCase()
+        const isCorruptedEstherAlias =
+          isProtectedEsther &&
+          (rawDataName.toLowerCase() === "expedite consults llc" ||
+            rawDataName.toLowerCase() === "kwesi asiedu" ||
+            rawDataEmail === "kasiedu@expedite-consults.com" ||
+            String(data.avatar || "").includes("/brand/kwesi-avatar"))
+        const cleanDataName = isCorruptedEstherAlias ? "" : rawDataName
+        const cleanDataEmail = isCorruptedEstherAlias ? "" : data.email
         const realDataEmail =
-          data.email &&
-          !data.email.endsWith("@connectin.app") &&
-          !data.email.endsWith("@connectin.phone")
-            ? data.email
+          cleanDataEmail &&
+          !cleanDataEmail.endsWith("@connectin.app") &&
+          !cleanDataEmail.endsWith("@connectin.phone")
+            ? cleanDataEmail
             : ""
         const realExistingEmail =
           existing?.email &&
@@ -260,7 +271,7 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
         const mergedEmail =
           realDataEmail ||
           realExistingEmail ||
-          data.email ||
+          cleanDataEmail ||
           existing?.email
         const isSyntheticEmail =
           !mergedEmail ||
@@ -269,11 +280,13 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
         const isDemo555 = /^\+1\d{3}555\d{4}$/.test(norm)
         cache.set(norm, {
           ...existing,
-          ...data,
+          ...(isCorruptedEstherAlias ? {} : data),
           phone: norm,
           prettyPhone: formatPrettyPhoneDisplay(norm),
-          name: data.name || existing?.name || norm,
+          name: cleanDataName || existing?.name || norm,
           email: mergedEmail,
+          avatar: isCorruptedEstherAlias ? existing?.avatar : data.avatar ?? existing?.avatar,
+          headline: isCorruptedEstherAlias ? existing?.headline : data.headline ?? existing?.headline,
           verifiedBy2FA: Boolean(
             data.verifiedBy2FA ??
               existing?.verifiedBy2FA ??
@@ -285,6 +298,8 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
           fcmTokens: Array.isArray(data.fcmTokens)
             ? data.fcmTokens
             : existing?.fcmTokens || [],
+          registeredAtIso: existing?.registeredAtIso || data.registeredAtIso || seedNowIso,
+          updatedAtIso: data.updatedAtIso || existing?.updatedAtIso || seedNowIso,
         })
       }
     }
@@ -365,14 +380,29 @@ export async function registerWhatsAppMemberNumber(params: {
     fcmTokens = [newFcm, ...fcmTokens].slice(0, 6)
   }
 
+  const isProtectedEsther = normPhone === "+14108418358"
+  const incomingNameTrim = params.name?.trim() || ""
+  const incomingEmailNorm = params.email?.trim().toLowerCase() || ""
+  const blockCorruptOverwrite =
+    isProtectedEsther &&
+    (incomingNameTrim.toLowerCase() === "expedite consults llc" ||
+      incomingNameTrim.toLowerCase() === "kwesi asiedu" ||
+      incomingEmailNorm === "kasiedu@expedite-consults.com")
+
   const record: WhatsAppDirectoryMember = {
     phone: normPhone,
     prettyPhone: formatPrettyPhoneDisplay(normPhone),
-    name: params.name?.trim() || existing?.name || formatPrettyPhoneDisplay(normPhone),
+    name:
+      (!blockCorruptOverwrite && incomingNameTrim) ||
+      existing?.name ||
+      (isProtectedEsther ? "Esther Boa Asiedu" : formatPrettyPhoneDisplay(normPhone)),
     fcmTokens,
-    email: params.email?.trim().toLowerCase() || existing?.email,
-    avatar: params.avatar || existing?.avatar,
-    headline: params.headline || existing?.headline,
+    email:
+      (!blockCorruptOverwrite && incomingEmailNorm) ||
+      existing?.email ||
+      (isProtectedEsther ? "esther.asiedu@connectin.com" : undefined),
+    avatar: blockCorruptOverwrite ? existing?.avatar : params.avatar || existing?.avatar,
+    headline: blockCorruptOverwrite ? existing?.headline : params.headline || existing?.headline,
     verifiedBy2FA: Boolean(params.verifiedBy2FA || existing?.verifiedBy2FA),
     pushSubscriptions: subs,
     registeredAtIso: existing?.registeredAtIso || nowIso,

@@ -21,6 +21,7 @@ import {
     saveCustomDeviceRingtoneDataUrl,
     getCustomDeviceRingtoneName,
     previewConnectLnRingtone,
+    startOutgoingCallerRingbackTone,
 } from '@/lib/connectin-background-ring';
 import {
     parseSocialVideoUrl,
@@ -1785,6 +1786,7 @@ export function WhatsAppModeWorkspace({
             avatar,
             mode: callMode,
         });
+        startOutgoingCallerRingbackTone();
     };
 
     const launchSmartVoiceCall = async (rawTarget: string, avatarOverride?: string) => {
@@ -5091,8 +5093,10 @@ export function WhatsAppModeWorkspace({
                         callerEmail={currentUser?.email}
                         roomJoinUrl={generatedCallLink || undefined}
                         onUpgradeToVideoHuddle={(label) => {
+                            const targetAvatar = activeSoftphoneTarget?.avatar;
+                            const targetPhone = activeSoftphoneTarget?.phone;
                             setActiveSoftphoneTarget(null);
-                            onStartLiveCall('video', label);
+                            launchWhatsAppDirectCall(targetPhone || label, 'video', targetAvatar);
                         }}
                     />
                 </div>

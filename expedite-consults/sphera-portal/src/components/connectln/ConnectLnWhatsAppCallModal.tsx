@@ -46,6 +46,7 @@ import {
   openAlwaysOnTopCallStandbyPiP,
   setCallMediaSilenceActive,
   startOutgoingCallerRingbackTone,
+  resumeOutgoingCallerRingbackIfActive,
   stopOutgoingCallerRingbackTone,
   stopLoudPhoneRingtone,
   stopTitleCallFlash,
@@ -1263,6 +1264,7 @@ export function ConnectLnWhatsAppCallModal({
   const maxRemoteCountSeenRef = useRef<number>(0)
   const hasSentInitialReopenRef = useRef<boolean>(false)
   const dialedOutboundCallIdRef = useRef<string>("")
+  const isWaitingForAnswerRef = useRef<boolean>(false)
 
   // Twilio Browser Conference Host Connection (`ConferenceRoom = conf_<callId>`)
   const pstnDeviceRef = useRef<any>(null)
@@ -1885,6 +1887,14 @@ export function ConnectLnWhatsAppCallModal({
           dialPeerNowRef.current?.(pid, true)
         }
       })
+      if (isWaitingForAnswerRef.current) {
+        resumeOutgoingCallerRingbackIfActive()
+        window.setTimeout(() => {
+          if (isWaitingForAnswerRef.current) {
+            resumeOutgoingCallerRingbackIfActive()
+          }
+        }, 350)
+      }
     },
     [isMicMuted]
   )
@@ -2245,11 +2255,15 @@ export function ConnectLnWhatsAppCallModal({
 
     let cancelled = false
     markConnectLnCallHandled(callId)
-    stopLoudPhoneRingtone(true)
+    stopLoudPhoneRingtone(Boolean(isIncomingAnswer))
     stopTitleCallFlash()
     dismissFloatingCallPopups()
     if (isIncomingAnswer) {
+      isWaitingForAnswerRef.current = false
       stopOutgoingCallerRingbackTone()
+    } else {
+      isWaitingForAnswerRef.current = true
+      startOutgoingCallerRingbackTone()
     }
     setRecipientName(
       looksLikeClientPhone(targetLabel) ? prettyClientPhone(targetLabel) : targetLabel || "ConnectLn Call"
@@ -2270,7 +2284,13 @@ export function ConnectLnWhatsAppCallModal({
           targetAvatar,
         }).then((data) => {
           if (cancelled || !data?.ok) return
-          if (data.recipient?.name) setRecipientName(data.recipient.name)
+          const respName = String(data.recipient?.name || "").trim()
+          const isStaleFounderAlias =
+            respName.toLowerCase() === "expedite consults llc" &&
+            targetLabel &&
+            !looksLikeClientPhone(targetLabel) &&
+            !targetLabel.toLowerCase().includes("expedite")
+          if (respName && !isStaleFounderAlias) setRecipientName(respName)
           if (data.recipient?.phone) setRecipientPhone(data.recipient.phone)
           if (data.recipient?.email) targetEmailRef.current = data.recipient.email
           if (data.recipient?.avatar) setRecipientAvatar(data.recipient.avatar)
@@ -3271,6 +3291,7 @@ export function ConnectLnWhatsAppCallModal({
     callStatus !== "ended" &&
     remoteWebRtcPeers.length === 0 &&
     !hasAnyWebRtcStream
+  isWaitingForAnswerRef.current = Boolean(isWaitingForAnswer)
   useEffect(() => {
     if (!isWaitingForAnswer || typeof window === "undefined") {
       stopOutgoingCallerRingbackTone()
@@ -3283,6 +3304,7 @@ export function ConnectLnWhatsAppCallModal({
   }, [isWaitingForAnswer])
 
   const handleHangup = (forceEndForAll = false) => {
+    isWaitingForAnswerRef.current = false
     stopOutgoingCallerRingbackTone()
     markConnectLnCallHandled(callId)
     const myPhone = getMyLinkedConnectLnPhone()

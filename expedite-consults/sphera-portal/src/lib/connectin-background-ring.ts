@@ -309,18 +309,21 @@ export function previewConnectLnRingtone(id?: ConnectLnRingtoneId, durationMs = 
 
 /**
  * Standard telephone calling/ringback tone (North America / ITU-T cadence):
- * Dual 440 Hz + 480 Hz sine wave, 2.0s ON followed by 4.0s OFF (6.0s cycle).
+ * Dual 440 Hz + 480 Hz sine wave with subtle warm harmonic clarity (1.8s ON / 2.2s OFF, 4.0s cycle)
+ * so laptop and mobile speakers project the calling tone clearly even during mic capture/AEC.
  */
 function synthesizeStandardPhoneRingbackSample(t: number): number {
-  if (t < 0.15 || t > 2.15) return 0
-  const localT = t - 0.15
-  const attack = Math.min(1, localT / 0.025)
-  const release = Math.min(1, (2.0 - localT) / 0.04)
+  if (t < 0.02 || t > 1.82) return 0
+  const localT = t - 0.02
+  const attack = Math.min(1, localT / 0.02)
+  const release = Math.min(1, (1.8 - localT) / 0.035)
   const env = Math.max(0, Math.min(attack, release))
   const wave =
-    0.5 * Math.sin(2 * Math.PI * 440 * localT) +
-    0.5 * Math.sin(2 * Math.PI * 480 * localT)
-  return wave * env
+    0.46 * Math.sin(2 * Math.PI * 440 * localT) +
+    0.46 * Math.sin(2 * Math.PI * 480 * localT) +
+    0.09 * Math.sin(2 * Math.PI * 880 * localT) +
+    0.07 * Math.sin(2 * Math.PI * 960 * localT)
+  return Math.tanh(wave * 1.15) * env
 }
 
 function synthesizeMelodicRingtoneSamples(
@@ -434,12 +437,12 @@ let cachedOutgoingRingbackUri: string | null = null
 function getOutgoingRingbackWavUri(): string {
   if (cachedOutgoingRingbackUri) return cachedOutgoingRingbackUri
   const sampleRate = 16000
-  const durationSec = 6.0 // Authentic 440 Hz + 480 Hz telephone ringback: 2.0s ON / 4.0s OFF
+  const durationSec = 4.0 // Authentic 440 Hz + 480 Hz telephone ringback: 1.8s ON / 2.2s OFF
   const totalSamples = Math.floor(sampleRate * durationSec)
   const samples = new Int16Array(totalSamples)
 
   for (let i = 0; i < totalSamples; i++) {
-    samples[i] = Math.round(synthesizeStandardPhoneRingbackSample(i / sampleRate) * 16000)
+    samples[i] = Math.round(Math.max(-1, Math.min(1, synthesizeStandardPhoneRingbackSample(i / sampleRate))) * 27500)
   }
 
   cachedOutgoingRingbackUri = encodeMonoPcm16WavDataUri(samples, sampleRate)
@@ -473,12 +476,12 @@ function buildAudioBuffers(ctx: AudioContext): void {
 
   if (!outgoingRingbackBuffer) {
     const sr = ctx.sampleRate
-    const durationSec = 6.0
+    const durationSec = 4.0
     const len = Math.floor(sr * durationSec)
     const buf = ctx.createBuffer(1, len, sr)
     const ch = buf.getChannelData(0)
     for (let i = 0; i < len; i++) {
-      ch[i] = synthesizeStandardPhoneRingbackSample(i / sr) * 0.48
+      ch[i] = synthesizeStandardPhoneRingbackSample(i / sr) * 0.85
     }
     outgoingRingbackBuffer = buf
   }
@@ -685,7 +688,7 @@ function ensureLiveAudioPipelineStarted(): void {
       outgoingRingbackAudio = new Audio(getOutgoingRingbackWavUri())
       outgoingRingbackAudio.dataset.connectlnCallAudio = "true"
       outgoingRingbackAudio.loop = true
-      outgoingRingbackAudio.volume = 0.65
+      outgoingRingbackAudio.volume = 0.92
       outgoingRingbackAudio.preload = "auto"
       outgoingRingbackAudio.setAttribute("playsinline", "true")
       outgoingRingbackAudio.style.cssText =
@@ -717,6 +720,7 @@ export function onBackgroundUnlockChange(cb: () => void): () => void {
 }
 
 let fallbackAudioGestureUnlocked = false
+let outgoingRingbackGestureUnlocked = false
 
 /**
  * Unlocks the continuous hardware background audio pipeline on the user's first interaction.
@@ -753,11 +757,26 @@ export function unlockBackgroundRingingSession(): void {
         })
         .catch(() => {})
     }
+    if (outgoingRingbackAudio && !outgoingRingbackGestureUnlocked && !isOutgoingRingbackActive) {
+      outgoingRingbackAudio.muted = true
+      outgoingRingbackAudio
+        .play()
+        .then(() => {
+          outgoingRingbackGestureUnlocked = true
+          if (!isOutgoingRingbackActive && outgoingRingbackAudio) {
+            outgoingRingbackAudio.pause()
+            outgoingRingbackAudio.currentTime = 0
+            outgoingRingbackAudio.muted = false
+          }
+        })
+        .catch(() => {})
+    }
     if (
       liveAudioCtx?.state === "running" &&
       keepAliveHtmlAudio &&
       !keepAliveHtmlAudio.paused &&
-      (!fallbackWavRingAudio || fallbackAudioGestureUnlocked)
+      (!fallbackWavRingAudio || fallbackAudioGestureUnlocked) &&
+      (!outgoingRingbackAudio || outgoingRingbackGestureUnlocked)
     ) {
       events.forEach((ev) => window.removeEventListener(ev, handler, true))
       notifyUnlockSubscribers()
@@ -853,7 +872,9 @@ function ensureCallStopControlListeners(): void {
       callStopControlChannel.onmessage = (ev) => {
         if (ev?.data?.type === "STOP_RING") {
           stopLoudPhoneRingtoneLocalOnly()
-          stopOutgoingCallerRingbackTone()
+          if (ev?.data?.stopOutgoingRingback === true) {
+            stopOutgoingCallerRingbackTone()
+          }
           stopTitleCallFlash()
           dismissFloatingCallPopups()
         }
@@ -862,8 +883,15 @@ function ensureCallStopControlListeners(): void {
   } catch {}
   window.addEventListener("storage", (ev) => {
     if (ev.key === CALL_STOP_RING_STORAGE_KEY && ev.newValue) {
+      let stopOutgoing = false
+      try {
+        const parsed = JSON.parse(ev.newValue)
+        stopOutgoing = parsed?.stopOutgoingRingback === true
+      } catch {}
       stopLoudPhoneRingtoneLocalOnly()
-      stopOutgoingCallerRingbackTone()
+      if (stopOutgoing) {
+        stopOutgoingCallerRingbackTone()
+      }
       stopTitleCallFlash()
       dismissFloatingCallPopups()
     }
@@ -874,10 +902,18 @@ if (typeof window !== "undefined") {
   ensureCallStopControlListeners()
 }
 
-export function broadcastStopRingtoneAcrossTabs(callId?: string): void {
+export function broadcastStopRingtoneAcrossTabs(
+  callId?: string,
+  stopOutgoingRingback = false
+): void {
   if (typeof window === "undefined") return
   ensureCallStopControlListeners()
-  const payload = { type: "STOP_RING", callId: callId || "", ts: Date.now() }
+  const payload = {
+    type: "STOP_RING",
+    callId: callId || "",
+    stopOutgoingRingback,
+    ts: Date.now(),
+  }
   try {
     callStopControlChannel?.postMessage(payload)
   } catch {}
@@ -1086,75 +1122,14 @@ export function stopLoudPhoneRingtone(broadcastToOtherTabs = false): void {
 
 /**
  * Plays the classic outgoing telephone ringback tone (`ring... ring...`) for the caller
- * while waiting for the recipient to answer. Uses BOTH Web Audio (`AudioBufferSourceNode`)
- * AND a DOM-attached `<audio loop>` WAV element so it works reliably on every desktop & mobile browser.
+ * while waiting for the recipient to answer. Handles suspended/interrupted Web Audio,
+ * gesture-unlocks HTML `<audio loop>` fallback, and recovers if `getUserMedia()` interrupts playback.
  */
 let outgoingRingbackSeq = 0
+let outgoingRingbackWatchdogTimer: ReturnType<typeof setInterval> | null = null
+let outgoingRingbackInteractionBound = false
 
-export function startOutgoingCallerRingbackTone(): void {
-  if (typeof window === "undefined") return
-  const myRingbackSeq = ++outgoingRingbackSeq
-  isOutgoingRingbackActive = true
-  ensureLiveAudioPipelineStarted()
-
-  // Strict single-source playback guard: never layer or restart if already ringing
-  if (
-    activeOutgoingRingbackSource ||
-    (outgoingRingbackAudio && !outgoingRingbackAudio.paused)
-  ) {
-    return
-  }
-
-  let startedWebAudio = false
-  if (liveAudioCtx && outgoingRingbackBuffer && !activeOutgoingRingbackSource) {
-    try {
-      if (liveAudioCtx.state === "suspended") {
-        liveAudioCtx.resume().catch(() => {})
-      }
-      if (liveAudioCtx.state === "running") {
-        if (outgoingRingbackAudio && !outgoingRingbackAudio.paused) {
-          outgoingRingbackAudio.pause()
-          outgoingRingbackAudio.currentTime = 0
-        }
-        const gain = liveAudioCtx.createGain()
-        gain.gain.value = 0.5
-        const src = liveAudioCtx.createBufferSource()
-        src.buffer = outgoingRingbackBuffer
-        src.loop = true
-        src.connect(gain)
-        gain.connect(liveAudioCtx.destination)
-        src.start(0)
-        activeOutgoingRingbackSource = src
-        activeOutgoingRingbackGain = gain
-        startedWebAudio = true
-      }
-    } catch {}
-  }
-
-  if (!startedWebAudio && outgoingRingbackAudio) {
-    const rbEl = outgoingRingbackAudio
-    rbEl.muted = false
-    rbEl.volume = 0.58
-    if (rbEl.paused) {
-      rbEl
-        .play()
-        .then(() => {
-          if (!isOutgoingRingbackActive || myRingbackSeq !== outgoingRingbackSeq) {
-            try {
-              rbEl.muted = true
-              rbEl.pause()
-              rbEl.currentTime = 0
-            } catch {}
-          }
-        })
-        .catch(() => {})
-    }
-  }
-}
-
-export function stopOutgoingCallerRingbackTone(): void {
-  outgoingRingbackSeq++
-  isOutgoingRingbackActive = false
+function stopWebAudioOutgoingRingbackSource(): void {
   if (activeOutgoingRingbackSource) {
     try {
       activeOutgoingRingbackSource.stop()
@@ -1168,6 +1143,210 @@ export function stopOutgoingCallerRingbackTone(): void {
     } catch {}
     activeOutgoingRingbackGain = null
   }
+}
+
+function startWebAudioOutgoingRingback(expectedSeq: number): boolean {
+  if (
+    !isOutgoingRingbackActive ||
+    expectedSeq !== outgoingRingbackSeq ||
+    !liveAudioCtx ||
+    !outgoingRingbackBuffer ||
+    liveAudioCtx.state !== "running"
+  ) {
+    return false
+  }
+  if (activeOutgoingRingbackSource) return true
+  try {
+    if (outgoingRingbackAudio && !outgoingRingbackAudio.paused) {
+      outgoingRingbackAudio.muted = true
+      outgoingRingbackAudio.pause()
+      outgoingRingbackAudio.currentTime = 0
+    }
+    const gain = liveAudioCtx.createGain()
+    gain.gain.value = 0.88
+    const src = liveAudioCtx.createBufferSource()
+    src.buffer = outgoingRingbackBuffer
+    src.loop = true
+    src.connect(gain)
+    gain.connect(liveAudioCtx.destination)
+    src.start(0)
+    activeOutgoingRingbackSource = src
+    activeOutgoingRingbackGain = gain
+    return true
+  } catch {
+    return false
+  }
+}
+
+function startHtmlAudioOutgoingRingback(expectedSeq: number): void {
+  if (!outgoingRingbackAudio || !isOutgoingRingbackActive || expectedSeq !== outgoingRingbackSeq) {
+    return
+  }
+  const rbEl = outgoingRingbackAudio
+  rbEl.muted = false
+  rbEl.volume = 0.92
+  if (rbEl.paused) {
+    rbEl
+      .play()
+      .then(() => {
+        if (!isOutgoingRingbackActive || expectedSeq !== outgoingRingbackSeq) {
+          try {
+            rbEl.muted = true
+            rbEl.pause()
+            rbEl.currentTime = 0
+          } catch {}
+        }
+      })
+      .catch(() => {
+        if (
+          isOutgoingRingbackActive &&
+          expectedSeq === outgoingRingbackSeq &&
+          liveAudioCtx &&
+          outgoingRingbackBuffer &&
+          liveAudioCtx.state === "running"
+        ) {
+          startWebAudioOutgoingRingback(expectedSeq)
+        }
+      })
+  }
+}
+
+export function isOutgoingRingbackAudiblyPlaying(): boolean {
+  return Boolean(
+    isOutgoingRingbackActive &&
+      ((activeOutgoingRingbackSource && liveAudioCtx?.state === "running") ||
+        (outgoingRingbackAudio && !outgoingRingbackAudio.paused && !outgoingRingbackAudio.muted))
+  )
+}
+
+export function resumeOutgoingCallerRingbackIfActive(): void {
+  if (typeof window === "undefined" || !isOutgoingRingbackActive) return
+  if (isOutgoingRingbackAudiblyPlaying()) return
+  const seq = outgoingRingbackSeq
+  ensureLiveAudioPipelineStarted()
+  if (liveAudioCtx && !outgoingRingbackBuffer) {
+    buildAudioBuffers(liveAudioCtx)
+  }
+  if (activeOutgoingRingbackSource && liveAudioCtx?.state !== "running") {
+    stopWebAudioOutgoingRingbackSource()
+  }
+  if (liveAudioCtx && outgoingRingbackBuffer) {
+    if (liveAudioCtx.state === "running") {
+      if (startWebAudioOutgoingRingback(seq)) return
+    } else {
+      liveAudioCtx
+        .resume()
+        .then(() => {
+          if (
+            isOutgoingRingbackActive &&
+            seq === outgoingRingbackSeq &&
+            !isOutgoingRingbackAudiblyPlaying()
+          ) {
+            if (!startWebAudioOutgoingRingback(seq)) {
+              startHtmlAudioOutgoingRingback(seq)
+            }
+          }
+        })
+        .catch(() => {})
+    }
+  }
+  startHtmlAudioOutgoingRingback(seq)
+}
+
+export function startOutgoingCallerRingbackTone(): void {
+  if (typeof window === "undefined") return
+  ensureLiveAudioPipelineStarted()
+  if (liveAudioCtx && !outgoingRingbackBuffer) {
+    buildAudioBuffers(liveAudioCtx)
+  }
+
+  // Only treat as already playing if audio output is genuinely active & running
+  if (activeOutgoingRingbackSource && liveAudioCtx?.state === "running") {
+    isOutgoingRingbackActive = true
+    if (outgoingRingbackAudio && !outgoingRingbackAudio.paused) {
+      try {
+        outgoingRingbackAudio.muted = true
+        outgoingRingbackAudio.pause()
+        outgoingRingbackAudio.currentTime = 0
+      } catch {}
+    }
+    return
+  }
+  if (activeOutgoingRingbackSource && liveAudioCtx?.state !== "running") {
+    stopWebAudioOutgoingRingbackSource()
+  }
+  if (outgoingRingbackAudio && !outgoingRingbackAudio.paused && !outgoingRingbackAudio.muted) {
+    isOutgoingRingbackActive = true
+    return
+  }
+
+  const myRingbackSeq = ++outgoingRingbackSeq
+  isOutgoingRingbackActive = true
+
+  let startedWebAudio = false
+  if (liveAudioCtx && outgoingRingbackBuffer) {
+    if (liveAudioCtx.state === "running") {
+      startedWebAudio = startWebAudioOutgoingRingback(myRingbackSeq)
+    } else {
+      liveAudioCtx
+        .resume()
+        .then(() => {
+          if (!isOutgoingRingbackActive || myRingbackSeq !== outgoingRingbackSeq) return
+          if (
+            !activeOutgoingRingbackSource &&
+            (!outgoingRingbackAudio || outgoingRingbackAudio.paused || outgoingRingbackAudio.muted)
+          ) {
+            startWebAudioOutgoingRingback(myRingbackSeq)
+          }
+        })
+        .catch(() => {})
+    }
+  }
+
+  if (!startedWebAudio) {
+    startHtmlAudioOutgoingRingback(myRingbackSeq)
+  }
+
+  if (!outgoingRingbackInteractionBound) {
+    outgoingRingbackInteractionBound = true
+    const resumeRingbackOnGesture = (ev?: Event) => {
+      if (!isOutgoingRingbackActive) return
+      if (
+        ev?.target instanceof Element &&
+        ev.target.closest("[data-connectln-call-action='hangup'], [data-connectln-call-action='decline']")
+      ) {
+        return
+      }
+      resumeOutgoingCallerRingbackIfActive()
+    }
+    window.addEventListener("pointerdown", resumeRingbackOnGesture, { capture: true, passive: true })
+    window.addEventListener("click", resumeRingbackOnGesture, { capture: true, passive: true })
+    window.addEventListener("touchstart", resumeRingbackOnGesture, { capture: true, passive: true })
+    window.addEventListener("keydown", resumeRingbackOnGesture, { capture: true, passive: true })
+  }
+
+  if (!outgoingRingbackWatchdogTimer) {
+    outgoingRingbackWatchdogTimer = setInterval(() => {
+      if (!isOutgoingRingbackActive) {
+        if (outgoingRingbackWatchdogTimer) {
+          clearInterval(outgoingRingbackWatchdogTimer)
+          outgoingRingbackWatchdogTimer = null
+        }
+        return
+      }
+      resumeOutgoingCallerRingbackIfActive()
+    }, 950)
+  }
+}
+
+export function stopOutgoingCallerRingbackTone(): void {
+  outgoingRingbackSeq++
+  isOutgoingRingbackActive = false
+  if (outgoingRingbackWatchdogTimer) {
+    clearInterval(outgoingRingbackWatchdogTimer)
+    outgoingRingbackWatchdogTimer = null
+  }
+  stopWebAudioOutgoingRingbackSource()
   if (outgoingRingbackAudio) {
     try {
       outgoingRingbackAudio.muted = true

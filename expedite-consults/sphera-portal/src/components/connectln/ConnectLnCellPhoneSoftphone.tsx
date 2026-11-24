@@ -21,6 +21,7 @@ import {
   formatInternationalPhonePretty,
   buildGlobalE164Phone,
 } from "@/lib/connectin-international-phones"
+import { startOutgoingCallerRingbackTone } from "@/lib/connectin-background-ring"
 
 const LOCAL_PHONEBOOK_KEY = "connectln_contact_phonebook_v1"
 
@@ -196,6 +197,12 @@ export function ConnectLnCellPhoneSoftphoneModal({
     if (effectiveE164 && targetLabel && !looksLikeClientPhone(targetLabel)) {
       saveContactPhoneLocal(effectiveE164, targetLabel, targetEmail)
     }
+    startOutgoingCallerRingbackTone()
+    if (onUpgradeToVideoHuddle) {
+      setIsRingingInternet(false)
+      onUpgradeToVideoHuddle(effectiveE164 || displayName)
+      return
+    }
     try {
       const res = await fetch("/api/connectin/calls/whatsapp", {
         method: "POST",
@@ -212,10 +219,6 @@ export function ConnectLnCellPhoneSoftphoneModal({
       })
       const data = await res.json()
       if (data?.joinUrl) setCallLinkUrl(data.joinUrl)
-      if (onUpgradeToVideoHuddle) {
-        onUpgradeToVideoHuddle(effectiveE164 || displayName)
-        return
-      }
       setStatusNote(
         data?.isRegisteredOnConnectLn
           ? `✓ Ringing ${displayName} free over ConnectLn Internet!`

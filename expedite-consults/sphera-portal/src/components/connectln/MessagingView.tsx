@@ -48,6 +48,7 @@ import {
 import {
     setCallMediaSilenceActive,
     startOutgoingCallerRingbackTone,
+    resumeOutgoingCallerRingbackIfActive,
     stopOutgoingCallerRingbackTone,
 } from '@/lib/connectin-background-ring';
 
@@ -773,18 +774,6 @@ export function MessagingView({
     const fallbackCanvasAnimRef = useRef<number | null>(null);
     const [huddleMyPeerId, setHuddleMyPeerId] = useState<string>('');
     const [huddleRemoteStreams, setHuddleRemoteStreams] = useState<Record<string, MediaStream>>({});
-    const waitingForHuddleRemote =
-        Boolean(activeCallMode) && Object.keys(huddleRemoteStreams).length === 0;
-    useEffect(() => {
-        if (waitingForHuddleRemote) {
-            startOutgoingCallerRingbackTone();
-        } else {
-            stopOutgoingCallerRingbackTone();
-        }
-        return () => {
-            stopOutgoingCallerRingbackTone();
-        };
-    }, [waitingForHuddleRemote]);
     const huddleActiveMediaCallsRef = useRef<Map<string, any>>(new Map());
     const huddleKnownPeerIdsRef = useRef<Set<string>>(new Set());
     const huddleDialPeerNowRef = useRef<((targetPeerId: string, force?: boolean) => void) | null>(null);
@@ -1166,6 +1155,33 @@ export function MessagingView({
 
     // Start/stop initial media when call modal opens or closes (zero 1s parent state re-renders!)
     const isCallModalOpen = Boolean(activeCallMode);
+    const waitingForHuddleRemote =
+        isCallModalOpen &&
+        remoteHuddleParticipants.length === 0 &&
+        Object.keys(huddleRemoteStreams).length === 0;
+    const waitingForHuddleRemoteRef = useRef<boolean>(false);
+    waitingForHuddleRemoteRef.current = waitingForHuddleRemote;
+
+    useEffect(() => {
+        if (waitingForHuddleRemote) {
+            startOutgoingCallerRingbackTone();
+        } else {
+            stopOutgoingCallerRingbackTone();
+        }
+        return () => {
+            stopOutgoingCallerRingbackTone();
+        };
+    }, [waitingForHuddleRemote]);
+
+    useEffect(() => {
+        if (!isCallModalOpen) return;
+        const timer = window.setTimeout(() => {
+            if (!waitingForHuddleRemoteRef.current) return;
+            stopOutgoingCallerRingbackTone();
+        }, 45000);
+        return () => window.clearTimeout(timer);
+    }, [isCallModalOpen]);
+
     useEffect(() => {
         if (!isCallModalOpen || !activeCallMode) {
             setIsScreenSharing(false);
@@ -1185,7 +1201,16 @@ export function MessagingView({
         callStartMsRef.current = Date.now();
         isHandingOffToStudioRef.current = false;
         isFirstHuddleHeartbeatRef.current = true;
-        startCallMedia(activeCallMode);
+        void startCallMedia(activeCallMode).finally(() => {
+            if (waitingForHuddleRemoteRef.current) {
+                resumeOutgoingCallerRingbackIfActive();
+                window.setTimeout(() => {
+                    if (waitingForHuddleRemoteRef.current) {
+                        resumeOutgoingCallerRingbackIfActive();
+                    }
+                }, 350);
+            }
+        });
 
         return () => {
             stopCurrentCallMedia();
@@ -1350,6 +1375,7 @@ export function MessagingView({
     };
 
     const handleEndCallAndLog = () => {
+        stopOutgoingCallerRingbackTone();
         const modeLabel = activeCallMode === 'video' ? '🎥 Video Huddle' : '📞 Voice Call';
         const elapsedSecs = Math.max(1, Math.floor((Date.now() - (callStartMsRef.current || Date.now())) / 1000));
         const durationStr = formatCallTime(elapsedSecs);
@@ -3614,20 +3640,27 @@ export function MessagingView({
                             setMobileShowChat(true);
                         }}
                         onStartLiveCall={(callType, targetName) => {
+                            startOutgoingCallerRingbackTone();
                             if (targetName) {
                                 const cleanTarget = targetName.trim();
-                                const matched = threads.find(
-                                    (t) =>
-                                        t.title.toLowerCase() === cleanTarget.toLowerCase() ||
-                                        t.title.toLowerCase().includes(cleanTarget.toLowerCase().slice(0, 6))
-                                );
+                                const targetDigits = cleanTarget.replace(/[^\d]/g, '');
+                                const matched = threads.find((t) => {
+                                    if (t.title.toLowerCase() === cleanTarget.toLowerCase()) return true;
+                                    if (targetDigits.length >= 7) {
+                                        const titleDigits = t.title.replace(/[^\d]/g, '');
+                                        if (titleDigits.length >= 7 && titleDigits.slice(-10) === targetDigits.slice(-10)) {
+                                            return true;
+                                        }
+                                    }
+                                    return false;
+                                });
                                 if (matched) {
                                     setSelectedThreadId(matched.id);
                                 } else {
                                     const isPhone = looksLikeClientPhone(cleanTarget);
                                     const prettyTitle = isPhone ? prettyClientPhone(cleanTarget) : cleanTarget;
                                     const newCallThread: B2BConversationThread = {
-                                        id: `call_thread_${cleanTarget.replace(/[^a-zA-Z0-9]/g, '').slice(0, 18)}`,
+                                        id: `call_thread_${cleanTarget.replace(/[^a-zA-Z0-9]/g, '').slice(0, 18)}_${Date.now().toString(36).slice(-4)}`,
                                         channelType: 'People',
                                         subType: 'DM',
                                         title: prettyTitle,
@@ -4454,7 +4487,10 @@ export function MessagingView({
                                             </button>
                                         )}
                                     <button
-                                        onClick={() => setActiveCallMode('audio')}
+                                        onClick={() => {
+                                            startOutgoingCallerRingbackTone();
+                                            setActiveCallMode('audio');
+                                        }}
                                         className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1 transition-all border border-slate-200 whitespace-nowrap cursor-pointer"
                                         title="Start Voice Call"
                                     >
@@ -4462,7 +4498,10 @@ export function MessagingView({
                                         <span className="hidden xl:inline">Call</span>
                                     </button>
                                     <button
-                                        onClick={() => setActiveCallMode('video')}
+                                        onClick={() => {
+                                            startOutgoingCallerRingbackTone();
+                                            setActiveCallMode('video');
+                                        }}
                                         className="px-2.5 py-1.5 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-xs font-bold flex items-center gap-1 transition-all shadow-2xs whitespace-nowrap cursor-pointer"
                                         style={{ color: '#FFFFFF' }}
                                         title="Start Live Video Huddle"
@@ -5456,6 +5495,7 @@ export function MessagingView({
                 onLaunchCall={(callMode) => {
                     setShowScheduler(false);
                     setIsCameraOn(callMode === 'video');
+                    startOutgoingCallerRingbackTone();
                     setActiveCallMode(callMode);
                 }}
                 onOpenCalendar={() => {
@@ -6200,6 +6240,7 @@ export function MessagingView({
                                             subtitle: activeThread.subtitle,
                                         };
                                         isHandingOffToStudioRef.current = true;
+                                        stopOutgoingCallerRingbackTone();
                                         stopCurrentCallMedia();
                                         setActiveCallMode(null);
                                         onNavigateVibeComms(handoffPayload);
