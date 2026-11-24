@@ -13,6 +13,8 @@ import {
   isSamePhoneOwnerEmail,
 } from "@/lib/connectin-whatsapp-directory"
 
+export const dynamic = "force-dynamic"
+
 async function dispatchMinimizedWakeupPushForTargets(params: {
   callId: string
   callMode: "audio" | "video"
@@ -975,10 +977,14 @@ function ensureCallRoom(callId: string, initiatorId: string, displayName: string
   return record
 }
 
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+}
+
 export async function GET(req: NextRequest) {
   if (req.nextUrl.searchParams.get("ice") === "1") {
     const iceServers = await getCachedTwilioIceServers()
-    return NextResponse.json({ ice_servers: iceServers })
+    return NextResponse.json({ ice_servers: iceServers }, { headers: NO_STORE_HEADERS })
   }
   const callId = req.nextUrl.searchParams.get("call_id")
   const hasIncomingQuery = Boolean(
@@ -992,23 +998,32 @@ export async function GET(req: NextRequest) {
   if (callId) {
     const call = ACTIVE_CALLS_STORE.get(callId)
     if (isCallTombstoned(callId, nowMs) || call?.state === "ENDED") {
-      return NextResponse.json({
-        protocol_version: 1,
-        call: { id: callId, state: "ENDED", participants: [] },
-        ended_call_ids: [callId],
-      })
+      return NextResponse.json(
+        {
+          protocol_version: 1,
+          call: { id: callId, state: "ENDED", participants: [] },
+          ended_call_ids: [callId],
+        },
+        { headers: NO_STORE_HEADERS }
+      )
     }
     if (!call) {
-      return NextResponse.json({
-        protocol_version: 1,
-        call: null,
-        ended_call_ids: [],
-      })
+      return NextResponse.json(
+        {
+          protocol_version: 1,
+          call: null,
+          ended_call_ids: [],
+        },
+        { headers: NO_STORE_HEADERS }
+      )
     }
-    return NextResponse.json({
-      protocol_version: 1,
-      call,
-    })
+    return NextResponse.json(
+      {
+        protocol_version: 1,
+        call,
+      },
+      { headers: NO_STORE_HEADERS }
+    )
   }
 
   const incomingForName = (req.nextUrl.searchParams.get("incoming_for") || "").trim().toLowerCase()
@@ -1191,19 +1206,25 @@ export async function GET(req: NextRequest) {
           (!hasAnyExplicitTarget && !viewerSharesCallerName && nameSlug.length >= 4 && cidLower.includes(nameSlug))
       )
     })
-    return NextResponse.json({
-      protocol_version: 1,
-      incoming_calls: incomingCalls,
-      ended_call_ids: endedCallIds,
-    })
+    return NextResponse.json(
+      {
+        protocol_version: 1,
+        incoming_calls: incomingCalls,
+        ended_call_ids: endedCallIds,
+      },
+      { headers: NO_STORE_HEADERS }
+    )
   }
 
-  return NextResponse.json({
-    protocol_version: 1,
-    active_calls_count: calls.length,
-    calls,
-    ended_call_ids: endedCallIds,
-  })
+  return NextResponse.json(
+    {
+      protocol_version: 1,
+      active_calls_count: calls.length,
+      calls,
+      ended_call_ids: endedCallIds,
+    },
+    { headers: NO_STORE_HEADERS }
+  )
 }
 
 async function removeSingleParticipantFromGroupCall(params: {

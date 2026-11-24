@@ -131,9 +131,10 @@ export async function firebaseKvGetItem<T = any>(mapName: string, key: string): 
     try {
       const db = await getConnectLnMongoDb()
       if (db) {
-        const doc = await db.collection<KvMongoDoc>(KV_MONGO_COLLECTION).findOne({
-          _id: `${mapName}::${key}`,
-        })
+        const doc = await db.collection<KvMongoDoc>(KV_MONGO_COLLECTION).findOne(
+          { _id: `${mapName}::${key}` },
+          { readPreference: "primary" }
+        )
         if (doc) {
           if (doc.expiresAtMs && doc.expiresAtMs < now) return null
           return (doc.data as T) ?? null
@@ -184,28 +185,35 @@ export async function firebaseKvListItems<T = any>(
   let mongoLoaded = false
 
   if (isConnectLnMongoConfigured()) {
-    try {
-      const db = await getConnectLnMongoDb()
-      if (db) {
-        const docs = await db
-          .collection<KvMongoDoc>(KV_MONGO_COLLECTION)
-          .find({
-            mapName,
-            $or: [{ expiresAtMs: null }, { expiresAtMs: { $gt: now } }],
-          })
-          .toArray()
-        mongoLoaded = true
-        for (const doc of docs) {
-          if (!doc?.key) continue
-          byKey.set(doc.key, {
-            key: doc.key,
-            data: doc.data as T,
-            updatedAtMs: doc.updatedAtMs || now,
-          })
+    for (let attempt = 0; attempt < 2 && !mongoLoaded; attempt++) {
+      try {
+        const db = await getConnectLnMongoDb()
+        if (db) {
+          const docs = await db
+            .collection<KvMongoDoc>(KV_MONGO_COLLECTION)
+            .find(
+              {
+                mapName,
+                $or: [{ expiresAtMs: null }, { expiresAtMs: { $gt: now } }],
+              },
+              { readPreference: "primary" }
+            )
+            .toArray()
+          mongoLoaded = true
+          for (const doc of docs) {
+            if (!doc?.key) continue
+            byKey.set(doc.key, {
+              key: doc.key,
+              data: doc.data as T,
+              updatedAtMs: doc.updatedAtMs || now,
+            })
+          }
+        }
+      } catch {
+        if (attempt === 0) {
+          await new Promise((r) => setTimeout(r, 50))
         }
       }
-    } catch {
-      // Fallback to Firebase below
     }
   }
 
@@ -306,34 +314,39 @@ export async function firebaseKvSetItem(
 
   let mongoOk = false
   if (isConnectLnMongoConfigured()) {
-    try {
-      const db = await getConnectLnMongoDb()
-      if (db) {
-        if (!globalForFbKv.__connectlnKvMongoIndexReady) {
-          globalForFbKv.__connectlnKvMongoIndexReady = true
-          db.collection<KvMongoDoc>(KV_MONGO_COLLECTION)
-            .createIndex({ mapName: 1, expiresAtMs: 1 }, { background: true })
-            .catch(() => {
-              globalForFbKv.__connectlnKvMongoIndexReady = false
-            })
-        }
-        await db.collection<KvMongoDoc>(KV_MONGO_COLLECTION).updateOne(
-          { _id: `${mapName}::${key}` },
-          {
-            $set: {
-              mapName,
-              key,
-              data: dataObj,
-              updatedAtMs: now,
-              expiresAtMs,
+    for (let attempt = 0; attempt < 2 && !mongoOk; attempt++) {
+      try {
+        const db = await getConnectLnMongoDb()
+        if (db) {
+          if (!globalForFbKv.__connectlnKvMongoIndexReady) {
+            globalForFbKv.__connectlnKvMongoIndexReady = true
+            db.collection<KvMongoDoc>(KV_MONGO_COLLECTION)
+              .createIndex({ mapName: 1, expiresAtMs: 1 }, { background: true })
+              .catch(() => {
+                globalForFbKv.__connectlnKvMongoIndexReady = false
+              })
+          }
+          await db.collection<KvMongoDoc>(KV_MONGO_COLLECTION).updateOne(
+            { _id: `${mapName}::${key}` },
+            {
+              $set: {
+                mapName,
+                key,
+                data: dataObj,
+                updatedAtMs: now,
+                expiresAtMs,
+              },
             },
-          },
-          { upsert: true }
-        )
-        mongoOk = true
+            { upsert: true }
+          )
+          mongoOk = true
+        }
+      } catch {
+        mongoOk = false
+        if (attempt === 0) {
+          await new Promise((r) => setTimeout(r, 50))
+        }
       }
-    } catch {
-      mongoOk = false
     }
   }
 
