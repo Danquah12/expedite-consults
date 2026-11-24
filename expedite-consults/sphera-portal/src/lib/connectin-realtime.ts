@@ -42,7 +42,7 @@ export function ringChannelForPhone(phone: string): string {
 
 export async function publishToPhones(
   phones: Array<string | undefined | null>,
-  event: "incoming-call" | "call-ended",
+  event: "incoming-call" | "call-ended" | "call-answered",
   data: Record<string, unknown>
 ): Promise<void> {
   const server = getRealtimeServer()

@@ -1066,6 +1066,29 @@ export async function GET(req: NextRequest) {
       const initiatorDigits = String(c.initiator_phone || "").replace(/[^\d]/g, "")
       const hasExplicitTargetPhone = targetDigits.length >= 7
 
+      // If this viewer's phone or name already joined as an active non-initiator participant, stop ringing this viewer immediately
+      const viewerAlreadyJoined = (c.participants || []).some((p) => {
+        if (!p || p.participant_state === "LEFT") return false
+        if (viewerPeerId && p.user_id === viewerPeerId) return true
+        if (!c.initiator_user_id || p.user_id === c.initiator_user_id) return false
+        const pDigits = String(p.phone || "").replace(/[^\d]/g, "")
+        if (
+          incomingPhoneDigits.length >= 7 &&
+          pDigits.length >= 7 &&
+          (pDigits === incomingPhoneDigits || pDigits.slice(-10) === incomingPhoneDigits.slice(-10))
+        ) {
+          return true
+        }
+        const pName = String(p.display_name || "").trim().toLowerCase()
+        if (incomingForName && pName && pName === incomingForName) {
+          return true
+        }
+        return false
+      })
+      if (viewerAlreadyJoined) {
+        return false
+      }
+
       // Never ring the initiator's own phone when the recipient answers and their heartbeat runs,
       // unless dialing another number on the same account owner whose call hasn't been answered yet.
       const viewerIsInitiatorPhone = Boolean(
@@ -1080,8 +1103,12 @@ export async function GET(req: NextRequest) {
           (targetDigits === initiatorDigits || targetDigits.slice(-10) === initiatorDigits.slice(-10))
       )
       const callAlreadyAnsweredByPeer = (c.participants || []).some(
-        (p) => p.user_id && c.initiator_user_id && p.user_id !== c.initiator_user_id
+        (p) => p.participant_state !== "LEFT" && p.user_id && c.initiator_user_id && p.user_id !== c.initiator_user_id
       )
+      // In a 1-on-1 call, once the peer picks up, stop ringing on all of the callee's other tabs/devices
+      if (callAlreadyAnsweredByPeer && (!c.invited_roster || c.invited_roster.length <= 1)) {
+        return false
+      }
       const targetsSameAccountOwner = Boolean(
         (incomingEmail &&
           c.target_recipient_email &&
@@ -1985,6 +2012,42 @@ export async function POST(req: NextRequest) {
           existingIdx >= 0 &&
           record.participants[existingIdx].peer_id !== body.peer_id
       )
+      const isNonInitiatorAnswering = Boolean(
+        record.initiator_user_id &&
+          userId !== record.initiator_user_id &&
+          (existingIdx < 0 || body.is_answering_recipient === true)
+      )
+      const phonesToSilenceOnAnswer = new Set<string>()
+      if (isNonInitiatorAnswering) {
+        if (participantPhone) phonesToSilenceOnAnswer.add(participantPhone)
+        const dDigits = String(participantPhone || "").replace(/[^\d]/g, "")
+        const dName = displayName.trim().toLowerCase()
+        if (Array.isArray(record.invited_roster)) {
+          for (const inv of record.invited_roster) {
+            if (!inv || inv.status === "removed") continue
+            const invDigits = String(inv.phone || "").replace(/[^\d]/g, "")
+            const matchesPhone = Boolean(
+              dDigits.length >= 7 &&
+                invDigits.length >= 7 &&
+                (invDigits === dDigits || invDigits.slice(-10) === dDigits.slice(-10))
+            )
+            const matchesName = Boolean(
+              dName && inv.name && inv.name.trim().toLowerCase() === dName
+            )
+            if (matchesPhone || matchesName || (record.invited_roster.length === 1)) {
+              if (inv.status !== "in-progress") {
+                inv.status = "in-progress"
+                inv.updated_at_ms = nowMs
+                rosterChanged = true
+              }
+              if (inv.phone) phonesToSilenceOnAnswer.add(inv.phone)
+            }
+          }
+        }
+        if (record.target_recipient_phone) {
+          phonesToSilenceOnAnswer.add(record.target_recipient_phone)
+        }
+      }
       if (existingIdx >= 0) {
         record.participants[existingIdx] = updatedParticipant
       } else {
@@ -2029,6 +2092,9 @@ export async function POST(req: NextRequest) {
             ).catch(() => {})
           : Promise.resolve(),
         pullCloudCallParticipants(userId).catch(() => {}),
+        phonesToSilenceOnAnswer.size > 0
+          ? publishToPhones(Array.from(phonesToSilenceOnAnswer), "call-answered", { callId }).catch(() => {})
+          : Promise.resolve(),
       ])
 
       // Prune stale participants who haven't sent a heartbeat in > 25 seconds so disconnected/ended users never stay frozen

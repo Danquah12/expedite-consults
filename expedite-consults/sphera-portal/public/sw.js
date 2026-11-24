@@ -1,4 +1,4 @@
-/* ConnectLn Service Worker v2026-11-24-large-popup — Background & Minimized Incoming Video & Voice Call Ringing + High-Visibility Banner */
+/* ConnectLn Service Worker v2026-11-24-whatsapp-stopring — Background & Minimized Incoming Video & Voice Call Ringing + High-Visibility Banner */
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
 });
@@ -104,12 +104,17 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
           (callObj && callObj.state === "ENDED") ||
             (Array.isArray(data && data.ended_call_ids) && data.ended_call_ids.includes(callId))
         );
-        if (isExplicitEnded) {
+        const isAlreadyAnswered = Boolean(
+          callObj && Array.isArray(callObj.participants) && callObj.participants.length >= 2
+        );
+        if (isExplicitEnded || isAlreadyAnswered || swAckedAnswerCallIds.has(callId)) {
           rememberSwCallId(swHandledCallIds, callId);
           for (const client of windowClients) {
             try {
               client.postMessage({
-                type: "CONNECTLN_DECLINE_CALL_FROM_NOTIFICATION",
+                type: isExplicitEnded
+                  ? "CONNECTLN_DECLINE_CALL_FROM_NOTIFICATION"
+                  : "CONNECTLN_CALL_ANSWERED_ELSEWHERE",
                 payload: { callId },
               });
             } catch {}
@@ -272,11 +277,21 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     (async () => {
+      await closeCallNotificationsByTag(callId);
       const windowClients = await self.clients.matchAll({
         type: "window",
         includeUncontrolled: true,
       });
       const targetClient = windowClients.find((c) => isExactConnectInClientUrl(c.url));
+      for (const client of windowClients) {
+        if (targetClient && client.id === targetClient.id) continue;
+        try {
+          client.postMessage({
+            type: "CONNECTLN_CALL_ANSWERED_ELSEWHERE",
+            payload: { callId },
+          });
+        } catch {}
+      }
       if (targetClient) {
         try {
           if ("focus" in targetClient) {
@@ -423,9 +438,29 @@ self.addEventListener("message", (event) => {
   if (msg.type === "CONNECTLN_ANSWER_ACK" && msg.callId) {
     const ackCid = String(msg.callId).trim();
     rememberSwCallId(swAckedAnswerCallIds, ackCid);
+    rememberSwCallId(swHandledCallIds, ackCid);
+    rememberSwCallId(swNotifiedCallIds, ackCid);
     if (swPendingAnswerPayload && swPendingAnswerPayload.callId === ackCid) {
       swPendingAnswerPayload = null;
     }
+    event.waitUntil(
+      (async () => {
+        await closeCallNotificationsByTag(ackCid);
+        const allClients = await self.clients
+          .matchAll({ type: "window", includeUncontrolled: true })
+          .catch(() => []);
+        const senderId = event.source && event.source.id;
+        for (const client of allClients) {
+          if (senderId && client.id === senderId) continue;
+          try {
+            client.postMessage({
+              type: "CONNECTLN_CALL_ANSWERED_ELSEWHERE",
+              payload: { callId: ackCid },
+            });
+          } catch {}
+        }
+      })()
+    );
     return;
   }
 

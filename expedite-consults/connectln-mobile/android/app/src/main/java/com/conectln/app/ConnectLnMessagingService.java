@@ -69,6 +69,8 @@ public class ConnectLnMessagingService extends MessagingService {
         open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         int id = callId.hashCode();
+        open.putExtra("notifId", id);
+        open.putExtra("callId", callId);
         PendingIntent answerPi = PendingIntent.getActivity(ctx, id, open, flags);
 
         Intent decline = new Intent(ctx, CallDeclineReceiver.class);

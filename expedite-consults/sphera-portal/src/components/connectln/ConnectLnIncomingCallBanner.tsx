@@ -34,6 +34,7 @@ import {
   onBackgroundUnlockChange,
   startLoudPhoneRingtone,
   stopLoudPhoneRingtone,
+  stopOutgoingCallerRingbackTone,
   startTitleCallFlash,
   stopTitleCallFlash,
   triggerSystemIncomingCallAlert,
@@ -139,18 +140,22 @@ export function ConnectLnIncomingCallBanner({
     markConnectLnCallHandled(cleanId)
     if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
       const ackMsg = { type: "CONNECTLN_ANSWER_ACK", callId: cleanId }
+      const handledMsg = { type: "CONNECTLN_SW_CALL_HANDLED", callId: cleanId }
       try {
         navigator.serviceWorker.controller?.postMessage(ackMsg)
+        navigator.serviceWorker.controller?.postMessage(handledMsg)
       } catch {}
       navigator.serviceWorker.ready
         .then((reg) => {
           reg?.active?.postMessage(ackMsg)
+          reg?.active?.postMessage(handledMsg)
         })
         .catch(() => {})
     }
     setCallMediaSilenceActive(true, "whatsapp-call-modal")
     setCallMediaSilenceActive(false, "incoming-call-banner")
-    stopLoudPhoneRingtone()
+    stopLoudPhoneRingtone(true)
+    stopOutgoingCallerRingbackTone()
     stopTitleCallFlash()
     closeStandbyPipForLocalCall()
     setIncomingCall(null)
@@ -441,6 +446,15 @@ export function ConnectLnIncomingCallBanner({
           p.callMode === "audio" ? "audio" : "video",
           p.callerPhone
         )
+      } else if (msg.type === "CONNECTLN_CALL_ANSWERED_ELSEWHERE" && msg.payload?.callId) {
+        const cid = String(msg.payload.callId)
+        markConnectLnCallHandled(cid)
+        if (realtimeRingRef.current?.call.id === cid) realtimeRingRef.current = null
+        setIncomingCall((prev) => (prev && prev.id === cid ? null : prev))
+        stopLoudPhoneRingtone(false)
+        stopOutgoingCallerRingbackTone()
+        stopTitleCallFlash()
+        dismissFloatingCallPopups()
       } else if (msg.type === "CONNECTLN_DECLINE_CALL_FROM_NOTIFICATION" && msg.payload?.callId) {
         declineAndEndIncomingCall(msg.payload.callId, false)
       }
@@ -742,6 +756,19 @@ export function ConnectLnIncomingCallBanner({
             dismissFloatingCallPopups()
             void checkIncoming()
           })
+          ch.bind("call-answered", (d: any) => {
+            if (d?.callId) {
+              markConnectLnCallHandled(String(d.callId))
+            }
+            if (realtimeRingRef.current?.call.id === d?.callId) realtimeRingRef.current = null
+            setIncomingCall((prev) => (prev && prev.id === d?.callId ? null : prev))
+            setCallMediaSilenceActive(false, "incoming-call-banner")
+            stopLoudPhoneRingtone(false)
+            stopOutgoingCallerRingbackTone()
+            stopTitleCallFlash()
+            dismissFloatingCallPopups()
+            void checkIncoming()
+          })
         } catch {}
       })()
     }
@@ -900,22 +927,22 @@ export function ConnectLnIncomingCallBanner({
       role="dialog"
       aria-modal="true"
       aria-label={`Incoming ${isVideo ? "Video" : "Voice"} Call from ${callerName}`}
-      className="fixed inset-0 z-[260] flex items-center justify-center bg-black/80 backdrop-blur-xl sm:p-4"
+      className="fixed inset-0 z-[260] flex items-center justify-center bg-black/85 backdrop-blur-xl sm:p-4"
     >
       <div
-        className="w-screen h-[100dvh] rounded-none sm:w-full sm:max-w-[420px] sm:h-auto sm:min-h-[600px] sm:rounded-[36px] overflow-hidden flex flex-col justify-between shadow-[0_28px_90px_rgba(0,0,0,0.85)] border-0 sm:border sm:border-white/15 text-white relative"
+        className="w-screen h-[100dvh] rounded-none sm:w-full sm:max-w-[430px] sm:h-auto sm:min-h-[580px] sm:rounded-[36px] overflow-hidden flex flex-col items-center justify-center gap-7 px-6 py-10 text-center shadow-[0_28px_90px_rgba(0,0,0,0.85)] border-0 sm:border sm:border-white/15 text-white relative"
         style={{
           background:
-            "radial-gradient(circle at 50% 36%, rgba(37, 211, 102, 0.22) 0%, rgba(14, 44, 39, 0.92) 38%, #0B141A 78%)",
+            "radial-gradient(circle at 50% 34%, rgba(37, 211, 102, 0.24) 0%, rgba(14, 44, 39, 0.94) 40%, #0B141A 82%)",
         }}
       >
-        {/* Top WhatsApp Header Section */}
-        <div className="pt-12 sm:pt-8 px-6 text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 text-xs font-medium text-white/65">
+        {/* Top WhatsApp Header */}
+        <div className="space-y-1.5 w-full">
+          <div className="inline-flex items-center gap-1.5 text-xs font-medium text-white/70">
             <Lock className="h-3.5 w-3.5" />
             <span>End-to-end encrypted</span>
           </div>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#25D366]">
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#25D366]">
             {isVideo ? "ConnectLn Video Call" : "ConnectLn Voice Call"}
             {activeInvitesCount >= 2 ? ` · Group (${activeInvitesCount + 1})` : ""}
           </p>
@@ -928,75 +955,65 @@ export function ConnectLnIncomingCallBanner({
         </div>
 
         {/* Center Hero Monogram Crest with Concentric Ripple Rings */}
-        <div className="flex-1 flex items-center justify-center py-8">
-          <div className="relative flex items-center justify-center">
-            <span className="absolute -inset-6 rounded-full bg-[#25D366]/25 animate-ping" />
-            <span className="absolute -inset-3 rounded-full border-2 border-[#25D366]/35" />
-            <div className="relative h-[136px] w-[136px] rounded-full bg-gradient-to-br from-[#128C7E] to-[#075E54] border-[3px] border-[#25D366]/80 shadow-[0_0_50px_rgba(37,211,102,0.35)] flex items-center justify-center">
-              <span className="text-5xl font-bold text-white select-none">
-                {callerInitials}
-              </span>
-              <span className="absolute -bottom-1 -right-1 h-10 w-10 rounded-full bg-[#25D366] border-[3px] border-[#0B141A] flex items-center justify-center shadow-lg">
-                {isVideo ? (
-                  <Video className="h-5 w-5 text-white" />
-                ) : (
-                  <Phone className="h-5 w-5 text-white" />
-                )}
-              </span>
-            </div>
+        <div className="relative flex items-center justify-center my-1">
+          <span className="absolute -inset-6 rounded-full bg-[#25D366]/25 animate-ping" />
+          <span className="absolute -inset-3 rounded-full border-2 border-[#25D366]/40" />
+          <div className="relative h-[120px] w-[120px] rounded-full bg-gradient-to-br from-[#128C7E] to-[#075E54] border-[3px] border-[#25D366]/85 shadow-[0_0_50px_rgba(37,211,102,0.4)] flex items-center justify-center">
+            <span className="text-4xl font-bold text-white select-none">
+              {callerInitials}
+            </span>
+            <span className="absolute -bottom-1 -right-1 h-9 w-9 rounded-full bg-[#25D366] border-[3px] border-[#0B141A] flex items-center justify-center shadow-lg">
+              {isVideo ? (
+                <Video className="h-4 w-4 text-white" />
+              ) : (
+                <Phone className="h-4 w-4 text-white" />
+              )}
+            </span>
           </div>
         </div>
 
-        {/* Bottom Frosted WhatsApp Action Dock */}
-        <div className="px-8 pt-6 pb-12 sm:pb-9 bg-white/[0.05] backdrop-blur-md border-t border-white/10">
-          <p className="text-center text-xs font-medium text-white/70 mb-5">
-            Tap Accept to answer
-          </p>
-          <div className="flex items-center justify-around gap-8 max-w-[320px] mx-auto">
-            <button
-              type="button"
-              data-connectln-call-action="decline"
-              onClick={(e) => {
-                e.stopPropagation()
-                declineAndEndIncomingCall(incomingCall.id, true)
-              }}
-              style={{ color: "#FFFFFF" }}
-              className="group flex flex-col items-center cursor-pointer touch-manipulation focus:outline-none"
-              title="Decline Call"
-            >
-              <span className="h-[76px] w-[76px] rounded-full bg-[#FF3B30] hover:bg-[#FF5147] group-active:scale-95 shadow-[0_12px_32px_rgba(255,59,48,0.5)] flex items-center justify-center transition-all">
-                <PhoneOff className="h-8 w-8 text-white" />
-              </span>
-              <span className="text-base font-bold text-white mt-2.5">Decline</span>
-            </button>
+        {/* Center-Stage Huge WhatsApp Accept & Decline Pills */}
+        <div className="w-full flex flex-col items-center gap-3.5">
+          <button
+            type="button"
+            data-connectln-call-action="answer"
+            onClick={(e) => {
+              e.stopPropagation()
+              acceptIncomingCallNow(
+                incomingCall.id,
+                callerName,
+                isVideo ? "video" : "audio",
+                incomingCall.initiator_phone
+              )
+            }}
+            style={{ color: "#FFFFFF" }}
+            className="w-full max-w-[350px] min-h-[78px] rounded-full bg-[#25D366] hover:bg-[#2EE070] active:scale-[0.98] border-[3px] border-[#BBF7D0] shadow-[0_0_48px_rgba(37,211,102,0.85)] px-6 py-4 flex items-center justify-center gap-3.5 text-xl sm:text-2xl font-black tracking-wide text-white cursor-pointer touch-manipulation transition-all"
+            title={isVideo ? "Accept Video Call" : "Accept Call"}
+          >
+            <span className="h-11 w-11 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+              {isVideo ? (
+                <Video className="h-6 w-6 text-white" />
+              ) : (
+                <Phone className="h-6 w-6 text-white" />
+              )}
+            </span>
+            <span>{isVideo ? "ACCEPT VIDEO CALL" : "ACCEPT CALL"}</span>
+          </button>
 
-            <button
-              type="button"
-              data-connectln-call-action="answer"
-              onClick={(e) => {
-                e.stopPropagation()
-                acceptIncomingCallNow(
-                  incomingCall.id,
-                  callerName,
-                  isVideo ? "video" : "audio",
-                  incomingCall.initiator_phone
-                )
-              }}
-              style={{ color: "#FFFFFF" }}
-              className="group flex flex-col items-center cursor-pointer touch-manipulation focus:outline-none"
-              title={isVideo ? "Accept Video Call" : "Accept Call"}
-            >
-              <span className="relative h-[82px] w-[82px] rounded-full bg-[#25D366] hover:bg-[#2EE070] group-active:scale-95 shadow-[0_0_42px_rgba(37,211,102,0.8)] flex items-center justify-center transition-all">
-                <span className="absolute -inset-2 rounded-full border-2 border-[#25D366]/60 animate-ping" />
-                {isVideo ? (
-                  <Video className="relative h-9 w-9 text-white" />
-                ) : (
-                  <Phone className="relative h-9 w-9 text-white" />
-                )}
-              </span>
-              <span className="text-base font-extrabold text-white mt-2.5">Accept</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            data-connectln-call-action="decline"
+            onClick={(e) => {
+              e.stopPropagation()
+              declineAndEndIncomingCall(incomingCall.id, true)
+            }}
+            style={{ color: "#FFFFFF" }}
+            className="w-full max-w-[350px] min-h-[58px] rounded-full bg-[#FF3B30] hover:bg-[#FF5147] active:scale-[0.98] border-2 border-white/25 shadow-[0_10px_28px_rgba(255,59,48,0.5)] px-6 py-3 flex items-center justify-center gap-3 text-lg font-extrabold text-white cursor-pointer touch-manipulation transition-all"
+            title="Decline Call"
+          >
+            <PhoneOff className="h-6 w-6 text-white" />
+            <span>DECLINE</span>
+          </button>
         </div>
       </div>
     </div>

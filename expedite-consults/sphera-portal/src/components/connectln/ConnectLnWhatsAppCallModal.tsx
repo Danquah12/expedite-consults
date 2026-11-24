@@ -47,6 +47,10 @@ import {
   setCallMediaSilenceActive,
   startOutgoingCallerRingbackTone,
   stopOutgoingCallerRingbackTone,
+  stopLoudPhoneRingtone,
+  stopTitleCallFlash,
+  dismissFloatingCallPopups,
+  broadcastStopRingtoneAcrossTabs,
   CONNECTLN_RINGTONE_PRESETS,
   ConnectLnRingtoneId,
   getSelectedConnectLnRingtoneId,
@@ -94,6 +98,7 @@ export function markConnectLnCallHandled(callId: string): void {
         window.localStorage.setItem(HANDLED_CALL_IDS_STORAGE_KEY, JSON.stringify(nextLocal))
       }
     } catch {}
+    broadcastStopRingtoneAcrossTabs(clean)
     if ("serviceWorker" in navigator) {
       const msg = { type: "CONNECTLN_SW_CALL_HANDLED", callId: clean }
       if (navigator.serviceWorker.controller) {
@@ -2240,6 +2245,12 @@ export function ConnectLnWhatsAppCallModal({
 
     let cancelled = false
     markConnectLnCallHandled(callId)
+    stopLoudPhoneRingtone(true)
+    stopTitleCallFlash()
+    dismissFloatingCallPopups()
+    if (isIncomingAnswer) {
+      stopOutgoingCallerRingbackTone()
+    }
     setRecipientName(
       looksLikeClientPhone(targetLabel) ? prettyClientPhone(targetLabel) : targetLabel || "ConnectLn Call"
     )
@@ -3104,6 +3115,8 @@ export function ConnectLnWhatsAppCallModal({
         if (remotes.length > 0) {
           emptyRemotesStreak = 0
           setCallStatus("connected")
+          stopOutgoingCallerRingbackTone()
+          stopLoudPhoneRingtone(false)
           setPushBannerNote("")
           setRemoteWebRtcPeers(mappedPeers)
 

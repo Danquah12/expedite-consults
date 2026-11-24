@@ -38,6 +38,10 @@ let outgoingRingbackBuffer: AudioBuffer | null = null
 let activeOutgoingRingbackSource: AudioBufferSourceNode | null = null
 let activeOutgoingRingbackGain: GainNode | null = null
 let isIncomingRingtoneActive = false
+let ringSessionSeq = 0
+const CALL_STOP_RING_STORAGE_KEY = "connectln_stop_ring_broadcast_v1"
+let callStopControlChannel: BroadcastChannel | null = null
+let callControlListenersBound = false
 let isOutgoingRingbackActive = false
 let autoPipVideoEl: HTMLVideoElement | null = null
 let autoPipCanvasTimer: ReturnType<typeof setInterval> | null = null
@@ -658,6 +662,7 @@ function ensureLiveAudioPipelineStarted(): void {
       const initialPreset = getSelectedConnectLnRingtoneId()
       fallbackWavRingAudio = new Audio(getRingtoneAudioSourceUri(initialPreset))
       fallbackWavRingAudio.dataset.connectlnCallAudio = "true"
+      fallbackWavRingAudio.dataset.connectlnRingtone = "true"
       fallbackWavRingAudio.dataset.ringtonePresetId = initialPreset
       fallbackWavRingAudio.loop = true
       fallbackWavRingAudio.volume = 1.0
@@ -782,23 +787,117 @@ function stopWebAudioRingSource(): void {
 function stopPipWindowRingAudio(win: Window | null | undefined): void {
   if (!win || win.closed) return
   try {
-    const audioEl = win.document?.getElementById("pip-ring-audio") as HTMLAudioElement | null
-    if (audioEl) {
-      audioEl.pause()
-      audioEl.removeAttribute("src")
-      audioEl.remove()
+    const audioEls = win.document?.querySelectorAll("audio")
+    audioEls?.forEach((audioEl) => {
+      try {
+        audioEl.muted = true
+        audioEl.pause()
+        audioEl.currentTime = 0
+        audioEl.removeAttribute("src")
+        audioEl.load()
+        audioEl.remove()
+      } catch {}
+    })
+  } catch {}
+}
+
+function stopLoudPhoneRingtoneLocalOnly(): void {
+  ringSessionSeq++
+  isIncomingRingtoneActive = false
+  stopWebAudioRingSource()
+  if (fallbackWavRingAudio) {
+    try {
+      fallbackWavRingAudio.muted = true
+      fallbackWavRingAudio.pause()
+      fallbackWavRingAudio.currentTime = 0
+    } catch {}
+  }
+  if (typeof document !== "undefined") {
+    try {
+      document.querySelectorAll('audio[data-connectln-ringtone="true"]').forEach((el) => {
+        if (el instanceof HTMLAudioElement) {
+          el.muted = true
+          el.pause()
+          el.currentTime = 0
+        }
+      })
+    } catch {}
+  }
+  stopPipWindowRingAudio(activePipWin)
+  stopPipWindowRingAudio(activePopupWin)
+  if (ringVibrateTimer) {
+    clearInterval(ringVibrateTimer)
+    ringVibrateTimer = null
+  }
+  try {
+    navigator.vibrate?.(0)
+  } catch {}
+  try {
+    if ("mediaSession" in navigator) {
+      const ms = (navigator as any).mediaSession
+      ms.playbackState = "none"
+      ms.setActionHandler?.("play", null)
+      ms.setActionHandler?.("pause", null)
+      ms.setActionHandler?.("stop", null)
     }
+  } catch {}
+  setCallMediaSilenceActive(false, "incoming-call-ringtone")
+}
+
+function ensureCallStopControlListeners(): void {
+  if (typeof window === "undefined" || callControlListenersBound) return
+  callControlListenersBound = true
+  try {
+    if ("BroadcastChannel" in window) {
+      callStopControlChannel = new BroadcastChannel("connectln_call_control")
+      callStopControlChannel.onmessage = (ev) => {
+        if (ev?.data?.type === "STOP_RING") {
+          stopLoudPhoneRingtoneLocalOnly()
+          stopOutgoingCallerRingbackTone()
+          stopTitleCallFlash()
+          dismissFloatingCallPopups()
+        }
+      }
+    }
+  } catch {}
+  window.addEventListener("storage", (ev) => {
+    if (ev.key === CALL_STOP_RING_STORAGE_KEY && ev.newValue) {
+      stopLoudPhoneRingtoneLocalOnly()
+      stopOutgoingCallerRingbackTone()
+      stopTitleCallFlash()
+      dismissFloatingCallPopups()
+    }
+  })
+}
+
+if (typeof window !== "undefined") {
+  ensureCallStopControlListeners()
+}
+
+export function broadcastStopRingtoneAcrossTabs(callId?: string): void {
+  if (typeof window === "undefined") return
+  ensureCallStopControlListeners()
+  const payload = { type: "STOP_RING", callId: callId || "", ts: Date.now() }
+  try {
+    callStopControlChannel?.postMessage(payload)
+  } catch {}
+  try {
+    window.localStorage.setItem(CALL_STOP_RING_STORAGE_KEY, JSON.stringify(payload))
   } catch {}
 }
 
 export function isIncomingRingtoneAudiblyPlaying(): boolean {
   return Boolean(
-    (activeRingSource && liveAudioCtx?.state === "running") ||
-      (fallbackWavRingAudio && !fallbackWavRingAudio.paused && !fallbackWavRingAudio.muted)
+    isIncomingRingtoneActive &&
+      ((activeRingSource && liveAudioCtx?.state === "running") ||
+        (fallbackWavRingAudio && !fallbackWavRingAudio.paused && !fallbackWavRingAudio.muted))
   )
 }
 
-function startWebAudioRingBuffer(): boolean {
+function startWebAudioRingBuffer(expectedSeq?: number): boolean {
+  if (expectedSeq !== undefined && (!isIncomingRingtoneActive || expectedSeq !== ringSessionSeq)) {
+    return false
+  }
   if (!liveAudioCtx || !ringtoneBuffer || liveAudioCtx.state !== "running") return false
   if (activeRingSource) return true
   try {
@@ -824,6 +923,8 @@ function startWebAudioRingBuffer(): boolean {
 
 export function startLoudPhoneRingtone(): void {
   if (typeof window === "undefined") return
+  ensureCallStopControlListeners()
+  const mySeq = ++ringSessionSeq
   isIncomingRingtoneActive = true
   setCallMediaSilenceActive(true, "incoming-call-ringtone")
   ensureLiveAudioPipelineStarted()
@@ -841,6 +942,7 @@ export function startLoudPhoneRingtone(): void {
   if (!useExternalAudioFile && activeRingSource && liveAudioCtx?.state === "running") {
     if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
       try {
+        fallbackWavRingAudio.muted = true
         fallbackWavRingAudio.pause()
         fallbackWavRingAudio.currentTime = 0
       } catch {}
@@ -858,18 +960,18 @@ export function startLoudPhoneRingtone(): void {
       liveAudioCtx
         .resume()
         .then(() => {
+          if (!isIncomingRingtoneActive || mySeq !== ringSessionSeq) return
           if (
-            isIncomingRingtoneActive &&
             !activeRingSource &&
             (!fallbackWavRingAudio || fallbackWavRingAudio.paused || fallbackWavRingAudio.muted)
           ) {
-            startWebAudioRingBuffer()
+            startWebAudioRingBuffer(mySeq)
           }
         })
         .catch(() => {})
     }
     if (liveAudioCtx.state === "running") {
-      startedWebAudio = startWebAudioRingBuffer()
+      startedWebAudio = startWebAudioRingBuffer(mySeq)
     }
   }
 
@@ -883,16 +985,29 @@ export function startLoudPhoneRingtone(): void {
       fallbackWavRingAudio.muted = false
       fallbackWavRingAudio.volume = 0.98
       if (fallbackWavRingAudio.paused) {
-        fallbackWavRingAudio.play().catch(() => {
-          if (
-            isIncomingRingtoneActive &&
-            liveAudioCtx &&
-            ringtoneBuffer &&
-            liveAudioCtx.state === "running"
-          ) {
-            startWebAudioRingBuffer()
-          }
-        })
+        const refEl = fallbackWavRingAudio
+        refEl
+          .play()
+          .then(() => {
+            if (!isIncomingRingtoneActive || mySeq !== ringSessionSeq) {
+              try {
+                refEl.muted = true
+                refEl.pause()
+                refEl.currentTime = 0
+              } catch {}
+            }
+          })
+          .catch(() => {
+            if (
+              isIncomingRingtoneActive &&
+              mySeq === ringSessionSeq &&
+              liveAudioCtx &&
+              ringtoneBuffer &&
+              liveAudioCtx.state === "running"
+            ) {
+              startWebAudioRingBuffer(mySeq)
+            }
+          })
       }
     }
   }
@@ -920,10 +1035,13 @@ export function startLoudPhoneRingtone(): void {
       if (activeRingSource && liveAudioCtx?.state === "running") return
       if (fallbackWavRingAudio && !fallbackWavRingAudio.paused && !fallbackWavRingAudio.muted) return
       if (liveAudioCtx && liveAudioCtx.state === "suspended") {
+        const interactionSeq = ringSessionSeq
         liveAudioCtx
           .resume()
           .then(() => {
-            if (isIncomingRingtoneActive) startLoudPhoneRingtone()
+            if (isIncomingRingtoneActive && interactionSeq === ringSessionSeq) {
+              startLoudPhoneRingtone()
+            }
           })
           .catch(() => {})
       }
@@ -940,6 +1058,7 @@ export function startLoudPhoneRingtone(): void {
       navigator.vibrate?.([550, 220, 550, 220, 750])
     } catch {}
     ringVibrateTimer = setInterval(() => {
+      if (!isIncomingRingtoneActive) return
       try {
         navigator.vibrate?.([550, 220, 550, 220, 750])
       } catch {}
@@ -947,34 +1066,11 @@ export function startLoudPhoneRingtone(): void {
   }
 }
 
-export function stopLoudPhoneRingtone(): void {
-  isIncomingRingtoneActive = false
-  stopWebAudioRingSource()
-  if (fallbackWavRingAudio) {
-    try {
-      fallbackWavRingAudio.pause()
-      fallbackWavRingAudio.currentTime = 0
-    } catch {}
+export function stopLoudPhoneRingtone(broadcastToOtherTabs = false): void {
+  stopLoudPhoneRingtoneLocalOnly()
+  if (broadcastToOtherTabs) {
+    broadcastStopRingtoneAcrossTabs()
   }
-  stopPipWindowRingAudio(activePipWin)
-  stopPipWindowRingAudio(activePopupWin)
-  if (ringVibrateTimer) {
-    clearInterval(ringVibrateTimer)
-    ringVibrateTimer = null
-  }
-  try {
-    navigator.vibrate?.(0)
-  } catch {}
-  try {
-    if ("mediaSession" in navigator) {
-      const ms = (navigator as any).mediaSession
-      ms.playbackState = "none"
-      ms.setActionHandler?.("play", null)
-      ms.setActionHandler?.("pause", null)
-      ms.setActionHandler?.("stop", null)
-    }
-  } catch {}
-  setCallMediaSilenceActive(false, "incoming-call-ringtone")
 }
 
 /**
@@ -1120,7 +1216,7 @@ function renderIncomingCallDomIntoWindow(
     doc.body.dataset.renderedCallId = spec.callId
 
     try {
-      win.resizeTo?.(440, 540)
+      win.resizeTo?.(460, 440)
       win.focus?.()
     } catch {}
 
@@ -1141,63 +1237,57 @@ function renderIncomingCallDomIntoWindow(
       <style>
         @keyframes waRipple {
           0% { transform: scale(0.95); opacity: 0.78; }
-          75% { transform: scale(1.48); opacity: 0; }
-          100% { transform: scale(1.48); opacity: 0; }
+          75% { transform: scale(1.42); opacity: 0; }
+          100% { transform: scale(1.42); opacity: 0; }
         }
         @keyframes waAcceptGlow {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 28px rgba(37, 211, 102, 0.65); }
-          50% { transform: scale(1.06); box-shadow: 0 0 46px rgba(37, 211, 102, 0.98); }
+          0%, 100% { transform: scale(1); box-shadow: 0 0 28px rgba(37, 211, 102, 0.7); }
+          50% { transform: scale(1.02); box-shadow: 0 0 46px rgba(37, 211, 102, 0.98); }
         }
-        #btn-answer:hover .wa-circle { filter: brightness(1.08); }
-        #btn-decline:hover .wa-circle { filter: brightness(1.08); }
+        #btn-answer:hover { filter: brightness(1.08); }
+        #btn-decline:hover { filter: brightness(1.08); }
       </style>
-      <div style="height:100vh;width:100vw;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(circle at 50% 35%, rgba(37,211,102,0.22) 0%, rgba(14,44,39,0.94) 40%, #0B141A 80%);color:#FFFFFF;font-family:system-ui,-apple-system,sans-serif;box-sizing:border-box;text-align:center;overflow:hidden;border:1px solid rgba(37,211,102,0.35);">
-        <div style="padding:18px 20px 6px 20px;display:flex;flex-direction:column;align-items:center;gap:6px;">
-          <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.65);">
+      <div style="height:100vh;width:100vw;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:14px 20px;background:radial-gradient(circle at 50% 35%, rgba(37,211,102,0.22) 0%, rgba(14,44,39,0.94) 42%, #0B141A 84%);color:#FFFFFF;font-family:system-ui,-apple-system,sans-serif;box-sizing:border-box;text-align:center;overflow:hidden;border:2px solid rgba(37,211,102,0.45);">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#25D366;letter-spacing:0.12em;text-transform:uppercase;">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>End-to-end encrypted</span>
+            <span>End-to-end encrypted · CONNECTLN ${isVideo ? "VIDEO" : "VOICE"} CALL</span>
           </div>
-          <div style="font-size:11px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:#25D366;margin-top:2px;">
-            CONNECTLN ${isVideo ? "VIDEO" : "VOICE"} CALL
-          </div>
-          <div style="font-size:28px;font-weight:800;line-height:1.15;max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#FFFFFF;margin-top:2px;">${safeName}</div>
-          <div style="font-size:14px;color:#86EFAC;font-weight:600;">${safePhone || "Ringing…"}</div>
         </div>
 
-        <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:8px;">
-          <div style="position:relative;width:104px;height:104px;display:flex;align-items:center;justify-content:center;">
-            <span style="position:absolute;inset:-14px;border-radius:999px;border:2px solid rgba(37,211,102,0.55);animation:waRipple 1.6s ease-out infinite;"></span>
-            <span style="position:absolute;inset:-6px;border-radius:999px;background:rgba(37,211,102,0.2);animation:waRipple 1.6s ease-out 0.45s infinite;"></span>
-            <div style="position:relative;width:104px;height:104px;border-radius:999px;background:linear-gradient(135deg,#128C7E 0%,#075E54 100%);border:3px solid #25D366;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:800;color:#FFFFFF;box-shadow:0 0 42px rgba(37,211,102,0.4);">
+        <div style="display:flex;align-items:center;justify-content:center;gap:14px;padding:4px 0;">
+          <div style="position:relative;width:72px;height:72px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+            <span style="position:absolute;inset:-8px;border-radius:999px;border:2px solid rgba(37,211,102,0.55);animation:waRipple 1.5s ease-out infinite;"></span>
+            <div style="position:relative;width:72px;height:72px;border-radius:999px;background:linear-gradient(135deg,#128C7E 0%,#075E54 100%);border:3px solid #25D366;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#FFFFFF;box-shadow:0 0 28px rgba(37,211,102,0.45);">
               ${safeInitials}
             </div>
           </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-width:0;max-width:290px;">
+            <div style="font-size:24px;font-weight:900;line-height:1.15;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#FFFFFF;">${safeName}</div>
+            <div style="font-size:14px;color:#86EFAC;font-weight:700;margin-top:2px;">${safePhone || "Ringing…"}</div>
+          </div>
         </div>
 
-        <div style="background:rgba(255,255,255,0.06);border-top:1px solid rgba(255,255,255,0.12);padding:18px 24px 22px 24px;display:flex;align-items:center;justify-content:space-around;gap:24px;width:100%;box-sizing:border-box;">
-          <button id="btn-decline" type="button" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;padding:4px 10px;color:#FFFFFF;">
-            <div class="wa-circle" style="width:68px;height:68px;border-radius:999px;background:#FF3B30;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px rgba(255,59,48,0.5);border:2px solid rgba(255,255,255,0.22);">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
-            </div>
-            <span style="font-size:15px;font-weight:700;color:#FFFFFF;">Decline</span>
+        <div style="display:flex;flex-direction:column;gap:10px;width:100%;box-sizing:border-box;">
+          <button id="btn-answer" type="button" style="width:100%;min-height:68px;padding:14px 18px;border-radius:999px;border:3px solid #BBF7D0;background:#25D366;color:#FFFFFF;font-size:20px;font-weight:900;letter-spacing:0.03em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 0 36px rgba(37,211,102,0.85);animation:waAcceptGlow 1.2s ease-in-out infinite;">
+            ${
+              isVideo
+                ? `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg><span>ACCEPT VIDEO CALL</span>`
+                : `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>ACCEPT CALL</span>`
+            }
           </button>
 
-          <button id="btn-answer" type="button" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;padding:4px 10px;color:#FFFFFF;">
-            <div class="wa-circle" style="width:76px;height:76px;border-radius:999px;background:#25D366;display:flex;align-items:center;justify-content:center;border:3px solid #BBF7D0;animation:waAcceptGlow 1.3s ease-in-out infinite;">
-              ${
-                isVideo
-                  ? `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`
-                  : `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`
-              }
-            </div>
-            <span style="font-size:16px;font-weight:800;color:#FFFFFF;">Accept</span>
+          <button id="btn-decline" type="button" style="width:100%;min-height:48px;padding:10px 16px;border-radius:999px;border:2px solid rgba(255,255,255,0.28);background:#FF3B30;color:#FFFFFF;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
+            <span>DECLINE CALL</span>
           </button>
         </div>
       </div>
     `
 
-    if (!isIncomingRingtoneAudiblyPlaying()) {
+    if (isIncomingRingtoneActive && !isIncomingRingtoneAudiblyPlaying()) {
       try {
+        const myPipSeq = ringSessionSeq
         const pipAudio = doc.createElement("audio")
         pipAudio.id = "pip-ring-audio"
         pipAudio.dataset.connectlnCallAudio = "true"
@@ -1208,7 +1298,20 @@ function renderIncomingCallDomIntoWindow(
         pipAudio.setAttribute("playsinline", "true")
         pipAudio.style.cssText = "position:fixed;left:-9999px;width:1px;height:1px;opacity:0.01;"
         doc.body.appendChild(pipAudio)
-        pipAudio.play().catch(() => {})
+        pipAudio
+          .play()
+          .then(() => {
+            if (!isIncomingRingtoneActive || myPipSeq !== ringSessionSeq) {
+              try {
+                pipAudio.muted = true
+                pipAudio.pause()
+                pipAudio.currentTime = 0
+                pipAudio.removeAttribute("src")
+                pipAudio.remove()
+              } catch {}
+            }
+          })
+          .catch(() => {})
       } catch {}
     }
 
@@ -1219,6 +1322,7 @@ function renderIncomingCallDomIntoWindow(
       if (handled) return
       handled = true
       const liveSpec = currentRingingSpec || spec
+      stopLoudPhoneRingtone(true)
       liveSpec?.onAnswer?.()
       try {
         ;(win.opener || window).focus()
@@ -1229,6 +1333,7 @@ function renderIncomingCallDomIntoWindow(
       if (handled) return
       handled = true
       const liveSpec = currentRingingSpec || spec
+      stopLoudPhoneRingtone(true)
       liveSpec?.onDecline?.()
     }
     if (ansBtn) {
@@ -1259,7 +1364,7 @@ export function isAlwaysOnTopReceiverOpen(): boolean {
 
 /**
  * Opens an Always-On-Top Document Picture-in-Picture Standby Receiver (Chrome / Edge Desktop).
- * Sized at 420x480 so the WhatsApp-style Incoming Call Screen renders cleanly inside it when minimized!
+ * Sized at 440x380 so the large centered WhatsApp Accept pill never clips on any laptop screen!
  */
 export async function openAlwaysOnTopCallStandbyPiP(manualUserAction = false): Promise<boolean> {
   if (!isDocumentPipSupported()) return false
@@ -1277,8 +1382,8 @@ export async function openAlwaysOnTopCallStandbyPiP(manualUserAction = false): P
     }
     const dpip = (window as any).documentPictureInPicture
     const pipWindow: Window = await dpip.requestWindow({
-      width: 420,
-      height: 480,
+      width: 440,
+      height: 380,
     })
     activePipWin = pipWindow
     programmaticPipClose = false
@@ -1379,15 +1484,15 @@ export async function triggerSystemIncomingCallAlert(
   if (activePipWin && !activePipWin.closed) {
     renderIncomingCallDomIntoWindow(activePipWin, spec, true)
   } else {
-    // 2. Also attempt opening a standalone 440x540 Pop-Up Call Window (succeeds whenever popups are allowed!)
+    // 2. Also attempt opening a standalone 460x440 Pop-Up Call Window (succeeds whenever popups are allowed!)
     try {
-      const left = Math.max(20, Math.round((window.screen.availWidth - 440) / 2))
-      const top = Math.max(30, Math.round((window.screen.availHeight - 540) / 2))
+      const left = Math.max(20, Math.round((window.screen.availWidth - 460) / 2))
+      const top = Math.max(30, Math.round((window.screen.availHeight - 440) / 2))
       if (!activePopupWin || activePopupWin.closed) {
         activePopupWin = window.open(
           "",
           "connectln_incoming_call_popup",
-          `popup=yes,width=440,height=540,left=${left},top=${top}`
+          `popup=yes,width=460,height=440,left=${left},top=${top}`
         )
       }
       if (activePopupWin && !activePopupWin.closed) {
