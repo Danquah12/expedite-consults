@@ -108,7 +108,7 @@ export function startLiveVoiceChunkCapture(
     silentGainNode.gain.value = 0
 
     processorNode.onaudioprocess = (e) => {
-      if (stopped || isMutedGetter() || !audioTracks[0].enabled) {
+      if (stopped || isMutedGetter() || !audioTracks[0].enabled || audioTracks[0].readyState !== "live") {
         writeIdx = 0
         sumSq = 0
         peakAbs = 0
@@ -189,6 +189,7 @@ export function startLiveVoiceChunkCapture(
     window.removeEventListener("keydown", resumeOnGesture)
     window.removeEventListener("click", resumeOnGesture)
     try {
+      if (processorNode) processorNode.onaudioprocess = null
       processorNode?.disconnect()
       sourceNode?.disconnect()
       silentGainNode?.disconnect()
@@ -204,6 +205,7 @@ export function startLiveVoiceChunkCapture(
 export class GaplessRemoteVoicePlayer {
   private lastPlayedSeqByPeer = new Map<string, number>()
   private nextStartTimeByPeer = new Map<string, number>()
+  private activeSourcesByPeer = new Map<string, Set<AudioBufferSourceNode>>()
   private htmlAudioPool: HTMLAudioElement[] = []
   private htmlAudioPoolIdx = 0
 
@@ -293,6 +295,51 @@ export class GaplessRemoteVoicePlayer {
     }
   }
 
+  public stopPeer(peerKey: string): void {
+    const activeSet = this.activeSourcesByPeer.get(peerKey)
+    if (activeSet) {
+      activeSet.forEach((src) => {
+        try {
+          src.onended = null
+          src.stop()
+        } catch {}
+        try {
+          src.disconnect()
+        } catch {}
+      })
+      activeSet.clear()
+      this.activeSourcesByPeer.delete(peerKey)
+    }
+    this.lastPlayedSeqByPeer.delete(peerKey)
+    this.nextStartTimeByPeer.delete(peerKey)
+  }
+
+  public stopAll(): void {
+    this.activeSourcesByPeer.forEach((activeSet) => {
+      activeSet.forEach((src) => {
+        try {
+          src.onended = null
+          src.stop()
+        } catch {}
+        try {
+          src.disconnect()
+        } catch {}
+      })
+      activeSet.clear()
+    })
+    this.activeSourcesByPeer.clear()
+    this.lastPlayedSeqByPeer.clear()
+    this.nextStartTimeByPeer.clear()
+    for (const a of this.htmlAudioPool) {
+      try {
+        a.pause()
+        a.currentTime = 0
+        a.removeAttribute("src")
+        a.load()
+      } catch {}
+    }
+  }
+
   private scheduleAudioBuffer(peerKey: string, ctx: AudioContext, audioBuffer: AudioBuffer, gainValue = 1.85): void {
     const src = ctx.createBufferSource()
     src.buffer = audioBuffer
@@ -300,6 +347,20 @@ export class GaplessRemoteVoicePlayer {
     gain.gain.value = gainValue
     src.connect(gain)
     gain.connect(ctx.destination)
+
+    let activeSet = this.activeSourcesByPeer.get(peerKey)
+    if (!activeSet) {
+      activeSet = new Set<AudioBufferSourceNode>()
+      this.activeSourcesByPeer.set(peerKey, activeSet)
+    }
+    activeSet.add(src)
+    src.onended = () => {
+      activeSet?.delete(src)
+      try {
+        src.disconnect()
+        gain.disconnect()
+      } catch {}
+    }
 
     const now = ctx.currentTime
     const prevEnd = this.nextStartTimeByPeer.get(peerKey) || 0

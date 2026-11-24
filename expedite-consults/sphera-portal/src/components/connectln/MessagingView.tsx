@@ -812,10 +812,19 @@ export function MessagingView({
     const fallbackCanvasAnimRef = useRef<number | null>(null);
     const [huddleMyPeerId, setHuddleMyPeerId] = useState<string>('');
     const [huddleRemoteStreams, setHuddleRemoteStreams] = useState<Record<string, MediaStream>>({});
+    const huddleRemoteStreamsRef = useRef<Record<string, MediaStream>>({});
+    useEffect(() => {
+        huddleRemoteStreamsRef.current = huddleRemoteStreams;
+    }, [huddleRemoteStreams]);
+    const huddlePeerRef = useRef<any>(null);
     const huddleActiveMediaCallsRef = useRef<Map<string, any>>(new Map());
+    const huddleActiveDataConnsRef = useRef<Map<string, any>>(new Map());
     const huddleKnownPeerIdsRef = useRef<Set<string>>(new Set());
     const huddleDialPeerNowRef = useRef<((targetPeerId: string, force?: boolean) => void) | null>(null);
     const huddleLiveWebRtcPeersCountRef = useRef<number>(0);
+    const huddleLatestAudioChunkRef = useRef<EncodedVoiceChunk | undefined>(undefined);
+    const huddleRecentAudioChunksRef = useRef<EncodedVoiceChunk[]>([]);
+    const huddleVoicePlayerRef = useRef<GaplessRemoteVoicePlayer | null>(null);
     const [huddleVirtualBgId, setHuddleVirtualBgId] = useState<string>(() => {
         if (typeof window !== 'undefined') {
             const saved = sessionStorage.getItem('vibe_call_virtual_bg');
@@ -843,15 +852,93 @@ export function MessagingView({
         }, 4000);
     };
 
+    const teardownHuddleMediaCall = (mc: any) => {
+        if (!mc) return;
+        try {
+            const pc: RTCPeerConnection | undefined = mc.peerConnection;
+            if (pc) {
+                if (typeof pc.getSenders === 'function') {
+                    pc.getSenders().forEach((sender) => {
+                        try {
+                            if (sender.track) {
+                                sender.track.enabled = false;
+                                sender.track.stop();
+                            }
+                        } catch {}
+                        try {
+                            pc.removeTrack(sender);
+                        } catch {}
+                    });
+                }
+                if (typeof pc.getReceivers === 'function') {
+                    pc.getReceivers().forEach((receiver) => {
+                        try {
+                            if (receiver.track) {
+                                receiver.track.enabled = false;
+                                receiver.track.stop();
+                            }
+                        } catch {}
+                    });
+                }
+                try {
+                    pc.close();
+                } catch {}
+            }
+        } catch {}
+        try {
+            mc.close?.();
+        } catch {}
+    };
+
     const stopCurrentCallMedia = () => {
         if (fallbackCanvasAnimRef.current) {
             cancelAnimationFrame(fallbackCanvasAnimRef.current);
             fallbackCanvasAnimRef.current = null;
         }
         if (localStreamRef.current) {
-            localStreamRef.current.getTracks().forEach((t) => t.stop());
+            localStreamRef.current.getTracks().forEach((t) => {
+                t.enabled = false;
+                t.stop();
+            });
             localStreamRef.current = null;
         }
+        if (localVideoRef.current) {
+            try {
+                localVideoRef.current.pause();
+                localVideoRef.current.srcObject = null;
+            } catch {}
+        }
+        const callsToClose = Array.from(huddleActiveMediaCallsRef.current.values());
+        huddleActiveMediaCallsRef.current.clear();
+        callsToClose.forEach((mc) => teardownHuddleMediaCall(mc));
+        const connsToClose = Array.from(huddleActiveDataConnsRef.current.values());
+        huddleActiveDataConnsRef.current.clear();
+        connsToClose.forEach((conn) => {
+            try {
+                conn?.close?.();
+            } catch {}
+        });
+        huddleKnownPeerIdsRef.current.clear();
+        Object.values(huddleRemoteStreamsRef.current).forEach((s) => {
+            try {
+                s?.getTracks().forEach((t) => {
+                    t.enabled = false;
+                    t.stop();
+                });
+            } catch {}
+        });
+        huddleRemoteStreamsRef.current = {};
+        huddleLiveWebRtcPeersCountRef.current = 0;
+        if (huddlePeerRef.current) {
+            try {
+                huddlePeerRef.current.destroy?.();
+            } catch {}
+            huddlePeerRef.current = null;
+        }
+        setHuddleMyPeerId('');
+        huddleVoicePlayerRef.current?.stopAll();
+        huddleLatestAudioChunkRef.current = undefined;
+        huddleRecentAudioChunksRef.current = [];
         setLocalStreamState(null);
     };
 
@@ -1420,6 +1507,13 @@ export function MessagingView({
         const durationStr = formatCallTime(elapsedSecs);
         const endingThreadId = activeThread?.id;
         isHandingOffToStudioRef.current = false;
+        huddleActiveDataConnsRef.current.forEach((conn) => {
+            if (conn?.open) {
+                try {
+                    conn.send({ type: 'call_ended', callId: endingThreadId, forceEndForAll: true });
+                } catch {}
+            }
+        });
         setActiveCallMode(null);
         setRemoteHuddleParticipants([]);
         setHuddleRemoteStreams({});
@@ -1434,6 +1528,7 @@ export function MessagingView({
                     action: 'end',
                     call_id: endingThreadId,
                     user_id: huddleLocalPeerId,
+                    end_for_all: true,
                 }),
             }).catch(() => {});
         }
@@ -1880,10 +1975,7 @@ export function MessagingView({
         }
     };
 
-    // Live voice capture & playback refs for Messaging Video/Audio Huddle (fallback only while WebRTC ICE negotiates)
-    const huddleLatestAudioChunkRef = useRef<EncodedVoiceChunk | undefined>(undefined);
-    const huddleRecentAudioChunksRef = useRef<EncodedVoiceChunk[]>([]);
-    const huddleVoicePlayerRef = useRef<GaplessRemoteVoicePlayer | null>(null);
+    // Live voice capture & playback helper (refs declared above for early teardown access)
     const hasActiveHuddleWebRtcStream = Object.keys(huddleRemoteStreams).length > 0;
 
     const activeHuddleBgPreset =
@@ -2304,8 +2396,17 @@ export function MessagingView({
             mediaCall.on('close', () => {
                 if (activeMediaCalls.get(mediaCall.peer) !== mediaCall) return;
                 activeMediaCalls.delete(mediaCall.peer);
+                huddleKnownPeerIdsRef.current.delete(mediaCall.peer);
+                teardownHuddleMediaCall(mediaCall);
                 setHuddleRemoteStreams((prev) => {
-                    if (!prev[mediaCall.peer]) return prev;
+                    const closingStream = prev[mediaCall.peer];
+                    if (closingStream) {
+                        closingStream.getTracks().forEach((t) => {
+                            t.enabled = false;
+                            t.stop();
+                        });
+                    }
+                    if (!closingStream) return prev;
                     const next = { ...prev };
                     delete next[mediaCall.peer];
                     huddleLiveWebRtcPeersCountRef.current = countVideoStreams(next);
@@ -2315,6 +2416,79 @@ export function MessagingView({
             mediaCall.on('error', () => {
                 if (activeMediaCalls.get(mediaCall.peer) === mediaCall) {
                     activeMediaCalls.delete(mediaCall.peer);
+                }
+            });
+        };
+
+        const activeDataConns = huddleActiveDataConnsRef.current;
+        const bindHuddleDataConn = (conn: any) => {
+            if (!conn) return;
+            if (conn.peer) {
+                huddleKnownPeerIdsRef.current.add(conn.peer);
+                activeDataConns.set(conn.peer, conn);
+            }
+            conn.on('data', (data: any) => {
+                if (isCancelled || !data) return;
+                if (data.type === 'call_ended' || data.type === 'VIBE_CALL_ENDED') {
+                    if (data.forceEndForAll !== true && activeMediaCalls.size >= 2) return;
+                    verifiedRemoteFramesRef.current.clear();
+                    setRemoteHuddleParticipants([]);
+                    setHuddleRemoteStreams({});
+                    stopCurrentCallMedia();
+                    setActiveCallMode(null);
+                    triggerToast('Meeting ended by participant.');
+                    return;
+                }
+                if (data.type === 'peer_left') {
+                    const leftPid = String(data.peerId || conn.peer || '');
+                    const leftUid = String(data.userId || '');
+                    if (leftPid) {
+                        const closingMc = activeMediaCalls.get(leftPid);
+                        activeMediaCalls.delete(leftPid);
+                        if (closingMc) teardownHuddleMediaCall(closingMc);
+                        const closingDc = activeDataConns.get(leftPid);
+                        activeDataConns.delete(leftPid);
+                        try {
+                            closingDc?.close?.();
+                        } catch {}
+                        huddleKnownPeerIdsRef.current.delete(leftPid);
+                        setHuddleRemoteStreams((prev) => {
+                            const closingStream = prev[leftPid];
+                            if (closingStream) {
+                                closingStream.getTracks().forEach((t) => {
+                                    t.enabled = false;
+                                    t.stop();
+                                });
+                            }
+                            if (!closingStream) return prev;
+                            const next = { ...prev };
+                            delete next[leftPid];
+                            huddleLiveWebRtcPeersCountRef.current = countVideoStreams(next);
+                            return next;
+                        });
+                    }
+                    if (leftUid) {
+                        huddleVoicePlayerRef.current?.stopPeer(leftUid);
+                    }
+                    return;
+                }
+                if (data.type !== 'VIBE_PEER_SYNC') return;
+                if (data.peerId && data.peerId !== peerInstance?.id) {
+                    huddleKnownPeerIdsRef.current.add(data.peerId);
+                    dialRemotePeerNow(data.peerId);
+                }
+                if (typeof data.liveFrame === 'string' && data.liveFrame.length > 800 && data.participantId) {
+                    publishHuddleRemoteFrame(data.participantId, data.liveFrame);
+                }
+            });
+            conn.on('close', () => {
+                if (conn.peer && activeDataConns.get(conn.peer) === conn) {
+                    activeDataConns.delete(conn.peer);
+                }
+            });
+            conn.on('error', () => {
+                if (conn.peer && activeDataConns.get(conn.peer) === conn) {
+                    activeDataConns.delete(conn.peer);
                 }
             });
         };
@@ -2332,6 +2506,13 @@ export function MessagingView({
             const outStream = getHuddleOutgoingStream();
             if (!outStream) return;
             const nowMs = Date.now();
+            const existingConn = activeDataConns.get(targetPeerId);
+            if (!existingConn) {
+                try {
+                    const dc = peerInstance.connect(targetPeerId, { reliable: true });
+                    if (dc) bindHuddleDataConn(dc);
+                } catch {}
+            }
             const lastTry = lastCallAttemptMs.get(targetPeerId) || 0;
             const existingCall = activeMediaCalls.get(targetPeerId);
             const existingPc: RTCPeerConnection | undefined = existingCall?.peerConnection;
@@ -2403,6 +2584,7 @@ export function MessagingView({
                         return;
                     }
                     peerInstance = peer;
+                    huddlePeerRef.current = peer;
                     setHuddleMyPeerId(openedId);
                     huddleKnownPeerIdsRef.current.forEach((pid) => {
                         if (pid && pid !== openedId) dialRemotePeerNow(pid);
@@ -2430,18 +2612,7 @@ export function MessagingView({
                 });
 
                 peer.on('connection', (conn: any) => {
-                    if (!conn) return;
-                    if (conn.peer) huddleKnownPeerIdsRef.current.add(conn.peer);
-                    conn.on('data', (data: any) => {
-                        if (!data || data.type !== 'VIBE_PEER_SYNC') return;
-                        if (data.peerId && data.peerId !== peerInstance?.id) {
-                            huddleKnownPeerIdsRef.current.add(data.peerId);
-                            dialRemotePeerNow(data.peerId);
-                        }
-                        if (typeof data.liveFrame === 'string' && data.liveFrame.length > 800 && data.participantId) {
-                            publishHuddleRemoteFrame(data.participantId, data.liveFrame);
-                        }
-                    });
+                    bindHuddleDataConn(conn);
                 });
 
                 peer.on('error', (err: any) => {
@@ -2461,12 +2632,24 @@ export function MessagingView({
             isCancelled = true;
             huddleDialPeerNowRef.current = null;
             setHuddleMyPeerId('');
+            const callsToClose = Array.from(activeMediaCalls.values());
             activeMediaCalls.clear();
+            callsToClose.forEach((mc) => teardownHuddleMediaCall(mc));
+            const connsToClose = Array.from(activeDataConns.values());
+            activeDataConns.clear();
+            connsToClose.forEach((c) => {
+                try {
+                    c?.close?.();
+                } catch {}
+            });
             if (meshTimer) clearInterval(meshTimer);
             if (peerInstance) {
                 try {
                     peerInstance.destroy();
                 } catch {}
+            }
+            if (huddlePeerRef.current === peerInstance) {
+                huddlePeerRef.current = null;
             }
         };
     }, [isCallModalOpen, activeThread?.id, huddleLocalPeerId]);
@@ -2502,6 +2685,9 @@ export function MessagingView({
         let mounted = true;
         let hbTimer: ReturnType<typeof setTimeout> | null = null;
         let lastFallbackFrameAtMs = 0;
+        const missingPeerBeats = new Map<string, number>();
+        const seenFallbackUserIds = new Set<string>();
+        const missingUserBeats = new Map<string, number>();
 
         const syncHuddleFrame = async () => {
             if (!mounted) return;
@@ -2655,6 +2841,7 @@ export function MessagingView({
                                 (Array.isArray(peer.recent_audio_chunks) &&
                                     peer.recent_audio_chunks.length > 0))
                         ) {
+                            seenFallbackUserIds.add(peer.user_id);
                             if (!huddleVoicePlayerRef.current) {
                                 huddleVoicePlayerRef.current = new GaplessRemoteVoicePlayer();
                             }
@@ -2679,6 +2866,65 @@ export function MessagingView({
                         if (typeof peer.live_frame === 'string' && peer.live_frame.length > 800) {
                             verifiedRemoteFramesRef.current.set(peer.user_id, peer.live_frame);
                             publishHuddleRemoteFrame(peer.user_id, peer.live_frame);
+                        }
+                    }
+
+                    const activeHuddlePeerIds = new Set<string>(
+                        activeRemotes.map((r: any) => String(r?.peer_id || '').trim()).filter(Boolean)
+                    );
+                    const activeHuddleUserIds = new Set<string>(
+                        activeRemotes.map((r: any) => String(r?.user_id || '').trim()).filter(Boolean)
+                    );
+                    const trackedHuddlePeers = new Set<string>([
+                        ...Array.from(huddleActiveMediaCallsRef.current.keys()),
+                        ...Array.from(huddleKnownPeerIdsRef.current),
+                        ...Object.keys(huddleRemoteStreamsRef.current),
+                    ]);
+                    for (const pid of trackedHuddlePeers) {
+                        if (!pid || pid === huddleMyPeerId) continue;
+                        if (activeHuddlePeerIds.has(pid)) {
+                            missingPeerBeats.delete(pid);
+                        } else {
+                            const misses = (missingPeerBeats.get(pid) || 0) + 1;
+                            if (misses >= 2) {
+                                missingPeerBeats.delete(pid);
+                                huddleKnownPeerIdsRef.current.delete(pid);
+                                const staleMc = huddleActiveMediaCallsRef.current.get(pid);
+                                huddleActiveMediaCallsRef.current.delete(pid);
+                                if (staleMc) teardownHuddleMediaCall(staleMc);
+                                const staleDc = huddleActiveDataConnsRef.current.get(pid);
+                                huddleActiveDataConnsRef.current.delete(pid);
+                                try {
+                                    staleDc?.close?.();
+                                } catch {}
+                                setHuddleRemoteStreams((prev) => {
+                                    const closingStream = prev[pid];
+                                    if (!closingStream) return prev;
+                                    closingStream.getTracks().forEach((t) => {
+                                        t.enabled = false;
+                                        t.stop();
+                                    });
+                                    const next = { ...prev };
+                                    delete next[pid];
+                                    return next;
+                                });
+                            } else {
+                                missingPeerBeats.set(pid, misses);
+                            }
+                        }
+                    }
+                    for (const uid of Array.from(seenFallbackUserIds)) {
+                        if (activeHuddleUserIds.has(uid)) {
+                            missingUserBeats.delete(uid);
+                        } else {
+                            const uMisses = (missingUserBeats.get(uid) || 0) + 1;
+                            if (uMisses >= 2) {
+                                missingUserBeats.delete(uid);
+                                seenFallbackUserIds.delete(uid);
+                                huddleVoicePlayerRef.current?.stopPeer(uid);
+                            } else {
+                                missingUserBeats.set(uid, uMisses);
+                            }
                         }
                     }
 
@@ -2738,6 +2984,17 @@ export function MessagingView({
             }
         };
 
+        const onGlobalCallEnded = (ev: Event) => {
+            const endedId = String((ev as CustomEvent)?.detail?.callId || '');
+            if (!endedId || endedId !== activeThread.id) return;
+            verifiedRemoteFramesRef.current.clear();
+            setRemoteHuddleParticipants([]);
+            setHuddleRemoteStreams({});
+            stopCurrentCallMedia();
+            setActiveCallMode(null);
+            triggerToast('Meeting ended by participant.');
+        };
+
         const handleUnloadLeave = () => {
             if (isHandingOffToStudioRef.current) return;
             try {
@@ -2752,14 +3009,19 @@ export function MessagingView({
                     }),
                 }).catch(() => {});
             } catch {}
+            stopCurrentCallMedia();
         };
+        window.addEventListener('connectln-call-ended', onGlobalCallEnded as EventListener);
         window.addEventListener('beforeunload', handleUnloadLeave);
+        window.addEventListener('pagehide', handleUnloadLeave);
 
         syncHuddleFrame();
         return () => {
             mounted = false;
             if (hbTimer) clearTimeout(hbTimer);
+            window.removeEventListener('connectln-call-ended', onGlobalCallEnded as EventListener);
             window.removeEventListener('beforeunload', handleUnloadLeave);
+            window.removeEventListener('pagehide', handleUnloadLeave);
         };
     }, [
         isCallModalOpen,

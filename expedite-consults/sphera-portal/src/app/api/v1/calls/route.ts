@@ -1618,27 +1618,30 @@ async function removeSingleParticipantFromGroupCall(params: {
   if (userId) {
     existing.participants = (existing.participants || []).filter((p) => p.user_id !== userId)
     upsertAttendanceEntry(existing, userId, displayName || "Left Participant", nowMs, true)
-    await pushCloudCallParticipant(
-      callId,
-      {
-        call_id: callId,
-        user_id: userId,
-        device_id: "left",
-        display_name: "Left",
-        role: "Left",
-        device_label: "Left",
-        joined_at: now,
-        last_seen_ms: 0,
-        left_at: now,
-        is_muted: true,
-        is_video_on: false,
-        is_speaking: false,
-        is_screen_sharing: false,
-        participant_state: "LEFT",
-        e2ee_media_fingerprint: "",
-      },
-      true
-    ).catch(() => {})
+    await Promise.all([
+      pushCloudCallParticipant(
+        callId,
+        {
+          call_id: callId,
+          user_id: userId,
+          device_id: "left",
+          display_name: "Left",
+          role: "Left",
+          device_label: "Left",
+          joined_at: now,
+          last_seen_ms: 0,
+          left_at: now,
+          is_muted: true,
+          is_video_on: false,
+          is_speaking: false,
+          is_screen_sharing: false,
+          participant_state: "LEFT",
+          e2ee_media_fingerprint: "",
+        },
+        true
+      ).catch(() => {}),
+      firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudAudioKey(callId, userId)).catch(() => {}),
+    ])
   }
 
   let rosterUpdated = false
@@ -1672,6 +1675,81 @@ async function removeSingleParticipantFromGroupCall(params: {
   savePersistedCalls(true)
 }
 
+async function endEntireCallRoom(params: {
+  callId: string
+  existing: CommCallRecord
+  body: any
+  now: string
+  nowMs: number
+}): Promise<void> {
+  const { callId, existing, body, now, nowMs } = params
+  ENDED_CALL_TOMBSTONES.set(callId, nowMs)
+
+  const phonesToSilence: Array<string | undefined> = [
+    existing.target_recipient_phone,
+    existing.initiator_phone,
+    typeof body.target_recipient_phone === "string" ? body.target_recipient_phone : undefined,
+    typeof body.participant_phone === "string" ? body.participant_phone : undefined,
+    ...(existing.invited_roster || []).map((m) => m.phone),
+    ...(existing.participants || []).map((p) => p.phone),
+    ...(Array.isArray(body.invited_phones) ? body.invited_phones : []),
+  ]
+
+  const userIdsToDelete = new Set<string>()
+  for (const p of existing.participants || []) {
+    if (p?.user_id) userIdsToDelete.add(p.user_id)
+  }
+  if (typeof body.user_id === "string" && body.user_id.trim()) {
+    userIdsToDelete.add(body.user_id.trim())
+  }
+
+  const cloudOps: Promise<any>[] = [
+    upsertTwilioSyncItem(
+      "firebase-kv",
+      makeCloudEndedKey(callId),
+      JSON.stringify({
+        kind: "ended",
+        call_id: callId,
+        ended_at: now,
+        ended_at_ms: nowMs,
+      }),
+      "300"
+    ).catch(() => {}),
+    firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudRosterKey(callId)).catch(() => {}),
+    firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudTeamsKey(callId)).catch(() => {}),
+    firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudStageKey(callId)).catch(() => {}),
+    publishToPhones(phonesToSilence, "call-ended", { callId }).catch(() => {}),
+    sendCallEndedWebPush({
+      callId,
+      phones: phonesToSilence,
+      targetEmail:
+        existing.target_recipient_email ||
+        (typeof body.target_recipient_email === "string" ? body.target_recipient_email : undefined),
+      targetName:
+        existing.target_recipient_name ||
+        (typeof body.target_recipient_name === "string" ? body.target_recipient_name : undefined),
+    }).catch(() => {}),
+    pushCloudSharedStage(callId, null, true).catch(() => {}),
+  ]
+  for (const uid of userIdsToDelete) {
+    cloudOps.push(
+      firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudParticipantKey(callId, uid)).catch(() => {}),
+      firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudAudioKey(callId, uid)).catch(() => {})
+    )
+  }
+  await Promise.all(cloudOps)
+  lastCloudPullMs = 0
+
+  existing.state = "ENDED"
+  existing.ended_at = now
+  existing.participants = []
+  existing.invited_roster = []
+  existing.shared_stage = null
+  existing.state_version += 1
+  ACTIVE_CALLS_STORE.set(callId, existing)
+  savePersistedCalls(true)
+}
+
 export async function POST(req: NextRequest) {
   try {
     loadPersistedCalls()
@@ -1695,6 +1773,45 @@ export async function POST(req: NextRequest) {
           now,
           nowMs,
         })
+        const remainingLive = (existing.participants || []).filter(
+          (p) =>
+            p.participant_state !== "LEFT" &&
+            p.last_seen_ms &&
+            nowMs - p.last_seen_ms < PARTICIPANT_TTL_MS
+        )
+        const remainingKeys = new Set<string>()
+        for (const p of remainingLive) {
+          buildModerationIdentityKeys({
+            userId: p.user_id,
+            phone: p.phone,
+            name: p.display_name,
+          }).forEach((k) => remainingKeys.add(k))
+        }
+        const hasFreshPendingInvitee = (existing.invited_roster || []).some(
+          (inv) =>
+            inv &&
+            (inv.status === "ringing" || inv.status === "invited") &&
+            nowMs - (Number(inv.updated_at_ms) || 0) < 60000 &&
+            !participantMatchesModKey(inv, remainingKeys)
+        )
+        if (
+          remainingLive.length === 0 ||
+          (remainingLive.length === 1 && !hasFreshPendingInvitee && body.keep_solo_room !== true)
+        ) {
+          await endEntireCallRoom({
+            callId: leaveCallId,
+            existing,
+            body,
+            now,
+            nowMs,
+          })
+          return NextResponse.json({
+            protocol_version: 1,
+            event_type: "call.ended",
+            occurred_at: now,
+            call: existing,
+          })
+        }
       }
       return NextResponse.json({
         protocol_version: 1,
@@ -1754,14 +1871,15 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      if (
-        action === "end" &&
-        !body.end_for_all &&
-        (otherActive.length >= 2 ||
-          (body.user_id !== existing.initiator_user_id &&
-            otherActive.length >= 1 &&
-            activeRoster.length >= 2))
-      ) {
+      const initPhoneTail = String(existing.initiator_phone || "").replace(/[^\d]/g, "").slice(-10)
+      const callerPhoneTail = String(body.participant_phone || "").replace(/[^\d]/g, "").slice(-10)
+      const isInitiatorEnding = Boolean(
+        body.end_for_all === true ||
+          (body.user_id && existing.initiator_user_id && body.user_id === existing.initiator_user_id) ||
+          (initPhoneTail.length >= 7 && callerPhoneTail.length >= 7 && initPhoneTail === callerPhoneTail)
+      )
+
+      if (action === "end" && !isInitiatorEnding && otherActive.length >= 2) {
         await removeSingleParticipantFromGroupCall({
           callId: endCallId,
           existing,
@@ -1780,67 +1898,13 @@ export async function POST(req: NextRequest) {
         })
       }
 
-      ENDED_CALL_TOMBSTONES.set(endCallId, nowMs)
-
-      const phonesToSilence: Array<string | undefined> = [
-        existing.target_recipient_phone,
-        existing.initiator_phone,
-        typeof body.target_recipient_phone === "string" ? body.target_recipient_phone : undefined,
-        ...(existing.invited_roster || []).map((m) => m.phone),
-        ...(existing.participants || []).map((p) => p.phone),
-        ...(Array.isArray(body.invited_phones) ? body.invited_phones : []),
-      ]
-
-      const cloudOps: Promise<any>[] = [
-        upsertTwilioSyncItem(
-          "firebase-kv",
-          makeCloudEndedKey(endCallId),
-          JSON.stringify({
-            kind: "ended",
-            call_id: endCallId,
-            ended_at: now,
-            ended_at_ms: nowMs,
-          }),
-          "300"
-        ).catch(() => {}),
-        firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudRosterKey(endCallId)).catch(() => {}),
-        firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudTeamsKey(endCallId)).catch(() => {}),
-        publishToPhones(phonesToSilence, "call-ended", { callId: endCallId }).catch(() => {}),
-        sendCallEndedWebPush({
-          callId: endCallId,
-          phones: phonesToSilence,
-          targetEmail:
-            existing.target_recipient_email ||
-            (typeof body.target_recipient_email === "string"
-              ? body.target_recipient_email
-              : undefined),
-          targetName:
-            existing.target_recipient_name ||
-            (typeof body.target_recipient_name === "string"
-              ? body.target_recipient_name
-              : undefined),
-        }).catch(() => {}),
-        pushCloudSharedStage(endCallId, null, true).catch(() => {}),
-      ]
-      for (const p of existing.participants || []) {
-        cloudOps.push(
-          firebaseKvDeleteItem(
-            CALLS_SYNC_MAP_NAME,
-            makeCloudParticipantKey(endCallId, p.user_id)
-          ).catch(() => {})
-        )
-      }
-      await Promise.all(cloudOps)
-      lastCloudPullMs = 0
-
-      existing.state = "ENDED"
-      existing.ended_at = now
-      existing.participants = []
-      existing.invited_roster = []
-      existing.shared_stage = null
-      existing.state_version += 1
-      ACTIVE_CALLS_STORE.set(endCallId, existing)
-      savePersistedCalls(true)
+      await endEntireCallRoom({
+        callId: endCallId,
+        existing,
+        body,
+        now,
+        nowMs,
+      })
 
       return NextResponse.json({
         protocol_version: 1,
@@ -2438,6 +2502,7 @@ export async function POST(req: NextRequest) {
         (!body.is_answering_recipient &&
           (!record.initiator_user_id ||
             record.initiator_user_id === "host" ||
+            (callerSignalingHint && record.initiator_user_id.startsWith("host_")) ||
             (callerSignalingHint && record.participants.length === 0)))
       ) {
         record.initiator_user_id = userId

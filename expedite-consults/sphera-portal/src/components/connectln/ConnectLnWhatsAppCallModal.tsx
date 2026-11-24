@@ -846,6 +846,44 @@ function RemoteStreamVideoRenderer({ stream }: { stream: MediaStream }) {
   )
 }
 
+function teardownPeerMediaConnection(mc: any): void {
+  if (!mc) return
+  try {
+    const pc: RTCPeerConnection | undefined = mc.peerConnection
+    if (pc) {
+      if (typeof pc.getSenders === "function") {
+        pc.getSenders().forEach((sender) => {
+          try {
+            if (sender.track) {
+              sender.track.enabled = false
+              sender.track.stop()
+            }
+          } catch {}
+          try {
+            pc.removeTrack(sender)
+          } catch {}
+        })
+      }
+      if (typeof pc.getReceivers === "function") {
+        pc.getReceivers().forEach((receiver) => {
+          try {
+            if (receiver.track) {
+              receiver.track.enabled = false
+              receiver.track.stop()
+            }
+          } catch {}
+        })
+      }
+      try {
+        pc.close()
+      } catch {}
+    }
+  } catch {}
+  try {
+    mc.close?.()
+  } catch {}
+}
+
 function RemoteStreamAudioPlayer({ stream, muted }: { stream: MediaStream; muted?: boolean }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   useEffect(() => {
@@ -865,6 +903,10 @@ function RemoteStreamAudioPlayer({ stream, muted }: { stream: MediaStream; muted
     return () => {
       window.removeEventListener("pointerdown", tryPlay)
       window.removeEventListener("touchstart", tryPlay)
+      try {
+        el.pause()
+        el.srcObject = null
+      } catch {}
     }
   }, [stream, muted])
 
@@ -1314,6 +1356,8 @@ export function ConnectLnWhatsAppCallModal({
   const hasSentInitialReopenRef = useRef<boolean>(false)
   const dialedOutboundCallIdRef = useRef<string>("")
   const isWaitingForAnswerRef = useRef<boolean>(false)
+  const isCallOpenRef = useRef<boolean>(open)
+  const mediaAcquireSeqRef = useRef<number>(0)
 
   // Twilio Browser Conference Host Connection (`ConferenceRoom = conf_<callId>`)
   const pstnDeviceRef = useRef<any>(null)
@@ -1656,35 +1700,76 @@ export function ConnectLnWhatsAppCallModal({
   }, [])
 
   const stopAllMedia = useCallback(() => {
+    isCallOpenRef.current = false
+    mediaAcquireSeqRef.current += 1
     stopPreviewConnectLnRingtone()
+    stopOutgoingCallerRingbackTone()
+    if (meetingRecorderRef.current && meetingRecorderRef.current.state !== "inactive") {
+      try {
+        meetingRecorderRef.current.stop()
+      } catch {}
+    }
     if (virtualBgStreamRef.current) {
-      virtualBgStreamRef.current.getTracks().forEach((t) => t.stop())
+      virtualBgStreamRef.current.getTracks().forEach((t) => {
+        t.enabled = false
+        t.stop()
+      })
       virtualBgStreamRef.current = null
     }
     setVirtualBgStreamState(null)
     if (screenStreamRef.current) {
-      screenStreamRef.current.getTracks().forEach((t) => t.stop())
+      screenStreamRef.current.getTracks().forEach((t) => {
+        t.enabled = false
+        t.stop()
+      })
       screenStreamRef.current = null
       setIsLocalScreenSharing(false)
     }
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((t) => t.stop())
+      localStreamRef.current.getTracks().forEach((t) => {
+        t.enabled = false
+        t.stop()
+      })
       localStreamRef.current = null
     }
     setLocalStreamState(null)
     setHasLocalVideoTrack(false)
-    activeMediaCallsRef.current.forEach((c) => {
-      try {
-        c.close?.()
-      } catch {}
-    })
+    const callsToClose = Array.from(activeMediaCallsRef.current.values())
     activeMediaCallsRef.current.clear()
-    activeDataConnsRef.current.forEach((conn) => {
+    callsToClose.forEach((c) => teardownPeerMediaConnection(c))
+    const connsToClose = Array.from(activeDataConnsRef.current.values())
+    activeDataConnsRef.current.clear()
+    connsToClose.forEach((conn) => {
       try {
         conn.close?.()
       } catch {}
     })
-    activeDataConnsRef.current.clear()
+    knownRemotePeerIdsRef.current.clear()
+    Object.values(remoteStreamsMapRef.current).forEach((s) => {
+      try {
+        s?.getTracks().forEach((t) => {
+          t.enabled = false
+          t.stop()
+        })
+      } catch {}
+    })
+    remoteStreamsMapRef.current = {}
+    hasAnyWebRtcStreamRef.current = false
+    hasLiveRemoteVideoRef.current = false
+    setRemoteStreamsMap({})
+    voicePlayerRef.current?.stopAll()
+    latestAudioChunkRef.current = undefined
+    recentAudioChunksRef.current = []
+    lastCapturedFrameRef.current = null
+    for (const el of [localVideoRef.current, gridLocalVideoRef.current, offscreenVideoRef.current]) {
+      if (el) {
+        try {
+          el.pause()
+          el.srcObject = null
+        } catch {}
+      }
+    }
+    myPeerIdRef.current = ""
     if (peerRef.current) {
       try {
         peerRef.current.destroy?.()
@@ -1850,9 +1935,15 @@ export function ConnectLnWhatsAppCallModal({
   const acquireCameraAndMic = useCallback(
     async (wantVideo: boolean, facing: "user" | "environment") => {
       if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return
+      const acquireSeq = ++mediaAcquireSeqRef.current
+      const isStale = () => !isCallOpenRef.current || acquireSeq !== mediaAcquireSeqRef.current
+      if (isStale()) return
 
       if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach((t) => t.stop())
+        localStreamRef.current.getTracks().forEach((t) => {
+          t.enabled = false
+          t.stop()
+        })
         localStreamRef.current = null
       }
 
@@ -1876,15 +1967,24 @@ export function ConnectLnWhatsAppCallModal({
             },
           })
         } catch {
+          if (isStale()) return
           try {
             stream = await navigator.mediaDevices.getUserMedia({
               video: { facingMode: facing },
               audio: false,
             })
           } catch {
+            if (isStale()) return
             try {
               stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
             } catch {}
+          }
+          if (isStale()) {
+            stream?.getTracks().forEach((t) => {
+              t.enabled = false
+              t.stop()
+            })
+            return
           }
           if (stream && stream.getAudioTracks().length === 0) {
             try {
@@ -1892,10 +1992,29 @@ export function ConnectLnWhatsAppCallModal({
                 video: false,
                 audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
               })
+              if (isStale()) {
+                mic.getTracks().forEach((t) => {
+                  t.enabled = false
+                  t.stop()
+                })
+                stream.getTracks().forEach((t) => {
+                  t.enabled = false
+                  t.stop()
+                })
+                return
+              }
               mic.getAudioTracks().forEach((at) => stream!.addTrack(at))
             } catch {}
           }
         }
+      }
+
+      if (isStale()) {
+        stream?.getTracks().forEach((t) => {
+          t.enabled = false
+          t.stop()
+        })
+        return
       }
 
       if (!stream) {
@@ -1905,6 +2024,14 @@ export function ConnectLnWhatsAppCallModal({
             audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
           })
         } catch {}
+      }
+
+      if (isStale()) {
+        stream?.getTracks().forEach((t) => {
+          t.enabled = false
+          t.stop()
+        })
+        return
       }
 
       if (!stream) {
@@ -2362,6 +2489,7 @@ export function ConnectLnWhatsAppCallModal({
     }
 
     let cancelled = false
+    isCallOpenRef.current = true
     markConnectLnCallHandled(callId)
     stopLoudPhoneRingtone(Boolean(isIncomingAnswer))
     stopTitleCallFlash()
@@ -2411,9 +2539,73 @@ export function ConnectLnWhatsAppCallModal({
 
     return () => {
       cancelled = true
+      isCallOpenRef.current = false
       stopAllMedia()
     }
   }, [open, callId])
+
+  // Immediately terminate local audio/video & close modal if Pusher/Banner broadcasts call-ended or mobile tab unloads
+  useEffect(() => {
+    if (!open || typeof window === "undefined") return
+    const onGlobalCallEnded = (ev: Event) => {
+      const endedId = String((ev as CustomEvent)?.detail?.callId || "")
+      if (!endedId || endedId !== callId) return
+      markConnectLnCallHandled(callId)
+      setCallStatus("ended")
+      stopAllMedia()
+      onCloseRef.current()
+    }
+    const onPageExit = () => {
+      const myPhone = getMyLinkedConnectLnPhone()
+      const shouldEndForAll = !isIncomingAnswer || remoteWebRtcPeersRef.current.length <= 1
+      activeDataConnsRef.current.forEach((conn) => {
+        if (conn?.open) {
+          try {
+            conn.send(
+              shouldEndForAll
+                ? { type: "call_ended", callId, forceEndForAll: true }
+                : { type: "peer_left", callId, peerId: myPeerIdRef.current, userId: localPeerUid }
+            )
+          } catch {}
+        }
+      })
+      fetch("/api/v1/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify(
+          shouldEndForAll
+            ? {
+                action: "end",
+                call_id: callId,
+                user_id: localPeerUid,
+                display_name: callerName,
+                participant_phone: myPhone || undefined,
+                end_for_all: true,
+                target_recipient_phone: recipientPhoneRef.current || undefined,
+                target_recipient_email: targetEmailRef.current || undefined,
+                target_recipient_name: recipientNameRef.current || undefined,
+              }
+            : {
+                action: "leave",
+                call_id: callId,
+                user_id: localPeerUid,
+                display_name: callerName,
+                participant_phone: myPhone || undefined,
+              }
+        ),
+      }).catch(() => {})
+      stopAllMedia()
+    }
+    window.addEventListener("connectln-call-ended", onGlobalCallEnded as EventListener)
+    window.addEventListener("pagehide", onPageExit)
+    window.addEventListener("beforeunload", onPageExit)
+    return () => {
+      window.removeEventListener("connectln-call-ended", onGlobalCallEnded as EventListener)
+      window.removeEventListener("pagehide", onPageExit)
+      window.removeEventListener("beforeunload", onPageExit)
+    }
+  }, [open, callId, isIncomingAnswer, localPeerUid, callerName, stopAllMedia])
 
   // Duration clock once connected
   useEffect(() => {
@@ -2516,8 +2708,17 @@ export function ConnectLnWhatsAppCallModal({
         if (activeMediaCallsRef.current.get(mc.peer) !== mc) return
         streamingPeersSet.delete(mc.peer)
         activeMediaCallsRef.current.delete(mc.peer)
+        knownRemotePeerIdsRef.current.delete(mc.peer)
+        teardownPeerMediaConnection(mc)
         retuneAllActivePeerConnections()
         setRemoteStreamsMap((prev) => {
+          const closingStream = prev[mc.peer]
+          if (closingStream) {
+            closingStream.getTracks().forEach((t) => {
+              t.enabled = false
+              t.stop()
+            })
+          }
           const next = { ...prev }
           delete next[mc.peer]
           hasLiveRemoteVideoRef.current = Object.values(next).some(
@@ -2543,18 +2744,53 @@ export function ConnectLnWhatsAppCallModal({
       })
       conn.on("data", (msg: any) => {
         if (msg?.type === "call_ended") {
-          if (
-            !msg.forceEndForAll &&
-            (remoteWebRtcPeersRef.current.length >= 2 ||
-              cellLegsRef.current.length >= 1 ||
-              maxRemoteCountSeenRef.current >= 2)
-          ) {
+          if (msg.forceEndForAll !== true && remoteWebRtcPeersRef.current.length >= 2) {
             return
           }
           markConnectLnCallHandled(callId)
           setCallStatus("ended")
           stopAllMedia()
           setTimeout(() => onCloseRef.current(), 250)
+          return
+        }
+        if (msg?.type === "peer_left") {
+          const leftPid = String(msg.peerId || conn.peer || "")
+          const leftUid = String(msg.userId || "")
+          if (leftPid) {
+            streamingPeersSet.delete(leftPid)
+            const closingMc = activeMediaCallsRef.current.get(leftPid)
+            activeMediaCallsRef.current.delete(leftPid)
+            if (closingMc) teardownPeerMediaConnection(closingMc)
+            const closingDc = activeDataConnsRef.current.get(leftPid)
+            activeDataConnsRef.current.delete(leftPid)
+            try {
+              closingDc?.close?.()
+            } catch {}
+            knownRemotePeerIdsRef.current.delete(leftPid)
+            setRemoteStreamsMap((prev) => {
+              const closingStream = prev[leftPid]
+              if (closingStream) {
+                closingStream.getTracks().forEach((t) => {
+                  t.enabled = false
+                  t.stop()
+                })
+              }
+              if (!closingStream) return prev
+              const next = { ...prev }
+              delete next[leftPid]
+              hasLiveRemoteVideoRef.current = Object.values(next).some(
+                (s) => s.getVideoTracks().length > 0
+              )
+              return next
+            })
+            retuneAllActivePeerConnections()
+          }
+          if (leftUid) {
+            voicePlayerRef.current?.stopPeer(leftUid)
+            setRemoteWebRtcPeers((prev) =>
+              prev.filter((p) => p.userId !== leftUid && (!leftPid || p.peerId !== leftPid))
+            )
+          }
           return
         }
         if (msg?.type === "host_moderation") {
@@ -2811,6 +3047,9 @@ export function ConnectLnWhatsAppCallModal({
     let isFirst = true
     let lastCapMs = 0
     let emptyRemotesStreak = 0
+    const missingPeerBeats = new Map<string, number>()
+    const seenFallbackUserIds = new Set<string>()
+    const missingUserBeats = new Map<string, number>()
 
     const syncBeat = async () => {
       if (!mounted) return
@@ -3312,6 +3551,68 @@ export function ConnectLnWhatsAppCallModal({
           })
         }
 
+        const activeServerPeerIds = new Set<string>(
+          remotes.map((r: any) => String(r?.peer_id || "").trim()).filter(Boolean)
+        )
+        const activeServerUserIds = new Set<string>(
+          remotes.map((r: any) => String(r?.user_id || "").trim()).filter(Boolean)
+        )
+        const trackedPeerIds = new Set<string>([
+          ...Array.from(activeMediaCallsRef.current.keys()),
+          ...Array.from(knownRemotePeerIdsRef.current),
+          ...Object.keys(remoteStreamsMapRef.current),
+        ])
+        for (const pid of trackedPeerIds) {
+          if (!pid || pid === myPeerIdRef.current) continue
+          if (activeServerPeerIds.has(pid)) {
+            missingPeerBeats.delete(pid)
+          } else {
+            const misses = (missingPeerBeats.get(pid) || 0) + 1
+            if (misses >= 2) {
+              missingPeerBeats.delete(pid)
+              knownRemotePeerIdsRef.current.delete(pid)
+              const staleMc = activeMediaCallsRef.current.get(pid)
+              activeMediaCallsRef.current.delete(pid)
+              if (staleMc) teardownPeerMediaConnection(staleMc)
+              const staleDc = activeDataConnsRef.current.get(pid)
+              activeDataConnsRef.current.delete(pid)
+              try {
+                staleDc?.close?.()
+              } catch {}
+              setRemoteStreamsMap((prev) => {
+                const closingStream = prev[pid]
+                if (!closingStream) return prev
+                closingStream.getTracks().forEach((t) => {
+                  t.enabled = false
+                  t.stop()
+                })
+                const next = { ...prev }
+                delete next[pid]
+                hasLiveRemoteVideoRef.current = Object.values(next).some(
+                  (s) => s.getVideoTracks().length > 0
+                )
+                return next
+              })
+            } else {
+              missingPeerBeats.set(pid, misses)
+            }
+          }
+        }
+        for (const uid of Array.from(seenFallbackUserIds)) {
+          if (activeServerUserIds.has(uid)) {
+            missingUserBeats.delete(uid)
+          } else {
+            const uMisses = (missingUserBeats.get(uid) || 0) + 1
+            if (uMisses >= 2) {
+              missingUserBeats.delete(uid)
+              seenFallbackUserIds.delete(uid)
+              voicePlayerRef.current?.stopPeer(uid)
+            } else {
+              missingUserBeats.set(uid, uMisses)
+            }
+          }
+        }
+
         if (remotes.length > 0) {
           emptyRemotesStreak = 0
           setCallStatus("connected")
@@ -3348,6 +3649,7 @@ export function ConnectLnWhatsAppCallModal({
                 )
             )
             if (!peerStream && !peerSilencedByHost && (rp.recent_audio_chunks?.length || rp.live_audio_chunk)) {
+              seenFallbackUserIds.add(rp.user_id)
               if (!voicePlayerRef.current) {
                 voicePlayerRef.current = new GaplessRemoteVoicePlayer()
               }
@@ -3360,10 +3662,7 @@ export function ConnectLnWhatsAppCallModal({
           }
         } else {
           emptyRemotesStreak += 1
-          if (
-            emptyRemotesStreak >= 3 &&
-            Object.keys(remoteStreamsMapRef.current).length === 0
-          ) {
+          if (emptyRemotesStreak >= 2) {
             setRemoteWebRtcPeers([])
           }
         }
@@ -3488,48 +3787,82 @@ export function ConnectLnWhatsAppCallModal({
     stopOutgoingCallerRingbackTone()
     markConnectLnCallHandled(callId)
     const myPhone = getMyLinkedConnectLnPhone()
-    const isMultiPartyGroupCall =
-      !forceEndForAll &&
-      (remoteWebRtcPeersRef.current.length >= 2 ||
-        remoteWebRtcPeersRef.current.length + cellLegsRef.current.length >= 2 ||
-        maxRemoteCountSeenRef.current >= 2)
+    const hostEndsAll = !isIncomingAnswer
+    const shouldEndForAll =
+      forceEndForAll || hostEndsAll || remoteWebRtcPeersRef.current.length <= 1
 
-    if (!isMultiPartyGroupCall || forceEndForAll) {
-      activeDataConnsRef.current.forEach((conn) => {
-        if (conn?.open) {
-          try {
-            conn.send({ type: "call_ended", callId, forceEndForAll })
-          } catch {}
-        }
-      })
-    }
+    activeDataConnsRef.current.forEach((conn) => {
+      if (conn?.open) {
+        try {
+          conn.send(
+            shouldEndForAll
+              ? { type: "call_ended", callId, forceEndForAll: true }
+              : { type: "peer_left", callId, peerId: myPeerIdRef.current, userId: localPeerUid }
+          )
+        } catch {}
+      }
+    })
 
     fetch("/api/v1/calls", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       keepalive: true,
       body: JSON.stringify(
-        isMultiPartyGroupCall
+        shouldEndForAll
           ? {
+              action: "end",
+              call_id: callId,
+              user_id: localPeerUid,
+              display_name: callerName,
+              participant_phone: myPhone || undefined,
+              end_for_all: true,
+              target_recipient_phone: recipientPhoneRef.current || recipientPhone || undefined,
+              target_recipient_email: targetEmailRef.current || targetEmail || undefined,
+              target_recipient_name: recipientNameRef.current || recipientName || undefined,
+              invited_phones: cellLegs.map((l) => l.phone).filter(Boolean),
+            }
+          : {
               action: "leave",
               call_id: callId,
               user_id: localPeerUid,
               display_name: callerName,
               participant_phone: myPhone || undefined,
             }
-          : {
-              action: "end",
-              call_id: callId,
-              user_id: localPeerUid,
-              display_name: callerName,
-              participant_phone: myPhone || undefined,
-              end_for_all: forceEndForAll || undefined,
-              target_recipient_phone: recipientPhoneRef.current || recipientPhone || undefined,
-              target_recipient_email: targetEmailRef.current || targetEmail || undefined,
-              target_recipient_name: recipientNameRef.current || recipientName || undefined,
-              invited_phones: cellLegs.map((l) => l.phone).filter(Boolean),
-            }
       ),
+    }).catch(() => {})
+    stopAllMedia()
+    onClose()
+  }
+
+  const handleLeaveOnly = () => {
+    isWaitingForAnswerRef.current = false
+    stopOutgoingCallerRingbackTone()
+    markConnectLnCallHandled(callId)
+    const myPhone = getMyLinkedConnectLnPhone()
+    activeDataConnsRef.current.forEach((conn) => {
+      if (conn?.open) {
+        try {
+          conn.send({
+            type: "peer_left",
+            callId,
+            peerId: myPeerIdRef.current,
+            userId: localPeerUid,
+          })
+        } catch {}
+      }
+    })
+    fetch("/api/v1/calls", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        action: "leave",
+        call_id: callId,
+        user_id: localPeerUid,
+        display_name: callerName,
+        participant_phone: myPhone || undefined,
+        keep_solo_room: false,
+      }),
     }).catch(() => {})
     stopAllMedia()
     onClose()
@@ -5761,15 +6094,25 @@ export function ConnectLnWhatsAppCallModal({
                   <span>Mute All Members</span>
                 </button>
                 {isLocalHost && totalRemoteCount >= 2 && (
-                  <button
-                    type="button"
-                    onClick={() => handleHangup(true)}
-                    style={{ color: "#FFFFFF" }}
-                    className="rounded-xl bg-rose-700 hover:bg-rose-600 px-3 py-1.5 text-xs font-extrabold cursor-pointer shrink-0 flex items-center gap-1"
-                  >
-                    <PhoneOff className="h-3.5 w-3.5" />
-                    <span>End Meeting for All</span>
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleHangup(true)}
+                      style={{ color: "#FFFFFF" }}
+                      className="rounded-xl bg-rose-700 hover:bg-rose-600 px-3 py-1.5 text-xs font-extrabold cursor-pointer shrink-0 flex items-center gap-1"
+                    >
+                      <PhoneOff className="h-3.5 w-3.5" />
+                      <span>End Meeting for All</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleLeaveOnly}
+                      style={{ color: "#FFFFFF" }}
+                      className="rounded-xl bg-slate-700 hover:bg-slate-600 px-3 py-1.5 text-xs font-extrabold cursor-pointer shrink-0"
+                    >
+                      <span>Leave Only</span>
+                    </button>
+                  </>
                 )}
               </div>
             )}
@@ -6442,8 +6785,12 @@ export function ConnectLnWhatsAppCallModal({
             style={{ color: "#FFFFFF" }}
             className="h-10 w-12 shrink-0 rounded-full bg-rose-600 hover:bg-rose-500 flex items-center justify-center shadow-lg cursor-pointer transition-transform active:scale-95"
             title={
-              totalRemoteCount >= 2
-                ? "Leave Group Call (others stay in meeting)"
+              isLocalHost
+                ? totalRemoteCount >= 2
+                  ? "End Call for All"
+                  : "End Call"
+                : remoteWebRtcPeers.length >= 2
+                ? "Leave Group Call"
                 : "End Call"
             }
           >

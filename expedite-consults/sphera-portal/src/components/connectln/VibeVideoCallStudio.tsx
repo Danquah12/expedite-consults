@@ -1640,19 +1640,77 @@ export function VibeVideoCallStudio({
 
   const fallbackSelfViewAnimRef = useRef<number | null>(null)
   const [isFallbackStudioCam, setIsFallbackStudioCam] = useState<boolean>(false)
+  const offscreenLocalVideoRef = useRef<HTMLVideoElement | null>(null)
+  const activeMediaCallsRef = useRef<Map<string, any>>(new Map())
+  const activeDataConnsRef = useRef<Map<string, any>>(new Map())
+  const peerInstanceRef = useRef<any>(null)
+  const knownRemotePeerIdsRef = useRef<Set<string>>(new Set())
+  const remoteStreamsRef = useRef<Record<string, MediaStream>>({})
+  const latestLocalAudioChunkRef = useRef<EncodedVoiceChunk | undefined>(undefined)
+  const recentLocalAudioChunksRef = useRef<EncodedVoiceChunk[]>([])
+  const voicePlayerRef = useRef<GaplessRemoteVoicePlayer | null>(null)
+  const isCallEndedRef = useRef<boolean>(false)
+  useEffect(() => {
+    isCallEndedRef.current = callState === "ENDED"
+  }, [callState])
 
-  // Cleanup hardware tracks
+  const teardownStudioMediaCall = useCallback((mc: any) => {
+    if (!mc) return
+    try {
+      const pc: RTCPeerConnection | undefined = mc.peerConnection
+      if (pc) {
+        if (typeof pc.getSenders === "function") {
+          pc.getSenders().forEach((sender) => {
+            try {
+              if (sender.track) {
+                sender.track.enabled = false
+                sender.track.stop()
+              }
+            } catch {}
+            try {
+              pc.removeTrack(sender)
+            } catch {}
+          })
+        }
+        if (typeof pc.getReceivers === "function") {
+          pc.getReceivers().forEach((receiver) => {
+            try {
+              if (receiver.track) {
+                receiver.track.enabled = false
+                receiver.track.stop()
+              }
+            } catch {}
+          })
+        }
+        try {
+          pc.close()
+        } catch {}
+      }
+    } catch {}
+    try {
+      mc.close?.()
+    } catch {}
+  }, [])
+
+  // Cleanup hardware tracks, WebRTC PeerConnections, and fallback audio playback
   const releaseAllMediaDevices = useCallback(() => {
+    stopOutgoingCallerRingbackTone()
     if (fallbackSelfViewAnimRef.current) {
       cancelAnimationFrame(fallbackSelfViewAnimRef.current)
       fallbackSelfViewAnimRef.current = null
     }
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((t) => t.stop())
+      localStreamRef.current.getTracks().forEach((t) => {
+        t.enabled = false
+        t.stop()
+      })
       localStreamRef.current = null
     }
     if (screenStreamRef.current) {
-      screenStreamRef.current.getTracks().forEach((t) => t.stop())
+      screenStreamRef.current.getTracks().forEach((t) => {
+        t.enabled = false
+        t.stop()
+      })
       screenStreamRef.current = null
     }
     if (audioContextRef.current) {
@@ -1664,12 +1722,49 @@ export function VibeVideoCallStudio({
       cancelAnimationFrame(animFrameRef.current)
       animFrameRef.current = null
     }
+    const callsToClose = Array.from(activeMediaCallsRef.current.values())
+    activeMediaCallsRef.current.clear()
+    callsToClose.forEach((mc) => teardownStudioMediaCall(mc))
+    const connsToClose = Array.from(activeDataConnsRef.current.values())
+    activeDataConnsRef.current.clear()
+    connsToClose.forEach((conn) => {
+      try {
+        conn?.close?.()
+      } catch {}
+    })
+    knownRemotePeerIdsRef.current.clear()
+    Object.values(remoteStreamsRef.current).forEach((s) => {
+      try {
+        s?.getTracks().forEach((t) => {
+          t.enabled = false
+          t.stop()
+        })
+      } catch {}
+    })
+    remoteStreamsRef.current = {}
+    if (peerInstanceRef.current) {
+      try {
+        peerInstanceRef.current.destroy?.()
+      } catch {}
+      peerInstanceRef.current = null
+    }
+    voicePlayerRef.current?.stopAll()
+    latestLocalAudioChunkRef.current = undefined
+    recentLocalAudioChunksRef.current = []
+    for (const vEl of [tileLocalVideoRef.current, heroLocalVideoRef.current, offscreenLocalVideoRef.current, screenVideoRef.current]) {
+      if (vEl) {
+        try {
+          vEl.pause()
+          vEl.srcObject = null
+        } catch {}
+      }
+    }
     setLocalStreamState(null)
     setScreenStreamState(null)
     setIsHardwareCameraActive(false)
     setIsScreenSharing(false)
     setIsFallbackStudioCam(false)
-  }, [])
+  }, [teardownStudioMediaCall])
 
   // Generate a live 24fps Self-View Studio video stream if physical webcam is busy/locked or missing
   const createFallbackSelfViewStream = useCallback((displayName: string, existingAudioTrack?: MediaStreamTrack): MediaStream | null => {
@@ -1872,6 +1967,16 @@ export function VibeVideoCallStudio({
         usedFallbackCam = true
       }
 
+      if (isCallEndedRef.current) {
+        stream?.getTracks().forEach((t) => {
+          t.enabled = false
+          t.stop()
+        })
+        setIsRequestingCamera(false)
+        setCameraStatusMsg(null)
+        return
+      }
+
       if (!stream) {
         setIsRequestingCamera(false)
         setCameraStatusMsg(null)
@@ -1947,10 +2052,7 @@ export function VibeVideoCallStudio({
   )
 
   // REAL-TIME AI PERSON-SEGMENTATION, SCREEN SHARE & WEBRTC TRACK COMPOSITING ENGINE
-  const activeMediaCallsRef = useRef<Map<string, any>>(new Map())
   const dialRemotePeerNowRef = useRef<((targetPeerId: string, force?: boolean) => void) | null>(null)
-  const offscreenLocalVideoRef = useRef<HTMLVideoElement | null>(null)
-  const knownRemotePeerIdsRef = useRef<Set<string>>(new Set())
   const selfieSegmenterRef = useRef<any>(null)
   const latestSegMaskRef = useRef<any>(null)
   const isSegmentingFrameRef = useRef<boolean>(false)
@@ -2867,15 +2969,10 @@ export function VibeVideoCallStudio({
   }, [localDisplayName])
 
   // Keep latest remoteStreams in a ref for non-React callbacks
-  const remoteStreamsRef = useRef<Record<string, MediaStream>>({})
   useEffect(() => {
     remoteStreamsRef.current = remoteStreams
   }, [remoteStreams])
 
-  // Rolling live voice chunk state for cross-network / mobile NAT fallback audio relay (Universal 8-bit WAV PCM + Gapless Player)
-  const latestLocalAudioChunkRef = useRef<EncodedVoiceChunk | undefined>(undefined)
-  const recentLocalAudioChunksRef = useRef<EncodedVoiceChunk[]>([])
-  const voicePlayerRef = useRef<GaplessRemoteVoicePlayer | null>(null)
   const verifiedWebRtcAudioPeersRef = useRef<Map<string, number>>(new Map())
 
   const handleVerifiedWebRtcAudio = useCallback((peerKey: string, hasSignal: boolean) => {
@@ -3089,14 +3186,15 @@ export function VibeVideoCallStudio({
   }, [localStreamState])
 
   // LAYER 1: Real WebRTC Multi-Device Video/Audio & Data Mesh via PeerJS (Collision-free unique peer ID + fast P2P DataChannel & MediaStream)
+  const isCallEnded = callState === "ENDED"
   useEffect(() => {
-    if (typeof window === "undefined") return
+    if (typeof window === "undefined" || isCallEnded) return
     let isCancelled = false
     let peerInstance: any = null
     let syncTimer: ReturnType<typeof setInterval> | null = null
     let fastDataTimer: ReturnType<typeof setTimeout> | null = null
     const activeMediaCalls = activeMediaCallsRef.current
-    const activeDataConns = new Map<string, any>()
+    const activeDataConns = activeDataConnsRef.current
     const pendingDataConnAtMs = new Map<string, number>()
     const liveStreamPeers = new Set<string>()
     const lastCallAttemptMs = new Map<string, number>()
@@ -3217,7 +3315,16 @@ export function VibeVideoCallStudio({
         liveStreamPeers.delete(mediaCall.peer)
         liveStreamPeersCountRef.current = liveStreamPeers.size
         activeMediaCalls.delete(mediaCall.peer)
+        knownRemotePeerIdsRef.current.delete(mediaCall.peer)
+        teardownStudioMediaCall(mediaCall)
         setRemoteStreams((prev) => {
+          const closingStream = prev[mediaCall.peer]
+          if (closingStream) {
+            closingStream.getTracks().forEach((t) => {
+              t.enabled = false
+              t.stop()
+            })
+          }
           const next = { ...prev }
           delete next[mediaCall.peer]
           return next
@@ -3264,7 +3371,69 @@ export function VibeVideoCallStudio({
         }
       })
       conn.on("data", (data: any) => {
-        if (isCancelled || !data || data.type !== "VIBE_PEER_SYNC") return
+        if (isCancelled || !data) return
+        if (data.type === "VIBE_CALL_ENDED" || data.type === "call_ended") {
+          if (data.forceEndForAll !== true && activeMediaCalls.size >= 2) return
+          isCallEndedRef.current = true
+          releaseAllMediaDevices()
+          setRemoteStreams({})
+          setRemoteSharedStageItem(null)
+          setLocalSharedStageItem(null)
+          setConnectedFriendsCount(0)
+          setParticipants((prev) =>
+            prev
+              .filter((p) => p.isLocal)
+              .map((p) => ({ ...p, isVideoOn: false, isMuted: true, isSpeaking: false }))
+          )
+          setCallState("ENDED")
+          setCallStateVersion((v) => v + 1)
+          if (onCloseStudio) {
+            setTimeout(() => onCloseStudio(), 250)
+          }
+          return
+        }
+        if (data.type === "peer_left") {
+          const leftPid = String(data.peerId || conn.peer || "")
+          const leftUid = String(data.userId || conn.peer || "")
+          if (leftPid) {
+            liveStreamPeers.delete(leftPid)
+            liveStreamPeersCountRef.current = liveStreamPeers.size
+            const closingMc = activeMediaCalls.get(leftPid)
+            activeMediaCalls.delete(leftPid)
+            if (closingMc) teardownStudioMediaCall(closingMc)
+            const closingDc = activeDataConns.get(leftPid)
+            activeDataConns.delete(leftPid)
+            try {
+              closingDc?.close?.()
+            } catch {}
+            knownRemotePeerIdsRef.current.delete(leftPid)
+            setRemoteStreams((prev) => {
+              const closingStream = prev[leftPid]
+              if (closingStream) {
+                closingStream.getTracks().forEach((t) => {
+                  t.enabled = false
+                  t.stop()
+                })
+              }
+              if (!closingStream) return prev
+              const next = { ...prev }
+              delete next[leftPid]
+              return next
+            })
+          }
+          if (leftUid) {
+            voicePlayerRef.current?.stopPeer(leftUid)
+            setParticipants((prev) => {
+              const nextList = prev.filter(
+                (p) => !p.isRealRemotePeer || (p.id !== leftUid && (!leftPid || p.remotePeerId !== leftPid))
+              )
+              setConnectedFriendsCount(nextList.filter((p) => p.isRealRemotePeer).length)
+              return nextList
+            })
+          }
+          return
+        }
+        if (data.type !== "VIBE_PEER_SYNC") return
         if (data.peerId && data.peerId !== peerInstance?.id) {
           knownRemotePeerIdsRef.current.add(data.peerId)
         }
@@ -3424,6 +3593,7 @@ export function VibeVideoCallStudio({
             return
           }
           peerInstance = peer
+          peerInstanceRef.current = peer
           setMyPeerId(openedId)
           peerSyncStateRef.current.appendLog(`WebRTC Room Mesh ready on channel [${openedId}] — listening for all participants...`)
 
@@ -3527,6 +3697,16 @@ export function VibeVideoCallStudio({
       liveStreamPeersCountRef.current = 0
       if (syncTimer) clearInterval(syncTimer)
       if (fastDataTimer) clearTimeout(fastDataTimer)
+      const callsToClose = Array.from(activeMediaCalls.values())
+      activeMediaCalls.clear()
+      callsToClose.forEach((mc) => teardownStudioMediaCall(mc))
+      const connsToClose = Array.from(activeDataConns.values())
+      activeDataConns.clear()
+      connsToClose.forEach((conn) => {
+        try {
+          conn?.close?.()
+        } catch {}
+      })
       if (peerInstance) {
         try {
           peerInstance.destroy()
@@ -3534,8 +3714,11 @@ export function VibeVideoCallStudio({
           // ignore
         }
       }
+      if (peerInstanceRef.current === peerInstance) {
+        peerInstanceRef.current = null
+      }
     }
-  }, [callId, isInvitedGuestLink, localParticipantId])
+  }, [callId, isInvitedGuestLink, localParticipantId, isCallEnded, releaseAllMediaDevices, teardownStudioMediaCall, onCloseStudio])
 
   const inFlightHeartbeatRef = useRef<boolean>(false)
   const isFirstStudioHeartbeatRef = useRef<boolean>(true)
@@ -3550,6 +3733,9 @@ export function VibeVideoCallStudio({
     if (callState === "ENDED") return
     let mounted = true
     let heartbeatTimer: ReturnType<typeof setTimeout> | null = null
+    const missingPeerBeats = new Map<string, number>()
+    const seenFallbackUserIds = new Set<string>()
+    const missingUserBeats = new Map<string, number>()
 
     const scheduleNextHeartbeat = () => {
       if (!mounted) return
@@ -3704,6 +3890,7 @@ export function VibeVideoCallStudio({
                   liveFrame: p.live_frame,
                 })
                 if (p.live_audio_chunk || (Array.isArray(p.recent_audio_chunks) && p.recent_audio_chunks.length > 0)) {
+                  seenFallbackUserIds.add(p.user_id)
                   st.playRemoteAudioChunk(
                     p.user_id,
                     p.peer_id,
@@ -3714,12 +3901,63 @@ export function VibeVideoCallStudio({
                 }
               }
             }
+            const trackedPeerIds = new Set<string>([
+              ...Array.from(activeMediaCallsRef.current.keys()),
+              ...Array.from(knownRemotePeerIdsRef.current),
+              ...Object.keys(remoteStreamsRef.current),
+            ])
+            for (const pid of trackedPeerIds) {
+              if (!pid || pid === myPeerId) continue
+              if (activeRemotePeerIds.has(pid)) {
+                missingPeerBeats.delete(pid)
+              } else {
+                const misses = (missingPeerBeats.get(pid) || 0) + 1
+                if (misses >= 2) {
+                  missingPeerBeats.delete(pid)
+                  knownRemotePeerIdsRef.current.delete(pid)
+                  const staleMc = activeMediaCallsRef.current.get(pid)
+                  activeMediaCallsRef.current.delete(pid)
+                  if (staleMc) teardownStudioMediaCall(staleMc)
+                  const staleDc = activeDataConnsRef.current.get(pid)
+                  activeDataConnsRef.current.delete(pid)
+                  try {
+                    staleDc?.close?.()
+                  } catch {}
+                  setRemoteStreams((prev) => {
+                    const closingStream = prev[pid]
+                    if (!closingStream) return prev
+                    closingStream.getTracks().forEach((t) => {
+                      t.enabled = false
+                      t.stop()
+                    })
+                    const next = { ...prev }
+                    delete next[pid]
+                    return next
+                  })
+                } else {
+                  missingPeerBeats.set(pid, misses)
+                }
+              }
+            }
+            for (const uid of Array.from(seenFallbackUserIds)) {
+              if (activeRemoteUserIds.has(uid)) {
+                missingUserBeats.delete(uid)
+              } else {
+                const uMisses = (missingUserBeats.get(uid) || 0) + 1
+                if (uMisses >= 2) {
+                  missingUserBeats.delete(uid)
+                  seenFallbackUserIds.delete(uid)
+                  voicePlayerRef.current?.stopPeer(uid)
+                } else {
+                  missingUserBeats.set(uid, uMisses)
+                }
+              }
+            }
             // Prune any real remote peer tile whose participant has left or timed out
             setParticipants((prev) => {
               const isStillActive = (p: CallParticipantTile) =>
                 activeRemoteUserIds.has(p.id) ||
                 Boolean(p.remotePeerId && activeRemotePeerIds.has(p.remotePeerId)) ||
-                Boolean(p.remotePeerId && activeMediaCallsRef.current.has(p.remotePeerId)) ||
                 activeRemoteNames.has(p.name.trim().toLowerCase())
 
               const hasStalePeer = prev.some((p) => p.isRealRemotePeer && !isStillActive(p))
@@ -3756,21 +3994,66 @@ export function VibeVideoCallStudio({
 
     sendHeartbeat()
 
+    const handleGlobalCallEnded = (ev: Event) => {
+      const endedId = String((ev as CustomEvent)?.detail?.callId || "")
+      if (!endedId || endedId !== callId) return
+      isCallEndedRef.current = true
+      releaseAllMediaDevices()
+      setRemoteStreams({})
+      setRemoteSharedStageItem(null)
+      setLocalSharedStageItem(null)
+      setConnectedFriendsCount(0)
+      setParticipants((prev) =>
+        prev
+          .filter((p) => p.isLocal)
+          .map((p) => ({ ...p, isVideoOn: false, isMuted: true, isSpeaking: false }))
+      )
+      setCallState("ENDED")
+      setCallStateVersion((v) => v + 1)
+      if (onCloseStudio) {
+        setTimeout(() => onCloseStudio(), 250)
+      }
+    }
+
     const handleBeforeUnload = () => {
       if (isHandingOffRef.current) return
+      const shouldEndForAll = !isInvitedGuestLink || activeMediaCallsRef.current.size <= 1
+      activeDataConnsRef.current.forEach((conn) => {
+        if (conn?.open) {
+          try {
+            conn.send(
+              shouldEndForAll
+                ? { type: "VIBE_CALL_ENDED", callId, forceEndForAll: true }
+                : { type: "peer_left", callId, peerId: myPeerId, userId: localParticipantId }
+            )
+          } catch {}
+        }
+      })
       fetch("/api/v1/calls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         keepalive: true,
-        body: JSON.stringify({
-          action: "leave",
-          call_id: callId,
-          user_id: localParticipantId,
-        }),
+        body: JSON.stringify(
+          shouldEndForAll
+            ? {
+                action: "end",
+                call_id: callId,
+                user_id: localParticipantId,
+                end_for_all: !isInvitedGuestLink || undefined,
+              }
+            : {
+                action: "leave",
+                call_id: callId,
+                user_id: localParticipantId,
+              }
+        ),
       }).catch(() => {})
+      releaseAllMediaDevices()
     }
     if (typeof window !== "undefined") {
+      window.addEventListener("connectln-call-ended", handleGlobalCallEnded as EventListener)
       window.addEventListener("beforeunload", handleBeforeUnload)
+      window.addEventListener("pagehide", handleBeforeUnload)
     }
 
     return () => {
@@ -3778,10 +4061,12 @@ export function VibeVideoCallStudio({
       inFlightHeartbeatRef.current = false
       if (heartbeatTimer) clearTimeout(heartbeatTimer)
       if (typeof window !== "undefined") {
+        window.removeEventListener("connectln-call-ended", handleGlobalCallEnded as EventListener)
         window.removeEventListener("beforeunload", handleBeforeUnload)
+        window.removeEventListener("pagehide", handleBeforeUnload)
       }
     }
-  }, [callId, localParticipantId, myPeerId, conversationId, initialMode, isInvitedGuestLink, callState, releaseAllMediaDevices, onCloseStudio])
+  }, [callId, localParticipantId, myPeerId, conversationId, initialMode, isInvitedGuestLink, callState, releaseAllMediaDevices, teardownStudioMediaCall, onCloseStudio])
 
   // Release hardware & notify server when component unmounts (unless handing off back to Messaging Huddle!)
   useEffect(() => {
@@ -4422,6 +4707,19 @@ export function VibeVideoCallStudio({
   }
 
   const handleEndCall = () => {
+    isCallEndedRef.current = true
+    stopOutgoingCallerRingbackTone()
+    activeDataConnsRef.current.forEach((conn) => {
+      if (conn?.open) {
+        try {
+          conn.send({
+            type: "VIBE_CALL_ENDED",
+            callId,
+            forceEndForAll: !isInvitedGuestLink,
+          })
+        } catch {}
+      }
+    })
     fetch("/api/v1/calls", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -4430,6 +4728,7 @@ export function VibeVideoCallStudio({
         action: "end",
         call_id: callId,
         user_id: localParticipantId,
+        end_for_all: !isInvitedGuestLink || undefined,
       }),
     }).catch(() => {})
     releaseAllMediaDevices()

@@ -774,6 +774,11 @@ export function ConnectLnIncomingCallBanner({
             if (realtimeRingRef.current?.call.id === eid) {
               realtimeRingRef.current = null
             }
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(
+                new CustomEvent("connectln-call-ended", { detail: { callId: String(eid) } })
+              )
+            }
           }
         }
         const list: IncomingCallSummary[] = Array.isArray(data?.incoming_calls)
@@ -914,6 +919,11 @@ export function ConnectLnIncomingCallBanner({
                 activeIncomingCallIdRef.current = ""
                 consecutiveEmptyPollsRef.current = 0
               }
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(
+                  new CustomEvent("connectln-call-ended", { detail: { callId: String(d.callId) } })
+                )
+              }
             }
             if (realtimeRingRef.current?.call.id === d?.callId) realtimeRingRef.current = null
             setIncomingCall((prev) => (prev && prev.id === d?.callId ? null : prev))
@@ -980,6 +990,48 @@ export function ConnectLnIncomingCallBanner({
       window.removeEventListener("focus", onVisOrFocus)
     }
   }, [viewerName, viewerEmail, myPhone, isAlreadyInCallStudio, hasOpenModal])
+
+  // Keep lightweight Pusher "call-ended" subscription active while a call modal or Call Studio is open
+  // so group-call termination closes remote phones immediately even before heartbeat or PeerJS DataChannel fires.
+  useEffect(() => {
+    const cleanPhoneDigits = (myPhone || "").replace(/[^\d]/g, "")
+    if ((!hasOpenModal && !isAlreadyInCallStudio) || cleanPhoneDigits.length < 7) {
+      return
+    }
+    let cancelled = false
+    let rtClient: any = null
+    ;(async () => {
+      try {
+        const cfg = await fetch("/api/connectin/realtime", { cache: "no-store" }).then((r) => r.json())
+        if (cancelled || !cfg?.enabled) return
+        const PusherJs = (await import("pusher-js")).default
+        if (cancelled) return
+        rtClient = new PusherJs(cfg.key, {
+          cluster: cfg.cluster,
+          channelAuthorization: { endpoint: "/api/connectin/realtime", transport: "ajax" },
+        })
+        const ch = rtClient.subscribe(`private-ring-${cleanPhoneDigits}`)
+        ch.bind("call-ended", (d: any) => {
+          if (!d?.callId) return
+          const endedId = String(d.callId)
+          declinedIdsRef.current.add(endedId)
+          markConnectLnCallHandled(endedId)
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("connectln-call-ended", { detail: { callId: endedId } })
+            )
+          }
+        })
+      } catch {}
+    })()
+
+    return () => {
+      cancelled = true
+      try {
+        rtClient?.disconnect()
+      } catch {}
+    }
+  }, [myPhone, hasOpenModal, isAlreadyInCallStudio])
 
   // 3. Hardware-Thread Ringtone + Always-On-Top Pop-Up Call Screen + OS Notification fallback on React commit!
   useEffect(() => {
