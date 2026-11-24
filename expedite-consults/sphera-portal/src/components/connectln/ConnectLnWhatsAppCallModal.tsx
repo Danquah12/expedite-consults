@@ -30,7 +30,26 @@ import {
   Volume2,
   FileText,
   Music,
+  Hand,
+  MoreHorizontal,
+  Pin,
+  Sparkles,
+  Voicemail,
 } from "lucide-react"
+import { enterInCallPresence, exitInCallPresence } from "@/lib/connectln-presence"
+import {
+  CommTeamsStateClient,
+  EMPTY_TEAMS_STATE,
+  TEAMS_CALL_REACTIONS,
+  TeamsBreakoutRoomsDrawer,
+  TeamsCallOverlays,
+  TeamsMoreMenuPopover,
+  TeamsPollsQaDrawer,
+  TeamsRecapAttendanceDrawer,
+  TeamsTransferHoldDrawer,
+  TeamsVoicemailRecorderModal,
+  TeamsWhiteboardOverlay,
+} from "./ConnectLnTeamsCallPanels"
 import {
   normalizeClientPhone,
   looksLikeClientPhone,
@@ -821,17 +840,17 @@ function RemoteStreamVideoRenderer({ stream }: { stream: MediaStream }) {
   )
 }
 
-function RemoteStreamAudioPlayer({ stream }: { stream: MediaStream }) {
+function RemoteStreamAudioPlayer({ stream, muted }: { stream: MediaStream; muted?: boolean }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   useEffect(() => {
     const el = audioRef.current
     if (!el || !stream) return
     if (el.srcObject !== stream) el.srcObject = stream
-    el.muted = false
+    el.muted = Boolean(muted)
     el.volume = 1.0
     const tryPlay = () => {
       if (!audioRef.current) return
-      audioRef.current.muted = false
+      audioRef.current.muted = Boolean(muted)
       audioRef.current.play().catch(() => {})
     }
     tryPlay()
@@ -841,7 +860,7 @@ function RemoteStreamAudioPlayer({ stream }: { stream: MediaStream }) {
       window.removeEventListener("pointerdown", tryPlay)
       window.removeEventListener("touchstart", tryPlay)
     }
-  }, [stream])
+  }, [stream, muted])
 
   return (
     <audio
@@ -1203,6 +1222,29 @@ export function ConnectLnWhatsAppCallModal({
   const [nativeTelHref, setNativeTelHref] = useState<string>("")
   const [pushBannerNote, setPushBannerNote] = useState<string>("")
 
+  // Microsoft Teams Collaboration Parity State
+  const [teamsState, setTeamsState] = useState<CommTeamsStateClient>(EMPTY_TEAMS_STATE)
+  const [showReactPicker, setShowReactPicker] = useState<boolean>(false)
+  const [showMoreMenu, setShowMoreMenu] = useState<boolean>(false)
+  const [showWhiteboard, setShowWhiteboard] = useState<boolean>(false)
+  const [transparentAnnotate, setTransparentAnnotate] = useState<boolean>(false)
+  const [showPollsDrawer, setShowPollsDrawer] = useState<boolean>(false)
+  const [showBreakoutDrawer, setShowBreakoutDrawer] = useState<boolean>(false)
+  const [showRecapDrawer, setShowRecapDrawer] = useState<boolean>(false)
+  const [showTransferDrawer, setShowTransferDrawer] = useState<boolean>(false)
+  const [showVoicemailModal, setShowVoicemailModal] = useState<boolean>(false)
+  const [isCaptionsOn, setIsCaptionsOn] = useState<boolean>(false)
+  const [isRecordingMeeting, setIsRecordingMeeting] = useState<boolean>(false)
+  const [isOnHold, setIsOnHold] = useState<boolean>(false)
+  const [layoutMode, setLayoutMode] = useState<"gallery" | "spotlight">("gallery")
+  const [pinnedPeerUserId, setPinnedPeerUserId] = useState<string | null>(null)
+  const [activeBreakoutInfo, setActiveBreakoutInfo] = useState<{
+    mainCallId: string
+    name: string
+  } | null>(null)
+  const meetingRecorderRef = useRef<MediaRecorder | null>(null)
+  const lobbyRequestedCallIdRef = useRef<string>("")
+
   const [localPeerUid] = useState<string>(() => {
     if (typeof window !== "undefined") {
       const s = sessionStorage.getItem("vibe_call_participant_id")
@@ -1503,11 +1545,13 @@ export function ConnectLnWhatsAppCallModal({
       setCallMediaSilenceActive(false, "whatsapp-call-modal")
       return
     }
+    enterInCallPresence({ name: callerName, email: callerEmail })
     setCallMediaSilenceActive(true, "whatsapp-call-modal")
     ;(window as any).__connectlnOpenCallModalCount =
       Number((window as any).__connectlnOpenCallModalCount || 0) + 1
     window.dispatchEvent(new Event("connectln_call_modal_change"))
     return () => {
+      exitInCallPresence({ name: callerName, email: callerEmail })
       setCallMediaSilenceActive(false, "whatsapp-call-modal")
       ;(window as any).__connectlnOpenCallModalCount = Math.max(
         0,
@@ -1515,7 +1559,7 @@ export function ConnectLnWhatsAppCallModal({
       )
       window.dispatchEvent(new Event("connectln_call_modal_change"))
     }
-  }, [open])
+  }, [open, callerName, callerEmail])
 
   const wasOpenRef = useRef<boolean>(open)
   useEffect(() => {
@@ -2198,9 +2242,9 @@ export function ConnectLnWhatsAppCallModal({
     syncWebRtcOutgoingVideoTrack,
   ])
 
-  // Load ConnectLn directory contacts when `Add People` drawer opens
+  // Load ConnectLn directory contacts when `Add People` or `Transfer` drawer opens
   useEffect(() => {
-    if (!open || !showAddPeopleDrawer) return
+    if (!open || (!showAddPeopleDrawer && !showTransferDrawer)) return
     fetch("/api/connectin/calls/whatsapp?list=1", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
@@ -2209,7 +2253,7 @@ export function ConnectLnWhatsAppCallModal({
         }
       })
       .catch(() => {})
-  }, [open, showAddPeopleDrawer])
+  }, [open, showAddPeopleDrawer, showTransferDrawer])
 
   // Initialize initial call recipient on open
   useEffect(() => {
@@ -2246,6 +2290,26 @@ export function ConnectLnWhatsAppCallModal({
       setPushBannerNote("")
       setAddFeedbackMsg("")
       setMaterialStatusNote("")
+      setTeamsState(EMPTY_TEAMS_STATE)
+      setShowReactPicker(false)
+      setShowMoreMenu(false)
+      setShowWhiteboard(false)
+      setShowPollsDrawer(false)
+      setShowBreakoutDrawer(false)
+      setShowRecapDrawer(false)
+      setShowTransferDrawer(false)
+      setShowVoicemailModal(false)
+      setIsCaptionsOn(false)
+      setIsRecordingMeeting(false)
+      setIsOnHold(false)
+      setPinnedPeerUserId(null)
+      setActiveBreakoutInfo(null)
+      lobbyRequestedCallIdRef.current = ""
+      if (meetingRecorderRef.current && meetingRecorderRef.current.state !== "inactive") {
+        try {
+          meetingRecorderRef.current.stop()
+        } catch {}
+      }
       return
     }
 
@@ -2822,6 +2886,32 @@ export function ConnectLnWhatsAppCallModal({
         setCohostKeys(srvCohostKeys)
         setHostMutedKeys(srvMutedKeys)
 
+        if (data?.call?.teams_state) {
+          const srvTeams = data.call.teams_state as CommTeamsStateClient
+          setTeamsState(srvTeams)
+          if (
+            isIncomingAnswer &&
+            srvTeams.lobby_enabled &&
+            !(srvTeams.admitted_user_ids || []).includes(localPeerUid) &&
+            !(srvTeams.denied_user_ids || []).includes(localPeerUid) &&
+            lobbyRequestedCallIdRef.current !== callId
+          ) {
+            lobbyRequestedCallIdRef.current = callId
+            fetch("/api/v1/calls", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "teams_signal",
+                sub_action: "request_lobby",
+                call_id: callId,
+                user_id: localPeerUid,
+                display_name: callerName,
+                participant_phone: myLinkedPhone || undefined,
+              }),
+            }).catch(() => {})
+          }
+        }
+
         const meSrv = (data?.call?.participants || []).find(
           (p: any) => p?.user_id === localPeerUid
         )
@@ -3362,6 +3452,154 @@ export function ConnectLnWhatsAppCallModal({
     setShowMaterialDrawer(false)
     setShowHostMembersDrawer(false)
     setShowShareSheet(false)
+    setShowReactPicker(false)
+    setShowMoreMenu(false)
+    setShowPollsDrawer(false)
+    setShowBreakoutDrawer(false)
+    setShowRecapDrawer(false)
+    setShowTransferDrawer(false)
+  }
+
+  const sendTeamsSignal = useCallback(
+    async (subAction: string, payload: Record<string, any> = {}) => {
+      try {
+        const res = await fetch("/api/v1/calls", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "teams_signal",
+            sub_action: subAction,
+            call_id: callId,
+            user_id: localPeerUid,
+            display_name: callerName,
+            ...payload,
+          }),
+        })
+        const data = await res.json().catch(() => null)
+        if (data?.call?.teams_state) {
+          setTeamsState(data.call.teams_state)
+        }
+      } catch {}
+    },
+    [callId, callerName, localPeerUid]
+  )
+
+  // Live Captions via Web Speech API -> synced across participants
+  useEffect(() => {
+    if (!open || !isCaptionsOn || typeof window === "undefined") return
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRec) return
+    let stopped = false
+    let rec: any = null
+    const startLoop = () => {
+      if (stopped) return
+      try {
+        rec = new SpeechRec()
+        rec.continuous = true
+        rec.interimResults = false
+        rec.lang = "en-US"
+        rec.onresult = (ev: any) => {
+          const phrase = Array.from(ev.results)
+            .slice(ev.resultIndex)
+            .map((r: any) => r[0]?.transcript || "")
+            .join(" ")
+            .trim()
+          if (phrase) {
+            void sendTeamsSignal("push_caption", { text: phrase })
+          }
+        }
+        rec.onend = () => {
+          if (!stopped) setTimeout(startLoop, 400)
+        }
+        rec.start()
+      } catch {}
+    }
+    startLoop()
+    return () => {
+      stopped = true
+      try {
+        rec?.stop?.()
+      } catch {}
+    }
+  }, [open, isCaptionsOn, sendTeamsSignal])
+
+  // Gentle soft hold chime when local user places call on hold
+  useEffect(() => {
+    if (!open || !isOnHold || typeof window === "undefined") return
+    const playSoftHoldNote = () => {
+      try {
+        const Ctx = window.AudioContext || (window as any).webkitAudioContext
+        if (!Ctx) return
+        const ctx = new Ctx()
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = "sine"
+        osc.frequency.value = 523.25
+        gain.gain.setValueAtTime(0.06, ctx.currentTime)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.65)
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.start()
+        osc.stop(ctx.currentTime + 0.65)
+        setTimeout(() => void ctx.close().catch(() => {}), 800)
+      } catch {}
+    }
+    playSoftHoldNote()
+    const timer = setInterval(playSoftHoldNote, 5500)
+    return () => clearInterval(timer)
+  }, [open, isOnHold])
+
+  const handleToggleRecordingMeeting = () => {
+    if (isRecordingMeeting) {
+      if (meetingRecorderRef.current && meetingRecorderRef.current.state !== "inactive") {
+        try {
+          meetingRecorderRef.current.stop()
+        } catch {}
+      }
+      setIsRecordingMeeting(false)
+      void sendTeamsSignal("set_recording", { is_recording: false })
+      return
+    }
+    const stream = localStreamRef.current || buildOutgoingCallStream()
+    if (!stream || typeof MediaRecorder === "undefined") {
+      setPushBannerNote("Recording unavailable until microphone/camera is active.")
+      return
+    }
+    try {
+      const chunks: BlobPart[] = []
+      const mr = new MediaRecorder(stream)
+      meetingRecorderRef.current = mr
+      mr.ondataavailable = (ev) => {
+        if (ev.data && ev.data.size > 0) chunks.push(ev.data)
+      }
+      mr.onstop = () => {
+        if (chunks.length > 0) {
+          const blob = new Blob(chunks, { type: mr.mimeType || "video/webm" })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement("a")
+          a.href = url
+          a.download = `connectln-meeting-${callId}-${Date.now()}.webm`
+          a.click()
+          URL.revokeObjectURL(url)
+          setPushBannerNote("✓ Meeting recording saved cleanly to your Downloads folder.")
+        }
+      }
+      mr.start(1000)
+      setIsRecordingMeeting(true)
+      void sendTeamsSignal("set_recording", { is_recording: true })
+    } catch {
+      setPushBannerNote("Could not start browser MediaRecorder for this call.")
+    }
+  }
+
+  const handleToggleCallHold = () => {
+    const nextHold = !isOnHold
+    setIsOnHold(nextHold)
+    isMicMutedRef.current = nextHold || isMicMuted
+    localStreamRef.current?.getAudioTracks().forEach((t) => {
+      t.enabled = !(nextHold || isMicMuted)
+    })
+    void sendTeamsSignal("toggle_hold", { hold: nextHold })
   }
 
   const mySelfTokens = buildMemberIdentityTokens({
@@ -4051,8 +4289,34 @@ export function ConnectLnWhatsAppCallModal({
 
       {/* Global Opus WebRTC Audio Output for ALL Connected Peers */}
       {Object.entries(remoteStreamsMap).map(([pid, st]) => (
-        <RemoteStreamAudioPlayer key={pid} stream={st} />
+        <RemoteStreamAudioPlayer
+          key={pid}
+          stream={st}
+          muted={isOnHold || (teamsState.on_hold_user_ids || []).length > 0}
+        />
       ))}
+
+      {/* Teams Overlays: Lobby Gate, Raised Hands Queue, Live Captions, Reactions, Hold Banner, Breakout Strip */}
+      <TeamsCallOverlays
+        teamsState={teamsState}
+        localUserId={localPeerUid}
+        canModerateCall={canModerateCall}
+        isHost={isLocalHost}
+        isCaptionsOn={isCaptionsOn}
+        isOnHold={isOnHold}
+        activeBreakoutName={activeBreakoutInfo?.name}
+        onReturnFromBreakout={
+          activeBreakoutInfo
+            ? () => {
+                setCallId(activeBreakoutInfo.mainCallId)
+                setActiveBreakoutInfo(null)
+              }
+            : undefined
+        }
+        onResumeHold={handleToggleCallHold}
+        onLeaveDenied={() => handleHangup(false)}
+        onTeamsSignal={sendTeamsSignal}
+      />
 
       {/* HOST MUTED YOUR MIC BANNER */}
       {wasMutedByHostBanner && (
@@ -4369,12 +4633,21 @@ export function ConnectLnWhatsAppCallModal({
                 (rp.peerId ? remoteStreamsMap[rp.peerId] : undefined) ||
                 (idx === 0 ? Object.values(remoteStreamsMap)[0] : undefined)
               const peerBg = CALL_BACKGROUND_THEMES.find((b) => b.id === rp.virtualBgId)
+              const isSpotlightOrPinned =
+                (layoutMode === "spotlight" &&
+                  ((teamsState.spotlight_user_id || pinnedPeerUserId) === rp.userId ||
+                    (!teamsState.spotlight_user_id && !pinnedPeerUserId && idx === 0))) ||
+                teamsState.spotlight_user_id === rp.userId ||
+                pinnedPeerUserId === rp.userId
+              const hasHandUp = (teamsState.raised_hands || []).some((h) => h.user_id === rp.userId)
               return (
                 <div
                   key={rp.userId}
-                  className={`relative rounded-2xl overflow-hidden border border-emerald-500/50 min-h-[200px] flex items-center justify-center ${
-                    peerBg ? peerBg.stageClass : "bg-[#111B21]"
-                  }`}
+                  className={`relative rounded-2xl overflow-hidden border min-h-[200px] flex items-center justify-center ${
+                    isSpotlightOrPinned
+                      ? "sm:col-span-2 border-amber-400 ring-2 ring-amber-400/70"
+                      : "border-emerald-500/50"
+                  } ${peerBg ? peerBg.stageClass : "bg-[#111B21]"}`}
                 >
                   {!st && rp.isVideoOn && rp.liveFrame && (
                     <img
@@ -4401,6 +4674,11 @@ export function ConnectLnWhatsAppCallModal({
                   {/* Co-Host / Host Controls & Direct Chat on Each Tile */}
                   <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1">
+                      {hasHandUp && (
+                        <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-extrabold text-slate-950">
+                          ✋
+                        </span>
+                      )}
                       {rp.isCoHost && (
                         <span className="rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-extrabold text-slate-950">
                           🛡️ Co-Host
@@ -4413,6 +4691,36 @@ export function ConnectLnWhatsAppCallModal({
                       )}
                     </div>
                     <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPinnedPeerUserId((prev) => (prev === rp.userId ? null : rp.userId))
+                        }
+                        className={`h-7 px-2 rounded-full text-[10px] font-bold cursor-pointer border border-white/15 ${
+                          pinnedPeerUserId === rp.userId
+                            ? "bg-amber-400 text-slate-950"
+                            : "bg-black/65 hover:bg-white/20 text-white"
+                        }`}
+                        title={pinnedPeerUserId === rp.userId ? "Unpin video" : `Pin ${rp.name}`}
+                      >
+                        <Pin className="h-3 w-3 inline" />
+                      </button>
+                      {canModerateCall && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            sendTeamsSignal("set_spotlight", { spotlight_user_id: rp.userId })
+                          }
+                          className={`h-7 px-2 rounded-full text-[10px] font-bold cursor-pointer border border-white/15 ${
+                            teamsState.spotlight_user_id === rp.userId
+                              ? "bg-amber-500 text-slate-950"
+                              : "bg-black/65 hover:bg-amber-500 hover:text-slate-950 text-white"
+                          }`}
+                          title={`Spotlight ${rp.name} for everyone`}
+                        >
+                          ⭐
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => {
@@ -4707,6 +5015,14 @@ export function ConnectLnWhatsAppCallModal({
                       <span>Copy Call Link</span>
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => setShowVoicemailModal(true)}
+                    className="rounded-xl bg-amber-600 hover:bg-amber-500 px-3.5 py-2 text-xs font-extrabold text-white cursor-pointer shadow-md flex items-center gap-1.5"
+                  >
+                    <Voicemail className="h-3.5 w-3.5" />
+                    <span>Leave Voicemail</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -5676,9 +5992,183 @@ export function ConnectLnWhatsAppCallModal({
         </div>
       )}
 
+      {/* Teams Popovers, Drawers, Whiteboard, Polls, Breakouts, Recap, Transfer & Voicemail */}
+      <TeamsWhiteboardOverlay
+        open={showWhiteboard}
+        transparentAnnotate={transparentAnnotate}
+        onToggleTransparent={() => setTransparentAnnotate((v) => !v)}
+        onClose={() => setShowWhiteboard(false)}
+        strokes={teamsState.whiteboard_strokes}
+        notes={teamsState.whiteboard_notes}
+        callerName={callerName}
+        onTeamsSignal={sendTeamsSignal}
+      />
+
+      <TeamsPollsQaDrawer
+        open={showPollsDrawer}
+        onClose={() => setShowPollsDrawer(false)}
+        polls={teamsState.polls}
+        qaItems={teamsState.qa_items}
+        localUserId={localPeerUid}
+        canModerateCall={canModerateCall}
+        onTeamsSignal={sendTeamsSignal}
+      />
+
+      <TeamsBreakoutRoomsDrawer
+        open={showBreakoutDrawer}
+        onClose={() => setShowBreakoutDrawer(false)}
+        mainCallId={activeBreakoutInfo?.mainCallId || callId}
+        breakoutRooms={teamsState.breakout_rooms}
+        peers={allCallTargetMembers.map((m) => ({ userId: m.userId || m.key, name: m.name }))}
+        canModerateCall={canModerateCall}
+        onJoinBreakoutRoom={(roomCallId, roomName) => {
+          setActiveBreakoutInfo((prev) => ({
+            mainCallId: prev?.mainCallId || callId,
+            name: roomName,
+          }))
+          setCallId(roomCallId)
+          setShowBreakoutDrawer(false)
+        }}
+        onTeamsSignal={sendTeamsSignal}
+      />
+
+      <TeamsRecapAttendanceDrawer
+        open={showRecapDrawer}
+        onClose={() => setShowRecapDrawer(false)}
+        callId={callId}
+        recipientName={primaryName}
+        elapsedSec={elapsedSec}
+        teamsState={teamsState}
+        chatMessages={chatMessages}
+      />
+
+      <TeamsTransferHoldDrawer
+        open={showTransferDrawer}
+        onClose={() => setShowTransferDrawer(false)}
+        contacts={directoryContacts}
+        onTransfer={async ({ name, phone, email, blind }) => {
+          await sendTeamsSignal("transfer_call", {
+            target_name: name,
+            target_phone: phone,
+            target_email: email,
+          })
+          setShowTransferDrawer(false)
+          if (blind) {
+            handleHangup(false)
+          } else {
+            setPushBannerNote(`✓ Ringing ${name} for warm transfer — they will merge right in.`)
+          }
+        }}
+      />
+
+      <TeamsVoicemailRecorderModal
+        open={showVoicemailModal}
+        onClose={() => setShowVoicemailModal(false)}
+        callerName={callerName}
+        callerPhone={getMyLinkedConnectLnPhone()}
+        callerEmail={callerEmail}
+        recipientName={primaryName}
+        recipientPhone={recipientPhone}
+        recipientEmail={targetEmail}
+        onSent={() => setPushBannerNote(`✓ Voicemail sent to ${primaryName}.`)}
+      />
+
+      {showReactPicker && (
+        <div className="fixed bottom-22 left-1/2 -translate-x-1/2 z-45 rounded-full bg-[#111B21]/95 border border-white/20 px-3 py-1.5 shadow-2xl flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              void sendTeamsSignal("toggle_hand")
+              setShowReactPicker(false)
+            }}
+            className={`rounded-full px-3 py-1 text-xs font-extrabold cursor-pointer flex items-center gap-1 ${
+              (teamsState.raised_hands || []).some((h) => h.user_id === localPeerUid)
+                ? "bg-amber-400 text-slate-950"
+                : "bg-white/10 hover:bg-white/20 text-white"
+            }`}
+          >
+            <Hand className="h-3.5 w-3.5" />
+            <span>
+              {(teamsState.raised_hands || []).some((h) => h.user_id === localPeerUid)
+                ? "Lower"
+                : "Raise Hand"}
+            </span>
+          </button>
+          {TEAMS_CALL_REACTIONS.map((em) => (
+            <button
+              key={em}
+              type="button"
+              onClick={() => {
+                void sendTeamsSignal("send_reaction", { emoji: em })
+                setShowReactPicker(false)
+              }}
+              className="h-8 w-8 rounded-full hover:bg-white/15 flex items-center justify-center text-lg cursor-pointer transition-transform active:scale-125"
+            >
+              {em}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <TeamsMoreMenuPopover
+        open={showMoreMenu}
+        onClose={() => setShowMoreMenu(false)}
+        isRecording={isRecordingMeeting}
+        isCaptionsOn={isCaptionsOn}
+        isWhiteboardOpen={showWhiteboard}
+        isPollsOpen={showPollsDrawer}
+        isBreakoutsOpen={showBreakoutDrawer}
+        isLobbyEnabled={teamsState.lobby_enabled}
+        canModerateCall={canModerateCall}
+        layoutMode={layoutMode}
+        isOnHold={isOnHold}
+        onToggleRecord={handleToggleRecordingMeeting}
+        onToggleCaptions={() => setIsCaptionsOn((v) => !v)}
+        onToggleWhiteboard={() => setShowWhiteboard((v) => !v)}
+        onTogglePolls={() => {
+          closeAllCallDrawers()
+          setShowPollsDrawer(true)
+        }}
+        onToggleBreakouts={() => {
+          closeAllCallDrawers()
+          setShowBreakoutDrawer(true)
+        }}
+        onToggleLobby={() => void sendTeamsSignal("toggle_lobby")}
+        onToggleLayout={() =>
+          setLayoutMode((prev) => (prev === "gallery" ? "spotlight" : "gallery"))
+        }
+        onToggleHold={handleToggleCallHold}
+        onOpenTransfer={() => {
+          closeAllCallDrawers()
+          setShowTransferDrawer(true)
+        }}
+        onOpenRecap={() => {
+          closeAllCallDrawers()
+          setShowRecapDrawer(true)
+        }}
+      />
+
       {/* BOTTOM WHATSAPP FLOATING CALL CONTROLS PILL */}
       <div className="fixed bottom-0 left-0 right-0 z-30 pb-5 pt-4 px-2 sm:px-4 bg-gradient-to-t from-black/85 to-transparent flex items-center justify-center">
         <div className="rounded-full bg-[#1F2C34]/95 border border-white/15 px-3 sm:px-4 py-2 shadow-2xl flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto max-w-[96vw]">
+          <button
+            type="button"
+            onClick={() => {
+              const next = !showReactPicker
+              closeAllCallDrawers()
+              setShowReactPicker(next)
+            }}
+            className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+              showReactPicker ||
+              (teamsState.raised_hands || []).some((h) => h.user_id === localPeerUid)
+                ? "bg-amber-400 text-slate-950"
+                : "bg-white/10 hover:bg-white/20 text-white"
+            }`}
+            title="Raise Hand & Live Reactions"
+          >
+            <Hand className="h-4 w-4" />
+          </button>
+
           <button
             type="button"
             onClick={() => {
@@ -5817,6 +6307,24 @@ export function ConnectLnWhatsAppCallModal({
 
           <button
             type="button"
+            onClick={() => {
+              const next = !showMoreMenu
+              closeAllCallDrawers()
+              setShowMoreMenu(next)
+            }}
+            className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+              showMoreMenu || showWhiteboard || isCaptionsOn || isRecordingMeeting
+                ? "bg-emerald-600 text-white"
+                : "bg-white/10 hover:bg-white/20 text-white"
+            }`}
+            title="More Meeting Tools (Record, Captions, Whiteboard, Polls, Breakouts, Recap)"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+
+          <button
+            type="button"
+            data-connectln-call-action="hangup"
             onClick={() => handleHangup(false)}
             style={{ color: "#FFFFFF" }}
             className="h-10 w-12 shrink-0 rounded-full bg-rose-600 hover:bg-rose-500 flex items-center justify-center shadow-lg cursor-pointer transition-transform active:scale-95"

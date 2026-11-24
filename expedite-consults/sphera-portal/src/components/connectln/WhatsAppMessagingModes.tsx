@@ -30,6 +30,7 @@ import {
     SocialEmbedProvider,
 } from '@/lib/connectin-social-video';
 import { ConnectLnTeamsCalendarView } from './ConnectLnTeamsCalendarView';
+import { ConnectLnVoicemailInbox } from './ConnectLnVoicemailInbox';
 import { MeetingInvitee } from './ScheduleMeetingModal';
 
 export type MessagingWorkspaceMode =
@@ -1692,6 +1693,8 @@ export function WhatsAppModeWorkspace({
         }
     });
     const [callSearch, setCallSearch] = useState('');
+    const [callsSidebarTab, setCallsSidebarTab] = useState<'calls' | 'voicemail'>('calls');
+    const [unreadVoicemailsCount, setUnreadVoicemailsCount] = useState(0);
     const callSearchInputRef = React.useRef<HTMLInputElement | null>(null);
     const [generatedCallLink, setGeneratedCallLink] = useState<string | null>(null);
     const [showAddFavoriteModal, setShowAddFavoriteModal] = useState(false);
@@ -4640,6 +4643,35 @@ export function WhatsAppModeWorkspace({
                                 ◈
                             </span>
                             <h2 className="text-xl font-bold text-[#1C1917]">Calls</h2>
+                            <div className="ml-1 inline-flex rounded-xl bg-[#EFE8DA] p-0.5 border border-[#D0C4AE]">
+                                <button
+                                    type="button"
+                                    onClick={() => setCallsSidebarTab('calls')}
+                                    className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold cursor-pointer transition-colors ${
+                                        callsSidebarTab === 'calls'
+                                            ? 'bg-[#7C4225] text-[#FBF8F3]'
+                                            : 'text-[#57534E] hover:text-[#1C1917]'
+                                    }`}
+                                >
+                                    Recents
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setCallsSidebarTab('voicemail')}
+                                    className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold cursor-pointer transition-colors flex items-center gap-1 ${
+                                        callsSidebarTab === 'voicemail'
+                                            ? 'bg-[#7C4225] text-[#FBF8F3]'
+                                            : 'text-[#57534E] hover:text-[#1C1917]'
+                                    }`}
+                                >
+                                    <span>Voicemail</span>
+                                    {unreadVoicemailsCount > 0 && (
+                                        <span className="px-1.5 rounded-full bg-rose-600 text-white text-[9px] font-extrabold">
+                                            {unreadVoicemailsCount}
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                         <button
                             type="button"
@@ -4657,6 +4689,18 @@ export function WhatsAppModeWorkspace({
                         </button>
                     </div>
 
+                    {callsSidebarTab === 'voicemail' ? (
+                        <div className="flex-1 overflow-y-auto px-1 pb-4">
+                            <ConnectLnVoicemailInbox
+                                viewerName={userName}
+                                viewerEmail={currentUser?.email}
+                                viewerPhone={myVerifiedCallerPhone || (currentUser as any)?.phone}
+                                onCallBack={(target) => launchWhatsAppDirectCall(target, 'audio')}
+                                onUnreadCountChange={setUnreadVoicemailsCount}
+                            />
+                        </div>
+                    ) : (
+                    <>
                     {/* Search / Quick Dial Bar */}
                     <div className="px-3 py-2.5">
                         <form
@@ -4811,6 +4855,8 @@ export function WhatsAppModeWorkspace({
                             </div>
                         </div>
                     </div>
+                    </>
+                    )}
                 </div>
 
                 {/* Right Column: "Voice and video calling" Card in Desk Note Palette */}

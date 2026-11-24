@@ -247,9 +247,13 @@ function buildViewerBilateralThreads(
                     role: m.senderRole || 'Verified ConnectLn Member',
                     isVerified: true,
                 },
-                text: m.text,
+                text: m.isDeleted ? 'This message was deleted' : m.text,
                 timestamp: formattedTimestamp,
                 createdAtIso: m.createdAtIso,
+                editedAtIso: m.editedAtIso,
+                isDeleted: Boolean(m.isDeleted),
+                readBy: m.readBy,
+                mentions: m.mentions,
                 reactions: m.reactions,
                 comments: m.comments,
                 attachments: m.attachment
@@ -722,6 +726,81 @@ export async function POST(request: Request) {
                 messageId,
                 reactions: foundMsg.reactions || {},
                 comments: foundMsg.comments || [],
+            });
+        }
+
+        if (action === 'edit_message' || action === 'delete_message') {
+            const { messageId, newText } = body as { messageId?: string; newText?: string };
+            const actorName = (viewerName || senderName || '').trim();
+            if (!messageId || !actorName) {
+                return NextResponse.json(
+                    { ok: false, error: 'messageId and sender identity are required.' },
+                    { status: 400 }
+                );
+            }
+            if (action === 'edit_message' && !String(newText || '').trim()) {
+                return NextResponse.json(
+                    { ok: false, error: 'Updated message text is required.' },
+                    { status: 400 }
+                );
+            }
+
+            const nowIso = new Date().toISOString();
+            let updatedMessage: any = null;
+
+            for (const c of Object.values(bilateralConversationsByPairKey)) {
+                const idx = (c.messages || []).findIndex((m) => m.id === messageId);
+                if (idx >= 0) {
+                    const target = c.messages[idx];
+                    const isAuthor = doesParticipantMatch(
+                        target.senderName,
+                        actorName,
+                        target.senderEmail,
+                        senderEmail
+                    );
+                    if (!isAuthor) {
+                        return NextResponse.json(
+                            { ok: false, error: 'Only the sender can modify this message.' },
+                            { status: 403 }
+                        );
+                    }
+                    if (action === 'delete_message') {
+                        target.isDeleted = true;
+                        target.text = 'This message was deleted';
+                        target.attachment = undefined;
+                    } else {
+                        target.text = String(newText).trim();
+                        target.editedAtIso = nowIso;
+                    }
+                    c.updatedAtIso = nowIso;
+                    await upsertCloudDirectConversation(c).catch(() => {});
+                    updatedMessage = target;
+                    break;
+                }
+            }
+
+            if (!updatedMessage && threadId && appendedMessagesByThreadId[threadId]) {
+                const list = appendedMessagesByThreadId[threadId];
+                const idx = list.findIndex((m) => m.id === messageId);
+                if (idx >= 0) {
+                    const target = list[idx];
+                    if (action === 'delete_message') {
+                        target.isDeleted = true;
+                        target.text = 'This message was deleted';
+                        target.attachments = undefined;
+                    } else {
+                        target.text = String(newText).trim();
+                        target.editedAtIso = nowIso;
+                    }
+                    updatedMessage = target;
+                }
+            }
+
+            return NextResponse.json({
+                ok: true,
+                action,
+                messageId,
+                updatedMessage,
             });
         }
 

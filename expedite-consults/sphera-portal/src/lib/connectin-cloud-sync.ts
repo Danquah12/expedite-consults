@@ -605,6 +605,9 @@ export interface CloudDirectMessage {
   attachment?: string
   timestamp: string
   createdAtIso: string
+  editedAtIso?: string
+  isDeleted?: boolean
+  mentions?: string[]
   readBy: string[]
   /** reaction kind (like | up | down) -> normalized names of members who reacted */
   reactions?: Record<string, string[]>

@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { convertLegacyMeetingToCalendarEvent } from '@/lib/connectln-calendar-utils';
+import { SchedulingAssistantPanel } from './ConnectLnCalendarTeamsTools';
 
 export interface MeetingInvitee {
     id: string;
@@ -152,6 +153,20 @@ export function ScheduleMeetingModal({
         (p) => !query.trim() || `${p.name} ${p.subtitle || ''}`.toLowerCase().includes(query.trim().toLowerCase())
     );
     const chosen = invitees.filter((p) => selected[p.id]);
+
+    const assistantWindowMs = useMemo(() => {
+        const [h, mi] = time.split(':').map(Number);
+        const [y, mo, d] = dateStr.split('-').map(Number);
+        const s =
+            y && mo && d
+                ? new Date(y, mo - 1, d, h || 0, mi || 0, 0, 0).getTime()
+                : Date.now() + 30 * 60_000;
+        return {
+            startMs: s,
+            endMs: s + durationMin * 60_000,
+            attendees: chosen.map((c) => ({ name: c.name })),
+        };
+    }, [chosen, dateStr, durationMin, time]);
 
     const submit = async () => {
         setError(null);
@@ -368,6 +383,23 @@ export function ScheduleMeetingModal({
                                     </select>
                                 </label>
                             </div>
+
+                            {chosen.length > 0 && (
+                                <SchedulingAssistantPanel
+                                    dateStr={dateStr}
+                                    startMs={assistantWindowMs.startMs}
+                                    endMs={assistantWindowMs.endMs}
+                                    durationMin={durationMin}
+                                    attendees={assistantWindowMs.attendees}
+                                    onPickSlot={(slotStartMs) => {
+                                        const d = new Date(slotStartMs);
+                                        const snappedMins = d.getMinutes() < 30 ? 0 : 30;
+                                        setDateStr(ymd(d));
+                                        setTime(`${pad(d.getHours())}:${pad(snappedMins)}`);
+                                        setMonthCursor(new Date(d.getFullYear(), d.getMonth(), 1));
+                                    }}
+                                />
+                            )}
 
                             <div className="flex gap-2 text-xs font-bold">
                                 <button type="button" onClick={() => setMode('video')} className={`flex-1 rounded-lg border p-2 ${mode === 'video' ? 'bg-[#0A66C2] border-[#0A66C2]' : 'bg-white border-slate-300'}`} style={mode === 'video' ? { color: '#FFFFFF' } : undefined}>🎥 Video Huddle</button>

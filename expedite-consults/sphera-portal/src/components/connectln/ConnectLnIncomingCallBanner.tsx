@@ -1,7 +1,8 @@
 "use client"
 
 import React, { useEffect, useRef, useState } from "react"
-import { Video, Phone, PhoneOff, Bell, X, PictureInPicture2, Lock } from "lucide-react"
+import { Video, Phone, PhoneOff, Bell, BellOff, X, PictureInPicture2, Lock } from "lucide-react"
+import { isLocalUserDnd, setLocalPresenceStatus, subscribePresenceChange } from "@/lib/connectln-presence"
 
 function getCallerInitials(name: string): string {
   const parts = String(name || "")
@@ -105,6 +106,20 @@ export function ConnectLnIncomingCallBanner({
   const [isIosBrowserTab, setIsIosBrowserTab] = useState<boolean>(false)
   const [vapidKey, setVapidKey] = useState<string>("")
   const [isEnablingPush, setIsEnablingPush] = useState<boolean>(false)
+  const [isDndActive, setIsDndActive] = useState<boolean>(() => isLocalUserDnd())
+
+  useEffect(() => {
+    return subscribePresenceChange((rec) => {
+      const nextDnd = rec.status === "dnd"
+      setIsDndActive(nextDnd)
+      if (nextDnd) {
+        stopLoudPhoneRingtone(false)
+        stopTitleCallFlash()
+        dismissFloatingCallPopups()
+        setCallMediaSilenceActive(false, "incoming-call-banner")
+      }
+    })
+  }, [])
 
   const declinedIdsRef = useRef<Set<string>>(new Set())
   const seenInServerPollRef = useRef<Set<string>>(new Set())
@@ -204,6 +219,13 @@ export function ConnectLnIncomingCallBanner({
       isConnectLnCallHandled(call.id) ||
       declinedIdsRef.current.has(call.id)
     ) {
+      return
+    }
+    if (isLocalUserDnd()) {
+      setCallMediaSilenceActive(false, "incoming-call-banner")
+      stopLoudPhoneRingtone(false)
+      stopTitleCallFlash()
+      dismissFloatingCallPopups()
       return
     }
     setCallMediaSilenceActive(true, "incoming-call-banner")
@@ -928,6 +950,48 @@ export function ConnectLnIncomingCallBanner({
   const activeInvitesCount = (incomingCall.invited_roster || []).filter(
     (m) => m.status !== "removed"
   ).length
+
+  if (isDndActive) {
+    return (
+      <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[260] w-[94vw] max-w-md rounded-2xl bg-[#111B21]/95 border border-rose-500/50 px-3.5 py-2.5 text-white shadow-2xl flex items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <BellOff className="h-4 w-4 text-rose-400 shrink-0" />
+          <p className="text-xs font-bold truncate">
+            <span className="text-rose-300">DND:</span> Call from {callerName}
+          </p>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() =>
+              acceptIncomingCallNow(
+                incomingCall.id,
+                callerName,
+                isVideo ? "video" : "audio",
+                incomingCall.initiator_phone
+              )
+            }
+            className="rounded-xl bg-[#25D366] hover:bg-[#2EE070] px-2.5 py-1 text-[11px] font-extrabold text-white cursor-pointer"
+          >
+            Answer
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              void setLocalPresenceStatus(
+                { status: "available" },
+                { name: viewerName, email: viewerEmail }
+              )
+              setIsDndActive(false)
+            }}
+            className="rounded-xl bg-white/15 hover:bg-white/25 px-2.5 py-1 text-[11px] font-bold text-white cursor-pointer"
+          >
+            Turn Off DND
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div

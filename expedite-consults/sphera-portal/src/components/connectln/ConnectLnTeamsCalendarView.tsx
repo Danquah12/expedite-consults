@@ -8,6 +8,7 @@ import {
   Clock,
   Copy,
   Download,
+  ExternalLink,
   MapPin,
   MessageSquare,
   PanelLeftClose,
@@ -17,6 +18,7 @@ import {
   Plus,
   Repeat,
   Search,
+  Settings,
   Trash2,
   Users,
   Video,
@@ -47,6 +49,15 @@ import {
   toLocalTimeString,
 } from '@/lib/connectln-calendar-utils';
 import { loadScheduledMeetings, MeetingInvitee } from './ScheduleMeetingModal';
+import {
+  CalendarPreferences,
+  CalendarSyncSettingsModal,
+  SchedulingAssistantPanel,
+  buildGoogleCalendarAddUrl,
+  buildOutlookCalendarAddUrl,
+  formatHourInZone,
+  loadCalendarPreferences,
+} from './ConnectLnCalendarTeamsTools';
 
 export type CalendarViewMode = 'day' | 'work_week' | 'week' | 'month' | 'agenda';
 
@@ -274,6 +285,11 @@ export function ConnectLnTeamsCalendarView({
   const [editorError, setEditorError] = useState<string | null>(null);
   const [isSavingEvent, setIsSavingEvent] = useState(false);
   const [isMutatingId, setIsMutatingId] = useState<string | null>(null);
+  const [calendarPrefs, setCalendarPrefs] = useState<CalendarPreferences>(() =>
+    loadCalendarPreferences()
+  );
+  const [syncSettingsOpen, setSyncSettingsOpen] = useState(false);
+  const [editorTab, setEditorTab] = useState<'details' | 'assistant'>('details');
 
   const timeGridScrollRef = useRef<HTMLDivElement | null>(null);
   const legacySyncedRef = useRef(false);
@@ -535,6 +551,7 @@ export function ConnectLnTeamsCalendarView({
   const openNewEventModal = (date: Date, hour = 9) => {
     setEditorError(null);
     setEditorInviteeSearch('');
+    setEditorTab('details');
     setEditorDraft(buildEmptyDraft(date, hour));
     setEditorOpen(true);
   };
@@ -553,6 +570,7 @@ export function ConnectLnTeamsCalendarView({
     }
     setEditorError(null);
     setEditorInviteeSearch('');
+    setEditorTab('details');
     setEditorDraft({
       id: ev.id,
       title: ev.title,
@@ -845,6 +863,33 @@ export function ConnectLnTeamsCalendarView({
     ? getViewerRsvpStatus(inspectedOccurrence.baseEvent, viewerKeySet)
     : null;
 
+  const editorWindowMs = useMemo(() => {
+    const [y, mo, d] = (editorDraft.dateStr || '').split('-').map(Number);
+    if (!y || !mo || !d) {
+      const now = Date.now();
+      return { startMs: now, endMs: now + 30 * 60_000, durationMin: 30 };
+    }
+    if (editorDraft.allDay) {
+      const s = new Date(y, mo - 1, d, 0, 0, 0, 0).getTime();
+      const e = new Date(y, mo - 1, d, 23, 59, 0, 0).getTime();
+      return { startMs: s, endMs: e, durationMin: 60 };
+    }
+    const [sh, sm] = (editorDraft.startTime || '09:00').split(':').map(Number);
+    const [eh, em] = (editorDraft.endTime || '10:00').split(':').map(Number);
+    const s = new Date(y, mo - 1, d, sh || 0, sm || 0, 0, 0).getTime();
+    const rawE = new Date(y, mo - 1, d, eh || 0, em || 0, 0, 0).getTime();
+    const dur = Math.max(15, Math.round((rawE - s) / 60_000) || 60);
+    return { startMs: s, endMs: rawE > s ? rawE : s + dur * 60_000, durationMin: dur };
+  }, [editorDraft.allDay, editorDraft.dateStr, editorDraft.endTime, editorDraft.startTime]);
+
+  const editorSelectedAttendees = useMemo(
+    () =>
+      invitees
+        .filter((p) => editorDraft.selectedInviteeKeys[p.id])
+        .map((p) => ({ name: p.name })),
+    [editorDraft.selectedInviteeKeys, invitees]
+  );
+
   return (
     <div className="flex-1 flex flex-col h-full min-h-0 bg-[#FBF8F3] text-[#1C1917] overflow-hidden">
       {/* TOP TEAMS-STYLE CALENDAR TOOLBAR */}
@@ -949,6 +994,16 @@ export function ConnectLnTeamsCalendarView({
               );
             })}
           </div>
+
+          <button
+            type="button"
+            onClick={() => setSyncSettingsOpen(true)}
+            title="Calendar Sync (.ics), Working Hours, Secondary Time Zone & Out-of-Office Auto-Decline"
+            className="px-2.5 py-1.5 rounded-xl bg-[#F7F2E8] hover:bg-[#EFE8DA] border border-[#D0C4AE] text-xs font-bold text-[#1C1917] flex items-center gap-1 cursor-pointer"
+          >
+            <Settings className="w-3.5 h-3.5 text-[#7C4225]" />
+            <span className="hidden sm:inline">Sync &amp; TZ</span>
+          </button>
 
           <button
             type="button"
@@ -1145,8 +1200,20 @@ export function ConnectLnTeamsCalendarView({
             <>
               {/* Sticky Day Headers */}
               <div className="flex border-b border-[#E0D6C5] bg-[#FBF8F3] shrink-0">
-                <div className="w-14 shrink-0 border-r border-[#E0D6C5] px-1 py-2 text-[10px] font-bold text-[#78716C] flex items-end justify-center">
-                  LOCAL
+                <div
+                  className={`${
+                    calendarPrefs.secondaryTimeZone ? 'w-24' : 'w-14'
+                  } shrink-0 border-r border-[#E0D6C5] px-1 py-2 text-[10px] font-bold text-[#78716C] flex items-end justify-center gap-1`}
+                >
+                  {calendarPrefs.secondaryTimeZone && (
+                    <span
+                      className="text-[9px] text-[#0A66C2] truncate max-w-[42px]"
+                      title={calendarPrefs.secondaryTimeZone}
+                    >
+                      {calendarPrefs.secondaryTimeZone.split('/').pop()?.replace(/_/g, ' ') || 'TZ2'}
+                    </span>
+                  )}
+                  <span>LOCAL</span>
                 </div>
                 <div
                   className="flex-1 grid"
@@ -1200,7 +1267,11 @@ export function ConnectLnTeamsCalendarView({
                 if (!hasAnyAllDay) return null;
                 return (
                   <div className="flex border-b border-[#E0D6C5] bg-[#F7F2E8]/70 shrink-0">
-                    <div className="w-14 shrink-0 border-r border-[#E0D6C5] px-1 py-1.5 text-[10px] font-bold text-[#78716C] flex items-center justify-center">
+                    <div
+                      className={`${
+                        calendarPrefs.secondaryTimeZone ? 'w-24' : 'w-14'
+                      } shrink-0 border-r border-[#E0D6C5] px-1 py-1.5 text-[10px] font-bold text-[#78716C] flex items-center justify-center`}
+                    >
                       All day
                     </div>
                     <div
@@ -1241,13 +1312,22 @@ export function ConnectLnTeamsCalendarView({
               <div ref={timeGridScrollRef} className="flex-1 overflow-y-auto relative">
                 <div className="flex" style={{ height: `${HOURS.length * HOUR_HEIGHT_PX}px` }}>
                   {/* Time Axis */}
-                  <div className="w-14 shrink-0 border-r border-[#E0D6C5] bg-[#FBF8F3] relative select-none">
+                  <div
+                    className={`${
+                      calendarPrefs.secondaryTimeZone ? 'w-24' : 'w-14'
+                    } shrink-0 border-r border-[#E0D6C5] bg-[#FBF8F3] relative select-none`}
+                  >
                     {HOURS.map((h) => (
                       <div
                         key={h}
                         style={{ height: `${HOUR_HEIGHT_PX}px` }}
-                        className="relative pr-1.5 text-right"
+                        className="relative pr-1.5 flex items-start justify-end gap-1"
                       >
+                        {calendarPrefs.secondaryTimeZone && h !== 0 && (
+                          <span className="text-[9px] font-semibold text-[#0A66C2]/80 -top-2 relative">
+                            {formatHourInZone(h, calendarPrefs.secondaryTimeZone)}
+                          </span>
+                        )}
                         <span className="text-[10px] font-semibold text-[#78716C] -top-2 relative">
                           {h === 0 ? '' : formatHourLabel(h)}
                         </span>
@@ -1289,15 +1369,23 @@ export function ConnectLnTeamsCalendarView({
                           }`}
                         >
                           {/* Clickable Hour Grid Cells */}
-                          {HOURS.map((h) => (
-                            <div
-                              key={h}
-                              onClick={() => openNewEventModal(day, h)}
-                              title={`Create event on ${day.toLocaleDateString()} at ${formatHourLabel(h)}`}
-                              style={{ height: `${HOUR_HEIGHT_PX}px` }}
-                              className="border-b border-[#EFE8DA] hover:bg-blue-50/40 cursor-pointer transition-colors"
-                            />
-                          ))}
+                          {HOURS.map((h) => {
+                            const isOffHours =
+                              h < calendarPrefs.workStartHour || h >= calendarPrefs.workEndHour;
+                            return (
+                              <div
+                                key={h}
+                                onClick={() => openNewEventModal(day, h)}
+                                title={`Create event on ${day.toLocaleDateString()} at ${formatHourLabel(h)}${
+                                  isOffHours ? ' (Outside working hours)' : ''
+                                }`}
+                                style={{ height: `${HOUR_HEIGHT_PX}px` }}
+                                className={`border-b border-[#EFE8DA] hover:bg-blue-50/40 cursor-pointer transition-colors ${
+                                  isOffHours ? 'bg-[#F3EDE2]/65' : ''
+                                }`}
+                              />
+                            );
+                          })}
 
                           {/* Live Current Time Line */}
                           {isToday && (
@@ -1897,6 +1985,22 @@ export function ConnectLnTeamsCalendarView({
                       >
                         <Download className="w-3.5 h-3.5" /> Export .ics
                       </button>
+                      <a
+                        href={buildGoogleCalendarAddUrl(ev)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold border border-slate-200 flex items-center gap-1 cursor-pointer"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Google Cal
+                      </a>
+                      <a
+                        href={buildOutlookCalendarAddUrl(ev)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold border border-slate-200 flex items-center gap-1 cursor-pointer"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Outlook
+                      </a>
                       <button
                         type="button"
                         onClick={() => handleOpenEventChat(ev)}
@@ -1941,6 +2045,72 @@ export function ConnectLnTeamsCalendarView({
           </DialogHeader>
 
           <form onSubmit={saveEditorEvent} className="space-y-4">
+            <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 w-fit">
+              <button
+                type="button"
+                onClick={() => setEditorTab('details')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
+                  editorTab === 'details'
+                    ? 'bg-white text-slate-900 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                📝 Details
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditorTab('assistant')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
+                  editorTab === 'assistant'
+                    ? 'bg-white text-[#0A66C2] shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                🗓️ Scheduling Assistant ({editorSelectedAttendees.length})
+              </button>
+            </div>
+
+            {editorTab === 'assistant' ? (
+              <div className="space-y-3">
+                <SchedulingAssistantPanel
+                  dateStr={editorDraft.dateStr}
+                  startMs={editorWindowMs.startMs}
+                  endMs={editorWindowMs.endMs}
+                  durationMin={editorWindowMs.durationMin}
+                  attendees={editorSelectedAttendees}
+                  onPickSlot={(slotStartMs, slotEndMs) => {
+                    const s = new Date(slotStartMs);
+                    const e = new Date(slotEndMs);
+                    setEditorDraft((d) => ({
+                      ...d,
+                      allDay: false,
+                      dateStr: toLocalDateString(s),
+                      startTime: toLocalTimeString(s),
+                      endTime: toLocalTimeString(e),
+                    }));
+                    triggerToast(
+                      `Applied open slot: ${s.toLocaleTimeString([], {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}`
+                    );
+                  }}
+                />
+                {editorSelectedAttendees.length === 0 && (
+                  <p className="text-[11px] text-slate-600">
+                    Switch to{' '}
+                    <button
+                      type="button"
+                      onClick={() => setEditorTab('details')}
+                      className="font-bold text-[#0A66C2] underline cursor-pointer"
+                    >
+                      Details
+                    </button>{' '}
+                    to select invitees from your Connections list.
+                  </p>
+                )}
+              </div>
+            ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {/* Left Column: Details, Timing, Category */}
               <div className="space-y-3">
@@ -2282,6 +2452,7 @@ export function ConnectLnTeamsCalendarView({
                 </div>
               </div>
             </div>
+            )}
 
             <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
               <span className="text-xs font-bold text-rose-600">{editorError}</span>
@@ -2310,6 +2481,17 @@ export function ConnectLnTeamsCalendarView({
           </form>
         </DialogContent>
       </Dialog>
+
+      <CalendarSyncSettingsModal
+        open={syncSettingsOpen}
+        onClose={() => setSyncSettingsOpen(false)}
+        userName={viewerName}
+        userEmail={viewerEmail}
+        prefs={calendarPrefs}
+        onSavePrefs={setCalendarPrefs}
+        onImportedEvents={() => fetchCalendarFromCloud(false)}
+        triggerToast={triggerToast}
+      />
     </div>
   );
 }

@@ -51,6 +51,15 @@ import {
     resumeOutgoingCallerRingbackIfActive,
     stopOutgoingCallerRingbackTone,
 } from '@/lib/connectin-background-ring';
+import {
+    PresencePickerPill,
+    ChannelWorkspaceTabsPanel,
+} from './ConnectLnChannelWorkspaceTabs';
+import {
+    ConnectLnPresenceRecord,
+    PRESENCE_META,
+    normalizePresenceKey,
+} from '@/lib/connectln-presence';
 
 type ChannelFilterType = 'All' | 'People' | 'Companies' | 'Products' | 'Communities';
 type ConnectLnMailboxFolder =
@@ -742,6 +751,18 @@ export function MessagingView({
         'People' | 'Companies' | 'Products' | 'Communities'
     >('People');
     const [newInitialMessage, setNewInitialMessage] = useState('');
+
+    // Microsoft Teams Chat, Presence & Channel Tabs State
+    const [activeChannelTab, setActiveChannelTab] = useState<'chat' | 'files' | 'tasks' | 'notes'>('chat');
+    const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+    const [editingMsgDraft, setEditingMsgDraft] = useState('');
+    const [remoteTypingUsers, setRemoteTypingUsers] = useState<Array<{ key: string; name: string }>>([]);
+    const [partnerPresenceMap, setPartnerPresenceMap] = useState<Record<string, ConnectLnPresenceRecord>>({});
+    const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+    const [showScheduleSendPopover, setShowScheduleSendPopover] = useState(false);
+    const [scheduleSendDateTime, setScheduleSendDateTime] = useState('');
+    const [queuedScheduledCount, setQueuedScheduledCount] = useState(0);
+    const lastTypingPingMsRef = useRef<number>(0);
 
     useEffect(() => {
         if (showNewMessageModal || showScheduler || workspaceMode === 'calendar') {
@@ -2911,6 +2932,20 @@ export function MessagingView({
             });
 
             const data = await res.json();
+            if (data?.ok && data.userMessage?.id) {
+                setThreads((prev) =>
+                    prev.map((t) =>
+                        t.id !== targetThreadId && t.id !== data.threadId
+                            ? t
+                            : {
+                                  ...t,
+                                  messages: t.messages.map((m) =>
+                                      m.id === optimisticMsg.id ? { ...m, id: data.userMessage.id } : m
+                                  ),
+                              }
+                    )
+                );
+            }
             if (data?.ok && data.emailDispatched && data.deliveredToEmail) {
                 triggerToast(`✓ Message emailed to ${data.deliveredToEmail} & synced to thread.`);
             }
@@ -2969,6 +3004,218 @@ export function MessagingView({
         senderEmail: currentUser?.email || '',
         senderAvatar: currentUser?.avatar || '',
     });
+
+    // Reset per-thread transient UI when switching conversations
+    useEffect(() => {
+        setActiveChannelTab('chat');
+        setEditingMsgId(null);
+        setEditingMsgDraft('');
+        setMentionQuery(null);
+        setRemoteTypingUsers([]);
+    }, [activeThread?.id]);
+
+    // Poll partner presence & live typing indicators for active thread
+    useEffect(() => {
+        if (!activeThread?.id) return;
+        let cancelled = false;
+        const myKey = normalizePresenceKey(currentUser?.email || currentUser?.name || '');
+        const partnerKeys = Array.from(
+            new Set(
+                [
+                    normalizePresenceKey(activeThread.recipientEmail),
+                    normalizePresenceKey(activeThread.title),
+                ].filter(Boolean)
+            )
+        );
+        const pollPresence = async () => {
+            try {
+                const qs = new URLSearchParams();
+                if (partnerKeys.length > 0) qs.set('keys', partnerKeys.join(','));
+                qs.set('threadId', activeThread.id);
+                const res = await fetch(`/api/connectin/presence?${qs.toString()}`, {
+                    cache: 'no-store',
+                });
+                if (!res.ok || cancelled) return;
+                const data = await res.json();
+                if (data?.presence) {
+                    setPartnerPresenceMap((prev) => ({ ...prev, ...data.presence }));
+                }
+                if (Array.isArray(data?.typingUsers)) {
+                    setRemoteTypingUsers(
+                        data.typingUsers.filter((u: any) => u?.key && u.key !== myKey)
+                    );
+                }
+            } catch {}
+        };
+        void pollPresence();
+        const timer = setInterval(() => void pollPresence(), 3500);
+        return () => {
+            cancelled = true;
+            clearInterval(timer);
+        };
+    }, [activeThread?.id, activeThread?.title, activeThread?.recipientEmail, currentUser?.name, currentUser?.email]);
+
+    // Scheduled message auto-dispatcher (runs every 15s for signed-in user)
+    useEffect(() => {
+        const uName = currentUser?.name || '';
+        const uEmail = currentUser?.email || '';
+        if (!uName && !uEmail) return;
+        let cancelled = false;
+        const dispatchDueScheduled = async () => {
+            try {
+                const qs = new URLSearchParams();
+                if (uName) qs.set('scheduledForUser', uName);
+                if (uEmail) qs.set('scheduledEmail', uEmail);
+                const res = await fetch(`/api/connectin/teams-workspace?${qs.toString()}`, {
+                    cache: 'no-store',
+                });
+                const data = await res.json();
+                if (cancelled || !data?.ok || !Array.isArray(data.scheduledMessages)) return;
+                const queued = data.scheduledMessages.filter((s: any) => s?.status === 'queued');
+                setQueuedScheduledCount(queued.length);
+                const nowMs = Date.now();
+                for (const s of queued) {
+                    const dueMs = new Date(s.scheduledForIso).getTime();
+                    if (Number.isFinite(dueMs) && dueMs <= nowMs) {
+                        await fetch('/api/connectin/messages', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                action: 'send_message',
+                                threadId: s.threadId,
+                                text: s.text,
+                                senderName: uName || s.senderName,
+                                senderEmail: uEmail || s.senderEmail,
+                                recipientName: s.recipientName,
+                                recipientEmail: s.recipientEmail,
+                            }),
+                        }).catch(() => {});
+                        await fetch('/api/connectin/teams-workspace', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                action: 'mark_scheduled_sent',
+                                id: s.id,
+                                senderName: uName || s.senderName,
+                                senderEmail: uEmail || s.senderEmail,
+                            }),
+                        }).catch(() => {});
+                        triggerToast(`⏰ Sent scheduled message to ${s.recipientName}`);
+                        window.dispatchEvent(new Event('connectin_dm_updated'));
+                    }
+                }
+            } catch {}
+        };
+        void dispatchDueScheduled();
+        const timer = setInterval(() => void dispatchDueScheduled(), 15000);
+        return () => {
+            cancelled = true;
+            clearInterval(timer);
+        };
+    }, [currentUser?.name, currentUser?.email]);
+
+    const sendComposerTypingPing = (isTyping: boolean) => {
+        if (!activeThread?.id) return;
+        const now = Date.now();
+        if (isTyping && now - lastTypingPingMsRef.current < 2800) return;
+        lastTypingPingMsRef.current = now;
+        fetch('/api/connectin/presence', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'typing',
+                threadId: activeThread.id,
+                userName: currentUser?.name || 'Member',
+                userEmail: currentUser?.email || '',
+                isTyping,
+            }),
+        }).catch(() => {});
+    };
+
+    const handleSaveEditedMessage = async (msg: B2BMessageItem) => {
+        const trimmed = editingMsgDraft.trim();
+        if (!trimmed) return;
+        const editedAtIso = new Date().toISOString();
+        updateMessage(msg.id, (m) => ({ ...m, text: trimmed, editedAtIso }));
+        setEditingMsgId(null);
+        setEditingMsgDraft('');
+        await fetch('/api/connectin/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ...messageActionBody(msg),
+                action: 'edit_message',
+                messageId: msg.id,
+                newText: trimmed,
+            }),
+        }).catch(() => {});
+        triggerToast('✓ Message updated.');
+    };
+
+    const handleDeleteSentMessage = async (msg: B2BMessageItem) => {
+        updateMessage(msg.id, (m) => ({
+            ...m,
+            isDeleted: true,
+            text: 'This message was deleted',
+            attachments: undefined,
+        }));
+        await fetch('/api/connectin/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ...messageActionBody(msg),
+                action: 'delete_message',
+                messageId: msg.id,
+            }),
+        }).catch(() => {});
+        triggerToast('🗑️ Message removed.');
+    };
+
+    const renderMessageWithMentions = (rawText: string, isOwnBubble: boolean) => {
+        const parts = String(rawText || '').split(/(@[A-Za-z0-9._-]+(?:\s+[A-Z][a-z0-9._-]+)?)/g);
+        return parts.map((part, idx) =>
+            part.startsWith('@') ? (
+                <span
+                    key={idx}
+                    className={`inline-block rounded px-1 py-0.2 font-bold ${
+                        isOwnBubble
+                            ? 'bg-white/25 text-white'
+                            : 'bg-blue-100 text-[#0A66C2]'
+                    }`}
+                >
+                    {part}
+                </span>
+            ) : (
+                <React.Fragment key={idx}>{part}</React.Fragment>
+            )
+        );
+    };
+
+    const mentionCandidates: Array<{ label: string; tag: string; role: string }> = (() => {
+        if (mentionQuery === null) return [];
+        const q = mentionQuery.toLowerCase();
+        const pool = [
+            { label: '@everyone', tag: '@everyone', role: 'Notify everyone in conversation' },
+            { label: '@channel', tag: '@channel', role: 'Notify channel followers' },
+            ...(activeThread
+                ? [{ label: activeThread.title, tag: `@${activeThread.title}`, role: activeThread.subtitle }]
+                : []),
+            ...allPlatformMembers.map((m) => ({
+                label: m.name,
+                tag: `@${m.name}`,
+                role: m.subtitle || 'ConnectLn Member',
+            })),
+        ];
+        const seen = new Set<string>();
+        return pool
+            .filter((item) => {
+                const k = item.tag.toLowerCase();
+                if (seen.has(k)) return false;
+                seen.add(k);
+                return !q || item.label.toLowerCase().includes(q) || item.tag.toLowerCase().includes(q);
+            })
+            .slice(0, 6);
+    })();
 
     const handleReactToMessage = async (msg: B2BMessageItem, kind: MessageReactionKind) => {
         const me = (currentUser?.name || '').toLowerCase().trim().replace(/\s+/g, ' ');
@@ -4069,8 +4316,8 @@ export function MessagingView({
                         >
                     {/* Sidebar Header (Deduplicated: No redundant thread count badge above filter pills) */}
                     <div className="p-3 bg-white border-b border-slate-200">
-                        <div className="flex justify-between items-center mb-2">
-                            <div className="min-w-0">
+                        <div className="flex justify-between items-center gap-2 mb-2">
+                            <div className="min-w-0 flex items-center gap-2 flex-wrap">
                                 <h2 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-1.5">
                                     <span>Messages</span>
                                     {isLoadingThreads && (
@@ -4079,6 +4326,12 @@ export function MessagingView({
                                         </span>
                                     )}
                                 </h2>
+                                <PresencePickerPill
+                                    userName={currentUser?.name}
+                                    userEmail={currentUser?.email}
+                                />
+                            </div>
+                        </div>
                                 {(activeCustomLabel || activeMailboxFolder !== 'inbox') && (
                                     <p className="text-[11px] text-slate-500 font-semibold flex items-center gap-1.5 flex-wrap mt-0.5">
                                         {activeCustomLabel ? (
@@ -4114,8 +4367,6 @@ export function MessagingView({
                                         )}
                                     </p>
                                 )}
-                            </div>
-                        </div>
 
                         {/* Search Bar */}
                         <div className="relative mb-2">
@@ -4445,8 +4696,27 @@ export function MessagingView({
                                                 🔒 E2EE
                                             </span>
                                         </div>
-                                        <p className="text-xs text-slate-500 font-medium truncate">
-                                            {activeThread.subtitle}
+                                        <p className="text-xs text-slate-500 font-medium truncate flex items-center gap-1.5">
+                                            {(() => {
+                                                const pRec =
+                                                    partnerPresenceMap[
+                                                        normalizePresenceKey(activeThread.recipientEmail)
+                                                    ] ||
+                                                    partnerPresenceMap[normalizePresenceKey(activeThread.title)];
+                                                if (pRec?.status) {
+                                                    const m = PRESENCE_META[pRec.status] || PRESENCE_META.available;
+                                                    return (
+                                                        <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-slate-700 shrink-0">
+                                                            <span className={`h-2 w-2 rounded-full ${m.dotClass}`} />
+                                                            <span>{m.shortLabel}</span>
+                                                            {pRec.customMessage ? ` (${pRec.customMessage})` : ''}
+                                                            <span>·</span>
+                                                        </span>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
+                                            <span className="truncate">{activeThread.subtitle}</span>
                                         </p>
                                     </div>
                                 </div>
@@ -4559,8 +4829,43 @@ export function MessagingView({
                                     )}
                                 </div>
                             )}
+
+                            {/* Clean 1-Row Microsoft Teams Channel Tabs (Chat | Files | Tasks | Notes) */}
+                            <div className="flex items-center gap-1 pt-1.5 border-t border-slate-100 overflow-x-auto no-scrollbar">
+                                {(
+                                    [
+                                        { id: 'chat', label: '💬 Chat' },
+                                        { id: 'files', label: '📁 Files' },
+                                        { id: 'tasks', label: '✅ Tasks' },
+                                        { id: 'notes', label: '📝 Notes' },
+                                    ] as const
+                                ).map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        type="button"
+                                        onClick={() => setActiveChannelTab(tab.id)}
+                                        className={`px-3 py-1 rounded-lg text-[11px] font-extrabold whitespace-nowrap cursor-pointer transition-colors ${
+                                            activeChannelTab === tab.id
+                                                ? 'bg-[#0A66C2] text-white shadow-2xs'
+                                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                        }`}
+                                        style={activeChannelTab === tab.id ? { color: '#FFFFFF' } : undefined}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
+                        {activeChannelTab !== 'chat' ? (
+                            <ChannelWorkspaceTabsPanel
+                                activeTab={activeChannelTab}
+                                thread={activeThread}
+                                userName={currentUser?.name || 'You'}
+                                triggerToast={triggerToast}
+                            />
+                        ) : (
+                        <>
                         {/* Chat History Stream */}
                         <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-2.5 bg-slate-50/40">
                             {activeThread.messages.map((msg, idx) => {
@@ -4710,9 +5015,83 @@ export function MessagingView({
                                                 )}
 
                                                 <div className={msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response') ? 'p-3.5' : ''}>
-                                                    <p className={isMe && !(msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response')) ? 'text-white' : 'text-slate-800'}>
-                                                        {msg.text}
-                                                    </p>
+                                                    {msg.isDeleted ? (
+                                                        <p className={`italic text-xs ${isMe ? 'text-white/80' : 'text-slate-400'}`}>
+                                                            🚫 This message was deleted
+                                                        </p>
+                                                    ) : editingMsgId === msg.id ? (
+                                                        <div className="space-y-1.5 min-w-[210px]">
+                                                            <input
+                                                                type="text"
+                                                                value={editingMsgDraft}
+                                                                onChange={(e) => setEditingMsgDraft(e.target.value)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') {
+                                                                        e.preventDefault();
+                                                                        void handleSaveEditedMessage(msg);
+                                                                    } else if (e.key === 'Escape') {
+                                                                        setEditingMsgId(null);
+                                                                    }
+                                                                }}
+                                                                className="w-full rounded-lg bg-white text-slate-900 px-2.5 py-1 text-xs border border-blue-200 focus:outline-none"
+                                                                autoFocus
+                                                            />
+                                                            <div className="flex items-center justify-end gap-1.5">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setEditingMsgId(null)}
+                                                                    className="px-2 py-0.5 rounded bg-black/20 text-[10px] font-bold text-white cursor-pointer"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => void handleSaveEditedMessage(msg)}
+                                                                    className="px-2 py-0.5 rounded bg-emerald-500 text-[10px] font-extrabold text-white cursor-pointer"
+                                                                >
+                                                                    Save
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <p className={isMe && !(msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response')) ? 'text-white' : 'text-slate-800'}>
+                                                            {renderMessageWithMentions(msg.text, isMe)}
+                                                            {msg.editedAtIso && (
+                                                                <span className={`ml-1.5 text-[10px] ${isMe ? 'text-white/75' : 'text-slate-400'}`}>
+                                                                    (edited)
+                                                                </span>
+                                                            )}
+                                                        </p>
+                                                    )}
+
+                                                    {isMe && !msg.isDeleted && editingMsgId !== msg.id && (
+                                                        <div className="mt-1 flex items-center justify-end gap-2 text-[10px] text-white/80">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setEditingMsgId(msg.id);
+                                                                    setEditingMsgDraft(msg.text);
+                                                                }}
+                                                                className="opacity-0 group-hover:opacity-100 hover:underline cursor-pointer transition-opacity"
+                                                                title="Edit message"
+                                                            >
+                                                                ✏️ Edit
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => void handleDeleteSentMessage(msg)}
+                                                                className="opacity-0 group-hover:opacity-100 hover:underline cursor-pointer transition-opacity"
+                                                                title="Delete / unsend message"
+                                                            >
+                                                                🗑️ Delete
+                                                            </button>
+                                                            {Array.isArray(msg.readBy) && msg.readBy.length > 0 ? (
+                                                                <span className="font-semibold text-emerald-200">✓✓ Seen</span>
+                                                            ) : (
+                                                                <span className="text-white/70">✓ Sent</span>
+                                                            )}
+                                                        </div>
+                                                    )}
 
                                                     {/* Attachments inside bubble */}
                                                     {msg.attachments && msg.attachments.length > 0 && (
@@ -4972,9 +5351,110 @@ export function MessagingView({
                             </div>
                         )}
 
+                        {/* Live Typing Indicator Bar */}
+                        {remoteTypingUsers.length > 0 && (
+                            <div className="px-4 py-1 bg-slate-50 border-t border-slate-100 text-[11px] font-bold text-[#0A66C2] flex items-center gap-1.5">
+                                <span className="inline-block w-2 h-2 rounded-full bg-[#0A66C2] animate-ping" />
+                                <span>
+                                    {remoteTypingUsers.map((u) => u.name).join(', ')}{' '}
+                                    {remoteTypingUsers.length === 1 ? 'is' : 'are'} typing...
+                                </span>
+                            </div>
+                        )}
+
+                        {/* @Mention Suggestions Popover */}
+                        {mentionCandidates.length > 0 && (
+                            <div className="px-4 py-2 bg-white border-t border-slate-200 flex flex-wrap items-center gap-1.5">
+                                <span className="text-[10.5px] font-extrabold text-slate-500 mr-1">
+                                    Mention:
+                                </span>
+                                {mentionCandidates.map((cand) => (
+                                    <button
+                                        key={cand.tag}
+                                        type="button"
+                                        onClick={() => {
+                                            const nextVal = messageInput.replace(/@([A-Za-z0-9._\s]*)$/, `${cand.tag} `);
+                                            setMessageInput(nextVal);
+                                            setMentionQuery(null);
+                                            composerInputRef.current?.focus();
+                                        }}
+                                        className="rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1 text-xs font-bold text-[#0A66C2] cursor-pointer"
+                                    >
+                                        {cand.tag}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Schedule Send Popover */}
+                        {showScheduleSendPopover && (
+                            <div className="px-4 py-2.5 bg-blue-50/90 border-t border-blue-200 flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-xs font-extrabold text-[#0A66C2]">
+                                        ⏰ Schedule Message Delivery:
+                                    </span>
+                                    <input
+                                        type="datetime-local"
+                                        value={scheduleSendDateTime}
+                                        onChange={(e) => setScheduleSendDateTime(e.target.value)}
+                                        className="rounded-lg bg-white border border-blue-300 px-2.5 py-1 text-xs font-semibold text-slate-900"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowScheduleSendPopover(false)}
+                                        className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-700 cursor-pointer"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            const txt = messageInput.trim();
+                                            const dt = new Date(scheduleSendDateTime);
+                                            if (!txt || !scheduleSendDateTime || Number.isNaN(dt.getTime())) {
+                                                triggerToast('Type a message and pick a future date/time first.');
+                                                return;
+                                            }
+                                            const res = await fetch('/api/connectin/teams-workspace', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    action: 'schedule_message',
+                                                    threadId: activeThread.id,
+                                                    threadTitle: activeThread.title,
+                                                    recipientName: activeThread.title,
+                                                    recipientEmail: activeThread.recipientEmail,
+                                                    text: txt,
+                                                    scheduledForIso: dt.toISOString(),
+                                                    senderName: currentUser?.name || 'Member',
+                                                    senderEmail: currentUser?.email || '',
+                                                }),
+                                            });
+                                            const data = await res.json();
+                                            if (data?.ok) {
+                                                setMessageInput('');
+                                                setShowScheduleSendPopover(false);
+                                                setQueuedScheduledCount((c) => c + 1);
+                                                triggerToast(`⏰ Message scheduled for ${dt.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.`);
+                                            }
+                                        }}
+                                        style={{ color: '#FFFFFF' }}
+                                        className="px-3 py-1 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-xs font-extrabold cursor-pointer"
+                                    >
+                                        Schedule Send
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Message Input Composer */}
                         <form
-                            onSubmit={handleSendMessage}
+                            onSubmit={(e) => {
+                                sendComposerTypingPing(false);
+                                void handleSendMessage(e);
+                            }}
                             className="p-3.5 bg-white border-t border-slate-200 flex items-center gap-2.5"
                         >
                             <button
@@ -5048,11 +5528,41 @@ export function MessagingView({
                                         const val = e.target.value;
                                         setMessageInput(val);
                                         saveDraftForThread(activeThread.id, val, false);
+                                        const mMatch = val.match(/@([A-Za-z0-9._\s]*)$/);
+                                        setMentionQuery(mMatch ? mMatch[1] : null);
+                                        sendComposerTypingPing(Boolean(val.trim()));
                                     }}
-                                    placeholder={`Message ${activeThread.title}...`}
+                                    placeholder={`Message ${activeThread.title} (type @ to mention)...`}
                                     className="w-full bg-slate-100 focus:bg-white border border-slate-200 focus:border-[#0A66C2] rounded-xl py-3 px-4 text-sm font-medium text-slate-900 focus:outline-none transition-all"
                                 />
                             </div>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (!scheduleSendDateTime) {
+                                        const d = new Date(Date.now() + 3600000);
+                                        const localIso = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+                                            .toISOString()
+                                            .slice(0, 16);
+                                        setScheduleSendDateTime(localIso);
+                                    }
+                                    setShowScheduleSendPopover((v) => !v);
+                                }}
+                                className={`relative p-2.5 rounded-xl border transition-all cursor-pointer ${
+                                    showScheduleSendPopover
+                                        ? 'bg-blue-50 border-[#0A66C2] text-[#0A66C2]'
+                                        : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
+                                }`}
+                                title="Schedule Send (deliver message later)"
+                            >
+                                ⏰
+                                {queuedScheduledCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-[#0A66C2] text-[9px] font-extrabold text-white flex items-center justify-center">
+                                        {queuedScheduledCount}
+                                    </span>
+                                )}
+                            </button>
 
                             {messageInput.trim() && (
                                 <button
@@ -5080,6 +5590,8 @@ export function MessagingView({
                                 {isSending ? 'Sending...' : 'Send ➤'}
                             </button>
                         </form>
+                        </>
+                        )}
                     </div>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50 p-8 text-center">

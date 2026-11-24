@@ -7,8 +7,11 @@ import {
   ConnectLnCalendarEvent,
   buildViewerCalendarKeys,
   computeParticipantKeysForEvent,
+  expandRecurringOccurrences,
   normalizeCalendarParticipantKey,
 } from '@/lib/connectln-calendar-utils';
+import { firebaseKvGetItem } from '@/lib/connectin-firebase-kv';
+import { ConnectLnPresenceRecord, normalizePresenceKey } from '@/lib/connectln-presence';
 import {
   deleteOrLeaveCalendarEvent,
   getCalendarEventById,
@@ -40,6 +43,98 @@ const VALID_RECURRENCE = new Set<CalendarRecurrenceRule>([
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
+
+  if (url.searchParams.get('checkAvailability') === '1') {
+    const dateStr = (url.searchParams.get('date') || new Date().toISOString().slice(0, 10)).slice(0, 10);
+    const startMsParam = Number(url.searchParams.get('startMs')) || 0;
+    const endMsParam = Number(url.searchParams.get('endMs')) || 0;
+    const durationMin = Math.max(15, Math.min(480, Number(url.searchParams.get('durationMin')) || 30));
+    const dayParts = dateStr.split('-').map(Number);
+    const baseDay =
+      dayParts.length === 3 && dayParts.every(Number.isFinite)
+        ? new Date(dayParts[0], dayParts[1] - 1, dayParts[2], 0, 0, 0, 0)
+        : new Date();
+    const dayStartMs = new Date(baseDay.getFullYear(), baseDay.getMonth(), baseDay.getDate(), 0, 0, 0, 0).getTime();
+    const dayEndMs = dayStartMs + 24 * 60 * 60 * 1000 - 1;
+    const targetStartMs = startMsParam > 0 ? startMsParam : dayStartMs + 9 * 3600000;
+    const targetEndMs = endMsParam > targetStartMs ? endMsParam : targetStartMs + durationMin * 60000;
+
+    let attendeeList: Array<{ name?: string; email?: string }> = [];
+    try {
+      const rawAtt = url.searchParams.get('attendees') || '[]';
+      const parsed = JSON.parse(rawAtt);
+      if (Array.isArray(parsed)) attendeeList = parsed.slice(0, 10);
+    } catch {}
+
+    const ownerName = (url.searchParams.get('userName') || '').trim();
+    const ownerEmail = (url.searchParams.get('userEmail') || '').trim();
+    if ((ownerName || ownerEmail) && attendeeList.length === 0) {
+      attendeeList.push({ name: ownerName, email: ownerEmail });
+    }
+
+    const perAttendee = await Promise.all(
+      attendeeList.map(async (att) => {
+        const name = String(att?.name || att?.email || 'Participant').trim();
+        const email = att?.email ? String(att.email).trim().toLowerCase() : undefined;
+        const keys = buildViewerCalendarKeys(name, email);
+        const { events } = keys.length > 0 ? await listUserCalendarEvents(keys) : { events: [] };
+        const occs = expandRecurringOccurrences(events, dayStartMs, dayEndMs).filter(
+          (o) => o.baseEvent.showAs !== 'free'
+        );
+
+        const presKey = normalizePresenceKey(email || name);
+        const presRec = presKey
+          ? await firebaseKvGetItem<ConnectLnPresenceRecord>('connectln_presence_v1', `p_${presKey.replace(/[^a-z0-9@._-]/g, '_')}`).catch(() => null)
+          : null;
+
+        const busyBlocks = occs.map((o) => ({
+          startMs: Math.max(dayStartMs, o.occurrenceStartMs),
+          endMs: Math.min(dayEndMs, o.occurrenceEndMs),
+          showAs: o.baseEvent.showAs,
+          title: o.baseEvent.showAs === 'oof' ? 'Out of Office' : o.baseEvent.title,
+        }));
+        const hasConflict =
+          busyBlocks.some((b) => b.startMs < targetEndMs && b.endMs > targetStartMs) ||
+          Boolean(presRec?.status === 'ooo' && presRec?.oooAutoDecline);
+
+        return {
+          name,
+          email,
+          presenceStatus: presRec?.status || 'available',
+          oooAutoDecline: Boolean(presRec?.status === 'ooo' && presRec?.oooAutoDecline),
+          hasConflict,
+          busyBlocks,
+        };
+      })
+    );
+
+    // Suggest up to 4 open slots between 08:00 and 18:00 on target day
+    const allBusy = perAttendee.flatMap((a) => a.busyBlocks);
+    const suggestedSlots: Array<{ startMs: number; endMs: number; label: string }> = [];
+    for (let m = 8 * 60; m + durationMin <= 18 * 60 && suggestedSlots.length < 4; m += 30) {
+      const slotStart = dayStartMs + m * 60000;
+      const slotEnd = slotStart + durationMin * 60000;
+      const clashes = allBusy.some((b) => b.startMs < slotEnd && b.endMs > slotStart);
+      if (!clashes) {
+        const sd = new Date(slotStart);
+        const ed = new Date(slotEnd);
+        suggestedSlots.push({
+          startMs: slotStart,
+          endMs: slotEnd,
+          label: `${sd.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} – ${ed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`,
+        });
+      }
+    }
+
+    return NextResponse.json({
+      ok: true,
+      date: dateStr,
+      attendees: perAttendee,
+      anyConflict: perAttendee.some((a) => a.hasConflict),
+      suggestedSlots,
+    });
+  }
+
   const userName = (url.searchParams.get('userName') || '').trim();
   const userEmail = (url.searchParams.get('userEmail') || '').trim();
   const viewerKeys = buildViewerCalendarKeys(userName, userEmail);
@@ -166,25 +261,49 @@ export async function POST(req: Request) {
     }
 
     const rawAttendees: any[] = Array.isArray(rawEvent?.attendees) ? rawEvent.attendees : [];
-    const attendees: CalendarAttendee[] = rawAttendees
-      .filter((a) => a && String(a.name || a.email || '').trim())
-      .map((a) => {
-        const name = String(a.name || a.email).trim();
-        const email = a.email ? String(a.email).trim().toLowerCase() : undefined;
-        const key =
-          normalizeCalendarParticipantKey(email) ||
-          normalizeCalendarParticipantKey(a.key || name);
-        const preservedRsvp = existingAttendeeRsvps.get(key);
-        return {
-          id: a.id ? String(a.id) : undefined,
-          name,
-          email,
-          avatar: a.avatar ? String(a.avatar) : undefined,
-          subtitle: a.subtitle ? String(a.subtitle) : undefined,
-          key,
-          rsvp: a.rsvp || preservedRsvp || 'pending',
-        };
-      });
+    const attendees: CalendarAttendee[] = await Promise.all(
+      rawAttendees
+        .filter((a) => a && String(a.name || a.email || '').trim())
+        .map(async (a) => {
+          const name = String(a.name || a.email).trim();
+          const email = a.email ? String(a.email).trim().toLowerCase() : undefined;
+          const key =
+            normalizeCalendarParticipantKey(email) ||
+            normalizeCalendarParticipantKey(a.key || name);
+          const preservedRsvp = existingAttendeeRsvps.get(key);
+          let autoDeclinedOoo = false;
+          let oooSub: string | undefined = a.subtitle ? String(a.subtitle) : undefined;
+          if (!a.rsvp && !preservedRsvp) {
+            const pKey = normalizePresenceKey(email || name);
+            const pRec = pKey
+              ? await firebaseKvGetItem<ConnectLnPresenceRecord>('connectln_presence_v1', `p_${pKey.replace(/[^a-z0-9@._-]/g, '_')}`).catch(() => null)
+              : null;
+            if (pRec?.status === 'ooo' && pRec?.oooAutoDecline) {
+              autoDeclinedOoo = true;
+              oooSub = 'Auto-declined · Out of Office';
+            } else {
+              const attKeys = buildViewerCalendarKeys(name, email);
+              if (attKeys.length > 0) {
+                const { events: attEvents } = await listUserCalendarEvents(attKeys).catch(() => ({ events: [] }));
+                const occs = expandRecurringOccurrences(attEvents, startMs - 3600000, endMs + 3600000);
+                if (occs.some((o) => o.baseEvent.showAs === 'oof' && o.occurrenceStartMs < endMs && o.occurrenceEndMs > startMs)) {
+                  autoDeclinedOoo = true;
+                  oooSub = 'Auto-declined · Out of Office';
+                }
+              }
+            }
+          }
+          return {
+            id: a.id ? String(a.id) : undefined,
+            name,
+            email,
+            avatar: a.avatar ? String(a.avatar) : undefined,
+            subtitle: oooSub,
+            key,
+            rsvp: a.rsvp || preservedRsvp || (autoDeclinedOoo ? 'declined' : 'pending'),
+          };
+        })
+    );
 
     const ownerName = existingEvent?.ownerName || actorName;
     const ownerEmail = existingEvent?.ownerEmail || actorEmail;

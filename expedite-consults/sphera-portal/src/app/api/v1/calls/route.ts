@@ -139,6 +139,69 @@ export interface CommInvitedMember {
   updated_at_ms: number
 }
 
+export interface CommTeamsState {
+  raised_hands: Array<{ user_id: string; name: string; raised_at_ms: number }>
+  reactions: Array<{ id: string; user_id: string; name: string; emoji: string; ts: number }>
+  spotlight_user_id: string | null
+  lobby_enabled: boolean
+  lobby_queue: Array<{ user_id: string; name: string; phone?: string; requested_at_ms: number }>
+  admitted_user_ids: string[]
+  denied_user_ids: string[]
+  is_recording: boolean
+  recording_by_name?: string
+  recording_started_at_ms?: number
+  captions: Array<{ id: string; user_id: string; speaker_name: string; text: string; ts: number }>
+  polls: Array<{
+    id: string
+    question: string
+    options: Array<{ id: string; text: string; votes: string[] }>
+    created_by: string
+    created_at_ms: number
+    closed?: boolean
+  }>
+  qa_items: Array<{
+    id: string
+    question: string
+    author: string
+    upvotes: string[]
+    answer?: string
+    answered_by?: string
+    ts: number
+  }>
+  whiteboard_strokes: Array<{
+    id: string
+    color: string
+    width: number
+    points: Array<[number, number]>
+    isAnnotation?: boolean
+  }>
+  whiteboard_notes: Array<{
+    id: string
+    x: number
+    y: number
+    text: string
+    color: string
+    author: string
+  }>
+  breakout_rooms: Array<{
+    id: string
+    name: string
+    call_id: string
+    assigned_user_ids: string[]
+    ends_at_ms?: number
+  }>
+  breakout_broadcast: { text: string; ts: number } | null
+  on_hold_user_ids: string[]
+  attendance_log: Array<{
+    user_id: string
+    name: string
+    joined_at_ms: number
+    last_seen_ms: number
+    left_at_ms?: number
+  }>
+  updated_at_ms: number
+}
+
 export interface CommCallRecord {
   id: string
   conversation_id: string
@@ -170,6 +233,7 @@ export interface CommCallRecord {
   moderation_updated_at_ms?: number
   shared_stage?: SharedStageRecord | null
   shared_messages?: SharedCallChatMessage[]
+  teams_state?: CommTeamsState
 }
 
 const globalForCalls = globalThis as unknown as {
@@ -305,6 +369,81 @@ function makeCloudChatKey(callId: string): string {
   return `c__${cleanCall}`
 }
 
+function makeCloudTeamsKey(callId: string): string {
+  const cleanCall = String(callId || "room").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48)
+  return `t__${cleanCall}`
+}
+
+function createDefaultTeamsState(nowMs = Date.now()): CommTeamsState {
+  return {
+    raised_hands: [],
+    reactions: [],
+    spotlight_user_id: null,
+    lobby_enabled: false,
+    lobby_queue: [],
+    admitted_user_ids: [],
+    denied_user_ids: [],
+    is_recording: false,
+    captions: [],
+    polls: [],
+    qa_items: [],
+    whiteboard_strokes: [],
+    whiteboard_notes: [],
+    breakout_rooms: [],
+    breakout_broadcast: null,
+    on_hold_user_ids: [],
+    attendance_log: [],
+    updated_at_ms: nowMs,
+  }
+}
+
+function ensureTeamsState(record: CommCallRecord, nowMs = Date.now()): CommTeamsState {
+  if (!record.teams_state) {
+    record.teams_state = createDefaultTeamsState(nowMs)
+  }
+  return record.teams_state
+}
+
+function upsertAttendanceEntry(
+  record: CommCallRecord,
+  userId: string,
+  name: string,
+  nowMs: number,
+  left = false
+): boolean {
+  if (!userId || userId === "host-signaling") return false
+  const ts = ensureTeamsState(record, nowMs)
+  const cleanName = String(name || "Meeting Participant").trim()
+  const idx = ts.attendance_log.findIndex((a) => a.user_id === userId)
+  if (idx < 0) {
+    ts.attendance_log.push({
+      user_id: userId,
+      name: cleanName,
+      joined_at_ms: nowMs,
+      last_seen_ms: nowMs,
+      left_at_ms: left ? nowMs : undefined,
+    })
+    if (ts.attendance_log.length > 64) {
+      ts.attendance_log = ts.attendance_log.slice(-64)
+    }
+    ts.updated_at_ms = Math.max(ts.updated_at_ms || 0, nowMs)
+    return true
+  } else {
+    const prevLeft = ts.attendance_log[idx].left_at_ms
+    ts.attendance_log[idx] = {
+      ...ts.attendance_log[idx],
+      name: cleanName || ts.attendance_log[idx].name,
+      last_seen_ms: nowMs,
+      left_at_ms: left ? nowMs : undefined,
+    }
+    if (Boolean(prevLeft) !== Boolean(left)) {
+      ts.updated_at_ms = Math.max(ts.updated_at_ms || 0, nowMs)
+      return true
+    }
+    return false
+  }
+}
+
 function buildModerationIdentityKeys(entry: {
   userId?: string
   phone?: string
@@ -413,6 +552,39 @@ function mergeInvitedEntriesIntoRecord(
 const lastCloudStagePushMap = new Map<string, number>()
 const lastCloudRosterPushMap = new Map<string, number>()
 const lastCloudChatPushMap = new Map<string, number>()
+const lastCloudTeamsPushMap = new Map<string, number>()
+
+async function pushCloudTeamsState(
+  callId: string,
+  teamsState: CommTeamsState | undefined,
+  force = false
+): Promise<void> {
+  const auth = getTwilioCallsAuthHeader()
+  if (!auth || !teamsState) return
+  const tKey = makeCloudTeamsKey(callId)
+  const nowMs = Date.now()
+  const lastPush = lastCloudTeamsPushMap.get(tKey) || 0
+  if (!force && nowMs - lastPush < 500) return
+  lastCloudTeamsPushMap.set(tKey, nowMs)
+  await upsertTwilioSyncItem(
+    auth,
+    tKey,
+    JSON.stringify({
+      kind: "teams",
+      call_id: callId,
+      teams_state: {
+        ...teamsState,
+        reactions: (teamsState.reactions || []).filter((r) => nowMs - r.ts < 8000).slice(-16),
+        captions: (teamsState.captions || []).slice(-60),
+        whiteboard_strokes: (teamsState.whiteboard_strokes || []).slice(-180),
+        whiteboard_notes: (teamsState.whiteboard_notes || []).slice(-30),
+        updated_at_ms: teamsState.updated_at_ms || nowMs,
+      },
+      updated_at_ms: teamsState.updated_at_ms || nowMs,
+    }),
+    "600"
+  )
+}
 
 async function pushCloudInvitedRoster(
   callId: string,
@@ -590,16 +762,21 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
       }
     }
 
-    // First pass: merge participant records (`p__`) and collect shared stage (`s__`), roster (`r__`), chat (`c__`), and audio (`a__`)
+    // First pass: merge participant records (`p__`) and collect shared stage (`s__`), roster (`r__`), chat (`c__`), teams (`t__`), and audio (`a__`)
     const audioItems: any[] = []
     const rosterItems: any[] = []
     const stageItems: any[] = []
     const chatItems: any[] = []
+    const teamsItems: any[] = []
     for (const item of items) {
       const data = item?.data
       if (!data || !data.call_id) continue
       if (data.kind === "ended" || String(item?.key || "").startsWith("e__")) continue
       if (isCallTombstoned(data.call_id, nowMs)) continue
+      if (data.kind === "teams" || String(item?.key || "").startsWith("t__")) {
+        teamsItems.push(data)
+        continue
+      }
       if (data.kind === "roster" || String(item?.key || "").startsWith("r__")) {
         rosterItems.push(data)
         continue
@@ -806,6 +983,23 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
           record.shared_messages = Array.from(msgMap.values()).slice(-50)
         }
       }
+
+      // Fifth pass: merge Teams meeting state (`t__`)
+      for (const tData of teamsItems) {
+        const remoteTs = Number(tData.updated_at_ms || tData.teams_state?.updated_at_ms) || 0
+        if (nowMs - remoteTs > 3600000) continue
+        const record = ACTIVE_CALLS_STORE.get(tData.call_id)
+        if (record && record.state !== "ENDED" && tData.teams_state) {
+          const localTs = record.teams_state?.updated_at_ms || 0
+          if (remoteTs >= localTs) {
+            record.teams_state = {
+              ...createDefaultTeamsState(remoteTs),
+              ...tData.teams_state,
+              reactions: (tData.teams_state.reactions || []).filter((r: any) => nowMs - (r?.ts || 0) < 8000),
+            }
+          }
+        }
+      }
     } catch {
       // non-fatal
     }
@@ -880,6 +1074,14 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
             for (const m of mem.shared_messages || []) msgMap.set(m.id, m)
             for (const m of v.shared_messages) msgMap.set(m.id, m)
             mem.shared_messages = Array.from(msgMap.values()).slice(-50)
+          }
+
+          if (
+            mem.state !== "ENDED" &&
+            v.teams_state &&
+            (!mem.teams_state || v.teams_state.updated_at_ms >= mem.teams_state.updated_at_ms)
+          ) {
+            mem.teams_state = v.teams_state
           }
         }
       }
@@ -1257,6 +1459,7 @@ async function removeSingleParticipantFromGroupCall(params: {
 
   if (userId) {
     existing.participants = (existing.participants || []).filter((p) => p.user_id !== userId)
+    upsertAttendanceEntry(existing, userId, displayName || "Left Participant", nowMs, true)
     await pushCloudCallParticipant(
       callId,
       {
@@ -1443,6 +1646,7 @@ export async function POST(req: NextRequest) {
           "300"
         ).catch(() => {}),
         firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudRosterKey(endCallId)).catch(() => {}),
+        firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudTeamsKey(endCallId)).catch(() => {}),
         publishToPhones(phonesToSilence, "call-ended", { callId: endCallId }).catch(() => {}),
         sendCallEndedWebPush({
           callId: endCallId,
@@ -1626,6 +1830,228 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         protocol_version: 1,
         event_type: "call.moderated",
+        occurred_at: now,
+        call: record,
+      })
+    }
+
+    if (action === "teams_signal" && body.call_id) {
+      const sigCallId = String(body.call_id).trim()
+      const userId = String(body.user_id || `user-${nowMs.toString().slice(-6)}`).trim()
+      const displayName = String(body.display_name || "ConnectLn Member").trim()
+      const subAction = String(body.sub_action || "").trim()
+      await pullCloudCallParticipants(undefined, true).catch(() => {})
+      if (isCallTombstoned(sigCallId, nowMs) || ACTIVE_CALLS_STORE.get(sigCallId)?.state === "ENDED") {
+        return NextResponse.json({
+          protocol_version: 1,
+          event_type: "call.ended",
+          occurred_at: now,
+          call: { id: sigCallId, state: "ENDED", participants: [] },
+        })
+      }
+      const record = ensureCallRoom(sigCallId, userId, displayName, sigCallId)
+      const ts = ensureTeamsState(record, nowMs)
+      ts.reactions = (ts.reactions || []).filter((r) => nowMs - r.ts < 8000)
+
+      if (subAction === "toggle_hand") {
+        const exists = ts.raised_hands.some((h) => h.user_id === userId)
+        ts.raised_hands = exists
+          ? ts.raised_hands.filter((h) => h.user_id !== userId)
+          : [...ts.raised_hands, { user_id: userId, name: displayName, raised_at_ms: nowMs }]
+      } else if (subAction === "send_reaction") {
+        const emoji = String(body.emoji || "👍").slice(0, 8)
+        ts.reactions = [
+          ...ts.reactions,
+          { id: `rx_${nowMs}_${Math.random().toString(36).slice(2, 6)}`, user_id: userId, name: displayName, emoji, ts: nowMs },
+        ].slice(-16)
+      } else if (subAction === "set_spotlight") {
+        const nextSpot = body.spotlight_user_id ? String(body.spotlight_user_id) : null
+        ts.spotlight_user_id = ts.spotlight_user_id === nextSpot ? null : nextSpot
+      } else if (subAction === "toggle_lobby") {
+        ts.lobby_enabled = body.enabled !== undefined ? Boolean(body.enabled) : !ts.lobby_enabled
+      } else if (subAction === "request_lobby") {
+        if (!ts.admitted_user_ids.includes(userId) && !ts.denied_user_ids.includes(userId)) {
+          if (!ts.lobby_queue.some((q) => q.user_id === userId)) {
+            ts.lobby_queue.push({
+              user_id: userId,
+              name: displayName,
+              phone: typeof body.participant_phone === "string" ? body.participant_phone : undefined,
+              requested_at_ms: nowMs,
+            })
+          }
+        }
+      } else if (subAction === "admit_lobby" || subAction === "deny_lobby") {
+        const targetId = String(body.target_user_id || "").trim()
+        if (targetId) {
+          ts.lobby_queue = ts.lobby_queue.filter((q) => q.user_id !== targetId)
+          if (subAction === "admit_lobby") {
+            if (!ts.admitted_user_ids.includes(targetId)) ts.admitted_user_ids.push(targetId)
+            ts.denied_user_ids = ts.denied_user_ids.filter((id) => id !== targetId)
+          } else {
+            if (!ts.denied_user_ids.includes(targetId)) ts.denied_user_ids.push(targetId)
+            ts.admitted_user_ids = ts.admitted_user_ids.filter((id) => id !== targetId)
+          }
+        }
+      } else if (subAction === "set_recording") {
+        const active = Boolean(body.is_recording)
+        ts.is_recording = active
+        ts.recording_by_name = active ? displayName : undefined
+        ts.recording_started_at_ms = active ? nowMs : undefined
+      } else if (subAction === "push_caption") {
+        const text = String(body.text || "").trim().slice(0, 300)
+        if (text) {
+          ts.captions = [
+            ...ts.captions,
+            { id: `cap_${nowMs}_${Math.random().toString(36).slice(2, 6)}`, user_id: userId, speaker_name: displayName, text, ts: nowMs },
+          ].slice(-60)
+        }
+      } else if (subAction === "create_poll") {
+        const question = String(body.question || "").trim().slice(0, 200)
+        const rawOpts: string[] = Array.isArray(body.options) ? body.options : []
+        const options = rawOpts
+          .map((o, idx) => ({ id: `opt_${idx + 1}`, text: String(o || "").trim().slice(0, 100), votes: [] as string[] }))
+          .filter((o) => o.text)
+          .slice(0, 4)
+        if (question && options.length >= 2) {
+          ts.polls = [
+            { id: `poll_${nowMs}_${Math.random().toString(36).slice(2, 5)}`, question, options, created_by: displayName, created_at_ms: nowMs, closed: false },
+            ...ts.polls,
+          ].slice(0, 12)
+        }
+      } else if (subAction === "vote_poll") {
+        const pollId = String(body.poll_id || "")
+        const optId = String(body.option_id || "")
+        const poll = ts.polls.find((p) => p.id === pollId)
+        if (poll && !poll.closed) {
+          for (const opt of poll.options) {
+            opt.votes = opt.votes.filter((v) => v !== userId)
+            if (opt.id === optId) opt.votes.push(userId)
+          }
+        }
+      } else if (subAction === "close_poll") {
+        const poll = ts.polls.find((p) => p.id === String(body.poll_id || ""))
+        if (poll) poll.closed = true
+      } else if (subAction === "ask_qa") {
+        const question = String(body.question || "").trim().slice(0, 280)
+        if (question) {
+          ts.qa_items = [
+            { id: `qa_${nowMs}_${Math.random().toString(36).slice(2, 5)}`, question, author: displayName, upvotes: [userId], ts: nowMs },
+            ...ts.qa_items,
+          ].slice(0, 30)
+        }
+      } else if (subAction === "upvote_qa") {
+        const item = ts.qa_items.find((q) => q.id === String(body.qa_id || ""))
+        if (item) {
+          item.upvotes = item.upvotes.includes(userId)
+            ? item.upvotes.filter((v) => v !== userId)
+            : [...item.upvotes, userId]
+        }
+      } else if (subAction === "answer_qa") {
+        const item = ts.qa_items.find((q) => q.id === String(body.qa_id || ""))
+        if (item) {
+          item.answer = String(body.answer || "").trim().slice(0, 400) || "Answered live during call."
+          item.answered_by = displayName
+        }
+      } else if (subAction === "wb_stroke") {
+        const st = body.stroke
+        if (st && Array.isArray(st.points) && st.points.length > 0) {
+          ts.whiteboard_strokes = [
+            ...ts.whiteboard_strokes,
+            {
+              id: String(st.id || `st_${nowMs}`),
+              color: String(st.color || "#34D399"),
+              width: Math.max(1, Math.min(18, Number(st.width) || 3)),
+              points: st.points.slice(0, 120),
+              isAnnotation: Boolean(st.isAnnotation),
+            },
+          ].slice(-180)
+        }
+      } else if (subAction === "wb_sticky") {
+        const note = body.note
+        if (note && String(note.text || "").trim()) {
+          ts.whiteboard_notes = [
+            ...ts.whiteboard_notes,
+            {
+              id: String(note.id || `wb_${nowMs}`),
+              x: Math.max(5, Math.min(85, Number(note.x) || 20)),
+              y: Math.max(8, Math.min(80, Number(note.y) || 20)),
+              text: String(note.text).trim().slice(0, 140),
+              color: String(note.color || "#FDE68A"),
+              author: displayName,
+            },
+          ].slice(-30)
+        }
+      } else if (subAction === "wb_undo") {
+        ts.whiteboard_strokes = ts.whiteboard_strokes.slice(0, -1)
+      } else if (subAction === "wb_clear") {
+        ts.whiteboard_strokes = []
+        ts.whiteboard_notes = []
+      } else if (subAction === "create_breakouts") {
+        const rawRooms: any[] = Array.isArray(body.rooms) ? body.rooms : []
+        const durationMin = Math.max(1, Math.min(60, Number(body.duration_min) || 10))
+        const endsAtMs = nowMs + durationMin * 60000
+        ts.breakout_rooms = rawRooms.slice(0, 6).map((r, i) => ({
+          id: String(r.id || `brk_${i + 1}`),
+          name: String(r.name || `Breakout Room ${i + 1}`).slice(0, 48),
+          call_id: String(r.call_id || `${sigCallId}_brk_${i + 1}`),
+          assigned_user_ids: Array.isArray(r.assigned_user_ids) ? r.assigned_user_ids.map(String) : [],
+          ends_at_ms: endsAtMs,
+        }))
+        ts.breakout_broadcast = null
+      } else if (subAction === "broadcast_breakouts") {
+        const text = String(body.text || "").trim().slice(0, 200)
+        if (text) ts.breakout_broadcast = { text, ts: nowMs }
+      } else if (subAction === "close_breakouts") {
+        ts.breakout_rooms = []
+        ts.breakout_broadcast = { text: "Breakout rooms closed — returning to main meeting.", ts: nowMs }
+      } else if (subAction === "toggle_hold") {
+        const targetId = String(body.target_user_id || userId)
+        const shouldHold = body.hold !== undefined ? Boolean(body.hold) : !ts.on_hold_user_ids.includes(targetId)
+        ts.on_hold_user_ids = shouldHold
+          ? Array.from(new Set([...ts.on_hold_user_ids, targetId]))
+          : ts.on_hold_user_ids.filter((id) => id !== targetId)
+      } else if (subAction === "transfer_call") {
+        const targetPhone = typeof body.target_phone === "string" ? body.target_phone.trim() : undefined
+        const targetEmail = typeof body.target_email === "string" ? body.target_email.trim().toLowerCase() : undefined
+        const targetName = String(body.target_name || targetPhone || targetEmail || "Teammate").trim()
+        const entry = {
+          id: makeInvitedMemberKey({ phone: targetPhone, email: targetEmail, name: targetName }),
+          name: targetName,
+          phone: targetPhone,
+          email: targetEmail,
+          status: "ringing" as const,
+          updated_at_ms: nowMs,
+        }
+        mergeInvitedEntriesIntoRecord(record, [entry], nowMs)
+        await Promise.all([
+          pushCloudInvitedRoster(
+            sigCallId,
+            record.invited_roster,
+            true,
+            record.cohost_keys,
+            record.muted_keys,
+            record.moderation_updated_at_ms
+          ).catch(() => {}),
+          !body.skip_push
+            ? dispatchMinimizedWakeupPushForTargets({
+                callId: sigCallId,
+                callMode: record.call_type === "audio" ? "audio" : "video",
+                callerName: displayName,
+                callerPhone: record.initiator_phone,
+                targets: [{ phone: targetPhone, email: targetEmail, name: targetName }],
+              }).catch(() => {})
+            : Promise.resolve(),
+        ])
+      }
+
+      ts.updated_at_ms = nowMs
+      record.state_version += 1
+      ACTIVE_CALLS_STORE.set(sigCallId, record)
+      await pushCloudTeamsState(sigCallId, ts, true).catch(() => {})
+      savePersistedCalls(true)
+      return NextResponse.json({
+        protocol_version: 1,
+        event_type: "call.teams_signal",
         occurred_at: now,
         call: record,
       })
@@ -2102,10 +2528,13 @@ export async function POST(req: NextRequest) {
           phonesToSilenceOnAnswer.add(record.initiator_phone)
         }
       }
+      let attendanceChanged = false
       if (existingIdx >= 0) {
         record.participants[existingIdx] = updatedParticipant
+        attendanceChanged = upsertAttendanceEntry(record, userId, displayName, nowMs, false)
       } else {
         record.participants.push(updatedParticipant)
+        attendanceChanged = upsertAttendanceEntry(record, userId, displayName, nowMs, false)
         record.sframe_key_epoch += 1
         record.state_version += 1
         recordGlobalUserActivity({
@@ -2144,6 +2573,9 @@ export async function POST(req: NextRequest) {
               record.muted_keys,
               record.moderation_updated_at_ms
             ).catch(() => {})
+          : Promise.resolve(),
+        attendanceChanged && record.teams_state
+          ? pushCloudTeamsState(callId, record.teams_state, true).catch(() => {})
           : Promise.resolve(),
         pullCloudCallParticipants(userId).catch(() => {}),
         phonesToSilenceOnAnswer.size > 0
