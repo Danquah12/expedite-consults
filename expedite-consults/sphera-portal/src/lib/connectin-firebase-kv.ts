@@ -35,6 +35,7 @@ const globalForFbKv = globalThis as unknown as {
   __connectlnFbLastFetchMs?: number
   __connectlnFbWriteLock?: Promise<void>
   __connectlnKvMongoIndexReady?: boolean
+  __connectlnFbDirBackfilled?: boolean
 }
 
 if (!globalForFbKv.__connectlnFbMapsCache) {
@@ -55,7 +56,10 @@ async function getFirebaseAccessToken(): Promise<{ token: string; projectId: str
     const parsed = JSON.parse(raw)
     const projectId = String(parsed.project_id || "connectln-2ab9b")
     const credential = cert(parsed)
-    const tok = await credential.getAccessToken()
+    const tok = await Promise.race([
+      credential.getAccessToken(),
+      new Promise<null>((r) => setTimeout(() => r(null), 3000)),
+    ])
     if (!tok?.access_token) return null
     globalForFbKv.__connectlnFbOAuth = {
       token: tok.access_token,
@@ -89,6 +93,7 @@ async function pullAllMapsFromFirebase(force = false): Promise<Record<string, Kv
       method: "GET",
       headers: { Authorization: `Bearer ${auth.token}` },
       cache: "no-store",
+      signal: AbortSignal.timeout(4000),
     })
     if (!res.ok) return globalForFbKv.__connectlnFbMapsCache || {}
     const etag = res.headers.get("etag") || "*"
@@ -217,15 +222,54 @@ export async function firebaseKvListItems<T = any>(
     }
   }
 
-  if (!mongoLoaded || mapName === "connectln_whatsapp_directory_v1" || byKey.size === 0) {
-    const maps = await pullAllMapsFromFirebase(forceRefresh)
+  const shouldBackfillDir =
+    mapName === "connectln_whatsapp_directory_v1" && !globalForFbKv.__connectlnFbDirBackfilled
+  if (!mongoLoaded || byKey.size === 0 || shouldBackfillDir) {
+    if (shouldBackfillDir) {
+      globalForFbKv.__connectlnFbDirBackfilled = true
+    }
+    const maps =
+      shouldBackfillDir && mongoLoaded && byKey.size > 0
+        ? await Promise.race([
+            pullAllMapsFromFirebase(false),
+            new Promise<Record<string, KvMapDict>>((r) => setTimeout(() => r({}), 2500)),
+          ])
+        : await pullAllMapsFromFirebase(forceRefresh)
     const dict = maps[mapName] || {}
+    const fbOnlyEntries: Array<{ key: string; env: KvEnvelope<any> }> = []
     for (const [k, env] of Object.entries(dict)) {
       if (!env || typeof env !== "object") continue
       if (env.expiresAtMs && env.expiresAtMs < now) continue
       if (!byKey.has(k)) {
         byKey.set(k, { key: k, data: env.data as T, updatedAtMs: env.updatedAtMs || now })
+        if (mongoLoaded && isConnectLnMongoConfigured()) {
+          fbOnlyEntries.push({ key: k, env })
+        }
       }
+    }
+    if (fbOnlyEntries.length > 0) {
+      void getConnectLnMongoDb()
+        .then((mdb) => {
+          if (!mdb) return
+          return Promise.allSettled(
+            fbOnlyEntries.map(({ key, env }) =>
+              mdb.collection<KvMongoDoc>(KV_MONGO_COLLECTION).updateOne(
+                { _id: `${mapName}::${key}` },
+                {
+                  $setOnInsert: {
+                    mapName,
+                    key,
+                    data: env.data,
+                    updatedAtMs: env.updatedAtMs || now,
+                    expiresAtMs: env.expiresAtMs ?? null,
+                  },
+                },
+                { upsert: true }
+              )
+            )
+          )
+        })
+        .catch(() => {})
     }
   }
 
@@ -268,6 +312,7 @@ async function writeFirebaseKeyWithFreshPull(
       },
       body: JSON.stringify({ parameters }),
       cache: "no-store",
+      signal: AbortSignal.timeout(4500),
     })
     if (putRes.ok) {
       globalForFbKv.__connectlnFbEtag = putRes.headers.get("etag") || "*"
@@ -280,13 +325,27 @@ async function writeFirebaseKeyWithFreshPull(
 
   const prevLock = globalForFbKv.__connectlnFbWriteLock || Promise.resolve()
   let result = false
-  const nextLock = prevLock
+  const nextLock = Promise.race([
+    prevLock.catch(() => {}),
+    new Promise<void>((resolve) => setTimeout(resolve, 6500)),
+  ])
     .then(async () => {
-      result = await runWrite()
+      result = await Promise.race([
+        runWrite().catch(() => false),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 6000)),
+      ])
     })
     .catch(() => {})
+    .finally(() => {
+      if (globalForFbKv.__connectlnFbWriteLock === nextLock) {
+        globalForFbKv.__connectlnFbWriteLock = undefined
+      }
+    })
   globalForFbKv.__connectlnFbWriteLock = nextLock
-  await nextLock
+  await Promise.race([
+    nextLock,
+    new Promise<void>((resolve) => setTimeout(resolve, 6500)),
+  ])
   return result
 }
 
@@ -350,7 +409,7 @@ export async function firebaseKvSetItem(
     }
   }
 
-  if (!mongoOk || mapName === "connectln_whatsapp_directory_v1") {
+  if (!mongoOk) {
     const fbOk = await writeFirebaseKeyWithFreshPull(mapName, key, envelope)
     return mongoOk || fbOk
   }
@@ -378,7 +437,7 @@ export async function firebaseKvDeleteItem(mapName: string, key: string): Promis
     }
   }
 
-  if (!mongoOk || mapName === "connectln_whatsapp_directory_v1") {
+  if (!mongoOk) {
     const fbOk = await writeFirebaseKeyWithFreshPull(mapName, key, null)
     return mongoOk || fbOk
   }

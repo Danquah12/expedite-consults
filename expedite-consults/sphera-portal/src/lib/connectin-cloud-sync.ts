@@ -300,7 +300,8 @@ export async function upsertCloudUser(payload: CloudUserPayload): Promise<boolea
         Authorization: auth,
         "Content-Type": "application/x-www-form-urlencoded"
       },
-      body: new URLSearchParams({ Data: serialized }).toString()
+      body: new URLSearchParams({ Data: serialized }).toString(),
+      signal: AbortSignal.timeout(4000)
     })
 
     if (updateRes.ok) return true
@@ -313,7 +314,8 @@ export async function upsertCloudUser(payload: CloudUserPayload): Promise<boolea
           Authorization: auth,
           "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: new URLSearchParams({ UniqueName: SYNC_MAP_NAME }).toString()
+        body: new URLSearchParams({ UniqueName: SYNC_MAP_NAME }).toString(),
+        signal: AbortSignal.timeout(4000)
       }).catch(() => {})
 
       const createRes = await fetch(`${baseUrl}/Items`, {
@@ -325,7 +327,8 @@ export async function upsertCloudUser(payload: CloudUserPayload): Promise<boolea
         body: new URLSearchParams({
           Key: key,
           Data: serialized
-        }).toString()
+        }).toString(),
+        signal: AbortSignal.timeout(4000)
       })
       return createRes.ok
     }
@@ -350,7 +353,8 @@ export async function pullCloudUsersIntoDb(): Promise<CloudUserPayload[]> {
     const res = await fetch(url, {
       method: "GET",
       headers: { Authorization: auth },
-      cache: "no-store"
+      cache: "no-store",
+      signal: AbortSignal.timeout(4000)
     })
     if (!res.ok) return []
 
@@ -396,7 +400,8 @@ export async function fetchCloudTelemetry(): Promise<CloudTelemetryState> {
       {
         method: "GET",
         headers: { Authorization: auth },
-        cache: "no-store"
+        cache: "no-store",
+        signal: AbortSignal.timeout(4000)
       }
     )
     if (!res.ok) return empty
@@ -438,7 +443,8 @@ export async function upsertCloudActivityItem(rawEvent: any): Promise<boolean> {
         Authorization: auth,
         "Content-Type": "application/x-www-form-urlencoded"
       },
-      body: new URLSearchParams({ Data: serialized }).toString()
+      body: new URLSearchParams({ Data: serialized }).toString(),
+      signal: AbortSignal.timeout(4000)
     })
     if (updateRes.ok) return true
 
@@ -449,7 +455,8 @@ export async function upsertCloudActivityItem(rawEvent: any): Promise<boolean> {
           Authorization: auth,
           "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: new URLSearchParams({ UniqueName: SYNC_ACTIVITY_MAP_NAME }).toString()
+        body: new URLSearchParams({ UniqueName: SYNC_ACTIVITY_MAP_NAME }).toString(),
+        signal: AbortSignal.timeout(4000)
       }).catch(() => {})
 
       const createRes = await fetch(`${baseUrl}/Items`, {
@@ -461,7 +468,8 @@ export async function upsertCloudActivityItem(rawEvent: any): Promise<boolean> {
         body: new URLSearchParams({
           Key: key,
           Data: serialized
-        }).toString()
+        }).toString(),
+        signal: AbortSignal.timeout(4000)
       })
       return createRes.ok
     }
@@ -559,7 +567,8 @@ export async function appendCloudTelemetry(partial: {
         Authorization: auth,
         "Content-Type": "application/x-www-form-urlencoded"
       },
-      body: new URLSearchParams({ Data: JSON.stringify(updated) }).toString()
+      body: new URLSearchParams({ Data: JSON.stringify(updated) }).toString(),
+      signal: AbortSignal.timeout(4000)
     })
 
     if (updateRes.status === 404) {
@@ -572,7 +581,8 @@ export async function appendCloudTelemetry(partial: {
         body: new URLSearchParams({
           UniqueName: SYNC_DOC_NAME,
           Data: JSON.stringify(updated)
-        }).toString()
+        }).toString(),
+        signal: AbortSignal.timeout(4000)
       })
     }
   } catch (err) {

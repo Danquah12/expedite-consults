@@ -362,18 +362,22 @@ export default function ConnectInLoginPage() {
 
   // Core sign-in logic — can be called from form onSubmit or programmatically (Resend button)
   const doSignIn = async (channelOverride?: 'all' | 'email' | 'sms' | 'call') => {
-    if (!signInEmail) return
+    if (!signInEmail.trim() && !signInPhone.trim()) {
+      setErrorMessage("Please enter your email or mobile phone number.")
+      return
+    }
 
     const effectiveChannel = channelOverride || signInChannel
     if (channelOverride) setSignInChannel(channelOverride)
 
     let effectivePhone = signInPhone.trim()
-      ? buildGlobalE164Phone(signInCountryCode, signInPhone.trim())
+      ? buildGlobalE164Phone(signInCountryCode, signInPhone.trim()) || signInPhone.trim()
       : ""
     if (!effectivePhone && isExactKwesiUser({ name: signInName, email: signInEmail })) {
       effectivePhone = "+12402607898"
       setSignInPhone("+1 (240) 260-7898")
     }
+    const effectiveEmailInput = signInEmail.trim() || effectivePhone
 
     setIsLoading(true)
     setErrorMessage(null)
@@ -383,31 +387,36 @@ export default function ConnectInLoginPage() {
         : `Dispatching 2FA security code via ${effectiveChannel.toUpperCase()}...`
     )
 
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
+
     try {
       const res = await fetch("/api/connectin/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: signInName,
-          email: signInEmail,
+          email: effectiveEmailInput,
           phone: effectivePhone,
           password: signInPassword,
           channel: effectiveChannel,
           professionId: signInProfessionId !== "auto_detect" ? signInProfessionId : undefined,
           clientTimezone: typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined
-        })
+        }),
+        signal: controller.signal
       })
 
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         throw new Error(data.error || "Sign in failed. Please check your credentials.")
       }
 
       // Single-time phone validation: if this phone number was already validated once, log straight in!
       if (data.alreadyVerified || data.requires2FA === false) {
-        const resolvedName = resolveDisplayName(signInName, signInEmail)
+        const effectiveLoginEmail = (data.email || effectiveEmailInput || effectivePhone).trim()
+        const resolvedName = resolveDisplayName(signInName, effectiveLoginEmail)
         const vaultProfile = getVaultProfileForUser({
-          email: signInEmail,
+          email: effectiveLoginEmail,
           name: signInName.trim() || resolvedName,
         })
         const finalName = signInName.trim() || data.profile?.name || vaultProfile?.name || resolvedName
@@ -415,26 +424,26 @@ export default function ConnectInLoginPage() {
           data.profile ||
           createUniqueUserProfile({
             name: finalName,
-            email: signInEmail,
+            email: effectiveLoginEmail,
             role: "personal",
           })
         const verifiedSignInPhone =
           data.phone || data.user?.phone || data.profile?.phone || effectivePhone || ""
         const candidateAvatar = vaultProfile?.avatar || data.profile?.avatar || baseProfile.avatar
         const safeAvatar =
-          candidateAvatar && !isForeignPersonaAvatar(candidateAvatar, { name: finalName, email: signInEmail })
+          candidateAvatar && !isForeignPersonaAvatar(candidateAvatar, { name: finalName, email: effectiveLoginEmail })
             ? candidateAvatar
             : getDefaultPortraitForUser({
                 name: finalName,
-                email: signInEmail,
+                email: effectiveLoginEmail,
                 professionEnclave: baseProfile.professionEnclave,
               } as any)
-        const isAdminUser = !inviteContext && isSuperAdminUser({ name: finalName, email: signInEmail })
+        const isAdminUser = !inviteContext && isSuperAdminUser({ name: finalName, email: effectiveLoginEmail })
         const shouldOpenAdminPortal =
           !inviteContext &&
           isDedicatedAdminAccount({
             name: finalName,
-            email: signInEmail,
+            email: effectiveLoginEmail,
             professionId: signInProfessionId,
           })
 
@@ -442,7 +451,7 @@ export default function ConnectInLoginPage() {
           ...baseProfile,
           ...(vaultProfile || {}),
           name: finalName,
-          email: data.email || signInEmail,
+          email: effectiveLoginEmail,
           phone: verifiedSignInPhone || undefined,
           phoneVerified: Boolean(verifiedSignInPhone),
           avatar: safeAvatar,
@@ -489,7 +498,7 @@ export default function ConnectInLoginPage() {
       setActiveSignInTarget(
         data.prettyPhone ||
           data.target ||
-          (effectiveChannel === 'email' ? signInEmail : (effectivePhone || signInEmail))
+          (effectiveChannel === 'email' ? effectiveEmailInput : (effectivePhone || effectiveEmailInput))
       )
       setSignInStep('2fa')
 
@@ -499,8 +508,13 @@ export default function ConnectInLoginPage() {
       )
     } catch (err: any) {
       setSuccessMessage(null)
-      setErrorMessage(err.message || "Failed to sign in")
+      if (err?.name === "AbortError") {
+        setErrorMessage("Request timed out while signing in. Please try again.")
+      } else {
+        setErrorMessage(err.message || "Failed to sign in")
+      }
     } finally {
+      clearTimeout(timeoutId)
       setIsLoading(false)
     }
   }
@@ -1072,14 +1086,14 @@ export default function ConnectInLoginPage() {
                     {/* Email Input */}
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                        {t("email_or_phone", "Email address or username")}
+                        {t("email_or_phone", "Email address or mobile number")}
                       </label>
                       <input
                         type="text"
-                        required
+                        required={!signInPhone.trim()}
                         value={signInEmail}
                         onChange={(e) => setSignInEmail(e.target.value)}
-                        placeholder="e.g. name@company.com"
+                        placeholder="e.g. name@company.com or mobile phone number"
                         className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
                     </div>

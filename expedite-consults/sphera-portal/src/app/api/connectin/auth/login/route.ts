@@ -21,7 +21,16 @@ import {
   formatInternationalPhonePretty,
 } from "@/lib/connectin-international-phones"
 
+export const dynamic = "force-dynamic"
+
 const EMAIL_FORMAT_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise.catch(() => fallback),
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ])
+}
 
 function isRealDeliverableEmail(raw?: string | null): boolean {
   const clean = String(raw || "").trim().toLowerCase()
@@ -44,7 +53,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email and mobile phone number are required." }, { status: 400 })
     }
 
-    await pullCloudUsersIntoDb().catch(() => {})
+    await withTimeout(pullCloudUsersIntoDb(), 3500, [])
     const geo = resolveRequestGeoLocation(req, clientTimezone, body.location)
     const cleanTarget = (email || body.phone || "").toLowerCase().trim()
     const isPhoneInput = !cleanTarget.includes("@") && /^[+\d\s().-]+$/.test(cleanTarget)
@@ -64,32 +73,54 @@ export async function POST(req: NextRequest) {
       submittedRawPhone && looksLikeInternationalPhone(submittedRawPhone)
         ? formatE164Phone(submittedRawPhone)
         : ""
+    const normDigits = normSubmittedPhone.replace(/[^\d]/g, "")
+    const last10 = normDigits.slice(-10)
+    const syntheticFullPhoneEmail = normDigits ? `${normDigits}@connectin.phone` : ""
+    const syntheticLast10Email = last10 ? `${last10}@connectin.phone` : ""
     const candidateUsers = connectinDb.getUsers().filter((u) => {
+      const uEmail = u.email.toLowerCase().trim()
+      const matchesPhoneEmail = Boolean(
+        (syntheticFullPhoneEmail && uEmail === syntheticFullPhoneEmail) ||
+          (syntheticLast10Email && uEmail === syntheticLast10Email)
+      )
       if (isPhoneInput) {
         return (
-          (u.phone && formatE164Phone(u.phone) === normSubmittedPhone) ||
-          u.email.toLowerCase().trim() === cleanTarget
+          (u.phone && normSubmittedPhone && formatE164Phone(u.phone) === normSubmittedPhone) ||
+          uEmail === cleanTarget ||
+          matchesPhoneEmail
         )
       }
       return (
-        u.email.toLowerCase().trim() === cleanTarget ||
-        (normSubmittedPhone && u.phone && formatE164Phone(u.phone) === normSubmittedPhone)
+        uEmail === cleanTarget ||
+        (normSubmittedPhone && u.phone && formatE164Phone(u.phone) === normSubmittedPhone) ||
+        matchesPhoneEmail
       )
     })
 
+    const dirCache = await withTimeout(refreshWhatsAppDirectoryCache(true), 3500, new Map())
+    const dirMemberPre = normSubmittedPhone ? dirCache.get(normSubmittedPhone) : undefined
     let user =
-      candidateUsers.find((u) => u.email.toLowerCase().trim() === cleanTarget) ||
+      (!isPhoneInput ? candidateUsers.find((u) => u.email.toLowerCase().trim() === cleanTarget) : undefined) ||
+      (syntheticLast10Email
+        ? candidateUsers.find((u) => u.email.toLowerCase().trim() === syntheticLast10Email)
+        : undefined) ||
+      (syntheticFullPhoneEmail
+        ? candidateUsers.find((u) => u.email.toLowerCase().trim() === syntheticFullPhoneEmail)
+        : undefined) ||
       candidateUsers.find((u) => {
         const p = connectinDb.findProfileByUserId(u.id)
         if (!p) return false
+        const pName = p.name.toLowerCase().trim()
         if (incomingName) {
-          return p.name.toLowerCase().trim() === incomingName.toLowerCase()
+          return pName === incomingName.toLowerCase()
         }
-        return true
+        if (dirMemberPre?.name && pName === dirMemberPre.name.toLowerCase().trim()) {
+          return true
+        }
+        return Boolean(pName && pName !== "connectin member" && pName !== "expedite consults llc")
       }) ||
       candidateUsers[0]
 
-    const dirCache = await refreshWhatsAppDirectoryCache(true).catch(() => new Map())
     let existingAccountPhone =
       user?.phone && looksLikeInternationalPhone(user.phone) ? formatE164Phone(user.phone) : ""
     const candidateEmail = user?.email || (!isPhoneInput ? cleanTarget : "")
@@ -213,57 +244,61 @@ export async function POST(req: NextRequest) {
       const nowIso = new Date().toISOString()
       const timeStr = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
 
-      await Promise.all([
-        registerWhatsAppMemberNumber({
-          phone: dispatchPhone,
-          name: activeProfile.name,
-          email: user.email,
-          avatar: activeProfile.avatar,
-          headline: activeProfile.headline,
-          verifiedBy2FA: true,
-        }).catch(() => null),
-        upsertCloudUser({
-          id: user.id,
-          email: user.email,
-          phone: dispatchPhone,
-          name: activeProfile.name,
-          role: user.role,
-          status: user.status,
-          headline: activeProfile.headline,
-          avatar: activeProfile.avatar,
-          coverImage: activeProfile.coverImage,
-          location: activeProfile.location || geo.locationLabel,
-          countryName: geo.countryName,
-          countryCode: geo.countryCode,
-          isOutsideUS: geo.isOutsideUS,
-          ipAddress: geo.ipAddress,
-          profession: activeProfile.profession,
-          professionId: activeProfile.professionId,
-          professionCategory: activeProfile.professionCategory,
-          professionEnclave: activeProfile.professionEnclave,
-          authProvider: "Verified Phone Login",
-          lastLoginAt: nowIso,
-          createdAt: user.createdAt,
-          updatedAt: nowIso,
-        }).catch(() => {}),
-        appendCloudTelemetry({
-          activityLog: {
-            id: `act_signin_${user.id}_${Date.now().toString().slice(-5)}`,
-            userId: user.id,
-            userName: activeProfile.name,
-            userEmail: user.email,
-            userAvatar: activeProfile.avatar,
-            userHeadline: activeProfile.headline,
-            actionType: "USER_LOGIN",
-            actionLabel: `Signed In (Verified Number · ${geo.locationLabel})`,
-            category: "auth",
-            targetTitle: `Verified Phone · ${geo.locationLabel}`,
-            details: `Direct sign-in using previously verified phone ${dispatchPhone}`,
-            timestamp: `${timeStr} · ${geo.countryName}`,
-            createdAtIso: nowIso,
-          },
-        }).catch(() => {}),
-      ])
+      await withTimeout(
+        Promise.all([
+          registerWhatsAppMemberNumber({
+            phone: dispatchPhone,
+            name: activeProfile.name,
+            email: user.email,
+            avatar: activeProfile.avatar,
+            headline: activeProfile.headline,
+            verifiedBy2FA: true,
+          }).catch(() => null),
+          upsertCloudUser({
+            id: user.id,
+            email: user.email,
+            phone: dispatchPhone,
+            name: activeProfile.name,
+            role: user.role,
+            status: user.status,
+            headline: activeProfile.headline,
+            avatar: activeProfile.avatar,
+            coverImage: activeProfile.coverImage,
+            location: activeProfile.location || geo.locationLabel,
+            countryName: geo.countryName,
+            countryCode: geo.countryCode,
+            isOutsideUS: geo.isOutsideUS,
+            ipAddress: geo.ipAddress,
+            profession: activeProfile.profession,
+            professionId: activeProfile.professionId,
+            professionCategory: activeProfile.professionCategory,
+            professionEnclave: activeProfile.professionEnclave,
+            authProvider: "Verified Phone Login",
+            lastLoginAt: nowIso,
+            createdAt: user.createdAt,
+            updatedAt: nowIso,
+          }).catch(() => {}),
+          appendCloudTelemetry({
+            activityLog: {
+              id: `act_signin_${user.id}_${Date.now().toString().slice(-5)}`,
+              userId: user.id,
+              userName: activeProfile.name,
+              userEmail: user.email,
+              userAvatar: activeProfile.avatar,
+              userHeadline: activeProfile.headline,
+              actionType: "USER_LOGIN",
+              actionLabel: `Signed In (Verified Number · ${geo.locationLabel})`,
+              category: "auth",
+              targetTitle: `Verified Phone · ${geo.locationLabel}`,
+              details: `Direct sign-in using previously verified phone ${dispatchPhone}`,
+              timestamp: `${timeStr} · ${geo.countryName}`,
+              createdAtIso: nowIso,
+            },
+          }).catch(() => {}),
+        ]),
+        3000,
+        undefined
+      )
 
       const prettyPhone = formatInternationalPhonePretty(dispatchPhone)
       const directRes = NextResponse.json({
@@ -306,68 +341,72 @@ export async function POST(req: NextRequest) {
       connectinDb.touchUserLogin(user.id, `${effectiveChannel.toUpperCase()} 2FA`)
       const nowIso = new Date().toISOString()
       const timeStr = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
-      await Promise.all([
-        upsertCloudUser({
-          id: user.id,
-          email: user.email,
-          phone: existingAccountPhone || user.phone || "",
-          name: activeProfile.name,
-          role: user.role,
-          status: user.status,
-          headline: activeProfile.headline,
-          avatar: activeProfile.avatar,
-          coverImage: activeProfile.coverImage,
-          location: activeProfile.location && !activeProfile.location.includes("United States") ? activeProfile.location : geo.locationLabel,
-          countryName: geo.countryName,
-          countryCode: geo.countryCode,
-          isOutsideUS: geo.isOutsideUS,
-          ipAddress: geo.ipAddress,
-          profession: activeProfile.profession,
-          professionId: activeProfile.professionId,
-          professionCategory: activeProfile.professionCategory,
-          professionEnclave: activeProfile.professionEnclave,
-          authProvider: `${effectiveChannel.toUpperCase()} 2FA`,
-          lastLoginAt: nowIso,
-          createdAt: user.createdAt,
-          updatedAt: nowIso
-        }),
-        appendCloudTelemetry({
-          activityLog: {
-            id: `act_signin_${user.id}_${Date.now().toString().slice(-5)}`,
-            userId: user.id,
-            userName: activeProfile.name,
-            userEmail: user.email,
-            userAvatar: activeProfile.avatar,
-            userHeadline: activeProfile.headline,
-            actionType: "USER_LOGIN",
-            actionLabel: `Signed In via ${effectiveChannel.toUpperCase()} 2FA (${geo.locationLabel})`,
-            category: "auth",
-            targetTitle: `${effectiveChannel.toUpperCase()} 2FA · ${geo.locationLabel}`,
-            details: `Authenticated sign-in from ${geo.locationLabel} (IP: ${geo.ipAddress})`,
-            timestamp: `${timeStr} · ${geo.countryName}`,
-            createdAtIso: nowIso
-          },
-          auditLog: {
-            id: `LOG-${Date.now().toString().slice(-6)}`,
-            adminEmail: user.email,
-            action: "USER_ACTIVATED",
-            targetEntity: `${activeProfile.name} (${user.email})`,
-            reason: `Member sign-in via ${effectiveChannel.toUpperCase()} 2FA from ${geo.locationLabel}`,
-            ipAddress: `${geo.ipAddress} (${geo.locationLabel})`,
-            timestamp: `${timeStr}`,
-            status: "Success"
-          },
-          socEvent: {
-            id: `SOC-LIVE-${Date.now().toString().slice(-5)}`,
-            severity: "Low",
-            eventType: `Member Sign-In (${geo.countryName})`,
-            sourceIp: `${geo.ipAddress} (${geo.locationLabel})`,
-            targetAccount: `${activeProfile.name} (${user.email})`,
-            mitigationAction: `Verified 2FA Dispatch & Session Created`,
-            timestamp: "Just Now"
-          }
-        })
-      ])
+      await withTimeout(
+        Promise.all([
+          upsertCloudUser({
+            id: user.id,
+            email: user.email,
+            phone: existingAccountPhone || user.phone || "",
+            name: activeProfile.name,
+            role: user.role,
+            status: user.status,
+            headline: activeProfile.headline,
+            avatar: activeProfile.avatar,
+            coverImage: activeProfile.coverImage,
+            location: activeProfile.location && !activeProfile.location.includes("United States") ? activeProfile.location : geo.locationLabel,
+            countryName: geo.countryName,
+            countryCode: geo.countryCode,
+            isOutsideUS: geo.isOutsideUS,
+            ipAddress: geo.ipAddress,
+            profession: activeProfile.profession,
+            professionId: activeProfile.professionId,
+            professionCategory: activeProfile.professionCategory,
+            professionEnclave: activeProfile.professionEnclave,
+            authProvider: `${effectiveChannel.toUpperCase()} 2FA`,
+            lastLoginAt: nowIso,
+            createdAt: user.createdAt,
+            updatedAt: nowIso
+          }).catch(() => {}),
+          appendCloudTelemetry({
+            activityLog: {
+              id: `act_signin_${user.id}_${Date.now().toString().slice(-5)}`,
+              userId: user.id,
+              userName: activeProfile.name,
+              userEmail: user.email,
+              userAvatar: activeProfile.avatar,
+              userHeadline: activeProfile.headline,
+              actionType: "USER_LOGIN",
+              actionLabel: `Signed In via ${effectiveChannel.toUpperCase()} 2FA (${geo.locationLabel})`,
+              category: "auth",
+              targetTitle: `${effectiveChannel.toUpperCase()} 2FA · ${geo.locationLabel}`,
+              details: `Authenticated sign-in from ${geo.locationLabel} (IP: ${geo.ipAddress})`,
+              timestamp: `${timeStr} · ${geo.countryName}`,
+              createdAtIso: nowIso
+            },
+            auditLog: {
+              id: `LOG-${Date.now().toString().slice(-6)}`,
+              adminEmail: user.email,
+              action: "USER_ACTIVATED",
+              targetEntity: `${activeProfile.name} (${user.email})`,
+              reason: `Member sign-in via ${effectiveChannel.toUpperCase()} 2FA from ${geo.locationLabel}`,
+              ipAddress: `${geo.ipAddress} (${geo.locationLabel})`,
+              timestamp: `${timeStr}`,
+              status: "Success"
+            },
+            socEvent: {
+              id: `SOC-LIVE-${Date.now().toString().slice(-5)}`,
+              severity: "Low",
+              eventType: `Member Sign-In (${geo.countryName})`,
+              sourceIp: `${geo.ipAddress} (${geo.locationLabel})`,
+              targetAccount: `${activeProfile.name} (${user.email})`,
+              mitigationAction: `Verified 2FA Dispatch & Session Created`,
+              timestamp: "Just Now"
+            }
+          }).catch(() => {})
+        ]),
+        2500,
+        undefined
+      )
     }
 
     const profile = connectinDb.findProfileByUserId(user.id)

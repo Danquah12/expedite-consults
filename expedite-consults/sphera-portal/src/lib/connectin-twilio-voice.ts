@@ -73,6 +73,7 @@ async function ensureSyncMap(authHeader: string, mapName: string): Promise<void>
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({ UniqueName: mapName }).toString(),
+    signal: AbortSignal.timeout(3500),
   }).catch(() => {})
 }
 
@@ -84,6 +85,7 @@ async function readSyncMapItem<T>(authHeader: string, mapName: string, key: stri
         method: "GET",
         headers: { Authorization: authHeader },
         cache: "no-store",
+        signal: AbortSignal.timeout(3500),
       }
     )
     if (!res.ok) return null
@@ -110,6 +112,7 @@ async function writeSyncMapItem(
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({ Data: serialized }).toString(),
+      signal: AbortSignal.timeout(3500),
     })
     if (upd.ok) return true
     if (upd.status === 404) {
@@ -121,6 +124,7 @@ async function writeSyncMapItem(
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({ Key: key, Data: serialized }).toString(),
+        signal: AbortSignal.timeout(3500),
       })
       return crt.ok || crt.status === 409
     }
