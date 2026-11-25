@@ -2474,6 +2474,33 @@ export async function POST(req: NextRequest) {
 
       if (
         action === "heartbeat" &&
+        !isCallTombstoned(callId, nowMs) &&
+        ACTIVE_CALLS_STORE.get(callId)?.state !== "ENDED"
+      ) {
+        const directEnded = await firebaseKvGetItem<any>(
+          CALLS_SYNC_MAP_NAME,
+          makeCloudEndedKey(callId)
+        ).catch(() => null)
+        const directEndedMs = Number(directEnded?.ended_at_ms) || 0
+        if (
+          directEnded &&
+          (directEnded.kind === "ended" || directEndedMs > 0) &&
+          (!directEndedMs || nowMs - directEndedMs < ENDED_TOMBSTONE_TTL_MS)
+        ) {
+          ENDED_CALL_TOMBSTONES.set(callId, directEndedMs || nowMs)
+          const cachedRec = ACTIVE_CALLS_STORE.get(callId)
+          if (cachedRec) {
+            cachedRec.state = "ENDED"
+            cachedRec.ended_at = directEnded.ended_at || cachedRec.ended_at || now
+            cachedRec.participants = []
+            cachedRec.invited_roster = []
+            cachedRec.shared_stage = null
+          }
+        }
+      }
+
+      if (
+        action === "heartbeat" &&
         (isCallTombstoned(callId, nowMs) || ACTIVE_CALLS_STORE.get(callId)?.state === "ENDED")
       ) {
         const endedRec = ACTIVE_CALLS_STORE.get(callId)
@@ -2934,6 +2961,29 @@ export async function POST(req: NextRequest) {
           ? publishToPhones(Array.from(phonesToSilenceOnAnswer), "call-answered", { callId }).catch(() => {})
           : Promise.resolve(),
       ])
+
+      if (
+        (record.state as string) === "ENDED" ||
+        ACTIVE_CALLS_STORE.get(callId)?.state === "ENDED" ||
+        isCallTombstoned(callId, Date.now())
+      ) {
+        record.state = "ENDED"
+        record.participants = []
+        record.invited_roster = []
+        record.shared_stage = null
+        await Promise.all([
+          firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudParticipantKey(callId, userId)).catch(() => {}),
+          firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudAudioKey(callId, userId)).catch(() => {}),
+        ])
+        ACTIVE_CALLS_STORE.set(callId, record)
+        savePersistedCalls()
+        return NextResponse.json({
+          protocol_version: 1,
+          event_type: "call.ended",
+          occurred_at: now,
+          call: record,
+        })
+      }
 
       // Prune stale participants who haven't sent a heartbeat in > 25 seconds so disconnected/ended users never stay frozen
       record.participants = record.participants.filter(
