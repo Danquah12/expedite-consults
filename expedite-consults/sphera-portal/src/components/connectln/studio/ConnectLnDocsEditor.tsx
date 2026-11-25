@@ -23,6 +23,7 @@ import {
   Eraser,
   Eye,
   FilePlus2,
+  FileSignature,
   FileText,
   Highlighter,
   History,
@@ -113,7 +114,7 @@ import { ConnectLnStudioPrintModal } from "./ConnectLnStudioPrintModal"
 export interface StudioSharePayload {
   title: string
   summary: string
-  appLabel: "ConnectLn Docs" | "ConnectLn Sheets" | "ConnectLn Slides"
+  appLabel: "ConnectLn Docs" | "ConnectLn Sheets" | "ConnectLn Slides" | "ConnectLn Sign"
   slides?: Array<{
     slideNumber: number
     title: string
@@ -125,6 +126,7 @@ export interface StudioSharePayload {
 interface ConnectLnDocsEditorProps {
   user: UserProfile
   onShareToFeed?: (payload: StudioSharePayload) => void
+  onSendToSign?: (doc: StudioDocRecord) => void
 }
 
 type DocsRibbonTab = "home" | "insert" | "layout" | "review" | "view"
@@ -193,7 +195,7 @@ function markdownToSimpleHtml(md: string): string {
   return out.join("\n") || "<p>Imported document</p>"
 }
 
-export function ConnectLnDocsEditor({ user, onShareToFeed }: ConnectLnDocsEditorProps) {
+export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: ConnectLnDocsEditorProps) {
   const [docs, setDocs] = useState<StudioDocRecord[]>(() => loadStudioDocs(user))
   const [activeDocId, setActiveDocId] = useState<string>(() => docs[0]?.id || "")
   const [editorRevision, setEditorRevision] = useState(1)
@@ -1068,6 +1070,23 @@ export function ConnectLnDocsEditor({ user, onShareToFeed }: ConnectLnDocsEditor
               <span className="rounded-lg bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 px-2.5 py-1 text-xs font-semibold text-[#0B5CAD] dark:text-sky-300">
                 {statusNotice}
               </span>
+            )}
+
+            {onSendToSign && (
+              <button
+                type="button"
+                onClick={() =>
+                  onSendToSign({
+                    ...activeDoc,
+                    contentHtml: editorRef.current?.innerHTML ?? activeDoc.contentHtml,
+                  })
+                }
+                title="Send this document directly to ConnectLn Sign for e-signature"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#4338CA] bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 px-3 py-1.5 text-xs font-extrabold text-[#4338CA] dark:text-indigo-300 cursor-pointer"
+              >
+                <FileSignature className="h-3.5 w-3.5" />
+                Send to Sign
+              </button>
             )}
 
             <button

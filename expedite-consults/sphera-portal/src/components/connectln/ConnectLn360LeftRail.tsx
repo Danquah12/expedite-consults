@@ -19,6 +19,7 @@ import {
   PlayCircle,
   Zap,
   FileText,
+  LayoutGrid,
   Table2,
   Presentation,
 } from "lucide-react"
@@ -140,6 +141,13 @@ export function ConnectLn360LeftRail({
               title: "ConnectLn Slides — Proprietary presentation decks",
               icon: Presentation,
               accentClass: "text-[#C84B28] dark:text-orange-400",
+            },
+            {
+              id: "sign",
+              shortLabel: "Power",
+              title: "ConnectLn Power Apps — E-Signatures & Professional Workflow Tools",
+              icon: LayoutGrid,
+              accentClass: "text-[#4338CA] dark:text-indigo-400",
             },
           ].map((sItem) => {
             const SIcon = sItem.icon

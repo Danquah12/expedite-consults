@@ -1718,3 +1718,184 @@ export function buildPrintableSlidesHtml(opts: PrintableSlidesOptions): string {
 <body>${contentHtml}</body>
 </html>`
 }
+
+export interface PrintableSignEnvelopeInput {
+  envelopeCode: string
+  title: string
+  status: string
+  documentHtml: string
+  documentSha256?: string
+  completedAt?: string
+  signers: Array<{
+    name: string
+    email: string
+    role: string
+    status: string
+    signedAt?: string
+    signatureDataUrl?: string
+    typedSignature?: string
+    signatureFont?: string
+  }>
+  requiredChecks?: Array<{ label: string; checked: boolean }>
+  auditTrail?: Array<{ timestamp: string; actor: string; action: string; detail: string }>
+}
+
+export function buildPrintableSignedContractHtml(
+  envelope: PrintableSignEnvelopeInput,
+  opts?: { includeAuditCertificate?: boolean; grayscale?: boolean }
+): string {
+  const safeTitle = escapeHtml(envelope.title || 'ConnectLn Agreement')
+  const safeCode = escapeHtml(envelope.envelopeCode || 'CLN-SIGN')
+  const safeBody = sanitizeSafeHtml(envelope.documentHtml || '<p></p>')
+  const isCompleted = envelope.status === 'completed'
+  const filterCss = opts?.grayscale ? 'filter: grayscale(100%);' : ''
+
+  const signerBlocksHtml = (envelope.signers || [])
+    .map((s) => {
+      const signed = s.status === 'signed'
+      const sigVisual = signed
+        ? s.signatureDataUrl && /^data:image\/(png|jpeg|jpg|webp);base64,/i.test(s.signatureDataUrl)
+          ? `<img src="${s.signatureDataUrl}" alt="${escapeHtml(
+              s.name
+            )} signature" style="max-height:56px;max-width:220px;object-fit:contain;" />`
+          : `<div style="font-family:Georgia,serif;font-style:italic;font-size:24px;font-weight:700;color:#0B1F3A;">${escapeHtml(
+              s.typedSignature || s.name
+            )}</div>`
+        : `<div style="color:#94A3B8;font-style:italic;font-size:12px;">Awaiting signature...</div>`
+
+      return `<div style="border:1px solid ${signed ? '#10B981' : '#CBD5E1'};border-radius:10px;padding:14px 16px;background:${
+        signed ? '#F0FDF4' : '#F8FAFC'
+      };break-inside:avoid;">
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:${
+          signed ? '#047857' : '#64748B'
+        };margin-bottom:8px;">${escapeHtml(s.role)} · ${signed ? 'ELECTRONICALLY SIGNED' : 'PENDING'}</div>
+        <div style="min-height:58px;display:flex;align-items:center;border-bottom:1px solid #94A3B8;padding-bottom:6px;margin-bottom:8px;">${sigVisual}</div>
+        <div style="font-size:12px;font-weight:700;color:#0B1F3A;">${escapeHtml(s.name)}</div>
+        <div style="font-size:11px;color:#475569;">${escapeHtml(s.email)}</div>
+        ${
+          signed && s.signedAt
+            ? `<div style="font-size:10px;color:#047857;margin-top:4px;font-family:monospace;">Signed UTC: ${escapeHtml(
+                new Date(s.signedAt).toISOString()
+              )}</div>`
+            : ''
+        }
+      </div>`
+    })
+    .join('')
+
+  const checksHtml =
+    envelope.requiredChecks && envelope.requiredChecks.length > 0
+      ? `<div style="margin:20px 0;padding:12px 16px;border:1px solid #E2E8F0;border-radius:8px;background:#F8FAFC;">
+          <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:#475569;margin-bottom:6px;">Compliance Acknowledgments</div>
+          ${envelope.requiredChecks
+            .map(
+              (c) =>
+                `<div style="font-size:12px;margin:4px 0;">${c.checked ? '☑' : '☐'} ${escapeHtml(
+                  c.label
+                )}</div>`
+            )
+            .join('')}
+        </div>`
+      : ''
+
+  const auditCertHtml =
+    opts?.includeAuditCertificate !== false
+      ? `<section class="cert-page">
+          <div style="border-bottom:2px solid #4338CA;padding-bottom:10px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;color:#4338CA;text-transform:uppercase;">ConnectLn Sign · ConnectLn 360 Studio</div>
+              <h2 style="margin:4px 0 0 0;font-size:20px;color:#0B1F3A;">Certificate of Completion &amp; Audit Trail</h2>
+            </div>
+            <div style="font-family:monospace;font-size:11px;font-weight:700;color:#0B1F3A;">${safeCode}</div>
+          </div>
+          <div style="border:1px solid #CBD5E1;border-radius:10px;padding:14px 16px;background:#F8FAFC;margin-bottom:18px;font-size:12px;">
+            <div><strong>Agreement Title:</strong> ${safeTitle}</div>
+            <div style="margin-top:4px;"><strong>Envelope Status:</strong> ${escapeHtml(envelope.status.toUpperCase())}</div>
+            <div style="margin-top:4px;"><strong>Document Integrity SHA-256 Digest:</strong></div>
+            <div style="font-family:monospace;font-size:11px;word-break:break-all;background:#FFFFFF;border:1px solid #E2E8F0;padding:8px 10px;border-radius:6px;margin-top:4px;">${escapeHtml(
+              envelope.documentSha256 || 'Pending final signature seal'
+            )}</div>
+          </div>
+          <table class="audit-table">
+            <thead>
+              <tr><th>Timestamp (ISO UTC)</th><th>Actor</th><th>Event</th><th>Details</th></tr>
+            </thead>
+            <tbody>
+              ${(envelope.auditTrail || [])
+                .map(
+                  (a) =>
+                    `<tr><td style="font-family:monospace;font-size:10.5px;">${escapeHtml(
+                      a.timestamp
+                    )}</td><td><strong>${escapeHtml(a.actor)}</strong></td><td>${escapeHtml(
+                      a.action
+                    )}</td><td>${escapeHtml(a.detail)}</td></tr>`
+                )
+                .join('')}
+            </tbody>
+          </table>
+        </section>`
+      : ''
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>${safeTitle} — ${safeCode}</title>
+  <style>
+    @page { size: letter portrait; margin: 0.7in; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0b1f3a;
+      ${filterCss}
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .sheet, .cert-page {
+      max-width: 816px;
+      margin: 0 auto 24px auto;
+      background: #ffffff;
+      padding: 40px 48px;
+      border-radius: 8px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+    }
+    .cert-page { page-break-before: always; break-before: page; }
+    .body-content h1 { font-size: 22px; margin-top: 0; }
+    .body-content h2 { font-size: 16px; color: #0b5cad; margin-top: 18px; }
+    .body-content table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    .body-content th, .body-content td { border: 1px solid #cbd5e1; padding: 7px 10px; font-size: 12.5px; text-align: left; }
+    .body-content th { background: #f1f5f9; }
+    .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 24px; }
+    .audit-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    .audit-table th, .audit-table td { border: 1px solid #cbd5e1; padding: 7px 9px; text-align: left; }
+    .audit-table th { background: #f1f5f9; font-weight: 700; }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .sheet, .cert-page { box-shadow: none; margin: 0; padding: 0; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <section class="sheet">
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0B1F3A;padding-bottom:10px;margin-bottom:20px;">
+      <div>
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:0.08em;color:#4338CA;text-transform:uppercase;">ConnectLn Sign · Electronic Agreement</div>
+        <div style="font-family:monospace;font-size:11px;color:#475569;">Envelope ID: ${safeCode}</div>
+      </div>
+      <div style="border-radius:999px;padding:4px 12px;font-size:11px;font-weight:800;background:${
+        isCompleted ? '#DCFCE7' : '#FEF3C7'
+      };color:${isCompleted ? '#065F46' : '#92400E'};">
+        ${isCompleted ? 'EXECUTED · ELECTRONICALLY SIGNED' : `${escapeHtml(envelope.status.toUpperCase())}`}
+      </div>
+    </div>
+    <div class="body-content">${safeBody}</div>
+    ${checksHtml}
+    <div class="sig-grid">${signerBlocksHtml}</div>
+  </section>
+  ${auditCertHtml}
+</body>
+</html>`
+}

@@ -11,9 +11,11 @@ import {
 import {
   buildPrintableDocumentHtml,
   buildPrintableSheetHtml,
+  buildPrintableSignedContractHtml,
   buildPrintableSlidesHtml,
   printHtmlViaHiddenIframe,
   type PrintableSheetTabInput,
+  type PrintableSignEnvelopeInput,
   type SlideExportItem,
   type SlidesPrintColorMode,
   type SlidesPrintLayout,
@@ -52,6 +54,10 @@ export type ConnectLnStudioPrintModalProps =
       slides: SlideExportItem[]
       currentSlideIndex: number
       theme: SlideThemePalette
+    })
+  | (CommonPrintProps & {
+      mode: "sign"
+      envelope: PrintableSignEnvelopeInput
     })
 
 function sheetTabToPrintable(tab: StudioSheetTab): PrintableSheetTabInput {
@@ -125,14 +131,34 @@ export function ConnectLnStudioPrintModal(props: ConnectLnStudioPrintModalProps)
   const [slidesFrame, setSlidesFrame] = useState(true)
   const [slidesNumbers, setSlidesNumbers] = useState(true)
 
+  // Sign local print settings
+  const [signIncludeCert, setSignIncludeCert] = useState(true)
+  const [signGrayscale, setSignGrayscale] = useState(false)
+
   const [printToast, setPrintToast] = useState<string | null>(null)
 
   const appLabel =
-    props.mode === "docs" ? "Docs" : props.mode === "sheets" ? "Sheets" : "Slides"
+    props.mode === "docs"
+      ? "Docs"
+      : props.mode === "sheets"
+      ? "Sheets"
+      : props.mode === "sign"
+      ? "Sign"
+      : "Slides"
   const exportExt =
-    props.mode === "docs" ? ".docx" : props.mode === "sheets" ? ".xlsx" : ".pptx"
+    props.mode === "docs" || props.mode === "sign"
+      ? ".docx"
+      : props.mode === "sheets"
+      ? ".xlsx"
+      : ".pptx"
 
   const printableHtml = useMemo(() => {
+    if (props.mode === "sign") {
+      return buildPrintableSignedContractHtml(props.envelope, {
+        includeAuditCertificate: signIncludeCert,
+        grayscale: signGrayscale,
+      })
+    }
     if (props.mode === "docs") {
       return buildPrintableDocumentHtml({
         title: props.title,
@@ -199,6 +225,8 @@ export function ConnectLnStudioPrintModal(props: ConnectLnStudioPrintModalProps)
     slidesColorMode,
     slidesFrame,
     slidesNumbers,
+    signIncludeCert,
+    signGrayscale,
   ])
 
   if (!props.isOpen) return null
@@ -575,6 +603,40 @@ export function ConnectLnStudioPrintModal(props: ConnectLnStudioPrintModalProps)
                       onChange={(e) => setSlidesNumbers(e.target.checked)}
                     />
                     <span>Show Slide Numbers</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {props.mode === "sign" && (
+              <div className="space-y-3 text-xs">
+                <div className="rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 space-y-1">
+                  <p className="text-[11px] font-extrabold text-[#4338CA] uppercase">
+                    Envelope Summary
+                  </p>
+                  <p className="font-mono text-[11px]">{props.envelope.envelopeCode}</p>
+                  <p className="text-[11px] text-zinc-500">
+                    Signers:{" "}
+                    {props.envelope.signers.filter((s) => s.status === "signed").length} /{" "}
+                    {props.envelope.signers.length} executed
+                  </p>
+                </div>
+                <div className="space-y-1.5 pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={signIncludeCert}
+                      onChange={(e) => setSignIncludeCert(e.target.checked)}
+                    />
+                    <span>Include Certificate of Completion &amp; Audit Trail</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={signGrayscale}
+                      onChange={(e) => setSignGrayscale(e.target.checked)}
+                    />
+                    <span>Black &amp; White Ink Mode</span>
                   </label>
                 </div>
               </div>

@@ -55,6 +55,7 @@ import {
   PhoneCall,
   Download,
   PlayCircle,
+  FileSignature,
   FileText,
   Table2,
   Presentation
@@ -727,6 +728,61 @@ export function ConnectLnNavbar({
                           <span className="text-[9.5px] text-[#6B7280] dark:text-zinc-400 truncate max-w-full">
                             {sApp.sub}
                           </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* ConnectLn Power Apps — First-Party Professional Workflow Suite */}
+                <div className="rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/30 p-2.5 space-y-2">
+                  <div className="flex items-center justify-between px-0.5">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#4338CA] dark:text-indigo-400">
+                      ConnectLn Power Apps
+                    </span>
+                    <span className="rounded-full bg-white dark:bg-zinc-800 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 text-[9.5px] font-bold text-[#4338CA] dark:text-indigo-300">
+                      Built by ConnectLn
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {[
+                      {
+                        id: "sign",
+                        label: "Sign",
+                        sub: "E-Signatures, Contract Routing & SHA-256 Certificates",
+                        icon: FileSignature,
+                        bg: "bg-[#4338CA]",
+                      },
+                    ].map((pApp) => {
+                      const PIcon = pApp.icon
+                      const isPActive = activeTab === pApp.id
+                      return (
+                        <button
+                          key={pApp.id}
+                          type="button"
+                          onClick={() => {
+                            setIsAppLauncherOpen(false)
+                            onSelectTab(pApp.id)
+                          }}
+                          className={`flex items-center gap-2.5 rounded-xl border p-2 text-left transition-all cursor-pointer ${
+                            isPActive
+                              ? "border-[#4338CA] bg-white dark:bg-zinc-800 shadow-2xs"
+                              : "border-transparent bg-white/85 dark:bg-zinc-900/85 hover:border-indigo-300 dark:hover:border-indigo-700"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white shadow-2xs ${pApp.bg}`}
+                          >
+                            <PIcon className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[11px] font-extrabold text-[#0B1F3A] dark:text-zinc-100 leading-tight">
+                              {pApp.label}
+                            </div>
+                            <div className="text-[9.5px] text-[#6B7280] dark:text-zinc-400 truncate">
+                              {pApp.sub}
+                            </div>
+                          </div>
                         </button>
                       )
                     })}
@@ -2868,6 +2924,40 @@ export function ConnectLnNavbar({
                         </button>
                       )
                     })}
+                  </div>
+                </div>
+
+                {/* ConnectLn Power Apps Mobile Quick Launch */}
+                <div className="rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/30 p-2.5 space-y-2">
+                  <div className="flex items-center justify-between px-0.5">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#4338CA] dark:text-indigo-400">
+                      ConnectLn Power Apps
+                    </span>
+                    <span className="text-[9.5px] font-bold text-[#4338CA] dark:text-indigo-300">
+                      Built by ConnectLn
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSelectTab("sign")
+                        setIsMobileDrawerOpen(false)
+                      }}
+                      className="flex items-center gap-2.5 rounded-xl border border-transparent bg-white/90 dark:bg-zinc-900/90 hover:border-[#4338CA] p-2 text-left cursor-pointer"
+                    >
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white bg-[#4338CA]">
+                        <FileSignature className="h-3.5 w-3.5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-extrabold text-[#0B1F3A] dark:text-zinc-100">
+                          Sign
+                        </div>
+                        <div className="text-[9.5px] text-[#6B7280] dark:text-zinc-400 truncate">
+                          E-Signatures &amp; Audit Certificates
+                        </div>
+                      </div>
+                    </button>
                   </div>
                 </div>
 

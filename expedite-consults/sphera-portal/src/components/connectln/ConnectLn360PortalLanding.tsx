@@ -15,6 +15,7 @@ import {
   Copy,
   Download,
   ExternalLink,
+  FileSignature,
   FileText,
   Globe,
   GraduationCap,
@@ -431,6 +432,14 @@ const SUITE_APPS: Array<{
     bg: "bg-[#C84B28]",
     cta: "Open ConnectLn Slides",
     href: "/connectin?tab=slides",
+  },
+  {
+    name: "ConnectLn Sign",
+    desc: "First-party ConnectLn Power App — draw or type signatures, route approvals, seal contracts with SHA-256 digests & print audit certificates.",
+    icon: FileSignature,
+    bg: "bg-[#4338CA]",
+    cta: "Open ConnectLn Sign",
+    href: "/connectin?tab=sign",
   },
 ]
 

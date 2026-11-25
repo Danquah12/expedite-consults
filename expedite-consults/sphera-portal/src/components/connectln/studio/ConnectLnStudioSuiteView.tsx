@@ -1,13 +1,15 @@
 "use client"
 
 import React, { useState } from "react"
-import { ArrowLeft, CheckCircle2, FileText, Layers, Presentation, Table2 } from "lucide-react"
+import { ArrowLeft, CheckCircle2, FileSignature, FileText, Layers, Presentation, Table2 } from "lucide-react"
 import type { UserProfile } from "@/lib/connectln-data"
+import type { StudioDocRecord } from "@/lib/connectln-studio-storage"
 import { ConnectLnDocsEditor, type StudioSharePayload } from "./ConnectLnDocsEditor"
 import { ConnectLnSheetsEditor } from "./ConnectLnSheetsEditor"
 import { ConnectLnSlidesEditor } from "./ConnectLnSlidesEditor"
+import { ConnectLnSignApp } from "./ConnectLnSignApp"
 
-export type StudioAppId = "docs" | "sheets" | "slides"
+export type StudioAppId = "docs" | "sheets" | "slides" | "sign"
 
 interface ConnectLnStudioSuiteViewProps {
   activeApp: StudioAppId
@@ -21,6 +23,7 @@ const STUDIO_APPS: Array<{
   id: StudioAppId
   name: string
   tagline: string
+  group: "create" | "power"
   icon: React.ComponentType<{ className?: string }>
   badgeClass: string
   activePillClass: string
@@ -29,6 +32,7 @@ const STUDIO_APPS: Array<{
     id: "docs",
     name: "ConnectLn Docs",
     tagline: "Rich Documents",
+    group: "create",
     icon: FileText,
     badgeClass: "bg-[#0B5CAD] text-white",
     activePillClass: "bg-[#0B5CAD] text-white shadow-xs",
@@ -37,6 +41,7 @@ const STUDIO_APPS: Array<{
     id: "sheets",
     name: "ConnectLn Sheets",
     tagline: "Formula Workbooks",
+    group: "create",
     icon: Table2,
     badgeClass: "bg-[#107C41] text-white",
     activePillClass: "bg-[#107C41] text-white shadow-xs",
@@ -45,9 +50,19 @@ const STUDIO_APPS: Array<{
     id: "slides",
     name: "ConnectLn Slides",
     tagline: "Presentation Decks",
+    group: "create",
     icon: Presentation,
     badgeClass: "bg-[#C84B28] text-white",
     activePillClass: "bg-[#C84B28] text-white shadow-xs",
+  },
+  {
+    id: "sign",
+    name: "ConnectLn Sign",
+    tagline: "E-Signatures & Audit Certificates",
+    group: "power",
+    icon: FileSignature,
+    badgeClass: "bg-[#4338CA] text-white",
+    activePillClass: "bg-[#4338CA] text-white shadow-xs",
   },
 ]
 
@@ -59,6 +74,7 @@ export function ConnectLnStudioSuiteView({
   onShareToFeed,
 }: ConnectLnStudioSuiteViewProps) {
   const [sharedBanner, setSharedBanner] = useState<string | null>(null)
+  const [pendingSignDoc, setPendingSignDoc] = useState<StudioDocRecord | null>(null)
   const currentAppMeta = STUDIO_APPS.find((a) => a.id === activeApp) || STUDIO_APPS[0]
   const CurrentIcon = currentAppMeta.icon
 
@@ -90,20 +106,33 @@ export function ConnectLnStudioSuiteView({
               <h1 className="text-sm sm:text-base font-extrabold text-[#0B1F3A] dark:text-white tracking-tight">
                 {currentAppMeta.name}
               </h1>
-              <span className="inline-flex items-center gap-1 rounded-full border border-[#E7E2DA] dark:border-zinc-700 bg-[#FAF7F2] dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[#0067B8] dark:text-sky-400">
+              <span
+                className={`inline-flex items-center gap-1 rounded-full border border-[#E7E2DA] dark:border-zinc-700 bg-[#FAF7F2] dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${
+                  currentAppMeta.group === "power"
+                    ? "text-[#4338CA] dark:text-indigo-400"
+                    : "text-[#0067B8] dark:text-sky-400"
+                }`}
+              >
                 <Layers className="h-3 w-3" />
-                ConnectLn 360 Studio · Built by ConnectLn
+                {currentAppMeta.group === "power"
+                  ? "ConnectLn Power Apps · Built by ConnectLn"
+                  : "ConnectLn 360 Studio · Built by ConnectLn"}
               </span>
             </div>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-              First-party proprietary workspace — own your documents, formula sheets &amp; decks with standard .docx, .xlsx &amp; .pptx export.
+              {currentAppMeta.group === "power"
+                ? "First-party professional workflow app — draw or type signatures, route approvals & seal contracts with SHA-256 certificates."
+                : "First-party proprietary workspace — own your documents, formula sheets & decks with standard .docx, .xlsx & .pptx export."}
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex items-center rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950 p-1 gap-1">
-            {STUDIO_APPS.map((app) => {
+          <div className="inline-flex flex-wrap items-center rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950 p-1 gap-1">
+            <span className="px-1.5 text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              Create:
+            </span>
+            {STUDIO_APPS.filter((a) => a.group === "create").map((app) => {
               const Icon = app.icon
               const isSelected = activeApp === app.id
               return (
@@ -115,6 +144,29 @@ export function ConnectLnStudioSuiteView({
                     isSelected
                       ? app.activePillClass
                       : "text-[#0B1F3A] dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span>{app.name.replace("ConnectLn ", "")}</span>
+                </button>
+              )
+            })}
+            <span aria-hidden="true" className="mx-0.5 h-5 w-px bg-[#E7E2DA] dark:bg-zinc-700" />
+            <span className="px-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#4338CA] dark:text-indigo-400">
+              Power Apps:
+            </span>
+            {STUDIO_APPS.filter((a) => a.group === "power").map((app) => {
+              const Icon = app.icon
+              const isSelected = activeApp === app.id
+              return (
+                <button
+                  key={app.id}
+                  type="button"
+                  onClick={() => onSwitchApp(app.id)}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                    isSelected
+                      ? app.activePillClass
+                      : "text-[#4338CA] dark:text-indigo-300 hover:bg-white dark:hover:bg-zinc-800"
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -152,13 +204,28 @@ export function ConnectLnStudioSuiteView({
       )}
 
       {activeApp === "docs" && (
-        <ConnectLnDocsEditor user={user} onShareToFeed={onShareToFeed ? handleShare : undefined} />
+        <ConnectLnDocsEditor
+          user={user}
+          onShareToFeed={onShareToFeed ? handleShare : undefined}
+          onSendToSign={(doc) => {
+            setPendingSignDoc(doc)
+            onSwitchApp("sign")
+          }}
+        />
       )}
       {activeApp === "sheets" && (
         <ConnectLnSheetsEditor user={user} onShareToFeed={onShareToFeed ? handleShare : undefined} />
       )}
       {activeApp === "slides" && (
         <ConnectLnSlidesEditor user={user} onShareToFeed={onShareToFeed ? handleShare : undefined} />
+      )}
+      {activeApp === "sign" && (
+        <ConnectLnSignApp
+          user={user}
+          pendingImportDoc={pendingSignDoc}
+          onClearPendingImport={() => setPendingSignDoc(null)}
+          onShareToFeed={onShareToFeed ? handleShare : undefined}
+        />
       )}
     </section>
   )
