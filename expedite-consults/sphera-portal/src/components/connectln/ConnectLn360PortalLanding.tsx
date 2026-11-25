@@ -9,6 +9,7 @@ import {
   Building2,
   Calendar,
   Check,
+  CheckCircle2,
   ChevronDown,
   ChevronRight,
   ChevronUp,
@@ -21,7 +22,10 @@ import {
   Globe,
   GraduationCap,
   Kanban,
+  KeyRound,
   Laptop,
+  Layers,
+  Lock,
   Mail,
   MessageSquare,
   PhoneCall,
@@ -31,6 +35,7 @@ import {
   Receipt,
   Search,
   ShieldCheck,
+  SlidersHorizontal,
   Smartphone,
   Sparkles,
   Table2,
@@ -61,9 +66,24 @@ const NAV_LINKS = [
   { href: "#tour", label: "Preview" },
   { href: "#plans", label: "Plans" },
   { href: "#download-app", label: "Download" },
-  { href: "#mobile-app", label: "Mobile App" },
   { href: "#suite", label: "Suite" },
+  { href: "#security", label: "Security" },
   { href: "#faq", label: "FAQ" },
+]
+
+const QUICK_CREATE_LINKS: Array<{
+  label: string
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  badgeClass: string
+}> = [
+  { label: "New Doc", href: "/connectin?tab=docs", icon: FileText, badgeClass: "text-[#0B5CAD] bg-sky-50 border-sky-200" },
+  { label: "New Sheet", href: "/connectin?tab=sheets", icon: Table2, badgeClass: "text-[#107C41] bg-emerald-50 border-emerald-200" },
+  { label: "New Deck", href: "/connectin?tab=slides", icon: Presentation, badgeClass: "text-[#C84B28] bg-orange-50 border-orange-200" },
+  { label: "Send to Sign", href: "/connectin?tab=sign", icon: FileSignature, badgeClass: "text-[#4338CA] bg-indigo-50 border-indigo-200" },
+  { label: "New Invoice", href: "/connectin?tab=invoice", icon: Receipt, badgeClass: "text-[#0F766E] bg-teal-50 border-teal-200" },
+  { label: "New Board", href: "/connectin?tab=boards", icon: Kanban, badgeClass: "text-[#B45309] bg-amber-50 border-amber-200" },
+  { label: "New Form", href: "/connectin?tab=forms", icon: ClipboardList, badgeClass: "text-[#9333EA] bg-purple-50 border-purple-200" },
 ]
 
 const HERO_TABS = ["Core Capabilities", "Unified Comms", "Noctis AI"] as const
@@ -227,6 +247,8 @@ const TOUR_TABS = [
     composeSubject: "Q4 Dispatch & Site Kickoff",
     composePreview: "Hi team — shared the updated inspection checklist in our room and scheduled our 10:00 AM group call.",
     aiSuggestion: "Help me finalize the agenda and invite everyone to the room",
+    ctaHref: "/connectin?tab=vibecomms",
+    ctaLabel: "Open Calls Studio",
   },
   {
     id: "noctis",
@@ -238,6 +260,34 @@ const TOUR_TABS = [
     composeSubject: "Shortlist Review: Senior Field Engineers",
     composePreview: "Three verified candidates completed peer vouches and match 95%+ of the site safety requirements.",
     aiSuggestion: "Compare top 3 applicants and draft interview invites",
+    ctaHref: "/connectin?tab=careersuite",
+    ctaLabel: "Open Noctis Workspace",
+  },
+  {
+    id: "studio",
+    title: "Studio: Docs, Sheets & Slides",
+    heading: "Full 5-tab editing ribbons, formulas, charts & print preview",
+    caption:
+      "Author formatted proposals in Docs, evaluate live bids with SUMIF & charts in Sheets, present widescreen Slides, and export clean handouts.",
+    composeTo: "ConnectLn Studio · Docs, Sheets & Slides",
+    composeSubject: "Q4 Timber Framing Estimate & Project Deck (.docx / .xlsx / .pptx)",
+    composePreview: "Formula bar verified (`=SUMIF(...) = $2,040`), custom page watermark applied, and 4-per-page handout ready to print.",
+    aiSuggestion: "Send approved proposal directly to ConnectLn Sign for client signature",
+    ctaHref: "/connectin?tab=docs",
+    ctaLabel: "Try Studio Apps",
+  },
+  {
+    id: "power",
+    title: "Power Apps: Sign to Invoice",
+    heading: "One connected pipeline: Forms → Boards → Sign → Invoice",
+    caption:
+      "Capture client intake in Forms, dispatch crew milestones on Boards, seal agreements with SHA-256 signatures, and collect payment in Invoice.",
+    composeTo: "ConnectLn Power Apps · Workflow Connected",
+    composeSubject: "Signed Contract #SIG-2041 sealed (SHA-256) → Invoice #INV-1088 Paid",
+    composePreview: "Client intake converted to crew board task, logged 12 billable hours, sealed via e-signature, and settled in Ledger.",
+    aiSuggestion: "Generate net cash flow summary and print official receipt",
+    ctaHref: "/connectin?tab=sign",
+    ctaLabel: "Try Power Apps",
   },
   {
     id: "apps",
@@ -249,6 +299,188 @@ const TOUR_TABS = [
     composeSubject: "RFP Package Submitted · Escrow Milestone #2",
     composePreview: "Deliverables uploaded to the Business Workspace along with signed verification certificates.",
     aiSuggestion: "Generate milestone summary and notify the buyer",
+    ctaHref: "/connectin",
+    ctaLabel: "Open App Launcher",
+  },
+]
+
+const ROLE_WORKFLOWS = [
+  {
+    id: "trades",
+    label: "Skilled Trades",
+    badge: "Field-Ready",
+    headline: "Built for master technicians, inspectors & field crews",
+    summary:
+      "Dispatch crews from job sites, submit signed inspection reports, and watch hands-on trade walkthroughs tailored to your license.",
+    steps: [
+      "Collect field inspection requests via ConnectLn Forms",
+      "Assign crew checklists and hours in ConnectLn Boards",
+      "Seal client sign-off in Sign & issue Invoices on site",
+    ],
+    ctaLabel: "Open Skilled Trades Hub",
+    ctaHref: "/connectin?tab=forms",
+    apps: [
+      { name: "ConnectLn Forms", tag: "Site Intake", href: "/connectin?tab=forms" },
+      { name: "ConnectLn Boards", tag: "Crew Tasks", href: "/connectin?tab=boards" },
+      { name: "ConnectLn Sign", tag: "Field Sign-Off", href: "/connectin?tab=sign" },
+      { name: "Vibe Calls & Studio", tag: "HD Dispatch", href: "/connectin?tab=vibecomms" },
+    ],
+  },
+  {
+    id: "business",
+    label: "Small Business",
+    badge: "Revenue Suite",
+    headline: "Run proposals, contracts, projects & invoicing in one portal",
+    summary:
+      "Eliminate scattered tools by moving from RFP inquiry to approved proposal, cryptographically sealed signature, and paid ledger.",
+    steps: [
+      "Draft clean SOWs in Docs & estimate budgets in Sheets",
+      "Track project milestones & billable hours on Boards",
+      "Collect SHA-256 signatures and log payments in Invoice",
+    ],
+    ctaLabel: "Open Business Workflow",
+    ctaHref: "/connectin?tab=invoice",
+    apps: [
+      { name: "ConnectLn Docs", tag: "Proposals", href: "/connectin?tab=docs" },
+      { name: "ConnectLn Sheets", tag: "Budgets", href: "/connectin?tab=sheets" },
+      { name: "ConnectLn Sign", tag: "Contracts", href: "/connectin?tab=sign" },
+      { name: "ConnectLn Invoice & Ledger", tag: "Billing", href: "/connectin?tab=invoice" },
+    ],
+  },
+  {
+    id: "healthcare",
+    label: "Healthcare",
+    badge: "Private & Fast",
+    headline: "Coordinate clinical teams, intake & continuing education safely",
+    summary:
+      "Host end-to-end encrypted consultations, organize credential renewals, and keep patient intake workflows cleanly structured.",
+    steps: [
+      "Run private HD video huddles with safety code verification",
+      "Manage clinic onboarding forms and credential check-ins",
+      "Share translated summaries with Noctis AI in Private Mode",
+    ],
+    ctaLabel: "Explore Clinical Tools",
+    ctaHref: "/connectin?tab=vibecomms",
+    apps: [
+      { name: "Vibe Calls & Studio", tag: "Encrypted HD", href: "/connectin?tab=vibecomms" },
+      { name: "ConnectLn Forms", tag: "Intake", href: "/connectin?tab=forms" },
+      { name: "Noctis Learning Academy", tag: "CE Videos", href: "/connectin?tab=learning" },
+      { name: "Trust & Passkeys", tag: "FIDO2 Auth", href: "/connectin" },
+    ],
+  },
+  {
+    id: "tech",
+    label: "Tech & Cyber",
+    badge: "Zero-Trust",
+    headline: "Ship architecture reviews, RFPs & sprints with cryptographic trust",
+    summary:
+      "Review system decks together in Slides, track security deliverables in Boards, and protect every workspace session with FIDO2 passkeys.",
+    steps: [
+      "Present architecture reviews & sprint readouts in Slides",
+      "Verify vendor NDAs with SHA-256 digests in ConnectLn Sign",
+      "Collaborate in end-to-end encrypted team calling rooms",
+    ],
+    ctaLabel: "Launch Engineering Suite",
+    ctaHref: "/connectin?tab=slides",
+    apps: [
+      { name: "ConnectLn Slides", tag: "Architecture", href: "/connectin?tab=slides" },
+      { name: "ConnectLn Boards", tag: "Sprints", href: "/connectin?tab=boards" },
+      { name: "ConnectLn Sign", tag: "SHA-256 NDA", href: "/connectin?tab=sign" },
+      { name: "Noctis Clinic", tag: "Rapid Drills", href: "/connectin?tab=noctisclinic" },
+    ],
+  },
+  {
+    id: "students",
+    label: "Students & Career",
+    badge: "Career Growth",
+    headline: "Learn skills in 60 seconds, polish resumes & land verified jobs",
+    summary:
+      "Pair curated video training and study cohorts with Docs resumes, interactive interview coaching, and direct verified job applications.",
+    steps: [
+      "Build polished resumes & cover letters in ConnectLn Docs",
+      "Practice interview walkthroughs with Noctis Learning",
+      "Apply straight to transparent verified jobs in your niche",
+    ],
+    ctaLabel: "Open Career Tools",
+    ctaHref: "/connectin?tab=jobs",
+    apps: [
+      { name: "Verified Jobs", tag: "Direct Apply", href: "/connectin?tab=jobs" },
+      { name: "Noctis Learning Academy", tag: "Video Tracks", href: "/connectin?tab=learning" },
+      { name: "Noctis Social", tag: "60s Sparks", href: "/connectin?tab=noctissocial" },
+      { name: "ConnectLn Docs", tag: "Resumes", href: "/connectin?tab=docs" },
+    ],
+  },
+]
+
+const PLAN_APP_ICONS = [
+  { key: "mail", label: "Mail & Chat", icon: Mail, color: "bg-[#0078D4]" },
+  { key: "calls", label: "HD Calls", icon: Video, color: "bg-emerald-600" },
+  { key: "docs", label: "Docs", icon: FileText, color: "bg-[#0B5CAD]" },
+  { key: "sheets", label: "Sheets", icon: Table2, color: "bg-[#107C41]" },
+  { key: "slides", label: "Slides", icon: Presentation, color: "bg-[#C84B28]" },
+  { key: "sign", label: "Sign", icon: FileSignature, color: "bg-[#4338CA]" },
+  { key: "invoice", label: "Invoice", icon: Receipt, color: "bg-[#0F766E]" },
+  { key: "boards", label: "Boards", icon: Kanban, color: "bg-[#B45309]" },
+  { key: "forms", label: "Forms", icon: ClipboardList, color: "bg-[#9333EA]" },
+  { key: "noctis", label: "Noctis AI", icon: Sparkles, color: "bg-[#0B1F3A]" },
+] as const
+
+const PLAN_COMPARISON_ROWS: Record<
+  "individual" | "business",
+  Array<{ feature: string; values: [string, string, string, string] }>
+> = {
+  individual: [
+    { feature: "Mail, Messaging & 1:1 / Group HD Calls", values: ["Included", "Included", "HD + Screenshare", "Up to 6 crew members"] },
+    { feature: "ConnectLn Docs, Sheets & Slides + Print", values: ["Core editing", "Full editing", "Full + Snapshots", "Shared team templates"] },
+    { feature: "Power Apps (Sign, Invoice, Boards, Forms)", values: ["Up to 3 active", "Standard limits", "Unlimited", "Unlimited + Shared"] },
+    { feature: "Noctis AI Assistant & Thread Recaps", values: ["Daily quota", "Standard", "Unlimited Pro", "Unlimited · 6 seats"] },
+    { feature: "Verified Jobs & Noctis Learning Academy", values: ["Included", "Ad-free", "Priority Matching", "Priority · 6 seats"] },
+    { feature: "SHA-256 Document Sealing & Passkeys", values: ["Included", "Included", "Included", "Included"] },
+  ],
+  business: [
+    { feature: "Mail, Group HD Calls & Team Rooms", values: ["Up to 3 seats", "Unlimited hosts", "Unlimited + Recaps", "Dedicated relay"] },
+    { feature: "ConnectLn Docs, Sheets & Slides Suite", values: ["Included", "Full + Exports", "Full + Audit History", "Custom Branding"] },
+    { feature: "Power Apps (Sign, Invoice, Boards, Forms)", values: ["Starter limits", "Full Workflow", "Unlimited + Ledger", "Unlimited + API"] },
+    { feature: "Procurement, RFPs & Seller Center", values: ["Directory listing", "Full RFP Desk", "Priority RFPs + Escrow", "Private Enclaves"] },
+    { feature: "Noctis AI Executive Advisor", values: ["Preview", "Team Drafting", "Full Unlimited", "Isolated Tenant"] },
+    { feature: "Security (FIDO2 Passkeys, E2EE, IAM)", values: ["Standard", "Passkeys + Logs", "Enforced FIDO2 + IAM", "Custom SSO/SAML"] },
+  ],
+}
+
+const STACK_REPLACEMENTS = [
+  { category: "Business Email & Team Chat", standaloneMonthly: 12, app: "Mail & Chat" },
+  { category: "HD Video Conferencing & Voice", standaloneMonthly: 15, app: "Vibe Calls & Studio" },
+  { category: "Docs, Sheets & Slides Editors", standaloneMonthly: 12, app: "ConnectLn Studio" },
+  { category: "Electronic Signatures & SHA-256", standaloneMonthly: 25, app: "ConnectLn Sign" },
+  { category: "Invoicing & Expense Ledger", standaloneMonthly: 20, app: "ConnectLn Invoice" },
+  { category: "Project & Crew Task Boards", standaloneMonthly: 10, app: "ConnectLn Boards" },
+  { category: "Intake Forms & Response Analytics", standaloneMonthly: 15, app: "ConnectLn Forms" },
+]
+
+const TRUST_PILLARS = [
+  {
+    title: "End-to-End Encrypted Calls & Chat",
+    desc: "Direct conversations and live HD video rooms support participant safety code verification with instant hardware cleanup on hangup.",
+    icon: Lock,
+    badge: "E2EE Verified",
+  },
+  {
+    title: "FIDO2 Passkeys & Phone Verification",
+    desc: "Hardware passkeys, phone-verified member badges, and clean per-device session isolation keep accounts protected.",
+    icon: KeyRound,
+    badge: "Zero-Trust Auth",
+  },
+  {
+    title: "Private-by-Default Noctis AI",
+    desc: "Run meeting and thread summaries locally in Private Mode — external AI is only queried when you explicitly choose Live AI.",
+    icon: Sparkles,
+    badge: "Explicit Consent",
+  },
+  {
+    title: "SHA-256 Cryptographic Sealing",
+    desc: "Agreements in ConnectLn Sign generate verifiable SHA-256 document digests alongside printable audit certificates.",
+    icon: ShieldCheck,
+    badge: "Tamper-Evident",
   },
 ]
 
@@ -262,6 +494,7 @@ const PLAN_TIERS = {
       highlight: false,
       description: "Messaging, 1-on-1 & group WebRTC calls, verified profile, jobs browsing, and profession feed.",
       cta: "Create free account",
+      includedApps: ["mail", "calls", "docs", "sheets", "slides"],
     },
     {
       name: "ConnectLn Basic",
@@ -272,6 +505,7 @@ const PLAN_TIERS = {
       highlight: false,
       description: "Ad-free workspace, expanded file sharing in calls, priority dispatch alerts, and verified badge tools.",
       cta: "Get Basic",
+      includedApps: ["mail", "calls", "docs", "sheets", "slides", "forms"],
     },
     {
       name: "ConnectLn Pro",
@@ -284,6 +518,7 @@ const PLAN_TIERS = {
       badge: "Recommended",
       description: "Full Noctis AI Assistant, CareerSuite interview coach, HD call recording & recaps, and priority jobs matching.",
       cta: "Start Pro Trial",
+      includedApps: ["mail", "calls", "docs", "sheets", "slides", "sign", "invoice", "boards", "forms", "noctis"],
     },
     {
       name: "ConnectLn Pro Plus",
@@ -294,6 +529,7 @@ const PLAN_TIERS = {
       highlight: false,
       description: "Share workspace benefits across up to 6 crew members or collaborators with shared calendars & files.",
       cta: "Choose Pro Plus",
+      includedApps: ["mail", "calls", "docs", "sheets", "slides", "sign", "invoice", "boards", "forms", "noctis"],
     },
   ],
   business: [
@@ -305,6 +541,7 @@ const PLAN_TIERS = {
       highlight: false,
       description: "Company profile, verified directory listing, group messaging, and team voice/video huddles.",
       cta: "Launch Crew",
+      includedApps: ["mail", "calls", "docs", "sheets", "boards"],
     },
     {
       name: "Business Standard",
@@ -315,6 +552,7 @@ const PLAN_TIERS = {
       highlight: false,
       description: "Procurement & RFP desk, calendar booking, Seller Center storefronts, and audit-ready call attendance logs.",
       cta: "Start Business",
+      includedApps: ["mail", "calls", "docs", "sheets", "slides", "sign", "invoice", "boards", "forms"],
     },
     {
       name: "Business Premium",
@@ -327,6 +565,7 @@ const PLAN_TIERS = {
       badge: "Best Value",
       description: "Everything in Standard plus Noctis AI Executive Advisor, FIDO2 passkey enforcement, and multi-org IAM.",
       cta: "Upgrade Team",
+      includedApps: ["mail", "calls", "docs", "sheets", "slides", "sign", "invoice", "boards", "forms", "noctis"],
     },
     {
       name: "Sovereign Enterprise",
@@ -336,12 +575,16 @@ const PLAN_TIERS = {
       highlight: false,
       description: "Private trade enclaves, dedicated TURN media relay, custom SSO/SAML, and compliance retention controls.",
       cta: "Contact Architecture",
+      includedApps: ["mail", "calls", "docs", "sheets", "slides", "sign", "invoice", "boards", "forms", "noctis"],
     },
   ],
 }
 
+type SuiteCategory = "All" | "Communication" | "Studio Apps" | "Power Apps" | "Career & Universe"
+
 const SUITE_APPS: Array<{
   name: string
+  category: Exclude<SuiteCategory, "All">
   desc: string
   icon: React.ComponentType<{ className?: string }>
   bg: string
@@ -352,6 +595,7 @@ const SUITE_APPS: Array<{
 }> = [
   {
     name: "Mail & Chat",
+    category: "Communication",
     desc: "Organized inbox, threaded direct messages, file attachments, and instant push notifications across web and mobile.",
     icon: Mail,
     bg: "bg-[#0078D4]",
@@ -359,6 +603,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "Vibe Calls & Studio",
+    category: "Communication",
     desc: "High-definition 1-on-1 and group calls with virtual backgrounds, screen sharing, whiteboard, and live recaps.",
     icon: Video,
     bg: "bg-emerald-600",
@@ -366,6 +611,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "Verified Jobs",
+    category: "Career & Universe",
     desc: "Mobile-friendly job discovery filtered by profession enclave, licensing level, location, and transparent compensation.",
     icon: Briefcase,
     bg: "bg-indigo-600",
@@ -373,6 +619,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "Noctis Learning Academy",
+    category: "Career & Universe",
     desc: "Role-matched short & full-length training videos selected for your exact profession right when you sign in.",
     icon: GraduationCap,
     bg: "bg-amber-600",
@@ -380,6 +627,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "Business & RFPs",
+    category: "Career & Universe",
     desc: "Manage Seller Center storefronts, procurement solicitations, invoicing, and escrow settlements from one hub.",
     icon: Building2,
     bg: "bg-sky-700",
@@ -387,6 +635,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "Trust & Passkeys",
+    category: "Career & Universe",
     desc: "Phone-verified identity, FIDO2 passkey protection, and clean zero-trust session isolation per device.",
     icon: ShieldCheck,
     bg: "bg-[#0B1F3A]",
@@ -394,6 +643,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "Noctis Social",
+    category: "Career & Universe",
     desc: "Create, learn, and connect in 60 seconds inside the ConnectLn 360 Universe — live short-form creator & community hub at noctis.social.",
     icon: PlayCircle,
     bg: "bg-fuchsia-600",
@@ -404,6 +654,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "Noctis Clinic",
+    category: "Career & Universe",
     desc: "Watch a Spark. Pass a drill. Take the stamp. Interactive rapid-mastery drills & intelligence clinic integrated directly at www.dstrike.app/noctis.",
     icon: Zap,
     bg: "bg-cyan-600",
@@ -414,6 +665,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "ConnectLn Docs",
+    category: "Studio Apps",
     desc: "Proprietary rich document editor engineered by ConnectLn — create proposals, SOWs, and field reports with standard .docx export.",
     icon: FileText,
     bg: "bg-[#0B5CAD]",
@@ -422,6 +674,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "ConnectLn Sheets",
+    category: "Studio Apps",
     desc: "Proprietary formula spreadsheet engine built by ConnectLn — run live bids, payroll, and budgets with standard .xlsx & CSV export.",
     icon: Table2,
     bg: "bg-[#107C41]",
@@ -430,6 +683,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "ConnectLn Slides",
+    category: "Studio Apps",
     desc: "Proprietary visual presentation studio owned by ConnectLn — design themed widescreen decks and present live with .pptx export.",
     icon: Presentation,
     bg: "bg-[#C84B28]",
@@ -438,6 +692,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "ConnectLn Sign",
+    category: "Power Apps",
     desc: "First-party ConnectLn Power App — draw or type signatures, route approvals, seal contracts with SHA-256 digests & print audit certificates.",
     icon: FileSignature,
     bg: "bg-[#4338CA]",
@@ -446,6 +701,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "ConnectLn Invoice & Ledger",
+    category: "Power Apps",
     desc: "First-party ConnectLn Power App — build invoices and estimates, log payments, track expenses and net cash flow, and print client statements.",
     icon: Receipt,
     bg: "bg-[#0F766E]",
@@ -454,6 +710,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "ConnectLn Boards",
+    category: "Power Apps",
     desc: "First-party ConnectLn Power App — organize sprints, field crews, checklists, billable hours & hand off directly to invoicing.",
     icon: Kanban,
     bg: "bg-[#B45309]",
@@ -462,6 +719,7 @@ const SUITE_APPS: Array<{
   },
   {
     name: "ConnectLn Forms",
+    category: "Power Apps",
     desc: "First-party ConnectLn Power App — build intake forms & surveys, validate responses, visualize analytics & route straight to project boards.",
     icon: ClipboardList,
     bg: "bg-[#9333EA]",
@@ -546,9 +804,28 @@ export function ConnectLn360PortalLanding() {
   const [selectedCurrency, setSelectedCurrency] =
     useState<keyof typeof FOOTER_CURRENCIES>("USD")
   const [mounted, setMounted] = useState(false)
+  const [signedInUserName, setSignedInUserName] = useState<string | null>(null)
+  const [activeRoleId, setActiveRoleId] = useState<string>("trades")
+  const [businessSeats, setBusinessSeats] = useState<number>(5)
+  const [showPlanCompare, setShowPlanCompare] = useState<boolean>(false)
+  const [showStackSavings, setShowStackSavings] = useState<boolean>(false)
+  const [activeSuiteCat, setActiveSuiteCat] = useState<SuiteCategory>("All")
 
   useEffect(() => {
     setMounted(true)
+    try {
+      const signedOut = localStorage.getItem("connectin_is_signed_out") === "true"
+      if (signedOut) return
+      const raw = localStorage.getItem("connectin_user_profile")
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      const fullName = typeof parsed?.name === "string" ? parsed.name.trim() : ""
+      if (fullName) {
+        setSignedInUserName(fullName.split(/\s+/)[0])
+      }
+    } catch {
+      // ignore storage errors
+    }
   }, [])
 
   const formatCurrencyPrice = (rawPrice: string) => {
@@ -561,16 +838,34 @@ export function ConnectLn360PortalLanding() {
     return `${cur.symbol}${(num * cur.rate).toFixed(2)}`
   }
 
+  const formatNumericCurrency = (usdAmount: number) => {
+    const cur = FOOTER_CURRENCIES[selectedCurrency] || FOOTER_CURRENCIES.USD
+    const scaled = usdAmount * cur.rate
+    return `${cur.symbol}${scaled.toLocaleString(undefined, {
+      minimumFractionDigits: scaled % 1 === 0 ? 0 : 2,
+      maximumFractionDigits: 2,
+    })}`
+  }
+
   const currentOverview =
     OVERVIEW_FEATURES.find((f) => f.id === activeAccordionId) || OVERVIEW_FEATURES[0]
 
   const currentPrompts = PROMPT_CARDS[promptCat]
   const currentTour = TOUR_TABS[activeTourIdx] || TOUR_TABS[0]
+  const currentRole = ROLE_WORKFLOWS.find((r) => r.id === activeRoleId) || ROLE_WORKFLOWS[0]
   const currentPlans = PLAN_TIERS[planAudience]
+  const visibleSuiteApps =
+    activeSuiteCat === "All"
+      ? SUITE_APPS
+      : SUITE_APPS.filter((app) => app.category === activeSuiteCat)
   const visibleTips =
     activeTipsCat === "All"
       ? TIPS_ITEMS
       : TIPS_ITEMS.filter((item) => item.cat === activeTipsCat)
+  const totalStandaloneMonthlyUsd = STACK_REPLACEMENTS.reduce(
+    (sum, item) => sum + item.standaloneMonthly,
+    0
+  )
 
   const handleCopyPrompt = (title: string, text: string) => {
     if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
@@ -620,18 +915,37 @@ export function ConnectLn360PortalLanding() {
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <Link
-              href="/connectin-login?mode=join"
-              className="rounded-full bg-[#0B1F3A] hover:bg-[#163259] text-white px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold whitespace-nowrap transition-colors shadow-xs"
-            >
-              Create free account
-            </Link>
-            <Link
-              href="/connectin-login"
-              className="rounded-full border border-[#0B1F3A]/30 bg-white hover:bg-[#FAF7F2] text-[#0B1F3A] px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold whitespace-nowrap transition-colors"
-            >
-              Sign in
-            </Link>
+            {mounted && signedInUserName ? (
+              <>
+                <span className="hidden md:inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-bold text-emerald-800">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span>Welcome back, {signedInUserName}</span>
+                </span>
+                <Link
+                  href="/connectin"
+                  data-portal-open-workspace="true"
+                  className="rounded-full bg-[#0067B8] hover:bg-[#00559B] text-white px-3.5 sm:px-4 py-1.5 sm:py-2 text-xs font-bold whitespace-nowrap transition-colors shadow-xs inline-flex items-center gap-1"
+                >
+                  <span>Open Workspace</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/connectin-login?mode=join"
+                  className="rounded-full bg-[#0B1F3A] hover:bg-[#163259] text-white px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold whitespace-nowrap transition-colors shadow-xs"
+                >
+                  Create free account
+                </Link>
+                <Link
+                  href="/connectin-login"
+                  className="rounded-full border border-[#0B1F3A]/30 bg-white hover:bg-[#FAF7F2] text-[#0B1F3A] px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold whitespace-nowrap transition-colors"
+                >
+                  Sign in
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -718,6 +1032,29 @@ export function ConnectLn360PortalLanding() {
           >
             ↗
           </a>
+        </div>
+
+        {/* 1-Click Quick Create Strip across Studio & Power Apps */}
+        <div
+          aria-label="Quick create strip"
+          className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-[#E7E2DA] bg-white/80 px-4 py-2.5 shadow-2xs"
+        >
+          <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-[#4B5563] pr-1">
+            Quick Create:
+          </span>
+          {QUICK_CREATE_LINKS.map((item) => {
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold hover:shadow-xs transition-all ${item.badgeClass}`}
+              >
+                <Icon className="h-3 w-3" />
+                <span>{item.label}</span>
+              </Link>
+            )
+          })}
         </div>
 
         <div className="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -953,7 +1290,7 @@ export function ConnectLn360PortalLanding() {
             One clean command center for email-grade threads, HD group calls, job leads, and your industry network — on desktop, iOS, and Android.
           </p>
 
-          <div className="mt-7 mx-auto max-w-2xl grid grid-cols-1 sm:grid-cols-3 rounded-2xl border border-[#E7E2DA] bg-white overflow-hidden shadow-xs">
+          <div className="mt-7 mx-auto max-w-5xl flex flex-wrap justify-center gap-2 rounded-2xl border border-[#E7E2DA] bg-white p-1.5 shadow-xs">
             {TOUR_TABS.map((tItem, idx) => {
               const active = idx === activeTourIdx
               return (
@@ -961,10 +1298,10 @@ export function ConnectLn360PortalLanding() {
                   key={tItem.id}
                   type="button"
                   onClick={() => setActiveTourIdx(idx)}
-                  className={`px-4 py-3.5 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                     active
-                      ? "border-[#0067B8] text-[#0B1F3A] bg-[#FAF7F2]/60"
-                      : "border-transparent text-[#4B5563] hover:text-[#0B1F3A]"
+                      ? "bg-[#0067B8] text-white shadow-xs"
+                      : "text-[#4B5563] hover:text-[#0B1F3A] hover:bg-[#FAF7F2]"
                   }`}
                 >
                   {tItem.title}
@@ -991,27 +1328,33 @@ export function ConnectLn360PortalLanding() {
                 <span className="text-xs font-bold text-[#0B1F3A]">ConnectLn 360</span>
               </div>
               <span className="text-[11px] font-medium text-[#6B7280] hidden sm:inline">
-                Home · Mail · Calls · Jobs · Business
+                Home · Mail · Calls · Studio · Power Apps
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12">
               {/* Main Compose / Thread Pane */}
               <div className="md:col-span-8 p-4 sm:p-5 border-b md:border-b-0 md:border-r border-[#E7E2DA] space-y-3">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href={currentTour.ctaHref || "/connectin-login"}
+                    className="rounded-lg bg-[#0067B8] hover:bg-[#00559B] text-white px-3 py-1.5 text-xs font-bold transition-colors"
+                  >
+                    {currentTour.ctaLabel || "Open Live Workspace"}
+                  </Link>
                   <Link
                     href="/connectin-login"
-                    className="rounded-lg bg-[#0067B8] text-white px-3 py-1.5 text-xs font-bold"
+                    className="rounded-lg bg-[#FAF7F2] border border-[#E7E2DA] px-2.5 py-1.5 text-[11px] font-semibold text-[#4B5563] hover:text-[#0B1F3A]"
                   >
                     Open Live Workspace
                   </Link>
-                  <span className="rounded-lg bg-[#FAF7F2] border border-[#E7E2DA] px-2.5 py-1.5 text-[11px] font-semibold text-[#4B5563]">
+                  <span className="rounded-lg bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-800">
                     Encrypted E2EE
                   </span>
                 </div>
                 <div className="rounded-xl border border-[#E7E2DA] bg-[#FAF7F2]/70 p-3.5 space-y-2">
                   <p className="text-[11px] text-[#6B7280]">
-                    <span className="font-bold text-[#0B1F3A]">To:</span> {currentTour.composeTo}
+                    <span className="font-bold text-[#0B1F3A]">Workspace:</span> {currentTour.composeTo}
                   </p>
                   <p className="text-sm font-bold text-[#0B1F3A]">{currentTour.composeSubject}</p>
                   <p className="text-xs leading-relaxed text-[#4B5563]">
@@ -1030,7 +1373,7 @@ export function ConnectLn360PortalLanding() {
                   {currentTour.aiSuggestion}
                 </div>
                 <Link
-                  href="/connectin-login"
+                  href={currentTour.ctaHref || "/connectin-login"}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0067B8] hover:underline"
                 >
                   <span>Try live in ConnectLn</span>
@@ -1038,6 +1381,89 @@ export function ConnectLn360PortalLanding() {
                 </Link>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 4B. BUILT FOR HOW YOU WORK (SINGLE-CARD TABBED INDUSTRY SHOWCASE) ─── */}
+      <section id="roles" className="mx-auto max-w-6xl px-4 sm:px-8 py-14 border-t border-[#E7E2DA]">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4B5563]">
+              BUILT FOR HOW YOU WORK
+            </p>
+            <h2 className="mt-2 text-2xl sm:text-3xl font-semibold tracking-tight text-[#0B1F3A]">
+              Tailored workflows by profession &amp; industry
+            </h2>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {ROLE_WORKFLOWS.map((role) => {
+              const active = role.id === currentRole.id
+              return (
+                <button
+                  key={role.id}
+                  type="button"
+                  onClick={() => setActiveRoleId(role.id)}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-bold cursor-pointer transition-colors ${
+                    active
+                      ? "bg-[#0B1F3A] text-white shadow-xs"
+                      : "bg-[#EAE5DC] text-[#0B1F3A] hover:bg-[#DFD8CC]"
+                  }`}
+                >
+                  {role.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="mt-7 grid grid-cols-1 lg:grid-cols-12 gap-6 rounded-3xl border border-[#E7E2DA] bg-white p-6 sm:p-8 shadow-xs">
+          <div className="lg:col-span-7 flex flex-col justify-between space-y-4">
+            <div className="space-y-2.5">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 border border-sky-200 px-3 py-1 text-[11px] font-bold text-[#0067B8]">
+                <Layers className="h-3.5 w-3.5" />
+                <span>{currentRole.label} · {currentRole.badge}</span>
+              </span>
+              <h3 className="text-xl sm:text-2xl font-bold text-[#0B1F3A]">
+                {currentRole.headline}
+              </h3>
+              <p className="text-xs sm:text-sm leading-relaxed text-[#4B5563]">
+                {currentRole.summary}
+              </p>
+              <ul className="pt-1 space-y-2">
+                {currentRole.steps.map((step) => (
+                  <li key={step} className="flex items-start gap-2 text-xs font-semibold text-[#0B1F3A]">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <Link
+                href={currentRole.ctaHref}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#0067B8] hover:bg-[#00559B] px-4 py-2 text-xs font-bold text-white transition-colors"
+              >
+                <span>{currentRole.ctaLabel}</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
+            {currentRole.apps.map((app) => (
+              <Link
+                key={app.name}
+                href={app.href}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-[#E7E2DA] bg-[#FAF7F2]/80 hover:border-[#0067B8] hover:bg-white px-4 py-3 transition-all"
+              >
+                <div>
+                  <p className="text-xs font-bold text-[#0B1F3A]">{app.name}</p>
+                  <p className="text-[11px] text-[#4B5563]">{app.tag}</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-[#0067B8] shrink-0" />
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -1069,23 +1495,68 @@ export function ConnectLn360PortalLanding() {
             ))}
           </div>
 
-          <div className="inline-flex items-center rounded-full border border-[#E7E2DA] bg-white p-1 text-xs font-bold">
-            {(["yearly", "monthly"] as const).map((cycle) => (
-              <button
-                key={cycle}
-                type="button"
-                onClick={() => setBillingCycle(cycle)}
-                className={`rounded-full px-3 py-1 capitalize cursor-pointer transition-colors ${
-                  billingCycle === cycle
-                    ? "bg-[#0B1F3A] text-white"
-                    : "text-[#4B5563] hover:text-[#0B1F3A]"
-                }`}
-              >
-                {cycle}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-1 text-[10.5px] font-bold">
+              Save up to 30%
+            </span>
+            <div className="inline-flex items-center rounded-full border border-[#E7E2DA] bg-white p-1 text-xs font-bold">
+              {(["yearly", "monthly"] as const).map((cycle) => (
+                <button
+                  key={cycle}
+                  type="button"
+                  onClick={() => setBillingCycle(cycle)}
+                  className={`rounded-full px-3 py-1 capitalize cursor-pointer transition-colors ${
+                    billingCycle === cycle
+                      ? "bg-[#0B1F3A] text-white"
+                      : "text-[#4B5563] hover:text-[#0B1F3A]"
+                  }`}
+                >
+                  {cycle}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
+
+        {planAudience === "business" && (
+          <div className="mt-5 rounded-2xl border border-[#E7E2DA] bg-white px-4 py-3 flex flex-wrap items-center justify-between gap-4 shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <SlidersHorizontal className="h-4 w-4 text-[#0067B8]" />
+              <span className="text-xs font-bold text-[#0B1F3A]">
+                Team Seat Estimator ({businessSeats} {businessSeats === 1 ? "seat" : "seats"}):
+              </span>
+              <input
+                type="range"
+                aria-label="Business team seats"
+                min={1}
+                max={100}
+                value={businessSeats}
+                onChange={(e) => setBusinessSeats(Number(e.target.value))}
+                className="w-32 sm:w-44 accent-[#0067B8] cursor-pointer"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              <span className="font-semibold text-[#4B5563]">
+                Standard:{" "}
+                <strong className="text-[#0B1F3A]">
+                  {formatNumericCurrency(
+                    businessSeats * (billingCycle === "yearly" ? 149 : 14.5)
+                  )}
+                  /{billingCycle === "yearly" ? "yr" : "mo"}
+                </strong>
+              </span>
+              <span className="font-semibold text-[#4B5563]">
+                Premium:{" "}
+                <strong className="text-[#0067B8]">
+                  {formatNumericCurrency(
+                    businessSeats * (billingCycle === "yearly" ? 249 : 22.9)
+                  )}
+                  /{billingCycle === "yearly" ? "yr" : "mo"}
+                </strong>
+              </span>
+            </div>
+          </div>
+        )}
 
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
           {currentPlans.map((plan) => {
@@ -1095,6 +1566,9 @@ export function ConnectLn360PortalLanding() {
               billingCycle === "yearly"
                 ? plan.unit
                 : (plan as { unitMonthly?: string }).unitMonthly || plan.unit
+            const badges = PLAN_APP_ICONS.filter((item) =>
+              plan.includedApps.includes(item.key)
+            )
             return (
               <div
                 key={plan.name}
@@ -1124,6 +1598,25 @@ export function ConnectLn360PortalLanding() {
                     <p className="mt-4 text-xs leading-relaxed text-[#4B5563]">
                       {plan.description}
                     </p>
+                    <div className="mt-4 pt-3 border-t border-[#EFECE6]">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-2">
+                        Apps included ({badges.length})
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {badges.map((appBadge) => {
+                          const BadgeIcon = appBadge.icon
+                          return (
+                            <span
+                              key={appBadge.key}
+                              title={appBadge.label}
+                              className={`inline-flex h-6 w-6 items-center justify-center rounded-md text-white shadow-2xs ${appBadge.color}`}
+                            >
+                              <BadgeIcon className="h-3.5 w-3.5" />
+                            </span>
+                          )
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="px-6 pb-6 pt-2">
@@ -1142,6 +1635,97 @@ export function ConnectLn360PortalLanding() {
             )
           })}
         </div>
+
+        {/* Progressive-Disclosure Action Toggles: Feature Matrix & Stack Consolidation */}
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowPlanCompare((prev) => !prev)}
+            className="inline-flex items-center gap-2 rounded-full border border-[#0B1F3A]/25 bg-white hover:bg-[#F3EFE8] px-4 py-2 text-xs font-bold text-[#0B1F3A] cursor-pointer transition-colors"
+          >
+            <span>Compare all plan features</span>
+            {showPlanCompare ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowStackSavings((prev) => !prev)}
+            className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 px-4 py-2 text-xs font-bold text-emerald-900 cursor-pointer transition-colors"
+          >
+            <span>Replace 7 separate tools with 1</span>
+            {showStackSavings ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </button>
+        </div>
+
+        {showPlanCompare && (
+          <div className="mt-6 rounded-2xl border border-[#E7E2DA] bg-white overflow-x-auto shadow-xs">
+            <table className="w-full min-w-[640px] text-left text-xs">
+              <thead className="bg-[#FAF7F2] border-b border-[#E7E2DA]">
+                <tr>
+                  <th className="px-4 py-3 font-bold text-[#0B1F3A]">Capability</th>
+                  {currentPlans.map((p) => (
+                    <th key={p.name} className="px-4 py-3 font-bold text-[#0B1F3A]">
+                      {p.name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#EFECE6]">
+                {PLAN_COMPARISON_ROWS[planAudience].map((row) => (
+                  <tr key={row.feature}>
+                    <td className="px-4 py-3 font-semibold text-[#0B1F3A]">{row.feature}</td>
+                    {row.values.map((val, idx) => (
+                      <td key={`${row.feature}-${idx}`} className="px-4 py-3 text-[#4B5563]">
+                        {val}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {showStackSavings && (
+          <div className="mt-6 rounded-2xl border border-emerald-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EFECE6] pb-4">
+              <div>
+                <p className="text-[10.5px] font-bold uppercase tracking-wider text-emerald-700">
+                  All-in-One Consolidation
+                </p>
+                <h3 className="text-base sm:text-lg font-bold text-[#0B1F3A]">
+                  Consolidate 7 standalone subscriptions into ConnectLn 360
+                </h3>
+              </div>
+              <div className="text-right">
+                <p className="text-[11px] text-[#6B7280]">
+                  Typical standalone stack:{" "}
+                  <span className="line-through font-bold">
+                    {formatNumericCurrency(totalStandaloneMonthlyUsd)}/mo
+                  </span>
+                </p>
+                <p className="text-sm font-extrabold text-emerald-700">
+                  ConnectLn Pro: {formatNumericCurrency(6.99)}/mo (Save over 90%)
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              {STACK_REPLACEMENTS.map((item) => (
+                <div
+                  key={item.category}
+                  className="rounded-xl border border-[#E7E2DA] bg-[#FAF7F2]/70 p-3 flex items-center justify-between gap-2"
+                >
+                  <div>
+                    <p className="text-xs font-bold text-[#0B1F3A]">{item.category}</p>
+                    <p className="text-[11px] text-emerald-700 font-semibold">Included: {item.app}</p>
+                  </div>
+                  <span className="text-[11px] font-mono text-[#6B7280] line-through shrink-0">
+                    {formatNumericCurrency(item.standaloneMonthly)}/mo
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ─── 6. DOWNLOAD HUB — DESKTOP, ANDROID APK, iOS & WEB PORTAL ─── */}
@@ -1304,7 +1888,7 @@ export function ConnectLn360PortalLanding() {
         </div>
       </section>
 
-      {/* ─── 8. CONNECTLN 360 SUITE APPS ─── */}
+      {/* ─── 8. CONNECTLN 360 SUITE APPS (CATEGORY FILTERED) ─── */}
       <section id="suite" className="mx-auto max-w-6xl px-4 sm:px-8 py-16">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -1324,12 +1908,38 @@ export function ConnectLn360PortalLanding() {
           </Link>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {SUITE_APPS.map((app) => {
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          {(
+            [
+              { id: "All", label: `All (${SUITE_APPS.length})` },
+              { id: "Communication", label: "Communication" },
+              { id: "Studio Apps", label: "Studio Apps" },
+              { id: "Power Apps", label: "Power Apps" },
+              { id: "Career & Universe", label: "Career & Universe" },
+            ] as const
+          ).map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setActiveSuiteCat(cat.id)}
+              className={`rounded-full px-4 py-1.5 text-xs font-bold cursor-pointer transition-colors ${
+                activeSuiteCat === cat.id
+                  ? "bg-[#0B1F3A] text-white shadow-xs"
+                  : "bg-[#EAE5DC] text-[#0B1F3A] hover:bg-[#DFD8CC]"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {visibleSuiteApps.map((app) => {
             const Icon = app.icon
             return (
               <div
                 key={app.name}
+                data-suite-card="true"
                 className="flex flex-col justify-between rounded-2xl border border-[#E7E2DA] bg-white p-6 shadow-xs hover:shadow-md transition-shadow"
               >
                 <div>
@@ -1367,6 +1977,49 @@ export function ConnectLn360PortalLanding() {
               </div>
             )
           })}
+        </div>
+      </section>
+
+      {/* ─── 8B. SECURITY, PRIVACY & TRUST CENTER BENTO ─── */}
+      <section id="security" className="mx-auto max-w-6xl px-4 sm:px-8 pb-16">
+        <div className="rounded-3xl bg-[#0B1F3A] text-white p-6 sm:p-8 border border-white/10 shadow-lg space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sky-300">
+                SECURITY, PRIVACY &amp; TRUST CENTER
+              </p>
+              <h2 className="mt-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+                Built with zero-trust protection across every app
+              </h2>
+            </div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/20 border border-emerald-400/40 px-3.5 py-1.5 text-xs font-bold text-emerald-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <span>All ConnectLn 360 Services Operational</span>
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {TRUST_PILLARS.map((pillar) => {
+              const Icon = pillar.icon
+              return (
+                <div
+                  key={pillar.title}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-2.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#0067B8]/40 border border-sky-400/30 text-sky-200">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-sky-200">
+                      {pillar.badge}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-bold text-white">{pillar.title}</h3>
+                  <p className="text-xs leading-relaxed text-slate-300">{pillar.desc}</p>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </section>
 
@@ -1785,14 +2438,14 @@ export function ConnectLn360PortalLanding() {
                 </Link>
               </li>
               <li>
-                <a
-                  href="https://desk-note.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-white hover:underline transition-colors"
-                >
-                  DeskNote E2EE App
-                </a>
+                <Link href="/connectin?tab=docs" className="hover:text-white hover:underline transition-colors">
+                  ConnectLn Docs, Sheets &amp; Slides
+                </Link>
+              </li>
+              <li>
+                <Link href="/connectin?tab=sign" className="hover:text-white hover:underline transition-colors">
+                  ConnectLn Power Apps
+                </Link>
               </li>
             </ul>
           </div>
