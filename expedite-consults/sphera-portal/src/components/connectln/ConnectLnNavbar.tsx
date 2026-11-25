@@ -54,7 +54,10 @@ import {
   CheckCircle2,
   PhoneCall,
   Download,
-  PlayCircle
+  PlayCircle,
+  FileText,
+  Table2,
+  Presentation
 } from "lucide-react"
 import { UserProfile, SuggestedConnection, getEnclaveConnectedMembers } from "@/lib/connectln-data"
 import { WORK_BUSINESS_MENU_ITEMS, WorkBusinessItemId } from "@/lib/work-business-data"
@@ -596,7 +599,7 @@ export function ConnectLnNavbar({
             </button>
 
             {isAppLauncherOpen && (
-              <div className="absolute left-0 top-11 z-[60] w-[356px] rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-[0_24px_60px_rgba(11,31,58,0.16)] animate-in fade-in zoom-in-95 space-y-3">
+              <div className="absolute left-0 top-11 z-[60] w-[356px] max-h-[calc(100vh-76px)] overflow-y-auto rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-[0_24px_60px_rgba(11,31,58,0.16)] animate-in fade-in zoom-in-95 space-y-3">
                 <div className="flex items-center justify-between border-b border-[#EFECE6] dark:border-zinc-800 pb-2.5">
                   <span className="text-xs font-extrabold tracking-tight text-[#0B1F3A] dark:text-zinc-100">
                     ConnectLn 360 Apps
@@ -661,6 +664,73 @@ export function ConnectLnNavbar({
                       </button>
                     )
                   })}
+                </div>
+
+                {/* ConnectLn 360 Studio — Proprietary Docs, Sheets & Slides */}
+                <div className="rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2]/90 dark:bg-zinc-950/70 p-2.5 space-y-2">
+                  <div className="flex items-center justify-between px-0.5">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0B5CAD] dark:text-sky-400">
+                      ConnectLn 360 Studio
+                    </span>
+                    <span className="rounded-full bg-white dark:bg-zinc-800 border border-[#E7E2DA] dark:border-zinc-700 px-2 py-0.5 text-[9.5px] font-bold text-[#0B1F3A] dark:text-zinc-300">
+                      Built by ConnectLn
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      {
+                        id: "docs",
+                        label: "Docs",
+                        sub: "Documents",
+                        icon: FileText,
+                        bg: "bg-[#0B5CAD]",
+                      },
+                      {
+                        id: "sheets",
+                        label: "Sheets",
+                        sub: "Spreadsheets",
+                        icon: Table2,
+                        bg: "bg-[#107C41]",
+                      },
+                      {
+                        id: "slides",
+                        label: "Slides",
+                        sub: "Decks",
+                        icon: Presentation,
+                        bg: "bg-[#C84B28]",
+                      },
+                    ].map((sApp) => {
+                      const SIcon = sApp.icon
+                      const isSActive = activeTab === sApp.id
+                      return (
+                        <button
+                          key={sApp.id}
+                          type="button"
+                          onClick={() => {
+                            setIsAppLauncherOpen(false)
+                            onSelectTab(sApp.id)
+                          }}
+                          className={`flex flex-col items-center justify-center rounded-xl border p-2 text-center transition-all cursor-pointer ${
+                            isSActive
+                              ? "border-[#0067B8] bg-white dark:bg-zinc-800 shadow-2xs"
+                              : "border-transparent bg-white/80 dark:bg-zinc-900/80 hover:border-[#E7E2DA] dark:hover:border-zinc-700"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-2xs ${sApp.bg}`}
+                          >
+                            <SIcon className="h-4 w-4" />
+                          </span>
+                          <span className="mt-1 text-[11px] font-extrabold text-[#0B1F3A] dark:text-zinc-100 leading-tight">
+                            {sApp.label}
+                          </span>
+                          <span className="text-[9.5px] text-[#6B7280] dark:text-zinc-400 truncate max-w-full">
+                            {sApp.sub}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
 
                 {/* ConnectLn 360 Universe */}
@@ -2761,6 +2831,45 @@ export function ConnectLnNavbar({
                   <span className="flex items-center gap-1.5">🔐 Passkeys &amp; Security</span>
                   <span className="text-zinc-400">→</span>
                 </button>
+
+                {/* ConnectLn 360 Studio Mobile Quick Launch */}
+                <div className="rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2]/90 dark:bg-zinc-950/70 p-2.5 space-y-2">
+                  <div className="flex items-center justify-between px-0.5">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0B5CAD] dark:text-sky-400">
+                      ConnectLn 360 Studio
+                    </span>
+                    <span className="text-[9.5px] font-bold text-[#6B7280] dark:text-zinc-400">
+                      Built by ConnectLn
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: "docs", label: "Docs", sub: "Documents", icon: FileText, bg: "bg-[#0B5CAD]" },
+                      { id: "sheets", label: "Sheets", sub: "Sheets", icon: Table2, bg: "bg-[#107C41]" },
+                      { id: "slides", label: "Slides", sub: "Decks", icon: Presentation, bg: "bg-[#C84B28]" },
+                    ].map((sApp) => {
+                      const SIcon = sApp.icon
+                      return (
+                        <button
+                          key={sApp.id}
+                          type="button"
+                          onClick={() => {
+                            onSelectTab(sApp.id)
+                            setIsMobileDrawerOpen(false)
+                          }}
+                          className="flex flex-col items-center justify-center rounded-xl border border-transparent bg-white/90 dark:bg-zinc-900/90 hover:border-[#0B5CAD] p-2 text-center cursor-pointer"
+                        >
+                          <span className={`flex h-7 w-7 items-center justify-center rounded-lg text-white ${sApp.bg}`}>
+                            <SIcon className="h-3.5 w-3.5" />
+                          </span>
+                          <span className="mt-1 text-[11px] font-bold text-[#0B1F3A] dark:text-zinc-100">
+                            {sApp.label}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
 
                 {/* ConnectLn 360 Universe Mobile Quick Launch */}
                 <div className="rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2]/80 dark:bg-zinc-950/60 p-2 space-y-1.5">

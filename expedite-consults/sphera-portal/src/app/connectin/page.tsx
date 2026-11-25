@@ -135,6 +135,7 @@ import {
 } from "@/lib/connectin-videos"
 import { buildProfessionTieredFeedPosts } from "@/lib/connectin-profession-feed"
 import { ConnectLnStagedVideoModal } from "@/components/connectln/ConnectLnStagedVideoModal"
+import { ConnectLnStudioSuiteView } from "@/components/connectln/studio/ConnectLnStudioSuiteView"
 import { LiveHarvestedMediaShowcase } from "@/components/connectln/LiveHarvestedMediaShowcase"
 import {
   loadStoredHarvestedItems,
@@ -234,6 +235,9 @@ export default function ConnectLnPage() {
     | 'workbusiness'
     | 'noctissocial'
     | 'noctisclinic'
+    | 'docs'
+    | 'sheets'
+    | 'slides'
   >('home')
   const [workBusinessSection, setWorkBusinessSection] = useState<WorkBusinessItemId>('find_work')
 
@@ -949,6 +953,12 @@ export default function ConnectLnPage() {
           ? "noctissocial"
           : tabParam === "noctisclinic" || tabParam === "noctis-clinic" || tabParam === "noctis"
           ? "noctisclinic"
+          : tabParam === "docs" || tabParam === "document" || tabParam === "documents" || tabParam === "studio"
+          ? "docs"
+          : tabParam === "sheets" || tabParam === "sheet" || tabParam === "spreadsheet" || tabParam === "spreadsheets"
+          ? "sheets"
+          : tabParam === "slides" || tabParam === "slide" || tabParam === "presentation" || tabParam === "presentations" || tabParam === "decks"
+          ? "slides"
           : pulseIdParam || pulseTitleParam || tabParam === "pulse" || tabParam === "pulserooms"
           ? "pulserooms"
           : videoParam || plateParam || postIdParam || tabParam === "home"
@@ -2980,7 +2990,11 @@ export default function ConnectLnPage() {
       <div className="lg:pl-[68px]">
       <main
         className={
-          activeTab === 'noctissocial' || activeTab === 'noctisclinic'
+          activeTab === 'noctissocial' ||
+          activeTab === 'noctisclinic' ||
+          activeTab === 'docs' ||
+          activeTab === 'sheets' ||
+          activeTab === 'slides'
             ? "mx-auto max-w-[1480px] px-2 sm:px-4 pt-3 pb-24 lg:pb-4"
             : "mx-auto max-w-7xl px-3 sm:px-6 pt-5 pb-24 lg:pb-12"
         }
@@ -4300,11 +4314,53 @@ export default function ConnectLnPage() {
             onSwitchApp={(tab) => setActiveTab(tab as any)}
           />
         )}
+
+        {/* VIEWS 20–22: CONNECTLN 360 STUDIO — DOCS, SHEETS & SLIDES */}
+        {(activeTab === 'docs' || activeTab === 'sheets' || activeTab === 'slides') && (
+          <ConnectLnStudioSuiteView
+            activeApp={activeTab}
+            user={userData}
+            onSwitchApp={(app) => setActiveTab(app)}
+            onReturnHome={() => setActiveTab('home')}
+            onShareToFeed={(payload) => {
+              handleAddPost({
+                author: {
+                  id: userData.id || 'user_self',
+                  name: userData.name || 'ConnectLn Member',
+                  headline: userData.headline || 'Verified Member on ConnectLn',
+                  avatar: userData.avatar || '',
+                  email: userData.email,
+                  connectionDegree: 'You',
+                },
+                visibility: 'Public',
+                content: `${payload.appLabel}: ${payload.title}\n\n${payload.summary}`,
+                hashtags: ['ConnectLnStudio', payload.appLabel.replace(/\s+/g, '')],
+                postType: payload.slides && payload.slides.length > 0 ? 'document' : 'standard',
+                document:
+                  payload.slides && payload.slides.length > 0
+                    ? {
+                        title: payload.title,
+                        totalPages: payload.slides.length,
+                        slides: payload.slides,
+                        fileType: payload.appLabel,
+                      }
+                    : undefined,
+                feedCategory: 'for_you',
+                feedSubCategory: 'All',
+              })
+            }}
+          />
+        )}
       </main>
       </div>
 
-      {/* Unified Persistent Bottom-Right Dock (Messaging + Job Alerts + Ask Noctis; hidden on full Messaging & embedded 360 Universe apps) */}
-      {activeTab !== 'messaging' && activeTab !== 'noctissocial' && activeTab !== 'noctisclinic' && (
+      {/* Unified Persistent Bottom-Right Dock (Messaging + Job Alerts + Ask Noctis; hidden on full Messaging, Studio & embedded 360 Universe apps) */}
+      {activeTab !== 'messaging' &&
+        activeTab !== 'noctissocial' &&
+        activeTab !== 'noctisclinic' &&
+        activeTab !== 'docs' &&
+        activeTab !== 'sheets' &&
+        activeTab !== 'slides' && (
         <FloatingMessagingDock
           currentUser={userData}
           onOpenFullMessaging={() => setActiveTab('messaging')}

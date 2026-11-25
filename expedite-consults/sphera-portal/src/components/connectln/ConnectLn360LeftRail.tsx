@@ -18,6 +18,9 @@ import {
   ShieldCheck,
   PlayCircle,
   Zap,
+  FileText,
+  Table2,
+  Presentation,
 } from "lucide-react"
 
 interface ConnectLn360LeftRailProps {
@@ -110,6 +113,70 @@ export function ConnectLn360LeftRail({
             </button>
           )
         })}
+
+        {/* ConnectLn 360 Studio — Proprietary Docs, Sheets & Slides */}
+        <div className="w-full pt-1.5 mt-1 border-t border-[#E7E2DA] dark:border-zinc-800 flex flex-col items-center gap-0.5">
+          <span className="text-[8.5px] font-extrabold tracking-widest uppercase text-[#0B5CAD] dark:text-sky-400">
+            STUDIO
+          </span>
+          {[
+            {
+              id: "docs",
+              shortLabel: "Docs",
+              title: "ConnectLn Docs — Proprietary rich document studio",
+              icon: FileText,
+              accentClass: "text-[#0B5CAD] dark:text-sky-400",
+            },
+            {
+              id: "sheets",
+              shortLabel: "Sheets",
+              title: "ConnectLn Sheets — Proprietary formula spreadsheets",
+              icon: Table2,
+              accentClass: "text-[#107C41] dark:text-emerald-400",
+            },
+            {
+              id: "slides",
+              shortLabel: "Slides",
+              title: "ConnectLn Slides — Proprietary presentation decks",
+              icon: Presentation,
+              accentClass: "text-[#C84B28] dark:text-orange-400",
+            },
+          ].map((sItem) => {
+            const SIcon = sItem.icon
+            const isSActive = activeTab === sItem.id
+            return (
+              <button
+                key={sItem.id}
+                type="button"
+                onClick={() => onSelectTab(sItem.id)}
+                title={sItem.title}
+                className={`group relative flex w-full flex-col items-center justify-center rounded-xl py-2 px-1 transition-all cursor-pointer ${
+                  isSActive
+                    ? "bg-white dark:bg-zinc-900 shadow-[0_2px_10px_rgba(11,31,58,0.06)] border border-[#E7E2DA] dark:border-zinc-700 text-[#0B1F3A] dark:text-white"
+                    : "text-zinc-600 dark:text-zinc-400 hover:bg-white/70 dark:hover:bg-zinc-900/70 hover:text-[#0B1F3A] dark:hover:text-white border border-transparent"
+                }`}
+              >
+                {isSActive && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-[#0067B8] dark:bg-sky-400"
+                  />
+                )}
+                <SIcon
+                  strokeWidth={isSActive ? 2.2 : 1.85}
+                  className={`h-[18px] w-[18px] transition-colors ${sItem.accentClass}`}
+                />
+                <span
+                  className={`mt-1 text-[10px] leading-tight tracking-tight truncate max-w-full ${
+                    isSActive ? "font-bold" : "font-medium"
+                  }`}
+                >
+                  {sItem.shortLabel}
+                </span>
+              </button>
+            )
+          })}
+        </div>
 
         {/* ConnectLn 360 Universe */}
         <div className="w-full pt-1.5 mt-1 border-t border-[#E7E2DA] dark:border-zinc-800 flex flex-col items-center gap-0.5">
