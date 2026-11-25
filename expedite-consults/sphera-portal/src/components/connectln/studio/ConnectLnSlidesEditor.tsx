@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useMemo, useRef, useState } from "react"
+import Link from "next/link"
 import {
   AlignCenter,
   AlignLeft,
@@ -9,6 +10,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  BarChart2,
   BarChart3,
   ChevronLeft,
   ChevronRight,
@@ -18,12 +20,18 @@ import {
   Eye,
   EyeOff,
   FilePlus2,
+  Globe2,
   Grid,
+  HelpCircle,
   ImagePlus,
   LayoutGrid,
   LayoutTemplate,
+  Link2,
+  ListTree,
   Maximize2,
   MessageSquare,
+  Mic,
+  MicOff,
   MonitorPlay,
   Palette,
   PanelLeftClose,
@@ -34,8 +42,11 @@ import {
   Presentation,
   Printer,
   Redo2,
+  RotateCcw,
   Search,
   Share2,
+  ShieldCheck,
+  Sigma,
   Sparkles,
   Square,
   Star,
@@ -45,9 +56,20 @@ import {
   Trash2,
   Type,
   Undo2,
+  Workflow,
   X,
 } from "lucide-react"
 import type { UserProfile } from "@/lib/connectln-data"
+import {
+  buildSlideDiagramElements,
+  computeDeckStats,
+  runDeckAccessibilityAudit,
+  SLIDE_FONT_PAIRINGS,
+  SLIDE_MOTION_PRESETS,
+  SLIDES_COMMAND_CATALOG,
+  type SlideDiagramKind,
+  type SlideMotionPresetId,
+} from "@/lib/connectln-slides-pro-tools"
 import {
   buildPptxBytes,
   buildStandaloneHtmlDeck,
@@ -68,6 +90,7 @@ import {
   type StudioSlideItem,
 } from "@/lib/connectln-studio-storage"
 import type { StudioSharePayload } from "./ConnectLnDocsEditor"
+import { ConnectLnSlidesNoctisPanel } from "./ConnectLnSlidesNoctisPanel"
 import { ConnectLnStudioHubDrawer } from "./ConnectLnStudioHubDrawer"
 import { ConnectLnStudioPrintModal } from "./ConnectLnStudioPrintModal"
 
@@ -76,7 +99,16 @@ interface ConnectLnSlidesEditorProps {
   onShareToFeed?: (payload: StudioSharePayload) => void
 }
 
-type SlidesRibbonTab = "home" | "insert" | "design" | "transitions" | "slideshow"
+type SlidesRibbonTab =
+  | "home"
+  | "insert"
+  | "design"
+  | "transitions"
+  | "motion"
+  | "slideshow"
+  | "record"
+  | "review"
+  | "view"
 
 const LAYOUT_OPTIONS: Array<{ id: SlideLayoutType; label: string }> = [
   { id: "cover", label: "Title Cover" },
@@ -246,6 +278,34 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
   const [redoDecks, setRedoDecks] = useState<StudioDeckRecord[]>([])
   const [statusNotice, setStatusNotice] = useState<string | null>(null)
   const [savedLabel, setSavedLabel] = useState("Saved locally")
+
+  // Command Deck, Noctis Pitch Studio & Pro View/Record/Motion States
+  const [commandQuery, setCommandQuery] = useState("")
+  const [commandMenuOpen, setCommandMenuOpen] = useState(false)
+  const [showNoctisPanel, setShowNoctisPanel] = useState(false)
+  const [noctisInitialPrompt, setNoctisInitialPrompt] = useState("")
+  const [noctisInitialMode, setNoctisInitialMode] = useState<
+    "generate" | "notes" | "tighten" | "translate" | undefined
+  >(undefined)
+  const [showDiagramMenu, setShowDiagramMenu] = useState(false)
+  const [showFooterEditor, setShowFooterEditor] = useState(false)
+  const [fontPairingId, setFontPairingId] = useState("editorial-sans")
+  const [showAccentBar, setShowAccentBar] = useState(true)
+  const [motionPreset, setMotionPreset] = useState<SlideMotionPresetId>("rise_up")
+  const [motionDurationMs, setMotionDurationMs] = useState(450)
+  const [motionPulseActive, setMotionPulseActive] = useState(false)
+  const [viewMode, setViewMode] = useState<"normal" | "outline" | "notes_page">("normal")
+  const [showGuides, setShowGuides] = useState(false)
+  const [colorMode, setColorMode] = useState<"color" | "grayscale" | "contrast">("color")
+  const [stageZoomPct, setStageZoomPct] = useState<85 | 100>(100)
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false)
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null)
+  const [showTeleprompter, setShowTeleprompter] = useState(false)
+  const [showStatsModal, setShowStatsModal] = useState(false)
+  const [showA11yModal, setShowA11yModal] = useState(false)
+  const [showHelpModal, setShowHelpModal] = useState(false)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
 
   const slideImageInputRef = useRef<HTMLInputElement>(null)
 
@@ -608,6 +668,160 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
     notify("Published slide deck to ConnectLn Home Feed")
   }
 
+  const activeFontFamily = useMemo(
+    () =>
+      SLIDE_FONT_PAIRINGS.find((f) => f.id === fontPairingId)?.fontFamily ||
+      SLIDE_FONT_PAIRINGS[0].fontFamily,
+    [fontPairingId]
+  )
+
+  const deckStats = useMemo(() => computeDeckStats(activeDeck), [activeDeck])
+  const deckA11yReport = useMemo(
+    () => runDeckAccessibilityAudit(activeDeck, theme),
+    [activeDeck, theme]
+  )
+
+  const slidesCommandResults = useMemo(() => {
+    const q = commandQuery.trim().toLowerCase()
+    if (!q) return SLIDES_COMMAND_CATALOG.slice(0, 6)
+    return SLIDES_COMMAND_CATALOG.filter(
+      (c) =>
+        c.label.toLowerCase().includes(q) ||
+        c.category.toLowerCase().includes(q) ||
+        c.keywords.toLowerCase().includes(q)
+    ).slice(0, 6)
+  }, [commandQuery])
+
+  const openSlidesNoctis = (
+    prompt = "",
+    mode?: "generate" | "notes" | "tighten" | "translate"
+  ) => {
+    setNoctisInitialPrompt(prompt)
+    setNoctisInitialMode(mode)
+    setShowNoctisPanel(true)
+    setCommandMenuOpen(false)
+  }
+
+  const handleInsertDiagramElements = (kind: SlideDiagramKind) => {
+    const added = buildSlideDiagramElements(kind, theme)
+    updateActiveSlide({ elements: [...(activeSlide.elements || []), ...added] }, true)
+    setShowDiagramMenu(false)
+    notify("Added visual diagram elements onto active slide")
+  }
+
+  const handleToggleNarrationRecord = async () => {
+    if (isRecordingAudio) {
+      try {
+        mediaRecorderRef.current?.stop()
+      } catch {}
+      setIsRecordingAudio(false)
+      notify("Saved slide narration rehearsal take")
+      return
+    }
+    if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        const recorder = new MediaRecorder(stream)
+        audioChunksRef.current = []
+        recorder.ondataavailable = (ev) => {
+          if (ev.data.size > 0) audioChunksRef.current.push(ev.data)
+        }
+        recorder.onstop = () => {
+          stream.getTracks().forEach((t) => t.stop())
+          if (audioChunksRef.current.length > 0) {
+            const blob = new Blob(audioChunksRef.current, { type: "audio/webm" })
+            setRecordedAudioUrl(URL.createObjectURL(blob))
+          }
+        }
+        mediaRecorderRef.current = recorder
+        recorder.start()
+        setIsRecordingAudio(true)
+        notify("Recording voiceover narration for slide...")
+        return
+      } catch {
+        // Gracefully start rehearsal capture timer mode if mic permission denied
+      }
+    }
+    setIsRecordingAudio(true)
+    notify("Narration timing mode active — speak alongside Teleprompter Notes")
+  }
+
+  const triggerMotionPreview = () => {
+    setMotionPulseActive(true)
+    setTransitionPulseKey((k) => k + 1)
+    setTimeout(() => setMotionPulseActive(false), Math.min(900, motionDurationMs + 150))
+  }
+
+  const executeSlidesCommand = (cmdId: string) => {
+    setCommandMenuOpen(false)
+    setCommandQuery("")
+    switch (cmdId) {
+      case "open_noctis":
+        openSlidesNoctis()
+        break
+      case "open_hub":
+        setShowHubDrawer(true)
+        break
+      case "add_slide":
+        handleAddSlide("bullets")
+        break
+      case "add_section":
+        handleAddSlide("section")
+        break
+      case "insert_diagram":
+        handleInsertDiagramElements("process_3step")
+        break
+      case "insert_table":
+        handleLayoutChange("table")
+        break
+      case "insert_chart":
+        handleLayoutChange("chart")
+        break
+      case "open_design":
+        setRibbonTab("design")
+        break
+      case "open_motion":
+        setRibbonTab("motion")
+        triggerMotionPreview()
+        break
+      case "start_present":
+        setActiveSlideIndex(0)
+        setPresenterViewMode(false)
+        setIsPresenting(true)
+        break
+      case "open_presenter":
+        setPresenterViewMode(true)
+        setIsPresenting(true)
+        break
+      case "open_record":
+        setRibbonTab("record")
+        setShowTeleprompter(true)
+        break
+      case "open_sorter":
+        setViewMode("normal")
+        setSorterMode(true)
+        break
+      case "open_outline":
+        setSorterMode(false)
+        setViewMode("outline")
+        break
+      case "toggle_guides":
+        setShowGuides((g) => !g)
+        break
+      case "open_stats":
+        setShowStatsModal(true)
+        break
+      case "run_a11y":
+        setShowA11yModal(true)
+        break
+      case "open_print":
+        setShowPrintModal(true)
+        break
+      default:
+        break
+    }
+  }
+
   const filteredDecks = decks.filter((d) => {
     const q = deckSearch.trim().toLowerCase()
     return !q || d.title.toLowerCase().includes(q) || d.category.toLowerCase().includes(q)
@@ -959,11 +1173,73 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
               aria-label="Deck title"
               value={activeDeck?.title || ""}
               onChange={(e) => updateActiveDeck((d) => ({ ...d, title: e.target.value }), false)}
-              className="min-w-[150px] flex-1 max-w-md rounded-lg border border-transparent hover:border-[#E7E2DA] focus:border-[#C84B28] bg-transparent px-2 py-1 text-sm sm:text-base font-extrabold text-[#0B1F3A] dark:text-white outline-none"
+              className="min-w-[130px] flex-1 max-w-xs rounded-lg border border-transparent hover:border-[#E7E2DA] focus:border-[#C84B28] bg-transparent px-2 py-1 text-sm sm:text-base font-extrabold text-[#0B1F3A] dark:text-white outline-none"
             />
-            <span className="hidden sm:inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 px-2.5 py-0.5 text-[11px] font-semibold text-[#C84B28] dark:text-orange-300">
+            <span className="hidden xl:inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 px-2.5 py-0.5 text-[11px] font-semibold text-[#C84B28] dark:text-orange-300">
               {savedLabel}
             </span>
+          </div>
+
+          {/* Centered Command Palette Search */}
+          <div className="relative w-full sm:w-56 md:w-64 order-last lg:order-none">
+            <Sparkles className="h-3.5 w-3.5 text-[#C84B28] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              aria-label="Ask Noctis or find a slide tool"
+              value={commandQuery}
+              onFocus={() => setCommandMenuOpen(true)}
+              onChange={(e) => {
+                setCommandQuery(e.target.value)
+                setCommandMenuOpen(true)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setCommandMenuOpen(false)
+                if (e.key === "Enter" && commandQuery.trim()) {
+                  openSlidesNoctis(commandQuery.trim(), "generate")
+                }
+              }}
+              placeholder="Ask Noctis or find a slide tool..."
+              className="w-full rounded-full border border-[#E7E2DA] dark:border-zinc-700 bg-[#FAF7F2] dark:bg-zinc-950 pl-8 pr-7 py-1.5 text-xs font-medium text-[#0B1F3A] dark:text-zinc-100 outline-none focus:border-[#C84B28] focus:bg-white"
+            />
+            {commandMenuOpen && (
+              <button
+                type="button"
+                aria-label="Close slides command search"
+                onClick={() => setCommandMenuOpen(false)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 cursor-pointer"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+            {commandMenuOpen && (
+              <div className="absolute left-0 right-0 top-9 z-40 rounded-2xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1.5 shadow-2xl space-y-1">
+                {commandQuery.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => openSlidesNoctis(commandQuery.trim(), "generate")}
+                    className="w-full flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#0B1F3A] to-[#C84B28] text-white px-2.5 py-2 text-left text-xs font-bold cursor-pointer"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 shrink-0 text-amber-200" />
+                    <span className="truncate">Ask Noctis: {commandQuery.trim()}</span>
+                  </button>
+                )}
+                {slidesCommandResults.map((cmd) => (
+                  <button
+                    key={cmd.id}
+                    type="button"
+                    onClick={() => executeSlidesCommand(cmd.id)}
+                    className="w-full flex items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-left text-xs hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer"
+                  >
+                    <span className="font-bold text-[#0B1F3A] dark:text-zinc-100 truncate">
+                      {cmd.label}
+                    </span>
+                    <span className="text-[10px] font-semibold text-[#C84B28] shrink-0">
+                      {cmd.category}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -1047,35 +1323,64 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
           </div>
         </div>
 
-        {/* 5-Tab Ribbon */}
-        <div className="flex items-center justify-between gap-2 px-3 pt-1.5 border-b border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950">
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+        {/* ConnectLn Floating Pill Command Deck */}
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950">
+          <div className="inline-flex flex-wrap items-center gap-1 rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#EFECE6]/90 dark:bg-zinc-900 p-1 overflow-x-auto no-scrollbar">
             {(
               [
                 { id: "home", label: "Home" },
                 { id: "insert", label: "Insert" },
                 { id: "design", label: "Design" },
                 { id: "transitions", label: "Transitions" },
+                { id: "motion", label: "Motion" },
                 { id: "slideshow", label: "Slide Show" },
+                { id: "record", label: "Record" },
+                { id: "review", label: "Review" },
+                { id: "view", label: "View" },
               ] as const
             ).map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setRibbonTab(tab.id)}
-                className={`px-3 py-1.5 text-xs font-extrabold rounded-t-lg border-b-2 transition-colors cursor-pointer ${
+                className={`px-3 py-1.5 text-xs font-extrabold rounded-xl transition-all cursor-pointer whitespace-nowrap ${
                   ribbonTab === tab.id
-                    ? "border-[#C84B28] bg-white dark:bg-zinc-900 text-[#C84B28] dark:text-orange-400"
-                    : "border-transparent text-zinc-600 dark:text-zinc-400 hover:text-[#0B1F3A]"
+                    ? "bg-[#0B1F3A] text-white shadow-2xs"
+                    : "text-[#0B1F3A]/80 dark:text-zinc-300 hover:bg-white/80 dark:hover:bg-zinc-800"
                 }`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          <span className="hidden md:inline text-[10.5px] font-mono text-zinc-500 pr-1">
-            {activeDeck?.aspectRatio || "16:9"} · {STUDIO_SLIDE_THEMES.length} Themes · Handouts &amp; Presenter View
-          </span>
+
+          <div className="flex items-center gap-2">
+            <span className="hidden xl:inline text-[10.5px] font-mono text-zinc-500">
+              {activeDeck?.aspectRatio || "16:9"} · {STUDIO_SLIDE_THEMES.length} Themes · Handouts &amp; Presenter View
+            </span>
+            <button
+              type="button"
+              aria-label="Open Noctis Pitch Studio"
+              onClick={() => setShowNoctisPanel((v) => !v)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-extrabold shadow-xs transition-all cursor-pointer ${
+                showNoctisPanel
+                  ? "bg-[#C84B28] text-white ring-2 ring-[#C84B28]/30"
+                  : "bg-gradient-to-r from-[#0B1F3A] to-[#C84B28] text-white hover:opacity-95"
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-200" />
+              Noctis
+            </button>
+            <button
+              type="button"
+              aria-label="Open ConnectLn Slides Help"
+              onClick={() => setShowHelpModal(true)}
+              className="inline-flex items-center gap-1 rounded-full border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#C84B28] px-2.5 py-1.5 text-xs font-bold text-[#0B1F3A] dark:text-zinc-200 cursor-pointer"
+            >
+              <HelpCircle className="h-3.5 w-3.5 text-[#C84B28]" />
+              <span className="hidden sm:inline">Help</span>
+            </button>
+          </div>
         </div>
 
         {/* Ribbon Tool Strip */}
@@ -1131,6 +1436,35 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
                 <Search className="h-3.5 w-3.5" />
                 Find
               </button>
+
+              <button
+                type="button"
+                onClick={() => handleAddSlide("section")}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 hover:border-[#C84B28] px-2 py-1 font-bold cursor-pointer"
+              >
+                + Section
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  updateActiveSlide({ customBgHex: undefined, titleAlign: undefined }, true)
+                  notify("Reset active slide styling & alignment")
+                }}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2 py-1 font-semibold cursor-pointer"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Reset Layout
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openSlidesNoctis("", "generate")}
+                className="inline-flex items-center gap-1 rounded-lg bg-[#0B1F3A] text-white px-2.5 py-1 font-extrabold hover:bg-[#132D52] cursor-pointer"
+              >
+                <Sparkles className="h-3 w-3 text-amber-300" />
+                Ask Noctis
+              </button>
             </>
           )}
 
@@ -1164,6 +1498,70 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
               >
                 <MessageSquare className="h-3.5 w-3.5" />
                 Comments ({activeSlide.comments?.length || 0})
+              </button>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowDiagramMenu((v) => !v)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 hover:border-[#C84B28] px-2.5 py-1 font-bold cursor-pointer"
+                >
+                  <Workflow className="h-3.5 w-3.5 text-[#C84B28]" />
+                  Visual Diagrams
+                </button>
+                {showDiagramMenu && (
+                  <div className="absolute left-0 top-9 z-30 w-52 rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1.5 shadow-xl space-y-1">
+                    {(
+                      [
+                        { id: "process_3step", label: "3-Step Process" },
+                        { id: "kpi_strip", label: "KPI Metric Strip" },
+                        { id: "milestone_timeline", label: "Milestone Timeline" },
+                        { id: "banner_title", label: "Banner Title Highlight" },
+                      ] as const
+                    ).map((dg) => (
+                      <button
+                        key={dg.id}
+                        type="button"
+                        onClick={() => handleInsertDiagramElements(dg.id)}
+                        className="w-full text-left rounded-lg px-2.5 py-1.5 text-xs font-bold hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer"
+                      >
+                        {dg.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  updateActiveSlide({
+                    elements: [
+                      ...(activeSlide.elements || []),
+                      {
+                        id: `eq_${Date.now()}`,
+                        kind: "badge",
+                        text: "ROI (%) = [(Net Gain - Cost) / Cost] × 100",
+                        bgHex: theme.surfaceHex,
+                        textHex: theme.accentHex,
+                      },
+                    ],
+                  }, true)
+                }
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2 py-1 font-bold cursor-pointer"
+              >
+                <Sigma className="h-3.5 w-3.5 text-[#C84B28]" />
+                Equation Badge
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowFooterEditor((v) => !v)}
+                className={`rounded-lg px-2 py-1 font-bold cursor-pointer ${
+                  showFooterEditor ? "bg-[#0B1F3A] text-white" : "border border-[#E7E2DA] bg-white dark:bg-zinc-900"
+                }`}
+              >
+                Footer Text
               </button>
             </>
           )}
@@ -1209,6 +1607,30 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
                 <option value="16:9">16:9 Widescreen</option>
                 <option value="4:3">4:3 Standard</option>
               </select>
+
+              <select
+                aria-label="Slide typography pairing"
+                value={fontPairingId}
+                onChange={(e) => {
+                  setFontPairingId(e.target.value)
+                  notify("Updated deck typography pairing")
+                }}
+                className="rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2 py-1 font-bold cursor-pointer"
+              >
+                {SLIDE_FONT_PAIRINGS.map((fp) => (
+                  <option key={fp.id} value={fp.id}>{fp.label}</option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={() => setShowAccentBar((v) => !v)}
+                className={`rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showAccentBar ? "bg-[#0B1F3A] text-white" : "border border-[#E7E2DA] bg-white"
+                }`}
+              >
+                Accent Header Bar
+              </button>
             </>
           )}
 
@@ -1270,11 +1692,74 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
             </>
           )}
 
+          {ribbonTab === "motion" && (
+            <>
+              <span className="font-bold text-zinc-500">Motion Preset:</span>
+              {SLIDE_MOTION_PRESETS.map((mp) => (
+                <button
+                  key={mp.id}
+                  type="button"
+                  title={mp.desc}
+                  onClick={() => {
+                    setMotionPreset(mp.id)
+                    triggerMotionPreview()
+                  }}
+                  className={`rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                    motionPreset === mp.id
+                      ? "bg-[#C84B28] text-white"
+                      : "border border-[#E7E2DA] bg-white dark:bg-zinc-900"
+                  }`}
+                >
+                  {mp.label}
+                </button>
+              ))}
+              <select
+                aria-label="Motion timing"
+                value={motionDurationMs}
+                onChange={(e) => setMotionDurationMs(Number(e.target.value))}
+                className="rounded-lg border border-[#E7E2DA] bg-white px-2 py-1 font-semibold cursor-pointer"
+              >
+                <option value={250}>Quick (0.25s)</option>
+                <option value={450}>Balanced (0.45s)</option>
+                <option value={750}>Measured (0.75s)</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => updateActiveSlide({ animateBullets: !activeSlide.animateBullets }, true)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  activeSlide.animateBullets ? "bg-[#0067B8] text-white" : "border border-[#E7E2DA] bg-white"
+                }`}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Step-by-Step Reveal
+              </button>
+              <button
+                type="button"
+                onClick={triggerMotionPreview}
+                className="rounded-lg bg-[#0B1F3A] text-white px-2.5 py-1 font-bold cursor-pointer"
+              >
+                Preview Motion
+              </button>
+            </>
+          )}
+
           {ribbonTab === "slideshow" && (
             <>
               <button type="button" onClick={() => { setActiveSlideIndex(0); setPresenterViewMode(false); setIsPresenting(true) }} className="inline-flex items-center gap-1 rounded-lg bg-[#0067B8] text-white px-2.5 py-1 font-bold cursor-pointer"><Play className="h-3.5 w-3.5" />From Start</button>
               <button type="button" onClick={() => { setPresenterViewMode(false); setIsPresenting(true) }} className="rounded-lg border border-[#0067B8] text-[#0067B8] bg-white px-2.5 py-1 font-bold cursor-pointer">From Current</button>
               <button type="button" onClick={() => { setPresenterViewMode(true); setIsPresenting(true) }} className="inline-flex items-center gap-1 rounded-lg bg-[#0B1F3A] text-white px-2.5 py-1 font-bold cursor-pointer"><MonitorPlay className="h-3.5 w-3.5" />Presenter View</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPresenterViewMode(true)
+                  setIsPresenting(true)
+                  notify("Rehearsal pacing timer active in Presenter View")
+                }}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white px-2.5 py-1 font-bold cursor-pointer"
+              >
+                <Timer className="h-3.5 w-3.5 text-[#C84B28]" />
+                Rehearse Timings
+              </button>
               <button
                 type="button"
                 onClick={() => setSorterMode((m) => !m)}
@@ -1304,7 +1789,223 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
               <button type="button" onClick={() => setShowPrintModal(true)} className="inline-flex items-center gap-1 rounded-lg border border-[#C84B28] text-[#C84B28] bg-orange-50 px-2.5 py-1 font-bold cursor-pointer"><Printer className="h-3.5 w-3.5" />Print Handouts</button>
             </>
           )}
+
+          {ribbonTab === "record" && (
+            <>
+              <button
+                type="button"
+                onClick={handleToggleNarrationRecord}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 font-extrabold cursor-pointer ${
+                  isRecordingAudio ? "bg-rose-600 text-white" : "bg-[#C84B28] text-white"
+                }`}
+              >
+                {isRecordingAudio ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                {isRecordingAudio ? "Stop Narration" : "Record Narration"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowTeleprompter((v) => !v)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showTeleprompter ? "bg-[#0B1F3A] text-white" : "border border-[#E7E2DA] bg-white"
+                }`}
+              >
+                <StickyNote className="h-3.5 w-3.5" />
+                Teleprompter Notes
+              </button>
+              <button
+                type="button"
+                onClick={() => handleExport("html")}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white px-2.5 py-1 font-bold cursor-pointer"
+              >
+                <Download className="h-3.5 w-3.5 text-[#C84B28]" />
+                Export Interactive Show
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPrintModal(true)}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white px-2.5 py-1 font-bold cursor-pointer"
+              >
+                <Printer className="h-3.5 w-3.5 text-[#C84B28]" />
+                Handouts Studio
+              </button>
+            </>
+          )}
+
+          {ribbonTab === "review" && (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowStatsModal(true)}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 hover:border-[#C84B28] px-2.5 py-1 font-bold cursor-pointer"
+              >
+                <BarChart2 className="h-3.5 w-3.5 text-[#C84B28]" />
+                Deck Statistics
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowA11yModal(true)}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 hover:border-[#C84B28] px-2.5 py-1 font-bold cursor-pointer"
+              >
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                Accessibility Check
+              </button>
+              <button
+                type="button"
+                onClick={() => openSlidesNoctis("", "translate")}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#C84B28]/40 bg-orange-50/70 text-[#C84B28] px-2.5 py-1 font-bold cursor-pointer"
+              >
+                <Globe2 className="h-3.5 w-3.5" />
+                Translate (Noctis)
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCommentsDrawer((c) => !c)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showCommentsDrawer ? "bg-[#0B1F3A] text-white" : "border border-[#E7E2DA] bg-white"
+                }`}
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                Comments ({activeSlide.comments?.length || 0})
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setInkStrokes([])
+                  notify("Cleared annotation ink strokes")
+                }}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white px-2.5 py-1 font-semibold cursor-pointer"
+              >
+                <Eraser className="h-3.5 w-3.5" />
+                Clear Ink
+              </button>
+            </>
+          )}
+
+          {ribbonTab === "view" && (
+            <>
+              <div className="inline-flex items-center rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 p-0.5 gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => { setSorterMode(false); setViewMode("normal") }}
+                  className={`rounded-md px-2 py-1 text-[11px] font-bold cursor-pointer ${
+                    !sorterMode && viewMode === "normal" ? "bg-[#0B1F3A] text-white" : "text-zinc-600"
+                  }`}
+                >
+                  Normal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSorterMode(false); setViewMode("outline") }}
+                  className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold cursor-pointer ${
+                    !sorterMode && viewMode === "outline" ? "bg-[#0B1F3A] text-white" : "text-zinc-600"
+                  }`}
+                >
+                  <ListTree className="h-3 w-3" />
+                  Outline View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSorterMode(true)}
+                  className={`rounded-md px-2 py-1 text-[11px] font-bold cursor-pointer ${
+                    sorterMode ? "bg-[#0B1F3A] text-white" : "text-zinc-600"
+                  }`}
+                >
+                  Sorter Grid
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSorterMode(false)
+                    setViewMode("notes_page")
+                    setShowNotesDrawer(true)
+                  }}
+                  className={`rounded-md px-2 py-1 text-[11px] font-bold cursor-pointer ${
+                    !sorterMode && viewMode === "notes_page" ? "bg-[#0B1F3A] text-white" : "text-zinc-600"
+                  }`}
+                >
+                  Notes Page
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowGuides((g) => !g)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showGuides ? "bg-[#C84B28] text-white" : "border border-[#E7E2DA] bg-white"
+                }`}
+              >
+                <Grid className="h-3.5 w-3.5" />
+                Guides &amp; Grid
+              </button>
+
+              <select
+                aria-label="Slide color mode"
+                value={colorMode}
+                onChange={(e) => setColorMode(e.target.value as any)}
+                className="rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2 py-1 font-bold cursor-pointer"
+              >
+                <option value="color">Color Mode</option>
+                <option value="grayscale">Grayscale Preview</option>
+                <option value="contrast">High Contrast</option>
+              </select>
+
+              <div className="inline-flex items-center gap-1">
+                {([85, 100] as const).map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => setStageZoomPct(pct)}
+                    className={`rounded-lg px-2 py-1 font-bold cursor-pointer ${
+                      stageZoomPct === pct ? "bg-[#0B1F3A] text-white" : "border border-[#E7E2DA] bg-white"
+                    }`}
+                  >
+                    {pct}%
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
+
+        {/* Optional Footer Label Strip */}
+        {showFooterEditor && (
+          <div className="flex flex-wrap items-center gap-2 px-4 py-2 bg-[#FAF7F2] dark:bg-zinc-900 border-b border-[#E7E2DA] text-xs">
+            <span className="font-bold text-zinc-600">Deck Footer Label:</span>
+            <input
+              type="text"
+              value={activeDeck?.footerText || ""}
+              onChange={(e) =>
+                updateActiveDeck((d) => ({ ...d, footerText: e.target.value }), false)
+              }
+              placeholder="e.g. ConnectLn Confidential · Q4 Review"
+              className="flex-1 min-w-[200px] rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-950 px-2.5 py-1 outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setShowFooterEditor(false)}
+              className="text-zinc-500 hover:text-zinc-800 cursor-pointer"
+            >
+              Done
+            </button>
+          </div>
+        )}
+
+        {/* Active Teleprompter & Narration Bar */}
+        {(showTeleprompter || isRecordingAudio || recordedAudioUrl) && (
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 bg-[#0B1F3A] text-white text-xs">
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300 mr-2">
+                {isRecordingAudio ? "● RECORDING NARRATION" : "TELEPROMPTER NOTES"}:
+              </span>
+              <span className="text-slate-100">
+                {activeSlide.notes?.trim() || "No speaker notes yet — use Noctis → Speaker Notes to generate talking points."}
+              </span>
+            </div>
+            {recordedAudioUrl && (
+              <audio controls src={recordedAudioUrl} className="h-7 max-w-[220px]" />
+            )}
+          </div>
+        )}
 
         {/* Optional Find & Replace Bar */}
         {showFindBar && (
@@ -1350,13 +2051,108 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
                 ))}
               </div>
             </div>
+          ) : viewMode === "outline" ? (
+            <div className="flex-1 overflow-y-auto bg-[#EFECE6] dark:bg-zinc-950 p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-extrabold text-[#0B1F3A] dark:text-white flex items-center gap-1.5">
+                  <ListTree className="h-4 w-4 text-[#C84B28]" />
+                  Outline View — Edit Slide Structure ({activeDeck?.slides.length || 0} Slides)
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("normal")}
+                  className="rounded-xl bg-[#0B1F3A] text-white px-3 py-1.5 text-xs font-bold cursor-pointer"
+                >
+                  Back to Normal Slide
+                </button>
+              </div>
+              <div className="space-y-2.5">
+                {activeDeck?.slides.map((s, idx) => (
+                  <div
+                    key={s.id}
+                    className="rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3.5 space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-extrabold text-[#C84B28]">
+                        Slide {idx + 1} · {s.layout.replace("_", " ").toUpperCase()}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveSlideIndex(idx)
+                          setViewMode("normal")
+                        }}
+                        className="text-[11px] font-bold text-[#0B5CAD] hover:underline cursor-pointer"
+                      >
+                        Focus Canvas →
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={s.title}
+                      onChange={(e) =>
+                        updateActiveDeck((d) => ({
+                          ...d,
+                          slides: d.slides.map((x, i) =>
+                            i === idx ? { ...x, title: e.target.value } : x
+                          ),
+                        }))
+                      }
+                      className="w-full rounded-lg border border-[#E7E2DA] bg-[#FAF7F2]/60 dark:bg-zinc-950 px-2.5 py-1 text-xs font-extrabold outline-none focus:border-[#C84B28]"
+                    />
+                    {s.bullets && s.bullets.length > 0 && (
+                      <ul className="pl-4 list-disc text-xs text-zinc-600 dark:text-zinc-300 space-y-0.5">
+                        {s.bullets.map((b, bi) => (
+                          <li key={bi}>{b}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : (
             <div className="flex-1 overflow-y-auto bg-[#EFECE6] dark:bg-zinc-950 p-4 sm:p-7 flex flex-col items-center justify-center">
               <div
                 key={`${activeSlide.id}_${transitionPulseKey}`}
-                style={{ backgroundColor: effectiveSlideBg, color: theme.textHex, ...transitionAnimStyle }}
-                className={`w-full max-w-[920px] min-h-[480px] ${aspectClass} rounded-2xl border border-black/15 shadow-[0_24px_60px_rgba(11,31,58,0.16)] p-6 sm:p-10 flex flex-col justify-between gap-4`}
+                style={{
+                  backgroundColor: effectiveSlideBg,
+                  color: theme.textHex,
+                  fontFamily: activeFontFamily,
+                  transform: motionPulseActive
+                    ? motionPreset === "zoom_pop"
+                      ? "scale(1.015)"
+                      : motionPreset === "rise_up"
+                      ? "translateY(-4px)"
+                      : undefined
+                    : undefined,
+                  transition: `all ${motionDurationMs}ms ease`,
+                  ...transitionAnimStyle,
+                }}
+                className={`relative w-full max-w-[920px] min-h-[480px] ${aspectClass} rounded-2xl border border-black/15 shadow-[0_24px_60px_rgba(11,31,58,0.16)] p-6 sm:p-10 flex flex-col justify-between gap-4 overflow-hidden ${
+                  colorMode === "grayscale"
+                    ? "grayscale"
+                    : colorMode === "contrast"
+                    ? "contrast-125"
+                    : ""
+                } ${stageZoomPct === 85 ? "scale-[0.88] origin-center" : ""}`}
               >
+                {showAccentBar && (
+                  <div
+                    aria-hidden="true"
+                    style={{ backgroundColor: theme.accentHex }}
+                    className="absolute left-0 right-0 top-0 h-1.5"
+                  />
+                )}
+                {showGuides && (
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 z-0"
+                  >
+                    <div className="absolute left-1/2 top-0 bottom-0 w-px border-l border-dashed border-sky-400/50" />
+                    <div className="absolute top-1/2 left-0 right-0 h-px border-t border-dashed border-sky-400/50" />
+                  </div>
+                )}
                 {/* Title & Subtitle */}
                 <div className={activeSlide.layout === "cover" || activeSlide.layout === "section" ? "text-center pt-4" : ""}>
                   <input
@@ -1683,6 +2479,36 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
                 ))}
               </div>
             </aside>
+          )}
+
+          {showNoctisPanel && activeDeck && (
+            <ConnectLnSlidesNoctisPanel
+              deckTitle={activeDeck.title}
+              activeSlide={activeSlide}
+              slideIndex={safeSlideIndex}
+              totalSlides={activeDeck.slides.length}
+              user={user}
+              initialPrompt={noctisInitialPrompt}
+              initialMode={noctisInitialMode}
+              onClose={() => setShowNoctisPanel(false)}
+              onAddGeneratedSlide={(gen) => {
+                const newSl: StudioSlideItem = {
+                  id: `sl_${Date.now()}`,
+                  layout: "bullets",
+                  title: gen.title,
+                  subtitle: gen.subtitle,
+                  bullets: gen.bullets,
+                  notes: gen.notes,
+                }
+                updateActiveDeck((d) => ({ ...d, slides: [...d.slides, newSl] }))
+                setActiveSlideIndex(activeDeck.slides.length)
+                setViewMode("normal")
+                setSorterMode(false)
+              }}
+              onApplyNotes={(notes) => updateActiveSlide({ notes }, false)}
+              onApplyBullets={(bullets) => updateActiveSlide({ bullets }, true)}
+              onNotify={notify}
+            />
           )}
         </div>
 
@@ -2021,6 +2847,133 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
           onTriggerPrint={() => setShowPrintModal(true)}
           onTriggerExportPrimary={() => handleExport("pptx")}
         />
+      )}
+
+      {/* Deck Statistics Modal */}
+      {showStatsModal && (
+        <div
+          role="dialog"
+          aria-label="ConnectLn Deck Statistics"
+          className="fixed inset-0 z-[105] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
+        >
+          <div className="w-full max-w-sm rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-2xl space-y-3">
+            <div className="flex items-center justify-between border-b border-[#E7E2DA] dark:border-zinc-800 pb-2">
+              <h3 className="text-sm font-extrabold text-[#0B1F3A] dark:text-white">
+                Deck Statistics
+              </h3>
+              <button type="button" aria-label="Close Deck Statistics" onClick={() => setShowStatsModal(false)} className="p-1 rounded cursor-pointer"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-1.5 text-xs">
+              {[
+                ["Total Slides", deckStats.slideCount],
+                ["Hidden Slides", deckStats.hiddenCount],
+                ["Total Words", deckStats.totalWords],
+                ["Estimated Present Time", `${deckStats.estimatedMinutes} min`],
+                ["Speaker Notes Coverage", `${deckStats.notesCoveragePct}%`],
+                ["Slide Comments", deckStats.totalComments],
+              ].map(([k, v]) => (
+                <div key={String(k)} className="flex justify-between py-1 border-b border-zinc-100 dark:border-zinc-800">
+                  <span className="text-zinc-500">{k}</span>
+                  <strong className="text-[#0B1F3A] dark:text-white">{v}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deck Accessibility Audit Modal */}
+      {showA11yModal && (
+        <div
+          role="dialog"
+          aria-label="ConnectLn Deck Accessibility Audit"
+          className="fixed inset-0 z-[105] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E7E2DA] dark:border-zinc-800 pb-3">
+              <div>
+                <h3 className="text-sm font-extrabold text-[#0B1F3A] dark:text-white flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  Deck Accessibility Audit
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  Readiness score: <strong className="text-[#C84B28]">{deckA11yReport.score}%</strong>
+                </p>
+              </div>
+              <button type="button" aria-label="Close Deck Accessibility Audit" onClick={() => setShowA11yModal(false)} className="p-1 rounded-lg hover:bg-zinc-100 cursor-pointer"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-2">
+              {deckA11yReport.checks.map((chk) => (
+                <div
+                  key={chk.title}
+                  className={`rounded-xl border p-3 text-xs space-y-1 ${
+                    chk.status === "pass"
+                      ? "border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20"
+                      : "border-amber-200 bg-amber-50/60 dark:bg-amber-950/20"
+                  }`}
+                >
+                  <p className="font-extrabold text-[#0B1F3A] dark:text-white">
+                    {chk.status === "pass" ? "PASS · " : "CHECK · "}
+                    {chk.title}
+                  </p>
+                  <p className="text-zinc-600 dark:text-zinc-300">{chk.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Slides Help & Quick Guide Modal */}
+      {showHelpModal && (
+        <div
+          role="dialog"
+          aria-label="ConnectLn Slides Help and Shortcuts"
+          className="fixed inset-0 z-[105] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E7E2DA] dark:border-zinc-800 pb-3">
+              <h3 className="text-sm font-extrabold text-[#0B1F3A] dark:text-white flex items-center gap-1.5">
+                <HelpCircle className="h-4 w-4 text-[#C84B28]" />
+                ConnectLn Slides Quick Guide &amp; Help
+              </h3>
+              <button type="button" aria-label="Close Slides Help" onClick={() => setShowHelpModal(false)} className="p-1 rounded-lg hover:bg-zinc-100 cursor-pointer"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-2 text-xs">
+              {[
+                ["Noctis Pill", "Generate new slides, speaker notes & translate bullets"],
+                ["F5 / Esc", "Launch or exit Full-Screen Present Mode"],
+                ["Insert → Visual Diagrams", "Drop 3-Step Process, KPI Strip, or Timeline callouts"],
+                ["Record Tab", "Capture narration rehearsal with Teleprompter Notes"],
+                ["View → Outline View", "Edit all slide titles & bullet structure in one tree"],
+                ["Ctrl / Cmd + P", "Open 4-up Handouts & Speaker Notes Print Studio"],
+              ].map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between gap-2 rounded-xl bg-[#FAF7F2] dark:bg-zinc-950 px-3 py-2">
+                  <kbd className="font-mono font-bold text-[#C84B28]">{k}</kbd>
+                  <span className="text-zinc-600 dark:text-zinc-300 text-right">{v}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#E7E2DA] dark:border-zinc-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowHelpModal(false)
+                  setShowHubDrawer(true)
+                }}
+                className="rounded-xl bg-[#0B1F3A] text-white px-3 py-1.5 text-xs font-bold cursor-pointer"
+              >
+                Open Studio Hub &amp; Tours
+              </button>
+              <Link
+                href="/connectin-portal#download-app"
+                className="text-xs font-extrabold text-[#C84B28] hover:underline"
+              >
+                Get ConnectLn Mobile App →
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
