@@ -1825,16 +1825,17 @@ export function NoctisVideoInterpreterPopup({
         return
       }
 
-      // Server-Native Neural / Gemini HD Voice (/api/connectin/tts?v=native8)
+      // Server-Native Neural / Gemini HD Voice (/api/connectin/tts?v=native9)
       setVoiceStatusNote(
         profile.mode === "server-native" ? profile.nativeSpeakerLabel : "Studio HD Native Voice"
       )
 
-      if (nextSentenceText) {
+      const triggerNextPreload = () => {
+        if (!nextSentenceText) return
         try {
           const preloadAudio = getSharedNoctisPreloadAudio()
           if (preloadAudio) {
-            preloadAudio.src = `/api/connectin/tts?v=native8&lang=${encodeURIComponent(
+            preloadAudio.src = `/api/connectin/tts?v=native9&lang=${encodeURIComponent(
               targetLang
             )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
               nextSentenceText.slice(0, 260)
@@ -1844,14 +1845,19 @@ export function NoctisVideoInterpreterPopup({
         } catch {}
       }
 
+      if (profile.mode === "server-native") {
+        triggerNextPreload()
+      }
+
       try {
         playAudioUrlOnSharedElement(
-          `/api/connectin/tts?v=native8&lang=${encodeURIComponent(
+          `/api/connectin/tts?v=native9&lang=${encodeURIComponent(
             targetLang
           )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
             sentenceText.slice(0, 260)
           )}`,
-          1.0
+          1.0,
+          profile.mode === "server-native" ? undefined : triggerNextPreload
         )
       } catch {
         // Wait for next sentence or user interaction

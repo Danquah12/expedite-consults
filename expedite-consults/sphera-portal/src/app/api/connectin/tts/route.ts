@@ -84,18 +84,18 @@ const YARNGPT_VOICE_MAP: Record<string, string> = {
 }
 
 const GEMINI_LANG_STYLE_MAP: Record<string, string> = {
-  ak: "Ghanaian Asante Twi (from Kumasi/Accra, Ghana)",
-  ee: "Ghanaian and Togolese Eʋegbe (Ewe)",
-  gaa: "Ghanaian Gã (from Accra, Ghana)",
-  ha: "Northern Nigerian / West African Hausa",
-  yo: "Nigerian Yorùbá (from Lagos/Ibadan, Nigeria)",
-  ig: "Nigerian Igbo (Southeastern Nigeria)",
-  om: "Ethiopian Afaan Oromoo (Oromo)",
+  ak: "Ghanaian Asante Twi",
+  ee: "Ghanaian Ewe",
+  gaa: "Ghanaian Ga",
+  ha: "Hausa",
+  yo: "Nigerian Yoruba",
+  ig: "Nigerian Igbo",
+  om: "Ethiopian Oromo",
   rw: "Rwandan Kinyarwanda",
-  sn: "Zimbabwean chiShona (Shona)",
-  xh: "South African isiXhosa (Xhosa)",
+  sn: "Zimbabwean Shona",
+  xh: "South African Xhosa",
   wo: "Senegalese Wolof",
-  lg: "Ugandan Oluganda (Luganda)",
+  lg: "Ugandan Luganda",
   pa: "Punjabi",
 }
 
@@ -856,57 +856,65 @@ async function synthesizeWithGeminiTTS(
   if (!apiKey) return null
   const styleDesc = GEMINI_LANG_STYLE_MAP[lang] || lang
   const voiceName = isFemale ? "Aoede" : "Orus"
-  try {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 18000)
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${encodeURIComponent(
-        apiKey
-      )}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: `Speak this ${styleDesc} clearly, warmly, and naturally as a native speaker. Speak ONLY the exact text below without adding any introduction or extra words:\n\n${text.slice(
-                    0,
-                    260
-                  )}`,
-                },
-              ],
+  const clipped = text.slice(0, 260)
+  const prompts = [
+    `Say warmly and clearly in ${styleDesc}: ${clipped}`,
+    `Say clearly: ${clipped}`,
+  ]
+
+  for (const promptText of prompts) {
+    try {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 12000)
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${encodeURIComponent(
+          apiKey
+        )}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: promptText }],
+              },
+            ],
+            generationConfig: {
+              responseModalities: ["AUDIO"],
+              speechConfig: {
+                voiceConfig: { prebuiltVoiceConfig: { voiceName } },
+              },
             },
-          ],
-          generationConfig: {
-            responseModalities: ["AUDIO"],
-            speechConfig: {
-              voiceConfig: { prebuiltVoiceConfig: { voiceName } },
-            },
-          },
-        }),
-        signal: controller.signal,
+          }),
+          signal: controller.signal,
+        }
+      )
+      clearTimeout(timer)
+      if (!res.ok) {
+        // Never retry HTTP 429 or HTTP error so we don't burn Tier-1 RPM quota
+        break
       }
-    )
-    clearTimeout(timer)
-    if (!res.ok) return null
-    const json = await res.json()
-    const inline = json?.candidates?.[0]?.content?.parts?.[0]?.inlineData
-    if (!inline?.data) return null
-    const raw = Buffer.from(inline.data, "base64")
-    if (raw.byteLength < 256) return null
-    const mime = String(inline.mimeType || "")
-    const rateMatch = /rate=(\d+)/i.exec(mime)
-    const sampleRate = rateMatch ? Number(rateMatch[1]) || 24000 : 24000
-    if (mime.includes("L16") || mime.includes("pcm")) {
-      return { buffer: pcm16ToWavBuffer(raw, sampleRate, 1), contentType: "audio/wav", actor: `gemini-2.5-${voiceName}` }
+      const json = await res.json()
+      const inline = json?.candidates?.[0]?.content?.parts?.[0]?.inlineData
+      if (!inline?.data) {
+        // Preview TTS occasionally returns finishReason=OTHER with empty inlineData; retry once with simpler prompt
+        continue
+      }
+      const raw = Buffer.from(inline.data, "base64")
+      if (raw.byteLength < 256) continue
+      const mime = String(inline.mimeType || "")
+      const rateMatch = /rate=(\d+)/i.exec(mime)
+      const sampleRate = rateMatch ? Number(rateMatch[1]) || 24000 : 24000
+      if (mime.includes("L16") || mime.includes("pcm")) {
+        return { buffer: pcm16ToWavBuffer(raw, sampleRate, 1), contentType: "audio/wav", actor: `gemini-2.5-${voiceName}` }
+      }
+      return { buffer: raw, contentType: mime || "audio/wav", actor: `gemini-2.5-${voiceName}` }
+    } catch {
+      // Transient abort/network failure on this attempt
     }
-    return { buffer: raw, contentType: mime || "audio/wav", actor: `gemini-2.5-${voiceName}` }
-  } catch {
-    return null
   }
+  return null
 }
 
 export async function GET(req: NextRequest) {
@@ -1077,7 +1085,7 @@ export async function GET(req: NextRequest) {
         status: 501,
         headers: {
           "X-Voice-Authenticity": "client-mms-required",
-          "Cache-Control": "public, max-age=3600",
+          "Cache-Control": "no-store",
         },
       }
     )
@@ -1090,7 +1098,7 @@ export async function GET(req: NextRequest) {
         status: 501,
         headers: {
           "X-Voice-Authenticity": "subtitles-only",
-          "Cache-Control": "public, max-age=3600",
+          "Cache-Control": "no-store",
         },
       }
     )
