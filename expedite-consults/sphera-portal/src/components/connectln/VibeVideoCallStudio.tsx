@@ -679,6 +679,7 @@ export interface VibeVideoCallStudioProps {
   conversationId: string
   conversationName: string
   initialMode?: "audio" | "video" | "screenshare"
+  autoStartCall?: boolean
   callTriggerNonce?: number
   currentUserName?: string
   currentUserAvatar?: string
@@ -820,6 +821,7 @@ export function VibeVideoCallStudio({
   conversationId,
   conversationName,
   initialMode = "video",
+  autoStartCall = false,
   callTriggerNonce = 0,
   currentUserName = "You (Verified Device)",
   currentUserAvatar,
@@ -890,17 +892,21 @@ export function VibeVideoCallStudio({
     return currentUserName || "Host"
   })
 
+  const shouldAutoStartCall = Boolean(autoStartCall || initialCallRoomId || urlJoinedRoomId)
+  const hasActivatedCallRef = useRef<boolean>(shouldAutoStartCall)
+
   // Call lifecycle state machine (Section 8)
   const [callState, setCallState] = useState<
-    "CREATED" | "RINGING" | "NEGOTIATING" | "CONNECTED" | "RECONNECTING" | "ENDED"
-  >("CONNECTED")
+    "READY" | "CREATED" | "RINGING" | "NEGOTIATING" | "CONNECTED" | "RECONNECTING" | "ENDED"
+  >(() => (shouldAutoStartCall ? "CONNECTED" : "READY"))
+  const isCallInactive = callState === "ENDED" || callState === "READY"
   useEffect(() => {
-    const isActive = callState !== "ENDED"
+    const isActive = !isCallInactive
     setCallMediaSilenceActive(isActive, "vibe-video-call-studio")
     return () => {
       setCallMediaSilenceActive(false, "vibe-video-call-studio")
     }
-  }, [callState])
+  }, [isCallInactive])
   const [callId, setCallId] = useState<string>(initialCallRoomId || urlJoinedRoomId || "call-9b0bbf68-live")
   useEffect(() => {
     if (initialCallRoomId && initialCallRoomId !== callId) {
@@ -918,7 +924,7 @@ export function VibeVideoCallStudio({
   const [lastJoinedFriendName, setLastJoinedFriendName] = useState<string | null>(null)
 
   const waitingForPeer =
-    callState !== "ENDED" &&
+    !isCallInactive &&
     connectedFriendsCount === 0 &&
     Object.keys(remoteStreams).length === 0
   useEffect(() => {
@@ -935,13 +941,13 @@ export function VibeVideoCallStudio({
   // Media hardware & stream state
   const [callMode, setCallMode] = useState<"audio" | "video" | "screenshare">(initialMode)
   const [isMicMuted, setIsMicMuted] = useState<boolean>(false)
-  const [isCameraOn, setIsCameraOn] = useState<boolean>(initialMode !== "audio")
+  const [isCameraOn, setIsCameraOn] = useState<boolean>(shouldAutoStartCall && initialMode !== "audio")
   const [isHardwareCameraActive, setIsHardwareCameraActive] = useState<boolean>(false)
   const [isRequestingCamera, setIsRequestingCamera] = useState<boolean>(false)
   const [isScreenSharing, setIsScreenSharing] = useState<boolean>(false)
   const [micLevel, setMicLevel] = useState<number>(18)
   const [cameraStatusMsg, setCameraStatusMsg] = useState<string | null>(
-    "Initializing computer camera & microphone (WebRTC getUserMedia)..."
+    shouldAutoStartCall ? "Initializing computer camera & microphone (WebRTC getUserMedia)..." : null
   )
   const [cameraError, setCameraError] = useState<string | null>(null)
 
@@ -1649,9 +1655,9 @@ export function VibeVideoCallStudio({
   const latestLocalAudioChunkRef = useRef<EncodedVoiceChunk | undefined>(undefined)
   const recentLocalAudioChunksRef = useRef<EncodedVoiceChunk[]>([])
   const voicePlayerRef = useRef<GaplessRemoteVoicePlayer | null>(null)
-  const isCallEndedRef = useRef<boolean>(false)
+  const isCallEndedRef = useRef<boolean>(!shouldAutoStartCall)
   useEffect(() => {
-    isCallEndedRef.current = callState === "ENDED"
+    isCallEndedRef.current = callState === "ENDED" || callState === "READY"
   }, [callState])
 
   const teardownStudioMediaCall = useCallback((mc: any) => {
@@ -2222,8 +2228,11 @@ export function VibeVideoCallStudio({
     }
   }, [appendLog, bindStreamToVideoElement, sframeEpoch, callId, localParticipantId, localDisplayName, conversationName, selectedVirtualBgId, syncWebRtcOutgoingVideoTrack])
 
-  // AUTO-START COMPUTER CAMERA & MICROPHONE IMMEDIATELY WHEN STUDIO OPENS OR USER CLICKS CALL BUTTON!
+  // AUTO-START COMPUTER CAMERA & MICROPHONE ONLY WHEN USER EXPLICITLY INITIATES OR JOINS A CALL!
   useEffect(() => {
+    if (!shouldAutoStartCall && callTriggerNonce === 0) return
+    hasActivatedCallRef.current = true
+    isCallEndedRef.current = false
     studioRootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
 
     if (initialMode === "screenshare") {
@@ -3040,7 +3049,7 @@ export function VibeVideoCallStudio({
   const hasActiveWebRtcPeers = Object.keys(remoteStreams).length > 0
   useEffect(() => {
     if (typeof window === "undefined") return
-    if (!localStreamState || callState === "ENDED" || hasActiveWebRtcPeers) {
+    if (!localStreamState || callState === "ENDED" || callState === "READY" || hasActiveWebRtcPeers) {
       latestLocalAudioChunkRef.current = undefined
       recentLocalAudioChunksRef.current = []
       return
@@ -3186,7 +3195,7 @@ export function VibeVideoCallStudio({
   }, [localStreamState])
 
   // LAYER 1: Real WebRTC Multi-Device Video/Audio & Data Mesh via PeerJS (Collision-free unique peer ID + fast P2P DataChannel & MediaStream)
-  const isCallEnded = callState === "ENDED"
+  const isCallEnded = callState === "ENDED" || callState === "READY"
   useEffect(() => {
     if (typeof window === "undefined" || isCallEnded) return
     let isCancelled = false
@@ -3730,7 +3739,7 @@ export function VibeVideoCallStudio({
 
   // LAYER 2: Adaptive `/api/v1/calls` Room Heartbeat Sync (2200ms lightweight presence once WebRTC connects; 520ms pre-ICE)
   useEffect(() => {
-    if (callState === "ENDED") return
+    if (callState === "ENDED" || callState === "READY") return
     let mounted = true
     let heartbeatTimer: ReturnType<typeof setTimeout> | null = null
     const missingPeerBeats = new Map<string, number>()
@@ -4068,11 +4077,11 @@ export function VibeVideoCallStudio({
     }
   }, [callId, localParticipantId, myPeerId, conversationId, initialMode, isInvitedGuestLink, callState, releaseAllMediaDevices, teardownStudioMediaCall, onCloseStudio])
 
-  // Release hardware & notify server when component unmounts (unless handing off back to Messaging Huddle!)
+  // Release hardware & notify server when component unmounts (unless standby or handing off back to Messaging Huddle!)
   useEffect(() => {
     return () => {
       releaseAllMediaDevices()
-      if (isHandingOffRef.current) return
+      if (isHandingOffRef.current || !hasActivatedCallRef.current) return
       fetch("/api/v1/calls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -4751,7 +4760,36 @@ export function VibeVideoCallStudio({
     }
   }
 
+  const handleStartCallFromStandby = async (mode: "video" | "audio" | "screenshare") => {
+    hasActivatedCallRef.current = true
+    isCallEndedRef.current = false
+    isFirstStudioHeartbeatRef.current = true
+    studioMountedAtMsRef.current = Date.now()
+    setCallMode(mode)
+    setCallState("CONNECTED")
+    setCallStateVersion((v) => v + 1)
+    setIsCameraOn(mode !== "audio")
+    setParticipants((prev) =>
+      prev.map((p) =>
+        p.isLocal ? { ...p, isVideoOn: mode !== "audio", isMuted: false, isSpeaking: true } : p
+      )
+    )
+    if (mode === "screenshare") {
+      await startHardwareCameraAndMic(selectedVideoDeviceId || undefined, selectedAudioDeviceId || undefined, false)
+      startScreenShare()
+    } else {
+      await startHardwareCameraAndMic(
+        selectedVideoDeviceId || undefined,
+        selectedAudioDeviceId || undefined,
+        mode === "audio"
+      )
+    }
+    appendLog(`Started live ${mode} call from Call Studio standby.`)
+  }
+
   const handleRestartCall = async () => {
+    hasActivatedCallRef.current = true
+    isCallEndedRef.current = false
     isFirstStudioHeartbeatRef.current = true
     studioMountedAtMsRef.current = Date.now()
     setCallState("CONNECTED")
@@ -4826,9 +4864,15 @@ export function VibeVideoCallStudio({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-sm sm:text-base font-extrabold text-white truncate">{conversationName}</h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                🟢 LIVE E2EE
-              </span>
+              {callState === "READY" ? (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-200 border border-amber-400/30">
+                  ⏸️ STANDBY · CAMERA OFF
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                  🟢 LIVE E2EE
+                </span>
+              )}
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-zinc-100 font-bold">
                 👥 {participants.length} Connected
               </span>
@@ -5749,6 +5793,45 @@ export function VibeVideoCallStudio({
             </div>
           )}
 
+          {callState === "READY" && (
+            <div className="rounded-2xl bg-slate-900/95 border border-emerald-500/40 p-6 flex flex-col items-center justify-center text-center space-y-4 shadow-xl m-4">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300">
+                <Video className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-extrabold text-white">Ready to Call · Camera &amp; Mic Off</h3>
+                <p className="text-xs text-zinc-300 max-w-md">
+                  Camera &amp; microphone stay off until you start a call. Choose video, audio, or screen share below when you are ready.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => handleStartCallFromStandby("video")}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-lg"
+                >
+                  <Video className="h-4 w-4" />
+                  <span>Start Video Call</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleStartCallFromStandby("audio")}
+                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-extrabold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Phone className="h-4 w-4 text-emerald-300" />
+                  <span>Start Audio Call</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleStartCallFromStandby("screenshare")}
+                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-extrabold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>Share Screen &amp; Join</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {callState === "ENDED" && (
             <div className="rounded-2xl bg-slate-900/95 border-2 border-rose-500/50 p-6 flex flex-col items-center justify-center text-center space-y-3 shadow-xl">
               <div className="h-12 w-12 rounded-2xl bg-rose-500/20 border border-rose-400/40 flex items-center justify-center text-rose-400">
@@ -5772,7 +5855,7 @@ export function VibeVideoCallStudio({
           )}
 
           {/* GLOBAL REMOTE WEBRTC AUDIO MIXER (Plays every incoming WebRTC audio track at full volume regardless of tile binding) */}
-          {callState !== "ENDED" && (
+          {callState !== "ENDED" && callState !== "READY" && (
             <div style={{ position: "fixed", width: 0, height: 0, overflow: "hidden", pointerEvents: "none" }}>
               {Object.entries(remoteStreams).map(([peerKey, stream]) => (
                 <RemotePeerAudioTrackPlayer
@@ -5786,7 +5869,7 @@ export function VibeVideoCallStudio({
           )}
 
           {/* PARTICIPANT VIDEO GRID (CLEAN, UNCLUTTERED, REAL MULTI-PARTY PARTICIPANTS) */}
-          {callState !== "ENDED" && (
+          {callState !== "ENDED" && callState !== "READY" && (
           <div
             className={`grid gap-4 ${
               participants.length === 1

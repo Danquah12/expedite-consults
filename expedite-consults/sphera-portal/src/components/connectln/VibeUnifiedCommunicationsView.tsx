@@ -709,7 +709,14 @@ export function VibeUnifiedCommunicationsView({
 
   const effectiveHandoff = studioHandoff || storedHandoff
 
-  const [activeMainTab, setActiveMainTab] = useState<MainSectionTab>("video_call_studio")
+  const [activeMainTab, setActiveMainTab] = useState<MainSectionTab>(() => {
+    if (effectiveHandoff?.callId) return "video_call_studio"
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search)
+      if (sp.get("joinCall") || sp.get("call")) return "video_call_studio"
+    }
+    return "workspace"
+  })
   const [joinedCallRoomId, setJoinedCallRoomId] = useState<string | null>(() => {
     if (effectiveHandoff?.callId) return effectiveHandoff.callId
     if (typeof window !== "undefined") {
@@ -729,7 +736,7 @@ export function VibeUnifiedCommunicationsView({
     }
     if (typeof window === "undefined") return
     const params = new URLSearchParams(window.location.search)
-    const joinCallParam = params.get("joinCall")
+    const joinCallParam = params.get("joinCall") || params.get("call")
     if (joinCallParam) {
       setJoinedCallRoomId(joinCallParam)
       setActiveMainTab("video_call_studio")
@@ -1129,6 +1136,7 @@ export function VibeUnifiedCommunicationsView({
           conversationId={effectiveHandoff?.conversationId || joinedCallRoomId || selectedConversation.id}
           conversationName={effectiveHandoff?.conversationName || selectedConversation.name}
           initialMode={effectiveHandoff?.mode || callMode}
+          autoStartCall={Boolean(effectiveHandoff?.callId || joinedCallRoomId)}
           currentUserName={currentUser?.name || "You (Verified Device)"}
           currentUserAvatar={currentUser?.avatar}
           currentUserEmail={currentUser?.email}
@@ -1158,6 +1166,10 @@ export function VibeUnifiedCommunicationsView({
             if (effectiveHandoff?.returnToMessaging && onReturnToMessaging) {
               onReturnToMessaging({ keepCallActive: false })
             } else {
+              setJoinedCallRoomId(null)
+              try {
+                sessionStorage.removeItem("connectln_studio_handoff_v1")
+              } catch {}
               setActiveMainTab("workspace")
             }
           }}
@@ -1237,6 +1249,7 @@ export function VibeUnifiedCommunicationsView({
               conversationId={selectedConversation.id}
               conversationName={selectedConversation.name}
               initialMode={callMode}
+              autoStartCall={true}
               currentUserName={currentUser?.name || "You (Verified Device)"}
               currentUserAvatar={currentUser?.avatar}
               currentUserEmail={currentUser?.email}
