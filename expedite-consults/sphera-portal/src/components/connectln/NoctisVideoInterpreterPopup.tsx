@@ -6,6 +6,11 @@ import { useLanguage } from "@/context/LanguageContext"
 import { LanguageCode, SUPPORTED_LANGUAGES } from "@/lib/translations"
 import { translateLinesLive, translateTextLive } from "@/lib/live-page-translator"
 import { getVerbatimSpokenSegmentsForVideo } from "@/lib/video-verbatim-transcripts"
+import { getLanguageVoiceProfile } from "@/lib/noctis-voice-profiles"
+import {
+  prefetchNativeMmsSpeech,
+  synthesizeNativeMmsSpeech,
+} from "@/lib/noctis-native-mms-client"
 
 export const NOCTIS_LANGUAGE_COMMAND_EVENT = "connectln:noctis-command-language"
 
@@ -180,10 +185,10 @@ const NATIVE_VIDEO_PHRASES: Partial<Record<Exclude<LanguageCode, "en">, Record<s
   ak: {
     "Carpentry Basics: Marking and Checking Angles": "Duadwuma Mfitiaseɛ: Ntwea Agyiraehyɛ ne Nhwehwɛmu",
     "Learners explore how a speed square helps mark angles and check whether corners are square. This is a useful starting lesson before moving into cutting and assembly.":
-      "Adesuafoɔ sua sɛnea susudua boa ma wɔhyɛ ntwea agyiraeɛ pɛpɛɛpɛ, na wɔhwɛ sɛ ntwea no gyina hɔ tẽẽ ansa na wɔatwa nnua no aka abom.",
-    "Speed Square Layout": "Susudua Nhyehyɛeɛ ne Nsusuwiiɛ",
-    "Marking 90° Perpendicular Lines": "Nsensaneeɛ Tẽẽ Agyiraehyɛ Pɛpɛɛpɛ",
-    "Marking 45° Miter Angles": "Ntwea Nkyekyɛmu Agyiraehyɛ",
+      "Adesuafoɔ sua sɛnea susudua ahinanan boa ma wɔhyɛ ntwea agyiraeɛ pɛpɛɛpɛ, na wɔhwɛ sɛ ntwea no gyina hɔ tẽẽ ansa na wɔatwa nnua no aka abom.",
+    "Speed Square Layout": "Susudua Ahinanan Nhyehyɛeɛ ne Nsusuwiiɛ",
+    "Marking 90° Perpendicular Lines": "Nsensaneeɛ Tẽẽ Digrii Aduɔkron Agyiraehyɛ",
+    "Marking 45° Miter Angles": "Ntwea Digrii Aduanan Num Agyiraehyɛ",
     "Checking Corner Squareness": "Ntwea Pɛpɛɛpɛ Nhwehwɛmu",
   },
   ee: {
@@ -390,10 +395,10 @@ function buildNativeLocalizedTemplate(
         overview: `Akwaaba ba nsaanodwuma adesua yi mu: ${translatedTitle}. ${translatedDesc}`,
         steps: [
           ...translatedTakeaways,
-          `Nea ɛdi kan, Nnwinnadeɛ Ahoboa: Kyerɛkyerɛfoɔ no de susudua no to dua no ano pɛpɛɛpɛ, na ɔhwɛ sɛ ɛhyia yie ansa na wahyɛ agyiraeɛ.`,
+          `Nea ɛdi kan, Nnwinnadeɛ Ahoboa: Kyerɛkyerɛfoɔ no de susudua ahinanan no to dua no ano pɛpɛɛpɛ, na ɔhwɛ sɛ ɛhyia yie ansa na wahyɛ agyiraeɛ.`,
           `Nea ɛtɔ so mmienu, Ntwea Agyiraehyɛ Wɔ Pon So: Hwɛ sɛnea kyerɛkyerɛfoɔ no sɔ adwinnadeɛ no mu dennen twa nsensaneeɛ tẽẽ pɛpɛɛpɛ.`,
           `Nea ɛtɔ so mmiɛnsa, Nhwehwɛmu ne Ahobammɔ: Wɔsan susuw ntwea biara mprenu ansa na wɔatwa dua no, sɛnea mfomsoɔ biara remma wɔ adwuma no mu.`,
-          `Nea ɛtɔ so nnan, Nkyerɛaseɛ Toa So: Video no ankasa nne yɛ brɛoo wɔ akyi, na yɛrekyerɛ aseɛ wɔ Twi kasa mu kɔsi video no awiei.`,
+          `Nea ɛtɔ so nnan, Nkyerɛaseɛ Toa So: Sini yi ankasa nne yɛ brɛoo wɔ akyi, na Noctis rekyerɛ aseɛ wɔ Twi kasa mu kɔsi awiei.`,
         ],
       }
     case "ee":
@@ -1346,6 +1351,9 @@ export function NoctisVideoInterpreterPopup({
   const [questionInput, setQuestionInput] = useState("")
   const [qaAnswer, setQaAnswer] = useState<string | null>(null)
   const [isAsking, setIsAsking] = useState(false)
+  const [voiceStatusNote, setVoiceStatusNote] = useState<string | null>(null)
+  const serverNativeLangsRef = useRef<Set<string> | null>(null)
+  const subtitleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const isSpeakingRef = useRef(false)
   isSpeakingRef.current = isSpeaking
@@ -1495,6 +1503,10 @@ export function NoctisVideoInterpreterPopup({
       clearTimeout(nextSentenceTimerRef.current)
       nextSentenceTimerRef.current = null
     }
+    if (subtitleTimerRef.current) {
+      clearTimeout(subtitleTimerRef.current)
+      subtitleTimerRef.current = null
+    }
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       try {
         window.speechSynthesis.cancel()
@@ -1518,6 +1530,25 @@ export function NoctisVideoInterpreterPopup({
     }
   }, [])
 
+  // Query live server TTS capabilities once (upgrades languages automatically when KHAYA_API_KEY / HF_TOKEN / GEMINI_API_KEY are set)
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const win = window as any
+    if (Array.isArray(win.__noctisServerNativeLangs)) {
+      serverNativeLangsRef.current = new Set(win.__noctisServerNativeLangs)
+      return
+    }
+    fetch("/api/connectin/tts?capabilities=1")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.serverNativeLangs)) {
+          win.__noctisServerNativeLangs = data.serverNativeLangs
+          serverNativeLangsRef.current = new Set(data.serverNativeLangs)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   // Stop this instance if another video card claims exclusive interpreter
   useEffect(() => {
     const handleExclusive = (e: Event) => {
@@ -1526,6 +1557,7 @@ export function NoctisVideoInterpreterPopup({
         if (isSpeakingRef.current) {
           isSpeakingRef.current = false
           setIsSpeaking(false)
+          setVoiceStatusNote(null)
           stopAudioOutput(false)
         }
         if (isPopupOpenRef.current) {
@@ -1537,9 +1569,11 @@ export function NoctisVideoInterpreterPopup({
     return () => window.removeEventListener(EXCLUSIVE_INTERPRETER_EVENT, handleExclusive)
   }, [stopAudioOutput])
 
-  // Core sentence-by-sentence continuous verbatim human voice player:
-  // Uses ONLY `/api/connectin/tts?v=human4` (Studio Natural Human Voice Actors) with strict single-voice sequence locking.
-  // NEVER invokes `window.speechSynthesis` so robotic browser AI voices can never speak or overlap!
+  // Core sentence-by-sentence continuous native human interpreter:
+  // Routes by language authenticity:
+  //   1) server-native (34 languages, plus any enabled by KHAYA_API_KEY / HF_TOKEN / GEMINI_API_KEY) -> /api/connectin/tts?v=native6
+  //   2) client-mms-native (ak Twi, yo, ig, wo, rw, ee, om) -> in-browser Meta MMS-TTS ONNX native speaker
+  //   3) subtitles-only (gaa, sn, xh unless server key enabled) -> live synchronized subtitles, never faked with Swahili/Zulu
   const speakSentenceAtIndex = useCallback((idx: number) => {
     if (typeof window === "undefined") return
     if ((window as any).__connectlnCallSilenceActive) return
@@ -1566,27 +1600,15 @@ export function NoctisVideoInterpreterPopup({
     const targetLang = audioLangRef.current
     const speakerParam = speakerNameRef.current || ""
     const expectedCacheKey = `${targetLang}::${scriptIdKey}`
-    const needsServerTranslate =
-      targetLang !== "en" && readyScriptKeyRef.current !== expectedCacheKey ? "&translate=1" : ""
+    const scriptAlreadyTranslated = readyScriptKeyRef.current === expectedCacheKey
+    const needsServerTranslate = targetLang !== "en" && !scriptAlreadyTranslated ? "&translate=1" : ""
 
     // Increment global sequence token so any previous in-flight request is immediately invalidated
     const mySeq = (win.__noctisAudioPlaySeq || 0) + 1
     win.__noctisAudioPlaySeq = mySeq
 
-    // Preload the NEXT verbatim spoken line in the background so there is zero gap between sentences!
-    if (nextSentenceText) {
-      try {
-        const preloadAudio = getSharedNoctisPreloadAudio()
-        if (preloadAudio) {
-          preloadAudio.src = `/api/connectin/tts?v=human5&lang=${encodeURIComponent(
-            targetLang
-          )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
-            nextSentenceText.slice(0, 260)
-          )}`
-          preloadAudio.load()
-        }
-      } catch {}
-    }
+    // Unlock shared hardware audio synchronously inside user gesture
+    primeSharedAudioOnUserGesture()
 
     const scheduleNextSentence = (delayMs = 150) => {
       if (!isSpeakingRef.current) return
@@ -1603,9 +1625,31 @@ export function NoctisVideoInterpreterPopup({
       }, delayMs)
     }
 
-    try {
+    const profile = getLanguageVoiceProfile(targetLang)
+    const serverHasOverride = Boolean(serverNativeLangsRef.current?.has(targetLang))
+    const effectiveMode = serverHasOverride ? "server-native" : profile.mode
+
+    if (effectiveMode === "subtitles-only") {
+      setShowSubtitlesStrip(true)
+      setVoiceStatusNote("Live Translated Subtitles · Native Voice Coming Soon")
+      if (onMuteOriginalVideoRef.current) {
+        onMuteOriginalVideoRef.current(false)
+      }
+      setPageVideoElementsDucking(false)
+      const readDurationMs = Math.max(3800, Math.min(8500, sentenceText.length * 65))
+      if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current)
+      subtitleTimerRef.current = setTimeout(() => {
+        scheduleNextSentence(120)
+      }, readDurationMs)
+      return
+    }
+
+    const playAudioUrlOnSharedElement = (audioUrl: string) => {
       const audio = getSharedNoctisAudio()
       if (!audio) return
+      if (!isSpeakingRef.current || win.__activeNoctisInterpreterId !== instanceIdRef.current || win.__noctisAudioPlaySeq !== mySeq) {
+        return
+      }
 
       audio.onended = null
       audio.onerror = null
@@ -1621,11 +1665,7 @@ export function NoctisVideoInterpreterPopup({
         audio.playbackRate = 1.0
       } catch {}
 
-      audio.src = `/api/connectin/tts?v=human5&lang=${encodeURIComponent(
-        targetLang
-      )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
-        sentenceText.slice(0, 260)
-      )}`
+      audio.src = audioUrl
 
       audio.onplaying = () => {
         win.__noctisSharedAudioUnlocked = true
@@ -1664,8 +1704,6 @@ export function NoctisVideoInterpreterPopup({
           if (errName === "AbortError") {
             return
           }
-          // If blocked by browser autoplay policy before first user gesture, restore original video sound
-          // and mark `isSpeaking = false` so the very first click/tap anywhere on the page starts it!
           if (errName === "NotAllowedError") {
             if (
               win.__activeNoctisInterpreterId === instanceIdRef.current &&
@@ -1673,6 +1711,7 @@ export function NoctisVideoInterpreterPopup({
             ) {
               isSpeakingRef.current = false
               setIsSpeaking(false)
+              setVoiceStatusNote(null)
               if (onMuteOriginalVideoRef.current) {
                 onMuteOriginalVideoRef.current(false)
               }
@@ -1688,6 +1727,94 @@ export function NoctisVideoInterpreterPopup({
           }
         })
       }
+    }
+
+    if (effectiveMode === "client-mms-native") {
+      setVoiceStatusNote(`${profile.engineLabel} · Preparing native voice...`)
+      ;(async () => {
+        try {
+          // Ensure we NEVER feed untranslated English text into a native Akan/Yoruba/Igbo/Wolof/Ewe/Kinyarwanda/Oromo voice model
+          let textInTargetLang = sentenceText
+          if (targetLang !== "en" && !scriptAlreadyTranslated) {
+            textInTargetLang = await translateTextLive(sentenceText, targetLang, true)
+            if (win.__noctisAudioPlaySeq !== mySeq || !isSpeakingRef.current) return
+          }
+
+          const blobUrl = await synthesizeNativeMmsSpeech(textInTargetLang, targetLang, {
+            onProgress: (pct, stage) => {
+              if (win.__noctisAudioPlaySeq !== mySeq) return
+              if (pct < 100) {
+                setVoiceStatusNote(`${profile.engineLabel} · ${pct}% (${stage})`)
+              } else {
+                setVoiceStatusNote(profile.nativeSpeakerLabel)
+              }
+            },
+          })
+
+          if (
+            !isSpeakingRef.current ||
+            win.__activeNoctisInterpreterId !== instanceIdRef.current ||
+            win.__noctisAudioPlaySeq !== mySeq
+          ) {
+            return
+          }
+
+          setVoiceStatusNote(profile.nativeSpeakerLabel)
+          playAudioUrlOnSharedElement(blobUrl)
+
+          // Pre-synthesize the NEXT sentence in target language for gapless playback
+          if (nextSentenceText && scriptAlreadyTranslated) {
+            prefetchNativeMmsSpeech(nextSentenceText, targetLang)
+          }
+        } catch {
+          if (
+            isSpeakingRef.current &&
+            win.__activeNoctisInterpreterId === instanceIdRef.current &&
+            win.__noctisAudioPlaySeq === mySeq
+          ) {
+            setShowSubtitlesStrip(true)
+            setVoiceStatusNote("Live Subtitles · Native voice model unavailable offline")
+            if (onMuteOriginalVideoRef.current) {
+              onMuteOriginalVideoRef.current(false)
+            }
+            setPageVideoElementsDucking(false)
+            const readDurationMs = Math.max(3800, Math.min(8000, sentenceText.length * 60))
+            if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current)
+            subtitleTimerRef.current = setTimeout(() => {
+              scheduleNextSentence(150)
+            }, readDurationMs)
+          }
+        }
+      })()
+      return
+    }
+
+    // Server-Native Neural / Regional Voice (/api/connectin/tts?v=native6)
+    setVoiceStatusNote(profile.nativeSpeakerLabel)
+
+    // Preload the NEXT verbatim spoken line in the background so there is zero gap between sentences
+    if (nextSentenceText) {
+      try {
+        const preloadAudio = getSharedNoctisPreloadAudio()
+        if (preloadAudio) {
+          preloadAudio.src = `/api/connectin/tts?v=native6&lang=${encodeURIComponent(
+            targetLang
+          )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
+            nextSentenceText.slice(0, 260)
+          )}`
+          preloadAudio.load()
+        }
+      } catch {}
+    }
+
+    try {
+      playAudioUrlOnSharedElement(
+        `/api/connectin/tts?v=native6&lang=${encodeURIComponent(
+          targetLang
+        )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
+          sentenceText.slice(0, 260)
+        )}`
+      )
     } catch {
       // Wait for next sentence or user interaction
     }
@@ -1710,6 +1837,7 @@ export function NoctisVideoInterpreterPopup({
     (restoreFullOriginalVolume = true) => {
       isSpeakingRef.current = false
       setIsSpeaking(false)
+      setVoiceStatusNote(null)
       stopAudioOutput(false)
       if (restoreFullOriginalVolume) {
         if (onMuteOriginalVideoRef.current) {
@@ -2279,11 +2407,16 @@ export function NoctisVideoInterpreterPopup({
                 }}
                 className="rounded border px-2 py-0.5 text-[10.5px] font-medium cursor-pointer focus:outline-none"
               >
-                {languages.map((l) => (
-                  <option key={l.code} value={l.code} style={{ backgroundColor: "#09090B", color: "#FFFFFF" }}>
-                    {l.localName} ({l.code.toUpperCase()})
-                  </option>
-                ))}
+                {languages.map((l) => {
+                  const vp = getLanguageVoiceProfile(l.code)
+                  const isSubOnly = vp.mode === "subtitles-only" && !serverNativeLangsRef.current?.has(l.code)
+                  return (
+                    <option key={l.code} value={l.code} style={{ backgroundColor: "#09090B", color: "#FFFFFF" }}>
+                      {isSubOnly ? "💬 " : "🔊 "}
+                      {l.localName} ({l.code.toUpperCase()}){isSubOnly ? " · Subtitles" : ""}
+                    </option>
+                  )
+                })}
               </select>
             </div>
           </div>
@@ -2368,11 +2501,16 @@ export function NoctisVideoInterpreterPopup({
                 className="rounded-md border px-2 py-0.5 text-[10px] sm:text-[11px] font-extrabold cursor-pointer focus:outline-none"
                 title="Choose which language to hear this video in"
               >
-                {languages.map((l) => (
-                  <option key={l.code} value={l.code} style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}>
-                    🔊 {l.localName} ({l.code.toUpperCase()})
-                  </option>
-                ))}
+                {languages.map((l) => {
+                  const vp = getLanguageVoiceProfile(l.code)
+                  const isSubOnly = vp.mode === "subtitles-only" && !serverNativeLangsRef.current?.has(l.code)
+                  return (
+                    <option key={l.code} value={l.code} style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}>
+                      {isSubOnly ? "💬 " : "🔊 "}
+                      {l.localName} ({l.code.toUpperCase()}){isSubOnly ? " · Subtitles" : ""}
+                    </option>
+                  )
+                })}
               </select>
 
               <button
@@ -2438,6 +2576,11 @@ export function NoctisVideoInterpreterPopup({
               >
                 {isLoadingTranslation ? labels.translating : activeSubtitleLine}
               </p>
+              {isSpeaking && voiceStatusNote && (
+                <p style={{ color: "#7DD3FC" }} className="mt-0.5 text-[10px] font-semibold truncate">
+                  {voiceStatusNote}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -2551,11 +2694,16 @@ export function NoctisVideoInterpreterPopup({
                     className="rounded-md border px-1.5 py-0.5 text-[10px] font-extrabold cursor-pointer focus:outline-none"
                     title="Choose which language to hear this video in"
                   >
-                    {languages.map((l) => (
-                      <option key={l.code} value={l.code} style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}>
-                        🔊 {l.flag} {l.localName} ({l.code.toUpperCase()})
-                      </option>
-                    ))}
+                    {languages.map((l) => {
+                      const vp = getLanguageVoiceProfile(l.code)
+                      const isSubOnly = vp.mode === "subtitles-only" && !serverNativeLangsRef.current?.has(l.code)
+                      return (
+                        <option key={l.code} value={l.code} style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}>
+                          {isSubOnly ? "💬 " : "🔊 "}
+                          {l.flag} {l.localName} ({l.code.toUpperCase()}){isSubOnly ? " · Subtitles" : ""}
+                        </option>
+                      )
+                    })}
                   </select>
 
                   <button
@@ -2672,15 +2820,20 @@ export function NoctisVideoInterpreterPopup({
                 }}
                 className="flex-1 rounded-lg border-2 px-2.5 py-1.5 text-base sm:text-xs font-extrabold focus:outline-none focus:border-[#0A66C2] cursor-pointer shadow-2xs"
               >
-                {languages.map((l) => (
-                  <option
-                    key={l.code}
-                    value={l.code}
-                    style={{ backgroundColor: "#FFFFFF", color: "#0F172A" }}
-                  >
-                    {l.localName} — {l.name} ({l.code.toUpperCase()})
-                  </option>
-                ))}
+                {languages.map((l) => {
+                  const vp = getLanguageVoiceProfile(l.code)
+                  const isSubOnly = vp.mode === "subtitles-only" && !serverNativeLangsRef.current?.has(l.code)
+                  return (
+                    <option
+                      key={l.code}
+                      value={l.code}
+                      style={{ backgroundColor: "#FFFFFF", color: "#0F172A" }}
+                    >
+                      {isSubOnly ? "💬 " : "🔊 "}
+                      {l.localName} — {l.name} ({l.code.toUpperCase()}){isSubOnly ? " · Live Subtitles" : ""}
+                    </option>
+                  )
+                })}
               </select>
             </div>
 
@@ -2753,7 +2906,7 @@ export function NoctisVideoInterpreterPopup({
                   style={{ color: "#6EE7B7" }}
                   className="text-[10px] font-black uppercase tracking-wider"
                 >
-                  {labels.liveInterpretingBadge}
+                  {voiceStatusNote || labels.liveInterpretingBadge}
                 </p>
                 <p style={{ color: "#FFFFFF" }} className="text-xs font-bold leading-snug mt-0.5">
                   “{activeSubtitleLine}”

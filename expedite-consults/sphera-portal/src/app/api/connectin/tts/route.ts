@@ -5,14 +5,14 @@ import https from "https"
 export const runtime = "nodejs"
 
 // ============================================================================
-// STUDIO NATURAL HUMAN VOICE ACTORS FOR ALL 46 SUPPORTED LANGUAGES
-// Maps each language code to [Male Human Voice Actor, Female Human Voice Actor]
+// VERIFIED NATIVE VOICE ACTORS (ONLY LANGUAGES WITH TRUE NATIVE VOICES)
+// Languages without a true native Edge voice MUST NOT be faked with Swahili/Zulu/French/Hindi.
 // ============================================================================
-const NATURAL_HUMAN_VOICE_ACTORS: Record<string, { male: string; female: string }> = {
+const EDGE_NATIVE_VOICE_ACTORS: Record<string, { male: string; female: string }> = {
   en: { male: "en-US-AndrewMultilingualNeural", female: "en-US-AvaMultilingualNeural" },
   es: { male: "es-ES-AlvaroNeural", female: "es-MX-DaliaNeural" },
   fr: { male: "fr-FR-RemyMultilingualNeural", female: "fr-FR-VivienneMultilingualNeural" },
-  de: { male: "de-DE-FlorianMultilingualNeural", female: "de-DE-SeraphinaMultilingualNeural" },
+  de: { male: "de-DE-ChristophNeural", female: "de-DE-TanjaNeural" },
   pt: { male: "pt-BR-AntonioNeural", female: "pt-BR-ThalitaMultilingualNeural" },
   it: { male: "it-IT-GiuseppeMultilingualNeural", female: "it-IT-IsabellaNeural" },
   nl: { male: "nl-NL-MaartenNeural", female: "nl-NL-FennaNeural" },
@@ -28,7 +28,6 @@ const NATURAL_HUMAN_VOICE_ACTORS: Record<string, { male: string; female: string 
   hi: { male: "hi-IN-MadhurNeural", female: "hi-IN-SwaraNeural" },
   bn: { male: "bn-BD-PradeepNeural", female: "bn-BD-NabanitaNeural" },
   ur: { male: "ur-PK-AsadNeural", female: "ur-PK-UzmaNeural" },
-  pa: { male: "hi-IN-MadhurNeural", female: "hi-IN-SwaraNeural" },
   ta: { male: "ta-IN-ValluvarNeural", female: "ta-IN-PallaviNeural" },
   zh: { male: "zh-CN-YunxiNeural", female: "zh-CN-XiaoxiaoNeural" },
   ja: { male: "ja-JP-KeitaNeural", female: "ja-JP-NanamiNeural" },
@@ -38,45 +37,66 @@ const NATURAL_HUMAN_VOICE_ACTORS: Record<string, { male: string; female: string 
   id: { male: "id-ID-ArdiNeural", female: "id-ID-GadisNeural" },
   ms: { male: "ms-MY-OsmanNeural", female: "ms-MY-YasminNeural" },
   tl: { male: "fil-PH-AngeloNeural", female: "fil-PH-BlessicaNeural" },
-  // African & regional languages mapped to authentic West/East/Southern African human voice actors
+  // Verified native African Edge neural voices:
   sw: { male: "sw-TZ-DaudiNeural", female: "sw-TZ-RehemaNeural" },
   am: { male: "am-ET-AmehaNeural", female: "am-ET-MekdesNeural" },
   so: { male: "so-SO-MuuseNeural", female: "so-SO-UbaxNeural" },
   zu: { male: "zu-ZA-ThembaNeural", female: "zu-ZA-ThandoNeural" },
-  xh: { male: "zu-ZA-ThembaNeural", female: "zu-ZA-ThandoNeural" },
-  ak: { male: "sw-KE-RafikiNeural", female: "sw-KE-ZuriNeural" },
-  ee: { male: "sw-KE-RafikiNeural", female: "sw-KE-ZuriNeural" },
-  gaa: { male: "sw-KE-RafikiNeural", female: "sw-KE-ZuriNeural" },
-  ha: { male: "sw-KE-RafikiNeural", female: "sw-KE-ZuriNeural" },
-  yo: { male: "sw-KE-RafikiNeural", female: "sw-KE-ZuriNeural" },
-  ig: { male: "sw-KE-RafikiNeural", female: "sw-KE-ZuriNeural" },
-  om: { male: "sw-KE-RafikiNeural", female: "sw-KE-ZuriNeural" },
-  rw: { male: "sw-TZ-DaudiNeural", female: "sw-TZ-RehemaNeural" },
-  sn: { male: "zu-ZA-ThembaNeural", female: "zu-ZA-ThandoNeural" },
-  wo: { male: "fr-FR-RemyMultilingualNeural", female: "fr-FR-VivienneMultilingualNeural" },
-  lg: { male: "sw-KE-RafikiNeural", female: "sw-KE-ZuriNeural" },
 }
 
-const PHONETIC_RESHAPE_LANGS = new Set(["ak", "ee", "gaa", "ha", "yo", "ig", "om", "rw", "sn", "lg"])
+// Verified native Google regional TTS languages without a native Edge voice
+const GOOGLE_NATIVE_TTS_MAP: Record<string, string> = {
+  ha: "ha",
+  pa: "pa",
+}
+
+// Languages synthesized natively in-browser via Meta MMS-TTS ONNX when no server cloud key is set
+const CLIENT_NATIVE_MMS_LANGS = new Set(["ak", "yo", "ig", "wo", "rw", "ee", "om"])
+
+// Languages without a browser ONNX or free native server TTS (subtitles-only unless cloud key is configured)
+const CLOUD_KEY_ONLY_LANGS = new Set(["gaa", "sn", "xh", "lg"])
+
+const KHAYA_LANG_MAP: Record<string, string> = {
+  ak: "tw",
+  ee: "ee",
+  gaa: "gaa",
+  yo: "yo",
+  ha: "ha",
+}
+
+const HF_MMS_ISO_MAP: Record<string, string> = {
+  ak: "aka",
+  ee: "ewe",
+  ha: "hau",
+  yo: "yor",
+  om: "orm",
+  rw: "kin",
+  sn: "sna",
+  lg: "lug",
+  pa: "pan",
+}
+
+const GEMINI_LANG_NAME_MAP: Record<string, string> = {
+  ak: "Asante Twi (Ghanaian Akan)",
+  ee: "Ewe (Ghana and Togo)",
+  gaa: "Ga (Accra, Ghana)",
+  ha: "Hausa",
+  yo: "Yoruba",
+  ig: "Igbo",
+  om: "Afaan Oromoo",
+  rw: "Kinyarwanda",
+  sn: "chiShona",
+  xh: "isiXhosa",
+  wo: "Wolof",
+  lg: "Luganda",
+  pa: "Punjabi",
+}
 
 const PRIMARY_TTS_LANG_MAP: Record<string, string> = {
   en: "en",
-  ak: "ak",
-  ee: "ee",
-  gaa: "gaa",
   ha: "ha",
-  yo: "yo",
-  ig: "ig",
   sw: "sw",
   am: "am",
-  om: "om",
-  so: "so",
-  zu: "zu",
-  xh: "xh",
-  rw: "rw",
-  sn: "sn",
-  wo: "wo",
-  lg: "lg",
   es: "es",
   fr: "fr",
   de: "de",
@@ -107,27 +127,6 @@ const PRIMARY_TTS_LANG_MAP: Record<string, string> = {
   tl: "tl",
 }
 
-const PHONETIC_FALLBACK_TTS_VOICE: Record<string, string[]> = {
-  ak: ["sw", "yo", "id", "pt-BR"],
-  ee: ["sw", "yo", "fr", "id"],
-  gaa: ["sw", "yo", "id", "pt-BR"],
-  ha: ["ha", "sw", "id", "ar"],
-  yo: ["yo", "sw", "id", "pt-BR"],
-  ig: ["ig", "sw", "yo", "id"],
-  am: ["am", "ar", "sw"],
-  om: ["sw", "so", "id"],
-  so: ["so", "sw", "ar"],
-  zu: ["zu", "sw", "id"],
-  xh: ["zu", "sw", "id"],
-  rw: ["sw", "fr", "id"],
-  sn: ["sw", "zu", "id"],
-  wo: ["fr", "sw", "id"],
-  lg: ["sw", "id", "en"],
-  fa: ["fa", "ar", "ur"],
-  he: ["iw", "he", "ar"],
-  pa: ["pa", "hi", "ur"],
-}
-
 const DEGREE_WORD_BY_LANG: Record<string, string> = {
   en: " degrees",
   ak: " ",
@@ -154,128 +153,20 @@ const DEGREE_WORD_BY_LANG: Record<string, string> = {
   ko: "도",
 }
 
-function reshapeForAuthenticSpokenPronunciation(rawText: string, lang: string, isFallbackVoice: boolean): string {
+/**
+ * Light whitespace & timestamp cleanup only. Never corrupts indigenous vowels (ɛ, ɔ, ɖ, ƒ, ŋ)
+ * or rewrites real native spelling into broken pseudo-English.
+ */
+function cleanTextForNaturalSpeech(rawText: string, lang: string): string {
   const degReplacement = DEGREE_WORD_BY_LANG[lang] ?? " "
-  let text = rawText
-    // Strip leading timestamp brackets like "[00:12] " so the voice only speaks the verbatim words
-    .replace(/^\s*\[\d{1,2}:\d{2}\]\s*/g, "")
+  return rawText
+    .replace(/^\s*\[\d{1,2}:\d{2}(?::\d{2})?\]\s*/g, "")
+    .replace(/^\s*\(\d{1,2}:\d{2}(?::\d{2})?\)\s*/g, "")
     .replace(/(\d+)\s*°/g, `$1${degReplacement}`)
     .replace(/\s*[—–·•|✓✕🔊⏸]\s*/g, ", ")
     .replace(/ConnectLn/gi, "Connect-Line")
     .replace(/\s+/g, " ")
     .trim()
-
-  if (lang === "ak") {
-    text = text
-      .replace(/nhwehwɛmu/gi, "nshwe-shwe-mu")
-      .replace(/hwehwɛ/gi, "shwe-shwe")
-      .replace(/nhyehyɛeɛ/gi, "nshe-she-eh")
-      .replace(/kyerɛkyerɛfoɔ/gi, "chere-chere-fo-o")
-      .replace(/nkyerɛaseɛ/gi, "nchere-ase-eh")
-      .replace(/kyerɛkyerɛ/gi, "chere-chere")
-      .replace(/kyerɛ/gi, "chere")
-      .replace(/adwumayɛfoɔ/gi, "ajuma-yefo-o")
-      .replace(/duadwuma/gi, "dua-juma")
-      .replace(/nsaanodwuma/gi, "nsaano-juma")
-      .replace(/adwinnadeɛ/gi, "ajwin-nade-eh")
-      .replace(/nnwinnadeɛ/gi, "nnwin-nade-eh")
-      .replace(/adwuma/gi, "ajuma")
-      .replace(/dwuma/gi, "juma")
-      .replace(/agyiraehyɛ/gi, "ajira-eshe")
-      .replace(/agyiraeɛ/gi, "ajira-eh")
-      .replace(/gyina/gi, "jina")
-      .replace(/ntwea/gi, "nchwe-a")
-      .replace(/atwa/gi, "achwa")
-      .replace(/watwa/gi, "wachwa")
-      .replace(/twa/gi, "chwa")
-      .replace(/hwɛ/gi, "shwe")
-      .replace(/ahwɛ/gi, "ashwe")
-      .replace(/hyɛ/gi, "sheh")
-      .replace(/ahyɛ/gi, "asheh")
-      .replace(/wahyɛ/gi, "washeh")
-      .replace(/ɛhyia/gi, "eshia")
-      .replace(/hyia/gi, "shia")
-      .replace(/mfitiaseɛ/gi, "mfitia-se-eh")
-      .replace(/adesuafoɔ/gi, "adesua-fo-o")
-      .replace(/sɛnea/gi, "sene-a")
-      .replace(/pɛpɛɛpɛ/gi, "pe-pee-pe")
-      .replace(/tẽẽ/gi, "tee")
-      .replace(/kɔsi/gi, "kosi")
-      .replace(/anammɔn/gi, "anam-mon")
-      .replace(/ɛ/g, "e")
-      .replace(/Ɛ/g, "E")
-      .replace(/ɔ/g, "o")
-      .replace(/Ɔ/g, "O")
-  } else if (lang === "ee") {
-    text = text
-      .replace(/eʋegbe/gi, "eve-gbe")
-      .replace(/nusrɔ̃lawo/gi, "nusro-lawo")
-      .replace(/nusrɔ̃ƒe/gi, "nusro-fe")
-      .replace(/srɔ̃a/gi, "sro-a")
-      .replace(/afɔɖeɖe/gi, "afo-dede")
-      .replace(/dzesiɖoɖo/gi, "dzesi-dodo")
-      .replace(/dzadzraɖo/gi, "dzadzra-do")
-      .replace(/gbegɔmeɖeɖe/gi, "gbe-gome-dede")
-      .replace(/gbeɖiɖi/gi, "gbe-didi")
-      .replace(/pɛpɛpɛ/gi, "pe-pe-pe")
-      .replace(/ɖ/g, "d")
-      .replace(/Ɖ/g, "D")
-      .replace(/ƒ/g, "f")
-      .replace(/Ƒ/g, "F")
-      .replace(/ʋ/g, "v")
-      .replace(/Ʋ/g, "V")
-      .replace(/ŋ/g, "ng")
-      .replace(/Ŋ/g, "Ng")
-      .replace(/ɣ/g, "g")
-      .replace(/Ɣ/g, "G")
-      .replace(/ɛ/g, "e")
-      .replace(/Ɛ/g, "E")
-      .replace(/ɔ/g, "o")
-      .replace(/Ɔ/g, "O")
-      .replace(/ã/g, "a")
-      .replace(/ẽ/g, "e")
-      .replace(/ĩ/g, "i")
-      .replace(/õ/g, "o")
-      .replace(/ũ/g, "u")
-  } else if (lang === "gaa") {
-    text = text
-      .replace(/shishitsɔɔmɔ/gi, "shishi-choomo")
-      .replace(/tsɔɔlɔ/gi, "choolo")
-      .replace(/tsɔɔ/gi, "choo")
-      .replace(/tsei/gi, "chei")
-      .replace(/tso/gi, "cho")
-      .replace(/jogbaŋŋ/gi, "jo-gbang")
-      .replace(/gbɛfaŋ/gi, "gbe-fang")
-      .replace(/kpɛŋŋ/gi, "kpeng")
-      .replace(/koŋi/gi, "kong-i")
-      .replace(/shĩa/gi, "shia")
-      .replace(/jw/gi, "j")
-      .replace(/ŋ/g, "ng")
-      .replace(/Ŋ/g, "Ng")
-      .replace(/ɛ/g, "e")
-      .replace(/Ɛ/g, "E")
-      .replace(/ɔ/g, "o")
-      .replace(/Ɔ/g, "O")
-      .replace(/ã/g, "a")
-  } else if (isFallbackVoice) {
-    text = text
-      .replace(/ɛ/g, "e")
-      .replace(/Ɛ/g, "E")
-      .replace(/ɔ/g, "o")
-      .replace(/Ɔ/g, "O")
-      .replace(/ɖ/g, "d")
-      .replace(/Ɖ/g, "D")
-      .replace(/ƒ/g, "f")
-      .replace(/Ƒ/g, "F")
-      .replace(/ŋ/g, "ng")
-      .replace(/Ŋ/g, "Ng")
-      .replace(/ʋ/g, "v")
-      .replace(/Ʋ/g, "V")
-      .replace(/ɣ/g, "g")
-      .replace(/Ɣ/g, "G")
-  }
-
-  return text
 }
 
 // ============================================================================
@@ -632,7 +523,9 @@ async function synthesizeStudioHumanVoiceAttempt(text: string, voiceName: string
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
-      const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voiceName}'><prosody pitch='+0Hz' rate='+0%' volume='+30%'>${escaped}</prosody></voice></speak>`
+      const localeMatch = /^([a-z]{2,3}-[A-Z]{2})/i.exec(voiceName)
+      const voiceLocale = localeMatch ? localeMatch[1] : "en-US"
+      const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='${voiceLocale}'><voice name='${voiceName}'><prosody pitch='+0Hz' rate='+0%' volume='+20%'>${escaped}</prosody></voice></speak>`
       const ssmlMsg =
         `X-RequestId:${reqId}\r\n` +
         `Content-Type:application/ssml+xml\r\n` +
@@ -723,7 +616,9 @@ async function synthesizeStudioHumanVoice(
   primaryVoiceName: string,
   backupVoiceName: string
 ): Promise<{ buffer: Buffer; actor: string } | null> {
-  const candidates = [primaryVoiceName, backupVoiceName, "en-US-AndrewMultilingualNeural"]
+  const candidates = primaryVoiceName === backupVoiceName
+    ? [primaryVoiceName]
+    : [primaryVoiceName, backupVoiceName]
   for (const voice of candidates) {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
@@ -732,7 +627,7 @@ async function synthesizeStudioHumanVoice(
           return { buffer: buf, actor: voice }
         }
       } catch {
-        // Retry once on transient socket/clock-skew error, then try next studio human actor
+        // Retry once on transient socket/clock-skew error, then try alternate native gender voice
       }
     }
   }
@@ -820,8 +715,174 @@ async function fetchStreamAudioBackup(text: string, tl: string): Promise<ArrayBu
   return null
 }
 
+function pcm16ToWavBuffer(pcmBytes: Uint8Array, sampleRate = 24000, channels = 1): Buffer {
+  const header = Buffer.alloc(44)
+  const byteRate = sampleRate * channels * 2
+  const blockAlign = channels * 2
+  header.write("RIFF", 0)
+  header.writeUInt32LE(36 + pcmBytes.byteLength, 4)
+  header.write("WAVE", 8)
+  header.write("fmt ", 12)
+  header.writeUInt32LE(16, 16)
+  header.writeUInt16LE(1, 20)
+  header.writeUInt16LE(channels, 22)
+  header.writeUInt32LE(sampleRate, 24)
+  header.writeUInt32LE(byteRate, 28)
+  header.writeUInt16LE(blockAlign, 32)
+  header.writeUInt16LE(16, 34)
+  header.write("data", 36)
+  header.writeUInt32LE(pcmBytes.byteLength, 40)
+  return Buffer.concat([header, Buffer.from(pcmBytes)])
+}
+
+async function synthesizeWithKhayaTTS(
+  text: string,
+  lang: string,
+  isFemale: boolean
+): Promise<{ buffer: Buffer; contentType: string; actor: string } | null> {
+  const apiKey = (process.env.KHAYA_API_KEY || "").trim()
+  const khayaLang = KHAYA_LANG_MAP[lang]
+  if (!apiKey || !khayaLang) return null
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 9000)
+    const speakerId = khayaLang === "tw" ? (isFemale ? "twi_speaker_5" : "twi_speaker_4") : undefined
+    const res = await fetch("https://translation-api.ghananlp.org/tts/v1/synthesize", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache",
+        "Ocp-Apim-Subscription-Key": apiKey,
+      },
+      body: JSON.stringify({
+        text: text.slice(0, 260),
+        language: khayaLang,
+        ...(speakerId ? { speaker_id: speakerId } : {}),
+      }),
+      signal: controller.signal,
+    })
+    clearTimeout(timer)
+    if (!res.ok) return null
+    const arr = await res.arrayBuffer()
+    if (arr.byteLength < 256) return null
+    const contentType = res.headers.get("content-type") || "audio/wav"
+    return { buffer: Buffer.from(arr), contentType, actor: speakerId || `khaya-${khayaLang}` }
+  } catch {
+    return null
+  }
+}
+
+async function synthesizeWithHuggingFaceMMS(
+  text: string,
+  lang: string
+): Promise<{ buffer: Buffer; contentType: string; actor: string } | null> {
+  const token = (process.env.HF_TOKEN || process.env.HUGGINGFACE_API_KEY || "").trim()
+  const iso = HF_MMS_ISO_MAP[lang]
+  if (!token || !iso) return null
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 9500)
+    const res = await fetch(`https://router.huggingface.co/hf-inference/models/facebook/mms-tts-${iso}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ inputs: text.slice(0, 260) }),
+      signal: controller.signal,
+    })
+    clearTimeout(timer)
+    if (!res.ok) return null
+    const arr = await res.arrayBuffer()
+    if (arr.byteLength < 256) return null
+    const contentType = res.headers.get("content-type") || "audio/flac"
+    return { buffer: Buffer.from(arr), contentType, actor: `hf-mms-tts-${iso}` }
+  } catch {
+    return null
+  }
+}
+
+async function synthesizeWithGeminiTTS(
+  text: string,
+  lang: string,
+  isFemale: boolean
+): Promise<{ buffer: Buffer; contentType: string; actor: string } | null> {
+  const apiKey = (process.env.GEMINI_API_KEY || "").trim()
+  if (!apiKey) return null
+  const langLabel = GEMINI_LANG_NAME_MAP[lang] || lang
+  const voiceName = isFemale ? "Kore" : "Puck"
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 11000)
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${encodeURIComponent(
+        apiKey
+      )}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `Speak the following ${langLabel} text naturally and clearly as a native speaker without adding extra commentary:\n\n${text.slice(
+                    0,
+                    260
+                  )}`,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: { prebuiltVoiceConfig: { voiceName } },
+            },
+          },
+        }),
+        signal: controller.signal,
+      }
+    )
+    clearTimeout(timer)
+    if (!res.ok) return null
+    const json = await res.json()
+    const inline = json?.candidates?.[0]?.content?.parts?.[0]?.inlineData
+    if (!inline?.data) return null
+    const raw = Buffer.from(inline.data, "base64")
+    if (raw.byteLength < 256) return null
+    const mime = String(inline.mimeType || "")
+    if (mime.includes("L16") || mime.includes("pcm")) {
+      return { buffer: pcm16ToWavBuffer(raw, 24000, 1), contentType: "audio/wav", actor: `gemini-${voiceName}` }
+    }
+    return { buffer: raw, contentType: mime || "audio/wav", actor: `gemini-${voiceName}` }
+  } catch {
+    return null
+  }
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
+
+  if (searchParams.get("capabilities") === "1") {
+    const hasKhaya = Boolean((process.env.KHAYA_API_KEY || "").trim())
+    const hasHf = Boolean((process.env.HF_TOKEN || process.env.HUGGINGFACE_API_KEY || "").trim())
+    const hasGemini = Boolean((process.env.GEMINI_API_KEY || "").trim())
+    const serverNativeLangs = [
+      ...Object.keys(EDGE_NATIVE_VOICE_ACTORS),
+      ...Object.keys(GOOGLE_NATIVE_TTS_MAP),
+      ...(hasKhaya ? Object.keys(KHAYA_LANG_MAP) : []),
+      ...(hasHf ? Object.keys(HF_MMS_ISO_MAP) : []),
+      ...(hasGemini ? Object.keys(GEMINI_LANG_NAME_MAP) : []),
+    ]
+    return NextResponse.json({
+      serverNativeLangs: Array.from(new Set(serverNativeLangs)),
+      clientMmsLangs: Array.from(CLIENT_NATIVE_MMS_LANGS),
+      subtitlesOnlyLangs: hasGemini ? [] : Array.from(CLOUD_KEY_ONLY_LANGS),
+      providers: { edge: true, google: true, khaya: hasKhaya, hf: hasHf, gemini: hasGemini },
+    })
+  }
+
   const rawTextParam = (searchParams.get("text") || "").trim().slice(0, 260)
   const rawLang = (searchParams.get("lang") || "en").trim().toLowerCase()
   const speaker = (searchParams.get("speaker") || "").trim()
@@ -836,54 +897,121 @@ export async function GET(req: NextRequest) {
   const rawText = shouldTranslate
     ? await translateTextIfRequested(strippedRaw, rawLang)
     : strippedRaw
-
-  // 1. Primary Engine: Studio Natural Human Voice Actor (24kHz 48kbps MP3)
-  const actorPair = NATURAL_HUMAN_VOICE_ACTORS[rawLang] || NATURAL_HUMAN_VOICE_ACTORS.en
+  const cleanSpeechText = cleanTextForNaturalSpeech(rawText, rawLang)
   const useFemale = isFemaleSpeakerName(speaker, genderParam)
-  const chosenVoiceActor = useFemale ? actorPair.female : actorPair.male
-  const backupVoiceActor = useFemale
-    ? "en-US-AvaMultilingualNeural"
-    : "en-US-AndrewMultilingualNeural"
-  const needsPhoneticReshape = PHONETIC_RESHAPE_LANGS.has(rawLang)
-  const humanVoiceText = reshapeForAuthenticSpokenPronunciation(rawText, rawLang, needsPhoneticReshape)
 
-  const studioHumanResult = await synthesizeStudioHumanVoice(
-    humanVoiceText,
-    chosenVoiceActor,
-    backupVoiceActor
-  )
-  if (studioHumanResult && studioHumanResult.buffer.byteLength > 200) {
-    return new NextResponse(new Uint8Array(studioHumanResult.buffer), {
+  // 1. Optional GhanaNLP Khaya native African TTS (if KHAYA_API_KEY configured)
+  const khayaRes = await synthesizeWithKhayaTTS(cleanSpeechText, rawLang, useFemale)
+  if (khayaRes) {
+    return new NextResponse(new Uint8Array(khayaRes.buffer), {
       status: 200,
       headers: {
-        "Content-Type": "audio/mpeg",
-        "X-Voice-Actor": studioHumanResult.actor,
-        "X-Voice-Type": "studio-human-actor",
+        "Content-Type": khayaRes.contentType,
+        "X-Voice-Actor": khayaRes.actor,
+        "X-Voice-Engine": "khaya-native",
+        "X-Voice-Authenticity": "native",
         "Cache-Control": "public, max-age=86400, s-maxage=86400",
       },
     })
   }
 
-  // 2. Guaranteed Audio Backup Stream so audio NEVER fails with 503 if WebSocket is blocked
-  const primaryTl = PRIMARY_TTS_LANG_MAP[rawLang] || rawLang
-  const fallbackTls = PHONETIC_FALLBACK_TTS_VOICE[rawLang] || []
-  const candidates = [primaryTl, ...fallbackTls.filter((c) => c !== primaryTl), "en"]
+  // 2. Optional HuggingFace Meta MMS-TTS Server Inference (if HF_TOKEN configured)
+  const hfRes = await synthesizeWithHuggingFaceMMS(cleanSpeechText, rawLang)
+  if (hfRes) {
+    return new NextResponse(new Uint8Array(hfRes.buffer), {
+      status: 200,
+      headers: {
+        "Content-Type": hfRes.contentType,
+        "X-Voice-Actor": hfRes.actor,
+        "X-Voice-Engine": "hf-mms-native",
+        "X-Voice-Authenticity": "native",
+        "Cache-Control": "public, max-age=86400, s-maxage=86400",
+      },
+    })
+  }
 
-  for (let i = 0; i < candidates.length; i++) {
-    const tl = candidates[i]
-    const shaped = reshapeForAuthenticSpokenPronunciation(rawText, rawLang, i > 0).slice(0, 200)
-    const buf = await fetchStreamAudioBackup(shaped, tl)
-    if (buf) {
-      return new NextResponse(buf, {
+  // 3. Verified Native Microsoft Edge Neural Voices (32 languages with genuine native actors)
+  const nativeEdgePair = EDGE_NATIVE_VOICE_ACTORS[rawLang]
+  if (nativeEdgePair) {
+    const primaryActor = useFemale ? nativeEdgePair.female : nativeEdgePair.male
+    const altActor = useFemale ? nativeEdgePair.male : nativeEdgePair.female
+    const studioHumanResult = await synthesizeStudioHumanVoice(cleanSpeechText, primaryActor, altActor)
+    if (studioHumanResult && studioHumanResult.buffer.byteLength > 200) {
+      return new NextResponse(new Uint8Array(studioHumanResult.buffer), {
         status: 200,
         headers: {
           "Content-Type": "audio/mpeg",
-          "X-Voice-Actor": `backup-${tl}`,
-          "Cache-Control": "public, max-age=3600",
+          "X-Voice-Actor": studioHumanResult.actor,
+          "X-Voice-Engine": "edge-neural",
+          "X-Voice-Authenticity": "native",
+          "Cache-Control": "public, max-age=86400, s-maxage=86400",
         },
       })
     }
   }
 
-  return new NextResponse("Audio stream unavailable", { status: 502 })
+  // 4. Verified Native Google Regional TTS (Hausa, Punjabi, or backup for Edge-native languages in SAME language only!)
+  const googleNativeTl = GOOGLE_NATIVE_TTS_MAP[rawLang] || (nativeEdgePair ? PRIMARY_TTS_LANG_MAP[rawLang] : undefined)
+  if (googleNativeTl) {
+    const googleBuf = await fetchStreamAudioBackup(cleanSpeechText.slice(0, 200), googleNativeTl)
+    if (googleBuf) {
+      return new NextResponse(googleBuf, {
+        status: 200,
+        headers: {
+          "Content-Type": "audio/mpeg",
+          "X-Voice-Actor": `google-native-${googleNativeTl}`,
+          "X-Voice-Engine": "google-native",
+          "X-Voice-Authenticity": "native",
+          "Cache-Control": "public, max-age=86400, s-maxage=86400",
+        },
+      })
+    }
+  }
+
+  // 5. Optional Gemini 2.5 Flash Native Multilingual TTS (if GEMINI_API_KEY configured)
+  const geminiRes = await synthesizeWithGeminiTTS(cleanSpeechText, rawLang, useFemale)
+  if (geminiRes) {
+    return new NextResponse(new Uint8Array(geminiRes.buffer), {
+      status: 200,
+      headers: {
+        "Content-Type": geminiRes.contentType,
+        "X-Voice-Actor": geminiRes.actor,
+        "X-Voice-Engine": "gemini-native",
+        "X-Voice-Authenticity": "native",
+        "Cache-Control": "public, max-age=86400, s-maxage=86400",
+      },
+    })
+  }
+
+  // 6. Honest Client-Side Meta MMS OR Subtitles-Only responses (NEVER fake Twi/African languages with Swahili/Zulu!)
+  if (CLIENT_NATIVE_MMS_LANGS.has(rawLang)) {
+    return NextResponse.json(
+      { ok: false, mode: "client_native_mms", lang: rawLang },
+      {
+        status: 501,
+        headers: {
+          "X-Voice-Authenticity": "client-mms-required",
+          "Cache-Control": "public, max-age=3600",
+        },
+      }
+    )
+  }
+
+  if (CLOUD_KEY_ONLY_LANGS.has(rawLang)) {
+    return NextResponse.json(
+      { ok: false, mode: "subtitles_only", lang: rawLang },
+      {
+        status: 501,
+        headers: {
+          "X-Voice-Authenticity": "subtitles-only",
+          "Cache-Control": "public, max-age=3600",
+        },
+      }
+    )
+  }
+
+  return NextResponse.json(
+    { ok: false, mode: "unavailable", lang: rawLang },
+    { status: 502 }
+  )
 }

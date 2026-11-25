@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
+  serverExternalPackages: ["@huggingface/transformers", "onnxruntime-node", "sharp"],
+  turbopack: {},
   typescript: {
     ignoreBuildErrors: true,
   },
