@@ -8,13 +8,17 @@ import {
   AlignRight,
   AArrowDown,
   AArrowUp,
+  ArrowUpDown,
   BarChart2,
   Bold,
+  BookMarked,
   BookOpen,
   Calendar,
   CaseSensitive,
   CheckCircle2,
   CheckSquare,
+  ChevronLeft,
+  ChevronRight,
   Clipboard,
   Code2,
   Columns,
@@ -22,19 +26,27 @@ import {
   Download,
   Eraser,
   Eye,
+  FileCheck2,
   FilePlus2,
   FileSignature,
   FileText,
+  GitCompare,
+  Globe2,
+  Grid,
+  HelpCircle,
   Highlighter,
   History,
   ImagePlus,
   Indent,
   Italic,
+  LayoutGrid,
   LayoutTemplate,
   Link2,
   List,
   ListOrdered,
   ListTree,
+  Lock,
+  Mail,
   Maximize2,
   MessageSquarePlus,
   Mic,
@@ -46,6 +58,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PenTool,
+  Pilcrow,
   Printer,
   Quote,
   Redo2,
@@ -55,7 +68,9 @@ import {
   Search,
   SeparatorHorizontal,
   Share2,
+  ShieldCheck,
   Sigma,
+  Sparkles,
   SpellCheck,
   Star,
   Strikethrough,
@@ -65,12 +80,47 @@ import {
   Trash2,
   Underline,
   Undo2,
+  Unlock,
   Upload,
+  Users,
   Volume2,
   VolumeX,
+  Workflow,
   X,
 } from "lucide-react"
+import Link from "next/link"
 import type { UserProfile } from "@/lib/connectln-data"
+import {
+  acceptAllTrackedChanges,
+  applyMergeTemplate,
+  buildBannerTitleHtml,
+  buildBibliographyHtml,
+  buildBookmarkHtml,
+  buildCaptionHtml,
+  buildDiagramHtml,
+  buildDropCapHtml,
+  buildEnvelopeHtml,
+  buildEquationHtml,
+  buildEsignFieldHtml,
+  buildFootnoteHtml,
+  buildInlineChartHtml,
+  buildLabelsSheetHtml,
+  DEFAULT_CITATION_SOURCES,
+  DEFAULT_MERGE_RECIPIENTS,
+  DOC_STYLE_THEMES,
+  DOCS_COMMAND_CATALOG,
+  formatInlineCitation,
+  lookupSynonyms,
+  MERGE_TOKENS,
+  rejectAllTrackedChanges,
+  runAccessibilityAudit,
+  type CitationStyle,
+  type DocCitationSource,
+  type DocStyleTheme,
+  type MergeRecipient,
+} from "@/lib/connectln-docs-pro-tools"
+import { ConnectLnDocsNoctisPanel } from "./ConnectLnDocsNoctisPanel"
+import { ConnectLnStudioHubDrawer } from "./ConnectLnStudioHubDrawer"
 import {
   buildCoverPageHtml,
   buildSignatureBlockHtml,
@@ -136,7 +186,18 @@ interface ConnectLnDocsEditorProps {
   onSendToSign?: (doc: StudioDocRecord) => void
 }
 
-type DocsRibbonTab = "home" | "insert" | "layout" | "review" | "view"
+type DocsRibbonTab =
+  | "home"
+  | "insert"
+  | "style"
+  | "layout"
+  | "cite"
+  | "merge"
+  | "review"
+  | "view"
+  | "pdf_sign"
+
+type DocsViewMode = "print" | "web" | "read"
 
 function stripHtmlForStats(html: string): string {
   return html
@@ -231,6 +292,48 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
   const [linkLabel, setLinkLabel] = useState("")
   const [showCaseMenu, setShowCaseMenu] = useState(false)
   const [showHeaderFooterEditor, setShowHeaderFooterEditor] = useState(false)
+  const [showDiagramMenu, setShowDiagramMenu] = useState(false)
+  const [showEquationMenu, setShowEquationMenu] = useState(false)
+
+  // Command Deck Search, Hub Drawer, Help & Noctis
+  const [showHubDrawer, setShowHubDrawer] = useState(false)
+  const [commandQuery, setCommandQuery] = useState("")
+  const [commandMenuOpen, setCommandMenuOpen] = useState(false)
+  const [noctisInitialPrompt, setNoctisInitialPrompt] = useState("")
+  const [noctisInitialMode, setNoctisInitialMode] = useState<
+    "draft" | "polish" | "summary" | "checklist" | "translate" | "expand" | undefined
+  >(undefined)
+  const [selectedTextSnapshot, setSelectedTextSnapshot] = useState("")
+  const [showHelpModal, setShowHelpModal] = useState(false)
+
+  // Styling, View & Pro Formatting
+  const [activeThemeId, setActiveThemeId] = useState("executive-navy")
+  const [docAccentColor, setDocAccentColor] = useState("#0B5CAD")
+  const [showParaMarks, setShowParaMarks] = useState(false)
+  const [showLineNumbers, setShowLineNumbers] = useState(false)
+  const [showGridlines, setShowGridlines] = useState(false)
+  const [viewMode, setViewMode] = useState<DocsViewMode>("print")
+
+  // Cite & Reference Engine
+  const [citationStyle, setCitationStyle] = useState<CitationStyle>("APA")
+  const [citationSources, setCitationSources] = useState<DocCitationSource[]>(
+    () => DEFAULT_CITATION_SOURCES
+  )
+  const [showCitationPopover, setShowCitationPopover] = useState(false)
+  const [newCiteAuthor, setNewCiteAuthor] = useState("")
+  const [newCiteYear, setNewCiteYear] = useState("2026")
+  const [newCiteTitle, setNewCiteTitle] = useState("")
+  const [newCitePublisher, setNewCitePublisher] = useState("")
+  const [footnoteCount, setFootnoteCount] = useState(1)
+  const [figureCount, setFigureCount] = useState(1)
+
+  // Batch Mail Merge Engine
+  const [mergeRecipients, setMergeRecipients] = useState<MergeRecipient[]>(
+    () => DEFAULT_MERGE_RECIPIENTS
+  )
+  const [showRecipientEditor, setShowRecipientEditor] = useState(false)
+  const [mergePreviewActive, setMergePreviewActive] = useState(false)
+  const [mergeIndex, setMergeIndex] = useState(0)
 
   // Format Painter state
   const [paintedFormat, setPaintedFormat] = useState<{
@@ -242,9 +345,14 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
 
   // Review & View features
   const [spellcheckEnabled, setSpellcheckEnabled] = useState(true)
+  const [trackChangesOn, setTrackChangesOn] = useState(false)
+  const [readOnlyLock, setReadOnlyLock] = useState(false)
+  const [showAccessibilityModal, setShowAccessibilityModal] = useState(false)
+  const [showThesaurusPopover, setShowThesaurusPopover] = useState(false)
+  const [thesaurusQuery, setThesaurusQuery] = useState("improve")
   const [showOutlinePane, setShowOutlinePane] = useState(false)
   const [showRuler, setShowRuler] = useState(true)
-  const [rightPanel, setRightPanel] = useState<"none" | "comments" | "history">("none")
+  const [rightPanel, setRightPanel] = useState<"none" | "comments" | "history" | "noctis">("none")
   const [commentDraft, setCommentDraft] = useState("")
   const [snapshotDraft, setSnapshotDraft] = useState("")
   const [isSpeaking, setIsSpeaking] = useState(false)
@@ -313,6 +421,8 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
     const range = sel.getRangeAt(0)
     if (editorRef.current && editorRef.current.contains(range.commonAncestorContainer)) {
       savedRangeRef.current = range.cloneRange()
+      const text = sel.toString().trim()
+      if (text) setSelectedTextSnapshot(text)
     }
   }
 
@@ -841,6 +951,254 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
     notify("Shared document to ConnectLn Home Feed")
   }
 
+  const handleSortActiveList = () => {
+    if (!editorRef.current || !activeDoc) return
+    const sel = window.getSelection()
+    let node: Node | null = sel?.anchorNode || null
+    let listEl: HTMLElement | null = null
+    while (node && node !== editorRef.current) {
+      if (node.nodeName === "UL" || node.nodeName === "OL") {
+        listEl = node as HTMLElement
+        break
+      }
+      node = node.parentNode
+    }
+    const targetList = listEl || editorRef.current.querySelector("ul, ol")
+    if (!targetList) {
+      notify("Place cursor inside a bulleted or numbered list to sort A–Z")
+      return
+    }
+    const items = Array.from(targetList.querySelectorAll(":scope > li"))
+    if (items.length < 2) {
+      notify("Need at least two list items to sort")
+      return
+    }
+    items.sort((a, b) => (a.textContent || "").localeCompare(b.textContent || ""))
+    items.forEach((li) => targetList.appendChild(li))
+    handleEditorInput()
+    notify("Sorted list items alphabetically (A–Z)")
+  }
+
+  const handleApplyTheme = (theme: DocStyleTheme) => {
+    setActiveThemeId(theme.id)
+    setDocAccentColor(theme.headingColor)
+    setFontFamily(theme.fontFamily)
+    updatePageSetup({
+      pageBg: theme.pageBg,
+      lineSpacing: theme.lineSpacing,
+    })
+    notify(`Applied "${theme.name}" ConnectLn Theme`)
+  }
+
+  const handleMarkSelectionTracked = (kind: "ins" | "del") => {
+    restoreSelectionRange()
+    const sel = window.getSelection()
+    const text = sel?.toString() || ""
+    if (!text) {
+      insertHtmlSnippet(
+        kind === "ins"
+          ? '<ins data-cln-track="ins" style="background:#DCFCE7;color:#065F46;text-decoration:underline;padding:0 3px;border-radius:3px;">[Proposed addition]</ins> '
+          : '<del data-cln-track="del" style="background:#FEE2E2;color:#991B1B;text-decoration:line-through;padding:0 3px;border-radius:3px;">[Proposed removal]</del> '
+      )
+      return
+    }
+    const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    insertHtmlSnippet(
+      kind === "ins"
+        ? `<ins data-cln-track="ins" style="background:#DCFCE7;color:#065F46;text-decoration:underline;padding:0 3px;border-radius:3px;">${escaped}</ins>`
+        : `<del data-cln-track="del" style="background:#FEE2E2;color:#991B1B;text-decoration:line-through;padding:0 3px;border-radius:3px;">${escaped}</del>`
+    )
+    notify(kind === "ins" ? "Marked selection as tracked insertion" : "Marked selection as tracked deletion")
+  }
+
+  const handleResolveTrackedChanges = (decision: "accept" | "reject") => {
+    if (!activeDoc) return
+    const currentHtml = editorRef.current?.innerHTML ?? activeDoc.contentHtml
+    const nextHtml =
+      decision === "accept"
+        ? acceptAllTrackedChanges(currentHtml)
+        : rejectAllTrackedChanges(currentHtml)
+    updateActiveDoc({ contentHtml: nextHtml }, true)
+    notify(decision === "accept" ? "Accepted all tracked revisions" : "Rejected all tracked revisions")
+  }
+
+  const handleAddCitationSource = () => {
+    if (!newCiteAuthor.trim() || !newCiteTitle.trim()) {
+      notify("Enter Author and Title for the citation source")
+      return
+    }
+    const newSrc: DocCitationSource = {
+      id: `src_${Date.now()}`,
+      author: newCiteAuthor.trim(),
+      year: newCiteYear.trim() || "2026",
+      title: newCiteTitle.trim(),
+      publisher: newCitePublisher.trim() || "ConnectLn Press",
+    }
+    setCitationSources((prev) => [newSrc, ...prev])
+    insertHtmlSnippet(`${formatInlineCitation(newSrc, citationStyle, 1)} `)
+    setNewCiteAuthor("")
+    setNewCiteTitle("")
+    setNewCitePublisher("")
+    setShowCitationPopover(false)
+    notify(`Inserted ${citationStyle} citation for ${newSrc.author}`)
+  }
+
+  const handleCopyShareLink = async () => {
+    if (!activeDoc) return
+    const shareUrl = `${typeof window !== "undefined" ? window.location.origin : "https://conectln.com"}/connectin?tab=docs&doc=${encodeURIComponent(activeDoc.id)}`
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      notify("Copied ConnectLn Docs link to clipboard")
+    } catch {
+      notify(`Share URL: ${shareUrl}`)
+    }
+  }
+
+  const handleShareViaConnectLnMail = async () => {
+    if (!activeDoc) return
+    const plain = stripHtmlForStats(editorRef.current?.innerHTML ?? activeDoc.contentHtml)
+    const digest = `${activeDoc.title}\n\n${plain.slice(0, 320)}${plain.length > 320 ? "..." : ""}`
+    try {
+      await navigator.clipboard.writeText(digest)
+    } catch {}
+    notify("Copied formatted PDF/Doc digest for ConnectLn Mail")
+  }
+
+  const handleCreateTourDoc = () => {
+    const now = new Date().toISOString()
+    const tourDoc: StudioDocRecord = {
+      id: `doc_tour_${Date.now()}`,
+      title: "ConnectLn Docs Quick Tour",
+      category: "Guided Tour",
+      contentHtml: `<h1>Welcome to ConnectLn Docs 360</h1>
+<p>This interactive sample introduces your ConnectLn Writing Studio:</p>
+<h2>1. Noctis AI Writing Studio</h2>
+<p>Click the <strong>Noctis</strong> pill at the top-right to draft sections, generate executive summaries, or translate text into Twi, French, Spanish, or German.</p>
+<h2>2. Themes, Citations &amp; Batch Merge</h2>
+<p>Switch visual palettes under <strong>Style</strong>, insert APA/MLA/IEEE references under <strong>Cite</strong>, or personalize letters with <code>{{FullName}}</code> &amp; <code>{{Company}}</code> under <strong>Merge</strong>.</p>
+<h2>3. Print &amp; ConnectLn Sign</h2>
+<p>Use <strong>PDF &amp; Sign</strong> or <strong>Send to Sign</strong> to route finalized agreements straight to SHA-256 signature verification.</p>`,
+      createdAt: now,
+      updatedAt: now,
+      authorName: user.name || "ConnectLn Member",
+      pageSetup: { ...DEFAULT_DOC_PAGE_SETUP },
+    }
+    setDocs((prev) => [tourDoc, ...prev])
+    setActiveDocId(tourDoc.id)
+    setEditorRevision((r) => r + 1)
+    notify("Opened ConnectLn Docs Quick Tour")
+  }
+
+  const openNoctisWithPrompt = (prompt = "", mode?: "draft" | "polish" | "summary" | "checklist" | "translate" | "expand") => {
+    setNoctisInitialPrompt(prompt)
+    setNoctisInitialMode(mode)
+    setRightPanel("noctis")
+    setCommandMenuOpen(false)
+  }
+
+  const executeStudioCommand = (cmdId: string) => {
+    setCommandMenuOpen(false)
+    setCommandQuery("")
+    switch (cmdId) {
+      case "open_noctis":
+        openNoctisWithPrompt()
+        break
+      case "open_hub":
+        setShowHubDrawer(true)
+        break
+      case "insert_table":
+        setRibbonTab("insert")
+        setShowTablePicker(true)
+        break
+      case "insert_diagram":
+        insertHtmlSnippet(buildDiagramHtml("process_3step"))
+        notify("Inserted 3-Step ConnectLn Diagram")
+        break
+      case "insert_banner":
+        insertHtmlSnippet(buildBannerTitleHtml(activeDoc?.title || "Executive Highlight"))
+        break
+      case "insert_chart":
+        insertHtmlSnippet(buildInlineChartHtml())
+        break
+      case "insert_signature":
+        insertHtmlSnippet(buildSignatureBlockHtml(user.name || "Authorized Signer"))
+        break
+      case "insert_toc":
+        insertHtmlSnippet(buildTocHtml(editorRef.current?.innerHTML ?? activeDoc?.contentHtml ?? ""))
+        break
+      case "open_cite":
+        setRibbonTab("cite")
+        break
+      case "open_style":
+        setRibbonTab("style")
+        break
+      case "toggle_landscape":
+        setRibbonTab("layout")
+        updatePageSetup({ orientation: pageSetup.orientation === "landscape" ? "portrait" : "landscape" })
+        break
+      case "open_merge":
+        setRibbonTab("merge")
+        break
+      case "run_accessibility":
+        setRibbonTab("review")
+        setShowAccessibilityModal(true)
+        break
+      case "toggle_track":
+        setRibbonTab("review")
+        setTrackChangesOn((v) => !v)
+        break
+      case "open_comments":
+        setRightPanel("comments")
+        break
+      case "open_history":
+        setRightPanel("history")
+        break
+      case "open_print":
+        setShowPrintModal(true)
+        break
+      case "send_sign":
+        if (activeDoc && onSendToSign) {
+          onSendToSign({ ...activeDoc, contentHtml: editorRef.current?.innerHTML ?? activeDoc.contentHtml })
+        }
+        break
+      case "open_find":
+        setShowFindBar(true)
+        break
+      case "open_stats":
+        setShowStatsModal(true)
+        break
+      default:
+        break
+    }
+  }
+
+  const commandResults = useMemo(() => {
+    const q = commandQuery.trim().toLowerCase()
+    if (!q) return DOCS_COMMAND_CATALOG.slice(0, 6)
+    return DOCS_COMMAND_CATALOG.filter(
+      (c) =>
+        c.label.toLowerCase().includes(q) ||
+        c.category.toLowerCase().includes(q) ||
+        c.keywords.toLowerCase().includes(q)
+    ).slice(0, 6)
+  }, [commandQuery])
+
+  const accessibilityReport = useMemo(
+    () => runAccessibilityAudit(editorRef.current?.innerHTML ?? activeDoc?.contentHtml ?? ""),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeDoc?.contentHtml, showAccessibilityModal]
+  )
+
+  const currentMergeRecipient =
+    mergeRecipients[Math.min(mergeIndex, Math.max(0, mergeRecipients.length - 1))] ||
+    DEFAULT_MERGE_RECIPIENTS[0]
+
+  const mergedPreviewHtml = useMemo(() => {
+    if (!mergePreviewActive) return ""
+    const rawHtml = editorRef.current?.innerHTML ?? activeDoc?.contentHtml ?? ""
+    return sanitizeSafeHtml(applyMergeTemplate(rawHtml, currentMergeRecipient))
+  }, [mergePreviewActive, activeDoc?.contentHtml, currentMergeRecipient])
+
   const scrollToHeadingIndex = (idx: number) => {
     if (!editorRef.current) return
     const allHeadings = editorRef.current.querySelectorAll("h1, h2, h3")
@@ -1060,16 +1418,87 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
                 <PanelLeftOpen className="h-4 w-4" />
               )}
             </button>
+            <button
+              type="button"
+              aria-label="Open ConnectLn Docs Hub"
+              onClick={() => setShowHubDrawer(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#0B1F3A] hover:bg-[#132D52] text-white px-2.5 py-1.5 text-xs font-extrabold shadow-2xs cursor-pointer shrink-0"
+            >
+              <LayoutGrid className="h-3.5 w-3.5 text-sky-300" />
+              <span className="hidden sm:inline">Studio Hub</span>
+            </button>
             <input
               type="text"
               aria-label="Document title"
               value={activeDoc?.title || ""}
               onChange={(e) => updateActiveDoc({ title: e.target.value })}
-              className="min-w-[150px] flex-1 max-w-md rounded-lg border border-transparent hover:border-[#E7E2DA] focus:border-[#0B5CAD] bg-transparent px-2 py-1 text-sm sm:text-base font-extrabold text-[#0B1F3A] dark:text-white outline-none"
+              className="min-w-[130px] flex-1 max-w-xs rounded-lg border border-transparent hover:border-[#E7E2DA] focus:border-[#0B5CAD] bg-transparent px-2 py-1 text-sm sm:text-base font-extrabold text-[#0B1F3A] dark:text-white outline-none"
             />
-            <span className="hidden sm:inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 shrink-0">
+            <span className="hidden xl:inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 shrink-0">
               {savedLabel}
             </span>
+          </div>
+
+          {/* Centered Command Palette Search */}
+          <div className="relative w-full sm:w-56 md:w-64 order-last lg:order-none">
+            <Sparkles className="h-3.5 w-3.5 text-[#0B5CAD] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              aria-label="Ask Noctis or find any tool"
+              value={commandQuery}
+              onFocus={() => setCommandMenuOpen(true)}
+              onChange={(e) => {
+                setCommandQuery(e.target.value)
+                setCommandMenuOpen(true)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setCommandMenuOpen(false)
+                if (e.key === "Enter" && commandQuery.trim()) {
+                  openNoctisWithPrompt(commandQuery.trim())
+                }
+              }}
+              placeholder="Ask Noctis or find any tool..."
+              className="w-full rounded-full border border-[#E7E2DA] dark:border-zinc-700 bg-[#FAF7F2] dark:bg-zinc-950 pl-8 pr-7 py-1.5 text-xs font-medium text-[#0B1F3A] dark:text-zinc-100 outline-none focus:border-[#0B5CAD] focus:bg-white"
+            />
+            {commandMenuOpen && (
+              <button
+                type="button"
+                aria-label="Close command search"
+                onClick={() => setCommandMenuOpen(false)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 cursor-pointer"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+            {commandMenuOpen && (
+              <div className="absolute left-0 right-0 top-9 z-40 rounded-2xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1.5 shadow-2xl space-y-1">
+                {commandQuery.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => openNoctisWithPrompt(commandQuery.trim())}
+                    className="w-full flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#0B1F3A] to-[#0B5CAD] text-white px-2.5 py-2 text-left text-xs font-bold cursor-pointer"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 shrink-0 text-sky-300" />
+                    <span className="truncate">Ask Noctis: &ldquo;{commandQuery.trim()}&rdquo;</span>
+                  </button>
+                )}
+                {commandResults.map((cmd) => (
+                  <button
+                    key={cmd.id}
+                    type="button"
+                    onClick={() => executeStudioCommand(cmd.id)}
+                    className="w-full flex items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-left text-xs hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer"
+                  >
+                    <span className="font-bold text-[#0B1F3A] dark:text-zinc-100 truncate">
+                      {cmd.label}
+                    </span>
+                    <span className="text-[10px] font-semibold text-[#0B5CAD] shrink-0">
+                      {cmd.category}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -1174,35 +1603,66 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
           </div>
         </div>
 
-        {/* 5-Tab Ribbon Selector */}
-        <div className="flex items-center justify-between gap-2 px-3 pt-1.5 border-b border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950">
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+        {/* ConnectLn Floating Pill Command Deck */}
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950">
+          <div className="inline-flex flex-wrap items-center gap-1 rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#EFECE6]/90 dark:bg-zinc-900 p-1 overflow-x-auto no-scrollbar">
             {(
               [
                 { id: "home", label: "Home" },
                 { id: "insert", label: "Insert" },
+                { id: "style", label: "Style" },
                 { id: "layout", label: "Layout" },
+                { id: "cite", label: "Cite" },
+                { id: "merge", label: "Merge" },
                 { id: "review", label: "Review" },
                 { id: "view", label: "View" },
+                { id: "pdf_sign", label: "PDF & Sign" },
               ] as const
             ).map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setRibbonTab(tab.id)}
-                className={`px-3 py-1.5 text-xs font-extrabold rounded-t-lg border-b-2 transition-colors cursor-pointer ${
+                className={`px-3 py-1.5 text-xs font-extrabold rounded-xl transition-all cursor-pointer whitespace-nowrap ${
                   ribbonTab === tab.id
-                    ? "border-[#0B5CAD] bg-white dark:bg-zinc-900 text-[#0B5CAD] dark:text-sky-400"
-                    : "border-transparent text-zinc-600 dark:text-zinc-400 hover:text-[#0B1F3A]"
+                    ? "bg-[#0B1F3A] text-white shadow-2xs"
+                    : "text-[#0B1F3A]/80 dark:text-zinc-300 hover:bg-white/80 dark:hover:bg-zinc-800"
                 }`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          <span className="hidden md:inline text-[10.5px] font-mono text-zinc-500 pr-1">
-            {pageSetup.paperSize.toUpperCase()} · {pageSetup.orientation} · {pageSetup.columns} col
-          </span>
+
+          <div className="flex items-center gap-2">
+            <span className="hidden xl:inline text-[10.5px] font-mono text-zinc-500">
+              {pageSetup.paperSize.toUpperCase()} · {pageSetup.orientation} · {pageSetup.columns} col
+            </span>
+            <button
+              type="button"
+              aria-label="Open Noctis Writing Studio"
+              onClick={() =>
+                setRightPanel((p) => (p === "noctis" ? "none" : "noctis"))
+              }
+              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-extrabold shadow-xs transition-all cursor-pointer ${
+                rightPanel === "noctis"
+                  ? "bg-[#0B5CAD] text-white ring-2 ring-[#0B5CAD]/30"
+                  : "bg-gradient-to-r from-[#0B1F3A] to-[#0B5CAD] text-white hover:opacity-95"
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-sky-300" />
+              Noctis
+            </button>
+            <button
+              type="button"
+              aria-label="Open ConnectLn Docs Help"
+              onClick={() => setShowHelpModal(true)}
+              className="inline-flex items-center gap-1 rounded-full border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#0B5CAD] px-2.5 py-1.5 text-xs font-bold text-[#0B1F3A] dark:text-zinc-200 cursor-pointer"
+            >
+              <HelpCircle className="h-3.5 w-3.5 text-[#0B5CAD]" />
+              <span className="hidden sm:inline">Help</span>
+            </button>
+          </div>
         </div>
 
         {/* Ribbon Tool Strip by Active Tab */}
@@ -1398,6 +1858,59 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
               >
                 <Search className="h-3.5 w-3.5" />
                 Find
+              </button>
+
+              <span className="h-5 w-px bg-[#E7E2DA] dark:bg-zinc-700 mx-0.5" />
+
+              {/* Compact ConnectLn Style Pills */}
+              {(
+                [
+                  { label: "Body", tag: "p" },
+                  { label: "H1", tag: "h1" },
+                  { label: "H2", tag: "h2" },
+                  { label: "Quote", tag: "blockquote" },
+                ] as const
+              ).map((st) => (
+                <button
+                  key={st.tag}
+                  type="button"
+                  onClick={() => execCmd("formatBlock", st.tag)}
+                  className="rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#0B5CAD] px-2 py-1 text-[11px] font-bold text-[#0B1F3A] dark:text-zinc-200 cursor-pointer"
+                >
+                  {st.label}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={handleSortActiveList}
+                title="Sort Active List A-Z"
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#0B5CAD] px-2 py-1 font-semibold cursor-pointer"
+              >
+                <ArrowUpDown className="h-3.5 w-3.5 text-[#0B5CAD]" />
+                <span className="hidden xl:inline">Sort A–Z</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowParaMarks((v) => !v)}
+                title="Show / Hide Paragraph Marks"
+                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 font-bold cursor-pointer ${
+                  showParaMarks
+                    ? "bg-[#0B5CAD] text-white"
+                    : "border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                }`}
+              >
+                <Pilcrow className="h-3.5 w-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openNoctisWithPrompt()}
+                className="inline-flex items-center gap-1 rounded-lg bg-[#0B1F3A] text-white px-2.5 py-1 font-extrabold hover:bg-[#132D52] cursor-pointer"
+              >
+                <Sparkles className="h-3 w-3 text-sky-300" />
+                Ask Noctis
               </button>
             </>
           )}
@@ -1630,6 +2143,156 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
               >
                 Header &amp; Footer
               </button>
+
+              {/* ConnectLn Diagrams & Creative Blocks */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => { saveSelectionRange(); setShowDiagramMenu((v) => !v) }}
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold hover:border-[#0B5CAD] cursor-pointer"
+                >
+                  <Workflow className="h-3.5 w-3.5 text-[#0B5CAD]" />
+                  Diagrams &amp; Blocks
+                </button>
+                {showDiagramMenu && (
+                  <div className="absolute left-0 top-9 z-30 w-52 rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1.5 shadow-xl space-y-1">
+                    {[
+                      { label: "3-Step Process Flow", run: () => buildDiagramHtml("process_3step") },
+                      { label: "Timeline Roadmap", run: () => buildDiagramHtml("timeline_roadmap") },
+                      { label: "KPI Metric Strip", run: () => buildDiagramHtml("kpi_strip") },
+                      { label: "Team Org Chart", run: () => buildDiagramHtml("org_tree") },
+                      { label: "Styled Banner Title", run: () => buildBannerTitleHtml(activeDoc?.title || "Executive Highlight") },
+                      { label: "Editorial Drop Cap", run: () => buildDropCapHtml() },
+                      { label: "Inline Bar Chart", run: () => buildInlineChartHtml() },
+                    ].map((opt) => (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        onClick={() => {
+                          insertHtmlSnippet(opt.run())
+                          setShowDiagramMenu(false)
+                          notify(`Inserted ${opt.label}`)
+                        }}
+                        className="w-full text-left rounded-lg px-2.5 py-1.5 text-xs font-semibold hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer"
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Equations */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => { saveSelectionRange(); setShowEquationMenu((v) => !v) }}
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 font-bold hover:border-[#0B5CAD] cursor-pointer"
+                >
+                  <Sigma className="h-3.5 w-3.5 text-[#0B5CAD]" />
+                  Equations
+                </button>
+                {showEquationMenu && (
+                  <div className="absolute right-0 top-9 z-30 w-52 rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1.5 shadow-xl space-y-1">
+                    {(
+                      [
+                        { id: "roi", label: "ROI Formula" },
+                        { id: "quadratic", label: "Quadratic Formula" },
+                        { id: "pythagorean", label: "Pythagorean Theorem" },
+                        { id: "summation", label: "Series Summation" },
+                      ] as const
+                    ).map((eq) => (
+                      <button
+                        key={eq.id}
+                        type="button"
+                        onClick={() => {
+                          insertHtmlSnippet(buildEquationHtml(eq.id))
+                          setShowEquationMenu(false)
+                        }}
+                        className="w-full text-left rounded-lg px-2.5 py-1.5 text-xs font-semibold hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer"
+                      >
+                        {eq.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => insertHtmlSnippet(buildBookmarkHtml("Key Checkpoint"))}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 font-semibold hover:border-[#0B5CAD] cursor-pointer"
+              >
+                <BookMarked className="h-3.5 w-3.5 text-amber-600" />
+                Bookmark
+              </button>
+
+              <button
+                type="button"
+                onClick={() => insertHtmlSnippet(buildEsignFieldHtml(user.name || "Client Signer"))}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#4338CA]/40 bg-indigo-50/70 dark:bg-indigo-950/40 px-2.5 py-1 font-bold text-[#4338CA] dark:text-indigo-300 cursor-pointer"
+              >
+                <FileSignature className="h-3.5 w-3.5" />
+                eSign Field
+              </button>
+            </>
+          )}
+
+          {ribbonTab === "style" && (
+            <>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {DOC_STYLE_THEMES.map((theme) => (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => handleApplyTheme(theme)}
+                    title={theme.desc}
+                    className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1 font-bold transition-all cursor-pointer ${
+                      activeThemeId === theme.id
+                        ? "border-[#0B5CAD] bg-white dark:bg-zinc-900 text-[#0B1F3A] dark:text-white ring-2 ring-[#0B5CAD]/20"
+                        : "border-[#E7E2DA] dark:border-zinc-700 bg-white/80 dark:bg-zinc-900 hover:border-[#0B5CAD]"
+                    }`}
+                  >
+                    <span className="inline-flex items-center -space-x-1">
+                      <span
+                        style={{ backgroundColor: theme.swatchPrimary }}
+                        className="h-3 w-3 rounded-full border border-white"
+                      />
+                      <span
+                        style={{ backgroundColor: theme.swatchAccent }}
+                        className="h-3 w-3 rounded-full border border-white"
+                      />
+                    </span>
+                    <span className="text-[11px]">{theme.name}</span>
+                  </button>
+                ))}
+              </div>
+
+              <span className="h-5 w-px bg-[#E7E2DA] dark:bg-zinc-700 mx-0.5" />
+
+              <div className="flex items-center gap-1">
+                <span className="font-bold text-zinc-500">Spacing:</span>
+                {(
+                  [
+                    { val: "1.15", label: "Compact" },
+                    { val: "1.5", label: "Balanced" },
+                    { val: "2.0", label: "Relaxed" },
+                  ] as const
+                ).map((sp) => (
+                  <button
+                    key={sp.val}
+                    type="button"
+                    onClick={() => updatePageSetup({ lineSpacing: sp.val })}
+                    className={`rounded-lg px-2 py-1 font-bold cursor-pointer ${
+                      pageSetup.lineSpacing === sp.val
+                        ? "bg-[#0B5CAD] text-white"
+                        : "border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                    }`}
+                  >
+                    {sp.label}
+                  </button>
+                ))}
+              </div>
             </>
           )}
 
@@ -1742,6 +2405,273 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
                 <option value="double">Border: Double Formal</option>
                 <option value="accent">Border: Top Accent Bar</option>
               </select>
+
+              <button
+                type="button"
+                onClick={() => setShowLineNumbers((v) => !v)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showLineNumbers
+                    ? "bg-[#0B5CAD] text-white"
+                    : "border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                }`}
+              >
+                Line Numbers
+              </button>
+
+              <button
+                type="button"
+                onClick={handleInsertPageBreak}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold hover:border-[#0B5CAD] cursor-pointer"
+              >
+                <SeparatorHorizontal className="h-3.5 w-3.5 text-[#0B5CAD]" />
+                Section Break
+              </button>
+            </>
+          )}
+
+          {ribbonTab === "cite" && (
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  insertHtmlSnippet(
+                    buildTocHtml(editorRef.current?.innerHTML ?? activeDoc?.contentHtml ?? "")
+                  )
+                }
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold hover:border-[#0B5CAD] cursor-pointer"
+              >
+                <ListTree className="h-3.5 w-3.5 text-[#0B5CAD]" />
+                Insert TOC
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  insertHtmlSnippet(buildFootnoteHtml(footnoteCount, "Supporting reference or audit note."))
+                  setFootnoteCount((n) => n + 1)
+                  notify(`Inserted Footnote [${footnoteCount}]`)
+                }}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold hover:border-[#0B5CAD] cursor-pointer"
+              >
+                Insert Footnote
+              </button>
+
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-zinc-500">Style:</span>
+                <select
+                  aria-label="Citation style"
+                  value={citationStyle}
+                  onChange={(e) => setCitationStyle(e.target.value as CitationStyle)}
+                  className="rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 font-bold cursor-pointer"
+                >
+                  <option value="APA">APA</option>
+                  <option value="MLA">MLA</option>
+                  <option value="Chicago">Chicago</option>
+                  <option value="IEEE">IEEE</option>
+                </select>
+              </div>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => { saveSelectionRange(); setShowCitationPopover((v) => !v) }}
+                  className="inline-flex items-center gap-1 rounded-lg bg-[#0B5CAD] text-white px-2.5 py-1 font-bold cursor-pointer"
+                >
+                  Insert Citation
+                </button>
+                {showCitationPopover && (
+                  <div className="absolute left-0 top-9 z-30 w-80 rounded-2xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 shadow-2xl space-y-2.5">
+                    <p className="text-[11px] font-extrabold text-[#0B1F3A] dark:text-white">
+                      Select Source ({citationStyle})
+                    </p>
+                    <div className="max-h-32 overflow-y-auto space-y-1">
+                      {citationSources.map((src, idx) => (
+                        <button
+                          key={src.id}
+                          type="button"
+                          onClick={() => {
+                            insertHtmlSnippet(`${formatInlineCitation(src, citationStyle, idx + 1)} `)
+                            setShowCitationPopover(false)
+                            notify(`Inserted ${formatInlineCitation(src, citationStyle, idx + 1)}`)
+                          }}
+                          className="w-full text-left rounded-lg border border-[#E7E2DA]/70 dark:border-zinc-800 px-2.5 py-1.5 hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer"
+                        >
+                          <p className="text-xs font-bold text-[#0B1F3A] dark:text-white truncate">
+                            {src.author} ({src.year})
+                          </p>
+                          <p className="text-[10.5px] text-zinc-500 truncate">{src.title}</p>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="border-t border-[#E7E2DA] dark:border-zinc-800 pt-2 space-y-1.5">
+                      <p className="text-[10.5px] font-bold text-zinc-500">Add New Source</p>
+                      <div className="grid grid-cols-3 gap-1">
+                        <input
+                          type="text"
+                          value={newCiteAuthor}
+                          onChange={(e) => setNewCiteAuthor(e.target.value)}
+                          placeholder="Author"
+                          className="col-span-2 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-transparent px-2 py-1 text-xs"
+                        />
+                        <input
+                          type="text"
+                          value={newCiteYear}
+                          onChange={(e) => setNewCiteYear(e.target.value)}
+                          placeholder="Year"
+                          className="rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-transparent px-2 py-1 text-xs"
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        value={newCiteTitle}
+                        onChange={(e) => setNewCiteTitle(e.target.value)}
+                        placeholder="Work or report title"
+                        className="w-full rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-transparent px-2 py-1 text-xs"
+                      />
+                      <input
+                        type="text"
+                        value={newCitePublisher}
+                        onChange={(e) => setNewCitePublisher(e.target.value)}
+                        placeholder="Publisher / Organization"
+                        className="w-full rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-transparent px-2 py-1 text-xs"
+                      />
+                      <div className="flex justify-end gap-1.5">
+                        <button type="button" onClick={() => setShowCitationPopover(false)} className="px-2 py-1 text-xs text-zinc-500 cursor-pointer">Close</button>
+                        <button type="button" onClick={handleAddCitationSource} className="rounded-lg bg-[#0B5CAD] text-white px-2.5 py-1 text-xs font-bold cursor-pointer">Save &amp; Cite</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  insertHtmlSnippet(buildBibliographyHtml(citationSources, citationStyle))
+                  notify(`Inserted ${citationStyle} Bibliography`)
+                }}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold hover:border-[#0B5CAD] cursor-pointer"
+              >
+                Insert Bibliography
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  insertHtmlSnippet(buildCaptionHtml("Figure", figureCount, "Project specification diagram"))
+                  setFigureCount((n) => n + 1)
+                }}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 font-semibold hover:border-[#0B5CAD] cursor-pointer"
+              >
+                Figure Caption
+              </button>
+            </>
+          )}
+
+          {ribbonTab === "merge" && (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowRecipientEditor((v) => !v)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showRecipientEditor
+                    ? "bg-[#0B5CAD] text-white"
+                    : "border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                }`}
+              >
+                <Users className="h-3.5 w-3.5" />
+                Recipients ({mergeRecipients.length})
+              </button>
+
+              <div className="flex flex-wrap items-center gap-1">
+                {MERGE_TOKENS.map((tok) => (
+                  <button
+                    key={tok}
+                    type="button"
+                    onClick={() => {
+                      insertHtmlSnippet(`<span style="background:#EFF6FF;color:#0B5CAD;font-weight:700;padding:0 4px;border-radius:4px;">${tok}</span> `)
+                      notify(`Inserted merge field ${tok}`)
+                    }}
+                    className="rounded-lg border border-[#0B5CAD]/30 bg-sky-50/70 dark:bg-sky-950/40 px-2 py-1 text-[11px] font-mono font-bold text-[#0B5CAD] dark:text-sky-300 hover:bg-sky-100 cursor-pointer"
+                  >
+                    {tok}
+                  </button>
+                ))}
+              </div>
+
+              <span className="h-5 w-px bg-[#E7E2DA] dark:bg-zinc-700 mx-0.5" />
+
+              <button
+                type="button"
+                onClick={() => setMergePreviewActive((v) => !v)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  mergePreviewActive
+                    ? "bg-emerald-600 text-white"
+                    : "border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                }`}
+              >
+                <Eye className="h-3.5 w-3.5" />
+                {mergePreviewActive ? "Exit Merge Preview" : "Preview Merged"}
+              </button>
+
+              <div className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-1.5 py-0.5">
+                <button
+                  type="button"
+                  aria-label="Previous merge recipient"
+                  onClick={() => {
+                    setMergePreviewActive(true)
+                    setMergeIndex((i) => Math.max(0, i - 1))
+                  }}
+                  className="p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+                <span className="text-[11px] font-bold px-1">
+                  {mergeIndex + 1} / {mergeRecipients.length} ({currentMergeRecipient.FullName.split(" ")[0]})
+                </span>
+                <button
+                  type="button"
+                  aria-label="Next merge recipient"
+                  onClick={() => {
+                    setMergePreviewActive(true)
+                    setMergeIndex((i) => Math.min(mergeRecipients.length - 1, i + 1))
+                  }}
+                  className="p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  insertHtmlSnippet(buildEnvelopeHtml(user.name || "ConnectLn Member", currentMergeRecipient))
+                  notify("Inserted formatted Envelope")
+                }}
+                className="rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 font-semibold hover:border-[#0B5CAD] cursor-pointer"
+              >
+                Envelope
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  insertHtmlSnippet(buildLabelsSheetHtml(mergeRecipients))
+                  notify("Inserted Mailing Labels Grid")
+                }}
+                className="rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 font-semibold hover:border-[#0B5CAD] cursor-pointer"
+              >
+                Labels
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMergePreviewActive(true)
+                  setShowPrintModal(true)
+                }}
+                className="rounded-lg bg-[#0B1F3A] text-white px-2.5 py-1 font-bold cursor-pointer"
+              >
+                Merge to PDF
+              </button>
             </>
           )}
 
@@ -1830,6 +2760,130 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
                 <History className="h-3.5 w-3.5" />
                 Version History ({activeDoc?.snapshots?.length || 0})
               </button>
+
+              <span className="h-5 w-px bg-[#E7E2DA] dark:bg-zinc-700 mx-0.5" />
+
+              <button
+                type="button"
+                onClick={() => setTrackChangesOn((v) => !v)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  trackChangesOn
+                    ? "bg-emerald-600 text-white"
+                    : "border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                }`}
+              >
+                <GitCompare className="h-3.5 w-3.5" />
+                Track Changes: {trackChangesOn ? "ON" : "OFF"}
+              </button>
+
+              {trackChangesOn && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleMarkSelectionTracked("ins")}
+                    className="rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 px-2 py-1 font-bold cursor-pointer"
+                  >
+                    + Insertion
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMarkSelectionTracked("del")}
+                    className="rounded-lg bg-rose-50 border border-rose-300 text-rose-800 px-2 py-1 font-bold cursor-pointer"
+                  >
+                    - Strike Del
+                  </button>
+                </>
+              )}
+
+              <button
+                type="button"
+                onClick={() => handleResolveTrackedChanges("accept")}
+                className="rounded-lg border border-emerald-300 bg-white dark:bg-zinc-900 text-emerald-700 px-2 py-1 font-semibold hover:bg-emerald-50 cursor-pointer"
+              >
+                Accept All
+              </button>
+              <button
+                type="button"
+                onClick={() => handleResolveTrackedChanges("reject")}
+                className="rounded-lg border border-rose-300 bg-white dark:bg-zinc-900 text-rose-700 px-2 py-1 font-semibold hover:bg-rose-50 cursor-pointer"
+              >
+                Reject All
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowAccessibilityModal(true)}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold hover:border-[#0B5CAD] cursor-pointer"
+              >
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                Accessibility Check
+              </button>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const selText = window.getSelection()?.toString().trim()
+                    if (selText) setThesaurusQuery(selText.split(/\s+/)[0] || "improve")
+                    setShowThesaurusPopover((v) => !v)
+                  }}
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 font-bold hover:border-[#0B5CAD] cursor-pointer"
+                >
+                  Thesaurus
+                </button>
+                {showThesaurusPopover && (
+                  <div className="absolute right-0 top-9 z-30 w-64 rounded-2xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 shadow-xl space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={thesaurusQuery}
+                        onChange={(e) => setThesaurusQuery(e.target.value)}
+                        placeholder="Look up synonyms..."
+                        className="flex-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-transparent px-2 py-1 text-xs"
+                      />
+                      <button type="button" onClick={() => setShowThesaurusPopover(false)} className="p-1 text-zinc-400 cursor-pointer"><X className="h-3.5 w-3.5" /></button>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {lookupSynonyms(thesaurusQuery).map((syn) => (
+                        <button
+                          key={syn}
+                          type="button"
+                          onClick={() => {
+                            execCmd("insertText", `${syn} `)
+                            setShowThesaurusPopover(false)
+                            notify(`Inserted "${syn}"`)
+                          }}
+                          className="rounded-lg bg-[#FAF7F2] dark:bg-zinc-800 hover:bg-[#0B5CAD] hover:text-white px-2 py-1 text-[11px] font-bold cursor-pointer"
+                        >
+                          {syn}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => openNoctisWithPrompt("", "translate")}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#0B5CAD]/30 bg-sky-50/70 dark:bg-sky-950/40 px-2.5 py-1 font-bold text-[#0B5CAD] dark:text-sky-300 cursor-pointer"
+              >
+                <Globe2 className="h-3.5 w-3.5" />
+                Translate (Noctis)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setReadOnlyLock((v) => !v)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  readOnlyLock
+                    ? "bg-amber-600 text-white"
+                    : "border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                }`}
+              >
+                {readOnlyLock ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5 text-zinc-500" />}
+                {readOnlyLock ? "Locked" : "Restrict Editing"}
+              </button>
             </>
           )}
 
@@ -1878,6 +2932,45 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
                 <Maximize2 className="h-3.5 w-3.5" />
                 Focus Mode
               </button>
+              <button
+                type="button"
+                onClick={() => setShowGridlines((g) => !g)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showGridlines
+                    ? "bg-[#0B5CAD] text-white"
+                    : "border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                }`}
+              >
+                <Grid className="h-3.5 w-3.5" />
+                Gridlines
+              </button>
+
+              <div className="inline-flex items-center rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-0.5 gap-0.5">
+                {(
+                  [
+                    { id: "print", label: "Print Page" },
+                    { id: "web", label: "Web Flow" },
+                    { id: "read", label: "Read Mode" },
+                  ] as const
+                ).map((vm) => (
+                  <button
+                    key={vm.id}
+                    type="button"
+                    onClick={() => {
+                      setViewMode(vm.id)
+                      if (vm.id === "read") setSidebarOpen(false)
+                    }}
+                    className={`rounded-md px-2 py-1 text-[11px] font-bold cursor-pointer ${
+                      viewMode === vm.id
+                        ? "bg-[#0B1F3A] text-white"
+                        : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100"
+                    }`}
+                  >
+                    {vm.label}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex items-center gap-1 ml-1">
                 <span className="font-bold text-zinc-500">Zoom:</span>
                 {([75, 90, 100, 115, 130] as const).map((pct) => (
@@ -1893,6 +2986,74 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
                   </button>
                 ))}
               </div>
+            </>
+          )}
+
+          {ribbonTab === "pdf_sign" && (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowPrintModal(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B5CAD] hover:bg-[#094a8d] text-white px-3 py-1 font-extrabold cursor-pointer"
+              >
+                <FileCheck2 className="h-3.5 w-3.5" />
+                Create Clean PDF
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCopyShareLink}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#0B5CAD] px-2.5 py-1 font-bold cursor-pointer"
+              >
+                <Link2 className="h-3.5 w-3.5 text-[#0B5CAD]" />
+                Copy PDF Share Link
+              </button>
+
+              <button
+                type="button"
+                onClick={handleShareViaConnectLnMail}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#0B5CAD] px-2.5 py-1 font-bold cursor-pointer"
+              >
+                <Mail className="h-3.5 w-3.5 text-[#0B5CAD]" />
+                Share via ConnectLn Mail
+              </button>
+
+              {onSendToSign && activeDoc && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onSendToSign({
+                      ...activeDoc,
+                      contentHtml: editorRef.current?.innerHTML ?? activeDoc.contentHtml,
+                    })
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#4338CA] hover:bg-[#3730A3] text-white px-3 py-1 font-extrabold cursor-pointer"
+                >
+                  <FileSignature className="h-3.5 w-3.5" />
+                  Request SHA-256 Signature
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMergePreviewActive(true)
+                  setShowPrintModal(true)
+                }}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#0B5CAD] px-2.5 py-1 font-bold cursor-pointer"
+              >
+                <Users className="h-3.5 w-3.5 text-[#0B5CAD]" />
+                Batch Merge to PDF
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRightPanel("comments")}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#0B5CAD] px-2.5 py-1 font-bold cursor-pointer"
+              >
+                <MessageSquarePlus className="h-3.5 w-3.5 text-[#0B5CAD]" />
+                PDF Review Notes ({activeDoc?.comments?.length || 0})
+              </button>
             </>
           )}
         </div>
@@ -1962,11 +3123,148 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
           </div>
         )}
 
-        {/* Workspace Row: Centered Paper Canvas + Optional Review / History Right Drawer */}
+        {/* Optional Merge Recipient List Drawer Strip */}
+        {showRecipientEditor && (
+          <div className="px-4 py-3 bg-[#FAF7F2] dark:bg-zinc-900 border-b border-[#E7E2DA] dark:border-zinc-800 space-y-2 text-xs">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-extrabold text-[#0B1F3A] dark:text-white">
+                Batch Merge Recipients ({mergeRecipients.length})
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMergeRecipients((prev) => [
+                      ...prev,
+                      {
+                        id: `rec_${Date.now()}`,
+                        FullName: "New Recipient",
+                        Company: "Partner Organization",
+                        Role: "Director",
+                        Email: "contact@partner.example",
+                        Amount: "$5,000",
+                        Date: "December 1, 2026",
+                      },
+                    ])
+                  }
+                  className="rounded-lg bg-[#0B5CAD] text-white px-2.5 py-1 text-[11px] font-bold cursor-pointer"
+                >
+                  + Add Recipient
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRecipientEditor(false)}
+                  className="text-zinc-500 hover:text-zinc-800 cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+              {mergeRecipients.map((rec, idx) => (
+                <div
+                  key={rec.id}
+                  className="rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-950 p-2 space-y-1"
+                >
+                  <div className="flex items-center justify-between gap-1">
+                    <input
+                      type="text"
+                      value={rec.FullName}
+                      onChange={(e) =>
+                        setMergeRecipients((prev) =>
+                          prev.map((r, i) => (i === idx ? { ...r, FullName: e.target.value } : r))
+                        )
+                      }
+                      className="font-bold text-[#0B1F3A] dark:text-white bg-transparent outline-none w-full"
+                    />
+                    {mergeRecipients.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMergeRecipients((prev) => prev.filter((_, i) => i !== idx))
+                        }
+                        className="text-zinc-400 hover:text-rose-600 cursor-pointer"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    value={rec.Company}
+                    onChange={(e) =>
+                      setMergeRecipients((prev) =>
+                        prev.map((r, i) => (i === idx ? { ...r, Company: e.target.value } : r))
+                      )
+                    }
+                    className="text-[11px] text-zinc-500 bg-transparent outline-none w-full"
+                  />
+                  <div className="flex gap-1 text-[11px]">
+                    <input
+                      type="text"
+                      value={rec.Amount}
+                      onChange={(e) =>
+                        setMergeRecipients((prev) =>
+                          prev.map((r, i) => (i === idx ? { ...r, Amount: e.target.value } : r))
+                        )
+                      }
+                      className="w-1/2 font-mono text-[#0B5CAD] bg-transparent outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={rec.Email}
+                      onChange={(e) =>
+                        setMergeRecipients((prev) =>
+                          prev.map((r, i) => (i === idx ? { ...r, Email: e.target.value } : r))
+                        )
+                      }
+                      className="w-1/2 text-zinc-400 bg-transparent outline-none truncate"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Active Protection / Merge Preview Banners */}
+        {readOnlyLock && (
+          <div className="flex items-center justify-between gap-2 px-4 py-1.5 bg-amber-50 dark:bg-amber-950/50 border-b border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200">
+            <span className="font-bold flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5" />
+              Editing Protected — Read-only review lock is active.
+            </span>
+            <button
+              type="button"
+              onClick={() => setReadOnlyLock(false)}
+              className="rounded-lg bg-amber-600 text-white px-2.5 py-0.5 text-[11px] font-bold cursor-pointer"
+            >
+              Unlock Editing
+            </button>
+          </div>
+        )}
+
+        {mergePreviewActive && (
+          <div className="flex items-center justify-between gap-2 px-4 py-1.5 bg-emerald-50 dark:bg-emerald-950/50 border-b border-emerald-200 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200">
+            <span className="font-bold">
+              Live Merge Preview ({mergeIndex + 1} of {mergeRecipients.length}):{" "}
+              {currentMergeRecipient.FullName} · {currentMergeRecipient.Company} ({currentMergeRecipient.Amount})
+            </span>
+            <button
+              type="button"
+              onClick={() => setMergePreviewActive(false)}
+              className="rounded-lg bg-emerald-700 text-white px-2.5 py-0.5 text-[11px] font-bold cursor-pointer"
+            >
+              Return to Template
+            </button>
+          </div>
+        )}
+
+        {/* Workspace Row: Centered Paper Canvas + Optional Review / History / Noctis Right Drawer */}
         <div className="flex-1 flex min-h-0 overflow-hidden">
           <div className="flex-1 overflow-auto bg-[#EFECE6] dark:bg-zinc-950 p-4 sm:p-7">
             {/* Horizontal Inch Ruler */}
-            {showRuler && (
+            {showRuler && viewMode === "print" && (
               <div
                 style={{ maxWidth: `${paperDims.widthPx}px`, zoom: `${zoomPct}%` }}
                 className="mx-auto mb-2 h-5 rounded-md bg-white/90 dark:bg-zinc-900 border border-[#E7E2DA] dark:border-zinc-800 flex items-center justify-between px-4 text-[9.5px] font-mono text-zinc-400 select-none"
@@ -1980,14 +3278,22 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
             {/* Live Styled Paper Canvas */}
             <div
               style={{
-                maxWidth: `${paperDims.widthPx}px`,
+                ["--doc-accent" as any]: docAccentColor,
+                maxWidth: viewMode === "web" ? "100%" : `${paperDims.widthPx}px`,
                 minHeight: `${Math.min(paperDims.minHeightPx, 820)}px`,
                 backgroundColor: pageSetup.pageBg || "#FFFFFF",
+                backgroundImage: showGridlines
+                  ? "linear-gradient(to right, rgba(11,92,173,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(11,92,173,0.06) 1px, transparent 1px)"
+                  : undefined,
+                backgroundSize: showGridlines ? "24px 24px" : undefined,
                 paddingLeft: `${marginInfo.px}px`,
                 paddingRight: `${marginInfo.px}px`,
                 paddingTop: "40px",
                 paddingBottom: "40px",
-                borderTop: pageSetup.pageBorder === "accent" ? "6px solid #0B5CAD" : pageBorderStyle,
+                borderTop:
+                  pageSetup.pageBorder === "accent"
+                    ? `6px solid ${docAccentColor}`
+                    : pageBorderStyle,
                 borderRight: pageBorderStyle,
                 borderBottom: pageBorderStyle,
                 borderLeft: pageBorderStyle,
@@ -1995,6 +3301,18 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
               }}
               className="relative mx-auto rounded-xl border border-[#E7E2DA] dark:border-zinc-800 shadow-[0_12px_40px_rgba(11,31,58,0.08)] flex flex-col justify-between overflow-hidden"
             >
+              {/* Subtle Line Numbers Gutter */}
+              {showLineNumbers && (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none select-none absolute left-2 top-10 bottom-10 w-6 flex flex-col gap-3 text-[9.5px] font-mono text-zinc-300 text-right pr-1"
+                >
+                  {Array.from({ length: 24 }).map((_, i) => (
+                    <span key={i}>{i + 1}</span>
+                  ))}
+                </div>
+              )}
+
               {/* Diagonal Watermark Overlay */}
               {pageSetup.watermark && (
                 <div
@@ -2014,9 +3332,23 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
                 </div>
               )}
 
+              {mergePreviewActive && (
+                <div
+                  aria-label="ConnectLn Docs merged preview canvas"
+                  style={{
+                    fontFamily,
+                    lineHeight: pageSetup.lineSpacing,
+                    columnCount: pageSetup.columns > 1 ? pageSetup.columns : undefined,
+                    columnGap: pageSetup.columns > 1 ? "28px" : undefined,
+                  }}
+                  dangerouslySetInnerHTML={{ __html: mergedPreviewHtml }}
+                  className="relative z-10 flex-1 min-h-[600px] outline-none text-[#0B1F3A] prose prose-slate max-w-none [&_h1]:text-2xl [&_h1]:font-extrabold [&_h1]:mb-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-[var(--doc-accent,#0B5CAD)] [&_h2]:mt-5 [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-bold"
+                />
+              )}
+
               <div
                 ref={editorRef}
-                contentEditable
+                contentEditable={!readOnlyLock}
                 suppressContentEditableWarning
                 spellCheck={spellcheckEnabled}
                 onInput={handleEditorInput}
@@ -2030,7 +3362,11 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
                   columnGap: pageSetup.columns > 1 ? "28px" : undefined,
                 }}
                 aria-label="ConnectLn Docs rich text editor canvas"
-                className="relative z-10 flex-1 min-h-[600px] outline-none text-[#0B1F3A] prose prose-slate max-w-none [&_h1]:text-2xl [&_h1]:font-extrabold [&_h1]:mb-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-[#0B5CAD] [&_h2]:mt-5 [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-bold [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-zinc-300 [&_th]:bg-zinc-100 [&_th]:px-3 [&_th]:py-1.5 [&_td]:border [&_td]:border-zinc-300 [&_td]:px-3 [&_td]:py-1.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
+                className={`${
+                  mergePreviewActive ? "hidden " : ""
+                }${
+                  showParaMarks ? "[&_p]:after:content-['_¶'] [&_p]:after:text-sky-400/60 [&_p]:after:text-xs " : ""
+                }relative z-10 flex-1 min-h-[600px] outline-none text-[#0B1F3A] prose prose-slate max-w-none [&_h1]:text-2xl [&_h1]:font-extrabold [&_h1]:mb-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-[var(--doc-accent,#0B5CAD)] [&_h2]:mt-5 [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-bold [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-zinc-300 [&_th]:bg-zinc-100 [&_th]:px-3 [&_th]:py-1.5 [&_td]:border [&_td]:border-zinc-300 [&_td]:px-3 [&_td]:py-1.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6`}
               />
 
               {(pageSetup.footerText || pageSetup.showPageNumbers || showHeaderFooterEditor) && (
@@ -2042,8 +3378,26 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
             </div>
           </div>
 
-          {/* Right Review / Version History Drawer */}
-          {rightPanel !== "none" && activeDoc && (
+          {/* Right Noctis / Review / Version History Drawer */}
+          {rightPanel === "noctis" && activeDoc && (
+            <ConnectLnDocsNoctisPanel
+              docTitle={activeDoc.title}
+              docHtml={editorRef.current?.innerHTML ?? activeDoc.contentHtml}
+              selectedText={selectedTextSnapshot}
+              user={user}
+              initialPrompt={noctisInitialPrompt}
+              initialMode={noctisInitialMode}
+              onClose={() => setRightPanel("none")}
+              onInsertHtml={(html) => insertHtmlSnippet(html)}
+              onInsertAtTop={(html) => {
+                const current = editorRef.current?.innerHTML ?? activeDoc.contentHtml
+                updateActiveDoc({ contentHtml: `${html}\n${current}` }, true)
+              }}
+              onNotify={notify}
+            />
+          )}
+
+          {(rightPanel === "comments" || rightPanel === "history") && activeDoc && (
             <aside className="w-full sm:w-[290px] shrink-0 border-l border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950 p-3 flex flex-col gap-3 overflow-y-auto">
               <div className="flex items-center justify-between border-b border-[#E7E2DA] dark:border-zinc-800 pb-2">
                 <span className="text-xs font-extrabold text-[#0B1F3A] dark:text-white">
@@ -2291,11 +3645,175 @@ export function ConnectLnDocsEditor({ user, onShareToFeed, onSendToSign }: Conne
           mode="docs"
           isOpen={showPrintModal}
           onClose={() => setShowPrintModal(false)}
-          title={activeDoc.title}
-          bodyHtml={editorRef.current?.innerHTML ?? activeDoc.contentHtml}
+          title={
+            mergePreviewActive
+              ? `${activeDoc.title} — ${currentMergeRecipient.FullName}`
+              : activeDoc.title
+          }
+          bodyHtml={
+            mergePreviewActive
+              ? mergedPreviewHtml
+              : editorRef.current?.innerHTML ?? activeDoc.contentHtml
+          }
           pageSetup={pageSetup}
           onUpdatePageSetup={updatePageSetup}
           onDownloadOpenXml={() => handleExport("docx")}
+        />
+      )}
+
+      {/* Accessibility Check Modal */}
+      {showAccessibilityModal && (
+        <div
+          role="dialog"
+          aria-label="ConnectLn Accessibility Audit"
+          className="fixed inset-0 z-[105] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E7E2DA] dark:border-zinc-800 pb-3">
+              <div>
+                <h3 className="text-sm font-extrabold text-[#0B1F3A] dark:text-white flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  Document Accessibility Audit
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  Readiness score: <strong className="text-[#0B5CAD]">{accessibilityReport.score}%</strong>
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close Accessibility Audit"
+                onClick={() => setShowAccessibilityModal(false)}
+                className="p-1 rounded-lg hover:bg-zinc-100 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              {accessibilityReport.checks.map((chk) => (
+                <div
+                  key={chk.title}
+                  className={`rounded-xl border p-3 text-xs space-y-1 ${
+                    chk.status === "pass"
+                      ? "border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20"
+                      : "border-amber-200 bg-amber-50/60 dark:bg-amber-950/20"
+                  }`}
+                >
+                  <p className="font-extrabold text-[#0B1F3A] dark:text-white">
+                    {chk.status === "pass" ? "PASS · " : "CHECK · "}
+                    {chk.title}
+                  </p>
+                  <p className="text-zinc-600 dark:text-zinc-300">{chk.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Help & Keyboard Shortcuts Modal */}
+      {showHelpModal && (
+        <div
+          role="dialog"
+          aria-label="ConnectLn Docs Help and Shortcuts"
+          className="fixed inset-0 z-[105] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E7E2DA] dark:border-zinc-800 pb-3">
+              <h3 className="text-sm font-extrabold text-[#0B1F3A] dark:text-white flex items-center gap-1.5">
+                <HelpCircle className="h-4 w-4 text-[#0B5CAD]" />
+                ConnectLn Docs Quick Guide &amp; Help
+              </h3>
+              <button
+                type="button"
+                aria-label="Close Docs Help"
+                onClick={() => setShowHelpModal(false)}
+                className="p-1 rounded-lg hover:bg-zinc-100 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-2 text-xs">
+              {[
+                ["Ctrl / Cmd + P", "Open Print & Clean PDF Studio"],
+                ["Ctrl / Cmd + F", "Open Find & Replace Bar"],
+                ["Noctis Pill", "Open AI drafting, polish, summary & translation"],
+                ["Style Tab", "Switch full ConnectLn visual typography themes"],
+                ["Cite Tab", "Insert APA/MLA/Chicago/IEEE references & TOC"],
+                ["Merge Tab", "Personalize batch letters with {{FullName}} tokens"],
+              ].map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between gap-2 rounded-xl bg-[#FAF7F2] dark:bg-zinc-950 px-3 py-2">
+                  <kbd className="font-mono font-bold text-[#0B5CAD]">{k}</kbd>
+                  <span className="text-zinc-600 dark:text-zinc-300 text-right">{v}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#E7E2DA] dark:border-zinc-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowHelpModal(false)
+                  handleCreateTourDoc()
+                }}
+                className="rounded-xl bg-[#0B1F3A] text-white px-3 py-1.5 text-xs font-bold cursor-pointer"
+              >
+                Open Docs Quick Tour
+              </button>
+              <Link
+                href="/connectin-portal#download-app"
+                className="text-xs font-extrabold text-[#0B5CAD] hover:underline"
+              >
+                Get ConnectLn Mobile App →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ConnectLn Docs Studio Hub Drawer */}
+      {showHubDrawer && (
+        <ConnectLnStudioHubDrawer
+          app="docs"
+          user={user}
+          activeTitle={activeDoc?.title || "Untitled Document"}
+          activeStatsSummary={`${stats.words} words · ~${stats.estimatedPages} page${stats.estimatedPages > 1 ? "s" : ""} · ${pageSetup.paperSize.toUpperCase()}`}
+          items={docs.map((d) => ({
+            id: d.id,
+            title: d.title,
+            category: d.category,
+            updatedAt: d.updatedAt,
+            starred: d.starred,
+          }))}
+          templates={DOC_TEMPLATES.map((t) => ({
+            id: t.id,
+            name: t.name,
+            category: t.category,
+            description: t.description,
+          }))}
+          onClose={() => setShowHubDrawer(false)}
+          onSelectItem={(id) => {
+            setActiveDocId(id)
+            setEditorRevision((r) => r + 1)
+          }}
+          onToggleStar={(id) =>
+            setDocs((prev) =>
+              prev.map((d) => (d.id === id ? { ...d, starred: !d.starred } : d))
+            )
+          }
+          onCreateBlank={() => {
+            const blank = DOC_TEMPLATES[0]
+            if (blank) handleCreateFromTemplate(blank)
+          }}
+          onCreateFromTemplate={(tid) => {
+            if (tid === "tour_docs_quick") {
+              handleCreateTourDoc()
+              return
+            }
+            const tpl = DOC_TEMPLATES.find((t) => t.id === tid)
+            if (tpl) handleCreateFromTemplate(tpl)
+          }}
+          onTriggerImport={() => fileInputRef.current?.click()}
+          onTriggerPrint={() => setShowPrintModal(true)}
+          onTriggerExportPrimary={() => handleExport("docx")}
         />
       )}
     </div>

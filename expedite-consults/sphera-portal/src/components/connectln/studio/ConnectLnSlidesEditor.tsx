@@ -20,6 +20,7 @@ import {
   FilePlus2,
   Grid,
   ImagePlus,
+  LayoutGrid,
   LayoutTemplate,
   Maximize2,
   MessageSquare,
@@ -67,6 +68,7 @@ import {
   type StudioSlideItem,
 } from "@/lib/connectln-studio-storage"
 import type { StudioSharePayload } from "./ConnectLnDocsEditor"
+import { ConnectLnStudioHubDrawer } from "./ConnectLnStudioHubDrawer"
 import { ConnectLnStudioPrintModal } from "./ConnectLnStudioPrintModal"
 
 interface ConnectLnSlidesEditorProps {
@@ -238,6 +240,7 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
   const [transitionPulseKey, setTransitionPulseKey] = useState(0)
   const [showPrintModal, setShowPrintModal] = useState(false)
   const [showTemplatesModal, setShowTemplatesModal] = useState(false)
+  const [showHubDrawer, setShowHubDrawer] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [undoDecks, setUndoDecks] = useState<StudioDeckRecord[]>([])
   const [redoDecks, setRedoDecks] = useState<StudioDeckRecord[]>([])
@@ -941,6 +944,15 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
               className="rounded-lg p-1.5 border border-[#E7E2DA] dark:border-zinc-700 hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer shrink-0"
             >
               {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+            </button>
+            <button
+              type="button"
+              aria-label="Open ConnectLn Slides Hub"
+              onClick={() => setShowHubDrawer(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#0B1F3A] hover:bg-[#132D52] text-white px-2.5 py-1.5 text-xs font-extrabold shadow-2xs cursor-pointer shrink-0"
+            >
+              <LayoutGrid className="h-3.5 w-3.5 text-orange-300" />
+              <span className="hidden sm:inline">Studio Hub</span>
             </button>
             <input
               type="text"
@@ -1923,6 +1935,91 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
           currentSlideIndex={safeSlideIndex}
           theme={theme}
           onDownloadOpenXml={() => handleExport("pptx")}
+        />
+      )}
+
+      {/* ConnectLn Slides Studio Hub Drawer */}
+      {showHubDrawer && (
+        <ConnectLnStudioHubDrawer
+          app="slides"
+          user={user}
+          activeTitle={activeDeck?.title || "Untitled Deck"}
+          activeStatsSummary={`${activeDeck?.slides.length || 1} slide(s) · Theme: ${theme.name}`}
+          items={decks.map((d) => ({
+            id: d.id,
+            title: d.title,
+            category: d.category,
+            updatedAt: d.updatedAt,
+            starred: d.starred,
+          }))}
+          templates={DECK_TEMPLATES.map((t) => ({
+            id: t.id,
+            name: t.name,
+            category: t.category,
+            description: t.description,
+          }))}
+          onClose={() => setShowHubDrawer(false)}
+          onSelectItem={(id) => {
+            setActiveDeckId(id)
+            setActiveSlideIndex(0)
+            setSidebarTab("slides")
+          }}
+          onToggleStar={(id) =>
+            setDecks((prev) =>
+              prev.map((d) => (d.id === id ? { ...d, starred: !d.starred } : d))
+            )
+          }
+          onCreateBlank={() => {
+            const blank = DECK_TEMPLATES[0]
+            if (blank) handleCreateDeckFromTemplate(blank)
+          }}
+          onCreateFromTemplate={(tid) => {
+            if (tid === "tour_slides_quick") {
+              const now = new Date().toISOString()
+              const tourDeck: StudioDeckRecord = {
+                id: `deck_tour_${Date.now()}`,
+                title: "ConnectLn Slides Quick Tour",
+                category: "Guided Tour",
+                themeId: "sandstone-editorial",
+                aspectRatio: "16:9",
+                showSlideNumbers: true,
+                createdAt: now,
+                updatedAt: now,
+                authorName: user.name || "ConnectLn Member",
+                slides: [
+                  {
+                    id: `sl_${Date.now()}_1`,
+                    layout: "cover",
+                    title: "Welcome to ConnectLn Slides 360",
+                    subtitle: "Design crisp executive decks with Presenter View & 16:9 exports",
+                    bullets: ["Presenter Timer", "Slide Sorter", ".pptx OpenXML"],
+                    notes: "Welcome your audience and introduce key metrics cleanly.",
+                  },
+                  {
+                    id: `sl_${Date.now()}_2`,
+                    layout: "bullets",
+                    title: "Three Ways to Impress",
+                    bullets: [
+                      "Switch full ConnectLn color themes under Design",
+                      "Use Slide Sorter Grid to reorder narrative flow fast",
+                      "Print 4-up Handouts or export standard .pptx anytime",
+                    ],
+                  },
+                ],
+              }
+              setDecks((prev) => [tourDeck, ...prev])
+              setActiveDeckId(tourDeck.id)
+              setActiveSlideIndex(0)
+              setSidebarTab("slides")
+              notify("Opened ConnectLn Slides Quick Tour")
+              return
+            }
+            const tpl = DECK_TEMPLATES.find((t) => t.id === tid)
+            if (tpl) handleCreateDeckFromTemplate(tpl)
+          }}
+          onTriggerImport={() => setShowTemplatesModal(true)}
+          onTriggerPrint={() => setShowPrintModal(true)}
+          onTriggerExportPrimary={() => handleExport("pptx")}
         />
       )}
     </div>

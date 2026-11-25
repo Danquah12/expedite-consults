@@ -23,6 +23,7 @@ import {
   FunctionSquare,
   Grid,
   Italic,
+  LayoutGrid,
   LayoutTemplate,
   LineChart,
   Lock,
@@ -80,6 +81,7 @@ import {
   type StudioWorkbookRecord,
 } from "@/lib/connectln-studio-storage"
 import type { StudioSharePayload } from "./ConnectLnDocsEditor"
+import { ConnectLnStudioHubDrawer } from "./ConnectLnStudioHubDrawer"
 import { ConnectLnStudioPrintModal } from "./ConnectLnStudioPrintModal"
 
 interface ConnectLnSheetsEditorProps {
@@ -196,6 +198,7 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
   const [editingCellKey, setEditingCellKey] = useState<string | null>(null)
   const [draftCellValue, setDraftCellValue] = useState("")
   const [showTemplatesModal, setShowTemplatesModal] = useState(false)
+  const [showHubDrawer, setShowHubDrawer] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [showPrintModal, setShowPrintModal] = useState(false)
   const [showFindBar, setShowFindBar] = useState(false)
@@ -1179,6 +1182,15 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
             >
               {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
             </button>
+            <button
+              type="button"
+              aria-label="Open ConnectLn Sheets Hub"
+              onClick={() => setShowHubDrawer(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#0B1F3A] hover:bg-[#132D52] text-white px-2.5 py-1.5 text-xs font-extrabold shadow-2xs cursor-pointer shrink-0"
+            >
+              <LayoutGrid className="h-3.5 w-3.5 text-emerald-300" />
+              <span className="hidden sm:inline">Studio Hub</span>
+            </button>
             <input
               type="text"
               aria-label="Workbook title"
@@ -2067,6 +2079,95 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
           allSheets={activeWorkbook.sheets}
           chartsSvgHtml={chartsSvgHtml}
           onDownloadOpenXml={() => handleExport("xlsx")}
+        />
+      )}
+
+      {/* ConnectLn Sheets Studio Hub Drawer */}
+      {showHubDrawer && (
+        <ConnectLnStudioHubDrawer
+          app="sheets"
+          user={user}
+          activeTitle={activeWorkbook?.title || "Untitled Workbook"}
+          activeStatsSummary={`${activeWorkbook?.sheets.length || 1} sheet(s) · Active: ${activeSheet.name}`}
+          items={workbooks.map((w) => ({
+            id: w.id,
+            title: w.title,
+            category: w.category,
+            updatedAt: w.updatedAt,
+            starred: w.starred,
+          }))}
+          templates={SHEET_TEMPLATES.map((t) => ({
+            id: t.id,
+            name: t.name,
+            category: t.category,
+            description: t.description,
+          }))}
+          onClose={() => setShowHubDrawer(false)}
+          onSelectItem={(id) => {
+            setActiveWorkbookId(id)
+            setSelectedCell({ col: 0, row: 0 })
+            setSelectionEnd(null)
+            setEditingCellKey(null)
+          }}
+          onToggleStar={(id) =>
+            setWorkbooks((prev) =>
+              prev.map((w) => (w.id === id ? { ...w, starred: !w.starred } : w))
+            )
+          }
+          onCreateBlank={() => {
+            const blank = SHEET_TEMPLATES[0]
+            if (blank) handleCreateFromTemplate(blank)
+          }}
+          onCreateFromTemplate={(tid) => {
+            if (tid.startsWith("tour_sheets_")) {
+              const now = new Date().toISOString()
+              const titleMap: Record<string, string> = {
+                tour_sheets_welcome: "ConnectLn Sheets Welcome Tour",
+                tour_sheets_formula: "ConnectLn Formula Lab",
+                tour_sheets_pivot: "Regional Pivot Summary",
+              }
+              const demoCells: Record<string, SheetCell> = {
+                A1: { raw: "Category", style: { bold: true, bg: "#0B1F3A", color: "#FFFFFF" } },
+                B1: { raw: "Region", style: { bold: true, bg: "#0B1F3A", color: "#FFFFFF" } },
+                C1: { raw: "Units", style: { bold: true, align: "right", bg: "#0B1F3A", color: "#FFFFFF" } },
+                D1: { raw: "Unit Price", style: { bold: true, align: "right", bg: "#0B1F3A", color: "#FFFFFF" } },
+                E1: { raw: "Total", style: { bold: true, align: "right", bg: "#0B1F3A", color: "#FFFFFF" } },
+                A2: { raw: "Solar Kits" },
+                B2: { raw: "East" },
+                C2: { raw: "14", style: { format: "integer", align: "right" } },
+                D2: { raw: "450", style: { format: "currency", align: "right" } },
+                E2: { raw: "=C2*D2", style: { format: "currency", align: "right" } },
+                A3: { raw: "Smart Panels" },
+                B3: { raw: "North" },
+                C3: { raw: "9", style: { format: "integer", align: "right" } },
+                D3: { raw: "620", style: { format: "currency", align: "right" } },
+                E3: { raw: "=C3*D3", style: { format: "currency", align: "right" } },
+                A5: { raw: "Grand Total", style: { bold: true, bg: "#E6F4EA" } },
+                E5: { raw: "=SUM(E2:E3)", style: { bold: true, format: "currency", align: "right", bg: "#E6F4EA" } },
+              }
+              const tourWb: StudioWorkbookRecord = {
+                id: `wb_${Date.now()}`,
+                title: titleMap[tid] || "ConnectLn Guided Workbook",
+                category: "Guided Tour",
+                sheets: [{ id: `sheet_${Date.now()}`, name: "Tour Grid", rowCount: 18, colCount: 8, cells: demoCells }],
+                activeSheetId: "",
+                createdAt: now,
+                updatedAt: now,
+                authorName: user.name || "ConnectLn Member",
+              }
+              tourWb.activeSheetId = tourWb.sheets[0].id
+              setWorkbooks((prev) => [tourWb, ...prev])
+              setActiveWorkbookId(tourWb.id)
+              setSelectedCell({ col: 0, row: 0 })
+              notify(`Opened "${tourWb.title}"`)
+              return
+            }
+            const tpl = SHEET_TEMPLATES.find((t) => t.id === tid)
+            if (tpl) handleCreateFromTemplate(tpl)
+          }}
+          onTriggerImport={() => csvInputRef.current?.click()}
+          onTriggerPrint={() => setShowPrintModal(true)}
+          onTriggerExportPrimary={() => handleExport("xlsx")}
         />
       )}
     </div>
