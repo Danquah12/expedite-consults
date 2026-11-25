@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
+export const maxDuration = 30
+
 const TRANSLATE_TARGET_MAP: Record<string, string> = {
   en: "en",
   ak: "ak",
@@ -103,7 +105,7 @@ async function translateBatchWithGemini(texts: string[], targetLang: string): Pr
 
   try {
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 8000)
+    const timer = setTimeout(() => controller.abort(), 12000)
     const prompt =
       `Translate each string in the JSON array below into natural, idiomatic, everyday spoken ${langDesc}.\n` +
       `Rules:\n` +
@@ -128,6 +130,7 @@ async function translateBatchWithGemini(texts: string[], targetLang: string): Pr
           generationConfig: {
             temperature: 0.2,
             responseMimeType: "application/json",
+            thinkingConfig: { thinkingBudget: 0 },
           },
         }),
         signal: controller.signal,

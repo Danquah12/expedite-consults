@@ -3,6 +3,7 @@ import crypto from "crypto"
 import https from "https"
 
 export const runtime = "nodejs"
+export const maxDuration = 30
 
 // ============================================================================
 // VERIFIED NATIVE VOICE ACTORS (ONLY LANGUAGES WITH TRUE NATIVE VOICES)
@@ -854,10 +855,10 @@ async function synthesizeWithGeminiTTS(
   const apiKey = (process.env.GEMINI_API_KEY || "").trim()
   if (!apiKey) return null
   const styleDesc = GEMINI_LANG_STYLE_MAP[lang] || lang
-  const voiceName = isFemale ? "Kore" : "Orus"
+  const voiceName = isFemale ? "Aoede" : "Orus"
   try {
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 11000)
+    const timer = setTimeout(() => controller.abort(), 18000)
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${encodeURIComponent(
         apiKey
@@ -871,7 +872,7 @@ async function synthesizeWithGeminiTTS(
               role: "user",
               parts: [
                 {
-                  text: `Read the following ${styleDesc} aloud clearly, warmly, and naturally at a comfortable conversational pace, speaking ONLY the exact text below without adding any introduction or extra words:\n\n${text.slice(
+                  text: `Speak this ${styleDesc} clearly, warmly, and naturally as a native speaker. Speak ONLY the exact text below without adding any introduction or extra words:\n\n${text.slice(
                     0,
                     260
                   )}`,
