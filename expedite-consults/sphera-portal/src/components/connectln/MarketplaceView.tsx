@@ -58,7 +58,8 @@ import {
   Wrench,
   GraduationCap,
   Boxes,
-  HelpCircleIcon
+  HelpCircleIcon,
+  RefreshCw
 } from "lucide-react"
 import {
   MarketplaceProduct,
@@ -156,6 +157,12 @@ export function MarketplaceView({
   const [generatedLicenseKey, setGeneratedLicenseKey] = useState<string | null>(null)
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false)
   const [hasCopiedLicense, setHasCopiedLicense] = useState(false)
+  const [embeddedMarketApp, setEmbeddedMarketApp] = useState<{
+    title: string
+    subtitle: string
+    url: string
+  } | null>(null)
+  const [embeddedMarketAppKey, setEmbeddedMarketAppKey] = useState(0)
 
   // Vendor Listing Modal
   const [isVendorModalOpen, setIsVendorModalOpen] = useState(false)
@@ -256,6 +263,9 @@ export function MarketplaceView({
     const isGlobalCategory = ['Cybersecurity', 'Launchpad', 'Software', 'AI', 'Cloud', 'Training', 'Enterprise', 'Solutions', 'Sphera', 'Deals'].includes(selectedMainCategory)
     const isFeaturedGlobalApp =
       p.id === 'prod_expedite_ecosystem_launchpad' ||
+      p.id === 'prod_trueplace_homeos' ||
+      p.id === 'prod_trueplace_hometruth' ||
+      p.id === 'prod_trueplace_housing_passport' ||
       p.id === 'prod_aagiis_federal_rmf' ||
       p.id === 'prod_expedite_strike_dast_engine' ||
       p.id === 'prod_expedite_strike_dast_landing' ||
@@ -808,7 +818,7 @@ export function MarketplaceView({
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#D8CEBE] dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider">
-                Categorized Flagship Platforms (11 Live Cards)
+                Categorized Flagship Platforms (15 Live Cards)
               </span>
               <span className="text-xs text-[#78716C] dark:text-zinc-400">
                 Every platform organized into dedicated cards with direct launch buttons
@@ -821,7 +831,7 @@ export function MarketplaceView({
                   onClick={() => setShowFlagshipInSolutions(!showFlagshipInSolutions)}
                   className="rounded-lg bg-[#EFE8DA] dark:bg-zinc-800 hover:bg-[#E5DEC9] dark:hover:bg-zinc-700 text-[#292521] dark:text-zinc-300 px-2.5 py-1 text-xs font-bold cursor-pointer transition-colors"
                 >
-                  {showFlagshipInSolutions ? '▲ Hide 11 Flagship Cards' : '▼ Show 11 Flagship Cards'}
+                  {showFlagshipInSolutions ? '▲ Hide 15 Flagship Cards' : '▼ Show 15 Flagship Cards'}
                 </button>
               )}
               {selectedSubCategory !== 'All' && (
@@ -838,6 +848,190 @@ export function MarketplaceView({
 
           {(selectedMainCategory !== 'Solutions' || showFlagshipInSolutions) && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* Flagship A: Expedite Launchpad — 67+ Platforms */}
+            <div className="rounded-xl border border-sky-200 dark:border-sky-800/70 bg-gradient-to-br from-[#FBF8F3] to-sky-50/60 dark:from-zinc-900 dark:to-sky-950/30 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#0067B8]/60 hover:shadow-md transition-all">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-sky-100 text-[#0067B8] border border-sky-200 dark:bg-sky-950 dark:text-sky-300 dark:border-sky-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    🚀 Ecosystem Gateway
+                  </span>
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
+                    67+ Platforms
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#0B1F3A] dark:text-zinc-100 leading-snug">
+                    Expedite Launchpad — 67+ Platforms
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    Central orchestration launchpad across autonomous cyber defense, ConnectLn OS, CampusSync &amp; cloud apps.
+                  </p>
+                </div>
+              </div>
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEmbeddedMarketApp({
+                      title: 'Expedite Launchpad — 67+ Platforms',
+                      subtitle: 'https://expedite-consults.vercel.app/launchpad',
+                      url: 'https://expedite-consults.vercel.app/launchpad',
+                    })
+                  }
+                  className="rounded-lg border border-[#0067B8]/40 bg-white dark:bg-zinc-900 hover:bg-sky-50 dark:hover:bg-zinc-800 px-2.5 py-1 text-[11px] font-bold text-[#0067B8] dark:text-sky-400 cursor-pointer"
+                >
+                  Open Here
+                </button>
+                <a
+                  href="https://expedite-consults.vercel.app/launchpad"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-[#0067B8] hover:bg-[#00559B] text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>Launchpad ↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Flagship B: TruePlace™ — Real Estate & HomeOS */}
+            <div className="rounded-xl border border-emerald-200 dark:border-emerald-800/70 bg-gradient-to-br from-[#FBF8F3] to-emerald-50/50 dark:from-zinc-900 dark:to-emerald-950/30 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-emerald-600/60 hover:shadow-md transition-all">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    🏡 Real Estate OS
+                  </span>
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
+                    HomeOS™
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#0B1F3A] dark:text-zinc-100 leading-snug">
+                    TruePlace™ — Real Estate &amp; HomeOS
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    TreeSHAP mathematical valuations, TrueCost™ affordability &amp; HomeOS™ appliance lifecycle intelligence.
+                  </p>
+                </div>
+              </div>
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEmbeddedMarketApp({
+                      title: 'TruePlace™ — Real Estate & HomeOS',
+                      subtitle: 'https://expedite-consults.vercel.app/trueplace',
+                      url: 'https://expedite-consults.vercel.app/trueplace',
+                    })
+                  }
+                  className="rounded-lg border border-emerald-600/40 bg-white dark:bg-zinc-900 hover:bg-emerald-50 dark:hover:bg-zinc-800 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 cursor-pointer"
+                >
+                  Open Here
+                </button>
+                <a
+                  href="https://expedite-consults.vercel.app/trueplace"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-emerald-700 hover:bg-emerald-800 text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>TruePlace ↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Flagship C: TruePlace HomeTruth™ — Carfax for Homes */}
+            <div className="rounded-xl border border-amber-200 dark:border-amber-800/70 bg-gradient-to-br from-[#FBF8F3] to-amber-50/50 dark:from-zinc-900 dark:to-amber-950/30 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-amber-600/60 hover:shadow-md transition-all">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-amber-100 text-amber-900 border border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    🔍 HomeTruth™
+                  </span>
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
+                    Property Audit
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#0B1F3A] dark:text-zinc-100 leading-snug">
+                    TruePlace HomeTruth™ — Carfax for Homes
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    Property history dossier, permits, structural inspection records &amp; environmental risk checks.
+                  </p>
+                </div>
+              </div>
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEmbeddedMarketApp({
+                      title: 'TruePlace HomeTruth™ — Carfax for Homes',
+                      subtitle: 'https://expedite-consults.vercel.app/trueplace?tab=hometruth',
+                      url: 'https://expedite-consults.vercel.app/trueplace?tab=hometruth',
+                    })
+                  }
+                  className="rounded-lg border border-amber-600/40 bg-white dark:bg-zinc-900 hover:bg-amber-50 dark:hover:bg-zinc-800 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-400 cursor-pointer"
+                >
+                  Open Here
+                </button>
+                <a
+                  href="https://expedite-consults.vercel.app/trueplace?tab=hometruth"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-amber-700 hover:bg-amber-800 text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>HomeTruth ↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Flagship D: TruePlace Housing Passport™ — Underwriting Intake */}
+            <div className="rounded-xl border border-indigo-200 dark:border-indigo-800/70 bg-gradient-to-br from-[#FBF8F3] to-indigo-50/50 dark:from-zinc-900 dark:to-indigo-950/30 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-indigo-600/60 hover:shadow-md transition-all">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    🪪 Housing Passport
+                  </span>
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
+                    Intake Flow
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#0B1F3A] dark:text-zinc-100 leading-snug">
+                    TruePlace Housing Passport™ — Intake
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    7-Pillar deterministic Housing Passport™ &amp; guided underwriting intake for buyers and lenders.
+                  </p>
+                </div>
+              </div>
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEmbeddedMarketApp({
+                      title: 'TruePlace Housing Passport™ — Intake',
+                      subtitle: 'https://expedite-consults.vercel.app/trueplace?tab=passport&intake=1',
+                      url: 'https://expedite-consults.vercel.app/trueplace?tab=passport&intake=1',
+                    })
+                  }
+                  className="rounded-lg border border-indigo-600/40 bg-white dark:bg-zinc-900 hover:bg-indigo-50 dark:hover:bg-zinc-800 px-2.5 py-1 text-[11px] font-bold text-indigo-700 dark:text-indigo-400 cursor-pointer"
+                >
+                  Open Here
+                </button>
+                <a
+                  href="https://expedite-consults.vercel.app/trueplace?tab=passport&intake=1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-indigo-700 hover:bg-indigo-800 text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>Start Intake ↗</span>
+                </a>
+              </div>
+            </div>
+
             {/* Card 1: Aagiis — Federal Compliance & DoD RMF */}
             <div className="rounded-xl border border-[#DDD3C2] dark:border-zinc-800 bg-[#FBF8F3] dark:bg-zinc-900 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#7C4225]/50 hover:shadow-md transition-all">
               <div className="space-y-2">
@@ -2931,6 +3125,63 @@ export function MarketplaceView({
                 </form>
               )}
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Embedded Live Launchpad / TruePlace Market Dialog */}
+      <Dialog
+        open={!!embeddedMarketApp}
+        onOpenChange={(open) => {
+          if (!open) setEmbeddedMarketApp(null)
+        }}
+      >
+        <DialogContent className="max-w-[95vw] sm:max-w-6xl h-[85vh] p-0 overflow-hidden flex flex-col gap-0">
+          {embeddedMarketApp && (
+            <>
+              <DialogHeader className="px-4 py-3 border-b border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-900 shrink-0 pr-12">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="min-w-0 text-left">
+                    <DialogTitle className="text-sm font-extrabold text-[#0B1F3A] dark:text-zinc-100 truncate">
+                      {embeddedMarketApp.title}
+                    </DialogTitle>
+                    <p className="text-[11px] font-mono text-[#6B7280] dark:text-zinc-400 truncate mt-0.5">
+                      {embeddedMarketApp.subtitle}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setEmbeddedMarketAppKey((k) => k + 1)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[#0B1F3A] dark:text-zinc-200 hover:bg-[#F3EFE8] cursor-pointer"
+                      title="Reload live app"
+                      aria-label="Reload live app"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    </button>
+                    <a
+                      href={embeddedMarketApp.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#0067B8] hover:bg-[#00559B] px-3 py-1.5 text-xs font-bold text-white transition-colors"
+                    >
+                      <span>Open in New Tab</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                </div>
+              </DialogHeader>
+              <div className="flex-1 min-h-0 w-full bg-white dark:bg-zinc-950">
+                <iframe
+                  key={`${embeddedMarketApp.url}-${embeddedMarketAppKey}`}
+                  src={embeddedMarketApp.url}
+                  title={embeddedMarketApp.title}
+                  className="w-full h-full border-0 bg-white dark:bg-zinc-950"
+                  allow="camera; microphone; autoplay; clipboard-read; clipboard-write; fullscreen; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </>
           )}
         </DialogContent>
       </Dialog>

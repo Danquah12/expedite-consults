@@ -192,6 +192,222 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     }
   },
   {
+    id: 'prod_trueplace_homeos',
+    name: 'TruePlace™ — Real Estate Intelligence & HomeOS',
+    tagline: 'Next-generation real estate platform with TreeSHAP valuations, HomeOS™ appliance lifecycles & TrueCost™ affordability',
+    category: 'Enterprise Solutions',
+    subCategory: 'Productivity & Field Notes',
+    icon: '🏡',
+    badge: '🔥 TruePlace Live',
+    rating: 5.0,
+    reviewsCount: 384,
+    activeUsersCount: '19,400+ Homebuyers & Analysts',
+    pricing: {
+      displayPrice: 'Free / Pro Tier',
+      billingPeriod: 'cloud platform',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'Expedite Consults',
+      logo: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'TruePlace™ unifies mathematical TreeSHAP property valuations, TrueCost™ full monthly carrying-cost projections, HomeOS™ appliance and roof lifecycle tracking, and direct HomeTruth™ verification inside one real estate operating system.',
+    features: [
+      { title: 'TreeSHAP Mathematical Valuations', desc: 'Explainable valuation breakdowns showing feature-by-feature price drivers with zero black-box guesswork.' },
+      { title: 'HomeOS™ Lifecycle Tracking', desc: 'Predict HVAC, roof, electrical panel, and appliance replacement timelines before closing or renovation.' },
+      { title: 'TrueCost™ Affordability Engine', desc: 'Calculates real monthly ownership costs including taxes, insurance, HOA, utilities, and capital reserves.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://expedite-consults.vercel.app/trueplace',
+    liveUrl: 'https://expedite-consults.vercel.app/trueplace',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'orchestration',
+    architecture: {
+      title: 'Deterministic Valuation & Lifecycle Mesh',
+      summary: 'Edge Next.js portal backed by TreeSHAP explainable pricing models and property ledger verification.',
+      layers: ['TruePlace Edge Web App', 'TreeSHAP & TrueCost Compute', 'HomeOS Maintenance Ledger'],
+      latency: '< 25ms Query',
+      dataPrivacy: 'Encrypted Property Dossiers'
+    },
+    integrations: ['ConnectLn', 'HomeTruth™', 'Housing Passport™', 'Expedite Launchpad'],
+    security: {
+      compliance: ['SOC 2 Type II', 'FCRA § 604/611/615', 'RESPA Aligned'],
+      encryption: 'TLS 1.3 + AES-256-GCM',
+      isolation: 'Per-Household Workspace Isolation'
+    },
+    pricingTiers: [
+      {
+        name: 'TruePlace Open Access',
+        price: '$0',
+        period: 'instant launch',
+        description: 'Immediate browser access to TruePlace Real Estate Intelligence & HomeOS.',
+        features: ['TreeSHAP Valuations', 'TrueCost™ Calculators', 'HomeOS™ Lifecycles', 'HomeTruth™ Links'],
+        recommended: true,
+        ctaText: 'Open TruePlace'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Open https://expedite-consults.vercel.app/trueplace to explore valuations, HomeTruth™ audits, and Housing Passport™.',
+      apiEndpoints: ['https://expedite-consults.vercel.app/trueplace'],
+      sdkSupport: ['Web Browser', 'ConnectLn Market Embed']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime SLA',
+      channel: 'TruePlace Real Estate Desk',
+      responseHours: '< 2 Hours'
+    }
+  },
+  {
+    id: 'prod_trueplace_hometruth',
+    name: 'TruePlace HomeTruth™ — Carfax for Homes',
+    tagline: 'Property history dossier, structural/title verification, neighborhood risk signals & HomeTruth™ inspection audits',
+    category: 'Enterprise Solutions',
+    subCategory: 'Productivity & Field Notes',
+    icon: '🔍',
+    badge: '✓ HomeTruth Audit',
+    rating: 4.9,
+    reviewsCount: 276,
+    activeUsersCount: '14,200+ Inspectors & Buyers',
+    pricing: {
+      displayPrice: 'Free / Verify',
+      billingPeriod: 'property dossier',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'Expedite Consults',
+      logo: 'https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'HomeTruth™ acts like a transparent Carfax for residential and commercial properties — surfacing permit history, roof and foundation records, flood/environmental indicators, and contractor repair logs.',
+    features: [
+      { title: 'Verified Permit & Repair History', desc: 'Inspect chronological permit closures, licensed contractor sign-offs, and major system replacements.' },
+      { title: 'Environmental & Risk Signals', desc: 'Surface flood plain shifts, utility liens, and structural disclosure flags before submitting an offer.' },
+      { title: 'Shareable Buyer Dossier', desc: 'Export verified HomeTruth™ readiness reports for lenders, insurers, and licensed trade inspectors.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://expedite-consults.vercel.app/trueplace?tab=hometruth',
+    liveUrl: 'https://expedite-consults.vercel.app/trueplace?tab=hometruth',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'orchestration',
+    architecture: {
+      title: 'HomeTruth Property Provenance Engine',
+      summary: 'Direct queryable tab inside TruePlace correlating municipal permits, contractor credentials, and inspection checkpoints.',
+      layers: ['HomeTruth Audit UI', 'Permit & Hazard Graph', 'Contractor License Cross-Check'],
+      latency: '< 30ms Lookup',
+      dataPrivacy: 'Zero-Trust Access Control'
+    },
+    integrations: ['TruePlace™', 'Housing Passport™', 'ConnectLn Business Pages'],
+    security: {
+      compliance: ['SOC 2 Type II', 'NIST 800-53'],
+      encryption: 'TLS 1.3 + AES-256-GCM',
+      isolation: 'Property-Scoped Audit Logs'
+    },
+    pricingTiers: [
+      {
+        name: 'HomeTruth™ Instant Audit',
+        price: '$0',
+        period: 'instant launch',
+        description: 'Run property verification audits directly inside ConnectLn Market or in a new tab.',
+        features: ['Carfax-Style Home Dossier', 'Permit Timeline', 'System Condition Checkpoints'],
+        recommended: true,
+        ctaText: 'Launch HomeTruth™'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Open https://expedite-consults.vercel.app/trueplace?tab=hometruth to inspect any property history dossier.',
+      apiEndpoints: ['https://expedite-consults.vercel.app/trueplace?tab=hometruth'],
+      sdkSupport: ['Web Browser', 'ConnectLn Market Embed']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime SLA',
+      channel: 'HomeTruth Verification Team',
+      responseHours: '< 2 Hours'
+    }
+  },
+  {
+    id: 'prod_trueplace_housing_passport',
+    name: 'TruePlace Housing Passport™ — Underwriting Intake',
+    tagline: '7-Pillar deterministic Housing Passport™ & guided underwriting intake for buyers, renters & lenders',
+    category: 'Enterprise Solutions',
+    subCategory: 'Productivity & Field Notes',
+    icon: '🪪',
+    badge: '⚡ Live Intake',
+    rating: 5.0,
+    reviewsCount: 318,
+    activeUsersCount: '16,800+ Applicants & Lenders',
+    pricing: {
+      displayPrice: 'Free Intake',
+      billingPeriod: 'portable passport',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'Expedite Consults',
+      logo: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Generate a portable, explainable 7-Pillar Housing Passport™ with guided intake for income stability, DTI readiness, reserves, and alternative credit signals — eliminating redundant mortgage and rental applications.',
+    features: [
+      { title: 'Guided Underwriting Intake', desc: 'Step-by-step intake workflow tailored to buyers, renters, and loan officers.' },
+      { title: '7-Pillar Deterministic Readiness', desc: 'Transparent scoring across income continuity, obligations, down-payment reserves, and housing history.' },
+      { title: 'Single Portable Credential', desc: 'Share verified readiness packets without exposing raw sensitive bank statements repeatedly.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://expedite-consults.vercel.app/trueplace?tab=passport&intake=1',
+    liveUrl: 'https://expedite-consults.vercel.app/trueplace?tab=passport&intake=1',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'orchestration',
+    architecture: {
+      title: 'Deterministic 7-Pillar Passport Intake',
+      summary: 'Direct intake route in TruePlace producing auditable housing readiness decisions.',
+      layers: ['Passport Intake Flow', 'Deterministic Rule Graph', 'Lender Verification Share'],
+      latency: '< 20ms Evaluation',
+      dataPrivacy: 'FCRA-Aligned Consent Controls'
+    },
+    integrations: ['TruePlace™', 'HomeTruth™', 'ConnectLn Career Passport'],
+    security: {
+      compliance: ['FCRA § 604/611/615', 'SOC 2 Type II', 'TLS 1.3'],
+      encryption: 'End-to-End Encrypted Intake Payloads',
+      isolation: 'Applicant-Controlled Consent Keys'
+    },
+    pricingTiers: [
+      {
+        name: 'Housing Passport™ Intake',
+        price: '$0',
+        period: 'instant launch',
+        description: 'Start guided Housing Passport underwriting intake right inside ConnectLn.',
+        features: ['Guided Intake Flow', '7-Pillar Readiness Score', 'Portable Lender Packet'],
+        recommended: true,
+        ctaText: 'Start Intake Now'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Open https://expedite-consults.vercel.app/trueplace?tab=passport&intake=1 to start the Housing Passport intake.',
+      apiEndpoints: ['https://expedite-consults.vercel.app/trueplace?tab=passport&intake=1'],
+      sdkSupport: ['Web Browser', 'ConnectLn Market Embed']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime SLA',
+      channel: 'Housing Passport Underwriting Desk',
+      responseHours: '< 2 Hours'
+    }
+  },
+  {
     id: 'prod_aagiis_federal_rmf',
     name: 'Aagiis — Federal Compliance Solutions | DoD RMF & DCSA NISP Platform (DoDI 8510.01)',
     tagline: 'End-to-end DoD Risk Management Framework (DoDI 8510.01), DCSA NISP (32 CFR Part 117), DISA STIG/SCAP (.cklb), POA&M governance & Authorizing Official ATO platform',

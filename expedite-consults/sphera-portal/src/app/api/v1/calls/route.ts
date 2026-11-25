@@ -1642,6 +1642,7 @@ async function removeSingleParticipantFromGroupCall(params: {
       ).catch(() => {}),
       firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudAudioKey(callId, userId)).catch(() => {}),
     ])
+    existing.participants = (existing.participants || []).filter((p) => p.user_id !== userId)
   }
 
   let rosterUpdated = false

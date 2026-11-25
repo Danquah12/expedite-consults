@@ -135,6 +135,7 @@ export function WorkAndBusinessHubView({
 
   // Find a professional & send inquiry state
   const [proSearchQuery, setProSearchQuery] = useState("")
+  const [showAllWbFolders, setShowAllWbFolders] = useState(false)
   const [selectedServiceForInquiry, setSelectedServiceForInquiry] = useState<ServiceListing | null>(null)
   const [inqCustomerLocation, setInqCustomerLocation] = useState("Laurel, MD")
   const [inqProjectScope, setInqProjectScope] = useState("")
@@ -859,41 +860,90 @@ export function WorkAndBusinessHubView({
                 </div>
               </div>
 
-              {/* Browse by 20 Synced Trade Folders (250 Roles) */}
-              <div className="rounded-xl border border-sky-200/80 dark:border-sky-800/60 bg-sky-50/40 dark:bg-sky-950/20 p-3 space-y-2">
-                <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E4E8C] dark:text-sky-300">
-                  📂 Browse by 20 Synced Trade Folders (250 Roles)
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedWbFolderNumber('all')}
-                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
-                      selectedWbFolderNumber === 'all'
-                        ? 'bg-[#1E4E8C] text-white border-[#1E4E8C]'
-                        : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700'
-                    }`}
-                  >
-                    📂 All 20 Folders (250)
-                  </button>
-                  {HANDYMAN_250_FOLDERS.map((folder) => {
-                    const active = selectedWbFolderNumber === folder.folderNumber
-                    return (
-                      <button
-                        key={folder.folderId}
-                        type="button"
-                        onClick={() => setSelectedWbFolderNumber(active ? 'all' : folder.folderNumber)}
-                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
-                          active
-                            ? 'bg-[#1E4E8C] text-white border-[#1E4E8C]'
-                            : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-sky-50'
-                        }`}
-                      >
-                        {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
-                      </button>
-                    )
-                  })}
+              {/* Compact Trade Folder Selector (250 Synced Roles) */}
+              <div className="rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-900/60 p-3 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#0067B8] dark:text-sky-300 shrink-0">
+                      Trade Category:
+                    </span>
+                    <select
+                      aria-label="Filter opportunities by trade folder"
+                      value={selectedWbFolderNumber}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setSelectedWbFolderNumber(v === 'all' ? 'all' : Number(v))
+                      }}
+                      className="rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-bold text-[#0B1F3A] dark:text-zinc-100 max-w-full cursor-pointer"
+                    >
+                      <option value="all">All 20 Trade Folders (250 Roles)</option>
+                      {HANDYMAN_250_FOLDERS.map((folder) => (
+                        <option key={folder.folderId} value={folder.folderNumber}>
+                          {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {HANDYMAN_250_FOLDERS.filter((f) => [1, 2, 3, 5].includes(f.folderNumber)).map((folder) => {
+                      const active = selectedWbFolderNumber === folder.folderNumber
+                      const shortName = folder.folderName.split('&')[0].trim().split(' ').slice(0, 2).join(' ')
+                      return (
+                        <button
+                          key={folder.folderId}
+                          type="button"
+                          onClick={() => setSelectedWbFolderNumber(active ? 'all' : folder.folderNumber)}
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-bold border cursor-pointer transition-colors ${
+                            active
+                              ? 'bg-[#0B1F3A] text-white border-[#0B1F3A]'
+                              : 'bg-white dark:bg-zinc-900 text-[#0B1F3A] dark:text-zinc-200 border-[#E7E2DA] dark:border-zinc-700 hover:border-[#0067B8]'
+                          }`}
+                        >
+                          {folder.icon} {shortName}
+                        </button>
+                      )
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => setShowAllWbFolders((prev) => !prev)}
+                      className="rounded-full px-2.5 py-1 text-[11px] font-bold border border-sky-200 dark:border-sky-800 bg-sky-50/70 dark:bg-sky-950/40 text-[#0067B8] dark:text-sky-300 cursor-pointer"
+                    >
+                      {showAllWbFolders ? 'Less ▲' : 'All 20 ▾'}
+                    </button>
+                  </div>
                 </div>
+                {showAllWbFolders && (
+                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#E7E2DA] dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedWbFolderNumber('all')}
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
+                        selectedWbFolderNumber === 'all'
+                          ? 'bg-[#1E4E8C] text-white border-[#1E4E8C]'
+                          : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700'
+                      }`}
+                    >
+                      📂 All 20 Folders (250)
+                    </button>
+                    {HANDYMAN_250_FOLDERS.map((folder) => {
+                      const active = selectedWbFolderNumber === folder.folderNumber
+                      return (
+                        <button
+                          key={folder.folderId}
+                          type="button"
+                          onClick={() => setSelectedWbFolderNumber(active ? 'all' : folder.folderNumber)}
+                          className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
+                            active
+                              ? 'bg-[#1E4E8C] text-white border-[#1E4E8C]'
+                              : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-sky-50'
+                          }`}
+                        >
+                          {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Opportunities List */}
@@ -1684,41 +1734,90 @@ export function WorkAndBusinessHubView({
                 />
               </div>
 
-              {/* Browse by 20 Synced Trade Folders (250 Roles) */}
-              <div className="rounded-xl border border-sky-200/80 dark:border-sky-800/60 bg-sky-50/40 dark:bg-sky-950/20 p-3 space-y-2">
-                <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E4E8C] dark:text-sky-300">
-                  📂 Browse by 20 Synced Trade Folders (250 Services)
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedWbFolderNumber('all')}
-                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
-                      selectedWbFolderNumber === 'all'
-                        ? 'bg-[#1E4E8C] text-white border-[#1E4E8C]'
-                        : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700'
-                    }`}
-                  >
-                    📂 All 20 Folders (250)
-                  </button>
-                  {HANDYMAN_250_FOLDERS.map((folder) => {
-                    const active = selectedWbFolderNumber === folder.folderNumber
-                    return (
-                      <button
-                        key={folder.folderId}
-                        type="button"
-                        onClick={() => setSelectedWbFolderNumber(active ? 'all' : folder.folderNumber)}
-                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
-                          active
-                            ? 'bg-[#1E4E8C] text-white border-[#1E4E8C]'
-                            : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-sky-50'
-                        }`}
-                      >
-                        {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
-                      </button>
-                    )
-                  })}
+              {/* Compact Trade Folder Selector (250 Services) */}
+              <div className="rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-900/60 p-3 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#0067B8] dark:text-sky-300 shrink-0">
+                      Service Folder:
+                    </span>
+                    <select
+                      aria-label="Filter professionals by trade folder"
+                      value={selectedWbFolderNumber}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setSelectedWbFolderNumber(v === 'all' ? 'all' : Number(v))
+                      }}
+                      className="rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-bold text-[#0B1F3A] dark:text-zinc-100 max-w-full cursor-pointer"
+                    >
+                      <option value="all">All 20 Trade Folders (250 Services)</option>
+                      {HANDYMAN_250_FOLDERS.map((folder) => (
+                        <option key={folder.folderId} value={folder.folderNumber}>
+                          {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {HANDYMAN_250_FOLDERS.filter((f) => [1, 2, 3, 5].includes(f.folderNumber)).map((folder) => {
+                      const active = selectedWbFolderNumber === folder.folderNumber
+                      const shortName = folder.folderName.split('&')[0].trim().split(' ').slice(0, 2).join(' ')
+                      return (
+                        <button
+                          key={folder.folderId}
+                          type="button"
+                          onClick={() => setSelectedWbFolderNumber(active ? 'all' : folder.folderNumber)}
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-bold border cursor-pointer transition-colors ${
+                            active
+                              ? 'bg-[#0B1F3A] text-white border-[#0B1F3A]'
+                              : 'bg-white dark:bg-zinc-900 text-[#0B1F3A] dark:text-zinc-200 border-[#E7E2DA] dark:border-zinc-700 hover:border-[#0067B8]'
+                          }`}
+                        >
+                          {folder.icon} {shortName}
+                        </button>
+                      )
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => setShowAllWbFolders((prev) => !prev)}
+                      className="rounded-full px-2.5 py-1 text-[11px] font-bold border border-sky-200 dark:border-sky-800 bg-sky-50/70 dark:bg-sky-950/40 text-[#0067B8] dark:text-sky-300 cursor-pointer"
+                    >
+                      {showAllWbFolders ? 'Less ▲' : 'All 20 ▾'}
+                    </button>
+                  </div>
                 </div>
+                {showAllWbFolders && (
+                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#E7E2DA] dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedWbFolderNumber('all')}
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
+                        selectedWbFolderNumber === 'all'
+                          ? 'bg-[#1E4E8C] text-white border-[#1E4E8C]'
+                          : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700'
+                      }`}
+                    >
+                      📂 All 20 Folders (250)
+                    </button>
+                    {HANDYMAN_250_FOLDERS.map((folder) => {
+                      const active = selectedWbFolderNumber === folder.folderNumber
+                      return (
+                        <button
+                          key={folder.folderId}
+                          type="button"
+                          onClick={() => setSelectedWbFolderNumber(active ? 'all' : folder.folderNumber)}
+                          className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
+                            active
+                              ? 'bg-[#1E4E8C] text-white border-[#1E4E8C]'
+                              : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-sky-50'
+                          }`}
+                        >
+                          {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
               {inqSentNotice && (

@@ -132,6 +132,7 @@ function pruneExpiredFromMap(dict: KvMapDict, nowMs: number): KvMapDict {
 
 export async function firebaseKvGetItem<T = any>(mapName: string, key: string): Promise<T | null> {
   const now = Date.now()
+  let mongoChecked = false
   if (isConnectLnMongoConfigured()) {
     try {
       const db = await getConnectLnMongoDb()
@@ -140,6 +141,7 @@ export async function firebaseKvGetItem<T = any>(mapName: string, key: string): 
           { _id: `${mapName}::${key}` },
           { readPreference: "primary" }
         )
+        mongoChecked = true
         if (doc) {
           if (doc.expiresAtMs && doc.expiresAtMs < now) return null
           return (doc.data as T) ?? null
@@ -149,6 +151,7 @@ export async function firebaseKvGetItem<T = any>(mapName: string, key: string): 
       // Fallback to Firebase below
     }
   }
+  if (mongoChecked) return null
 
   const maps = await pullAllMapsFromFirebase()
   const dict = maps[mapName]

@@ -93,6 +93,9 @@ export function ConnectLnBusinessWorkspace({
   const [mktSearch, setMktSearch] = useState("")
   const [mktCategoryFilter, setMktCategoryFilter] = useState("ALL")
   const [hiringFolderNumber, setHiringFolderNumber] = useState<number | "all">(1)
+  const [hiringRoleSearch, setHiringRoleSearch] = useState("")
+  const [showAllHiringFolders, setShowAllHiringFolders] = useState(false)
+  const [showAllHiringRoles, setShowAllHiringRoles] = useState(false)
   const [quoteScopeByService, setQuoteScopeByService] = useState<Record<string, string>>({})
   const [quoteDateByService, setQuoteDateByService] = useState<Record<string, string>>({})
   const [quoteBudgetByService, setQuoteBudgetByService] = useState<Record<string, string>>({})
@@ -355,10 +358,10 @@ export function ConnectLnBusinessWorkspace({
         </div>
       )}
 
-      {/* TOP LINKEDIN-BUSINESS WORKSPACE BAR (AUTH-01, AUTH-02, BIZ-03, BIZ-04) */}
-      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-gradient-to-r from-[#0A66C2] via-[#004182] to-slate-900 p-4 text-white shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div className="space-y-1">
+      {/* TOP BUSINESS WORKSPACE BAR (AUTH-01, AUTH-02, BIZ-03, BIZ-04) */}
+      <div className="rounded-2xl border border-[#1E3A5F]/20 bg-gradient-to-r from-[#0B1F3A] via-[#13386B] to-[#00559B] p-4 sm:p-5 text-white shadow-sm overflow-hidden">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+          <div className="space-y-1 min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="rounded-md bg-white/15 px-2 py-0.5 text-[10px] font-mono font-black uppercase tracking-wider">
                 CONNECTLN BUSINESS WORKSPACE · SRS v1.0
@@ -370,12 +373,12 @@ export function ConnectLnBusinessWorkspace({
                 {activeBiz.verificationStatus}
               </span>
             </div>
-            <div className="flex items-center gap-2.5 flex-wrap pt-0.5">
+            <div className="flex items-center gap-2.5 flex-wrap pt-0.5 min-w-0">
               <Building2 className="h-5 w-5 text-sky-300 shrink-0" />
               <select
                 value={activeBiz.id}
                 onChange={(e) => setActiveBusinessId(e.target.value)}
-                className="rounded-xl bg-white/15 hover:bg-white/20 border border-white/25 px-3 py-1.5 text-sm font-black text-white focus:outline-none cursor-pointer"
+                className="max-w-full truncate rounded-xl bg-white/15 hover:bg-white/20 border border-white/25 px-3 py-1.5 text-sm font-black text-white focus:outline-none cursor-pointer"
                 title="BIZ-03 Multi-Business Switcher"
               >
                 {state.businesses.map((b) => (
@@ -391,7 +394,7 @@ export function ConnectLnBusinessWorkspace({
           </div>
 
           {/* Workspace Switcher: Personal <-> Business & Public Storefront Toggle */}
-          <div className="flex items-center gap-2 flex-wrap shrink-0">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
               onClick={handleCopyPublicStorefrontUrl}
@@ -440,18 +443,18 @@ export function ConnectLnBusinessWorkspace({
         </div>
 
         {/* 9 Clean Business Workspace Navigation Tabs */}
-        <div className="mt-3.5 pt-3 border-t border-white/15 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        <div className="mt-3.5 pt-3 border-t border-white/15 flex flex-wrap items-center gap-1.5">
           {(
             [
-              { id: "overview", label: "1. Overview", icon: LayoutDashboard },
-              { id: "profiles", label: "2. Business Profiles", icon: Building2 },
-              { id: "services_portfolio", label: "3. Services & Portfolio", icon: Wrench },
-              { id: "marketplace", label: "4. Public Marketplace", icon: Store },
-              { id: "crm_leads", label: `5. Leads & CRM (${tenantLeads.length})`, icon: Kanban },
-              { id: "inbox", label: "6. Business Inbox", icon: MessageSquare },
-              { id: "bookings_reviews", label: "7. Bookings & Reviews", icon: CalendarCheck },
-              { id: "hiring", label: "8. Hiring & Talent", icon: Briefcase },
-              { id: "billing_team_audit", label: "9. Billing, Team & Audit", icon: ShieldCheck },
+              { id: "overview", label: "Overview", icon: LayoutDashboard },
+              { id: "profiles", label: "Profiles", icon: Building2 },
+              { id: "services_portfolio", label: "Services", icon: Wrench },
+              { id: "marketplace", label: "Marketplace", icon: Store },
+              { id: "crm_leads", label: `Leads (${tenantLeads.length})`, icon: Kanban },
+              { id: "inbox", label: "Inbox", icon: MessageSquare },
+              { id: "bookings_reviews", label: "Bookings", icon: CalendarCheck },
+              { id: "hiring", label: "Hiring", icon: Briefcase },
+              { id: "billing_team_audit", label: "Team & Billing", icon: ShieldCheck },
             ] as const
           ).map((t) => {
             const Icon = t.icon
@@ -1053,33 +1056,34 @@ export function ConnectLnBusinessWorkspace({
                   </select>
                 </div>
 
-                {/* Quick 20 Synced Trade Folders Filter Strip */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                {/* Compact Core Trade Quick-Pick Strip (Full 20 folders available in dropdown above) */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-1">
                   <button
                     type="button"
                     onClick={() => setMktCategoryFilter("ALL")}
-                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border shrink-0 cursor-pointer ${
+                    className={`rounded-full px-3 py-1 text-[11px] font-bold border cursor-pointer transition-colors ${
                       mktCategoryFilter === "ALL"
-                        ? "bg-[#0A66C2] text-white border-[#0A66C2]"
-                        : "bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700"
+                        ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
+                        : "bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-[#E7E2DA] dark:border-zinc-700"
                     }`}
                   >
-                    📂 All 20 Folders (250 Services)
+                    All Folders
                   </button>
-                  {HANDYMAN_250_FOLDERS.map((folder) => {
+                  {HANDYMAN_250_FOLDERS.slice(0, 5).map((folder) => {
                     const active = mktCategoryFilter === folder.folderName
+                    const shortLabel = folder.folderName.split("&")[0].trim()
                     return (
                       <button
                         key={folder.folderId}
                         type="button"
                         onClick={() => setMktCategoryFilter(active ? "ALL" : folder.folderName)}
-                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border shrink-0 cursor-pointer ${
+                        className={`rounded-full px-3 py-1 text-[11px] font-bold border cursor-pointer transition-colors ${
                           active
-                            ? "bg-[#0A66C2] text-white border-[#0A66C2]"
-                            : "bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-sky-50"
+                            ? "bg-[#0067B8] text-white border-[#0067B8]"
+                            : "bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-[#E7E2DA] dark:border-zinc-700 hover:border-[#0067B8]"
                         }`}
                       >
-                        {folder.icon} {folder.folderNumber}. {folder.folderName}
+                        {folder.icon} {shortLabel}
                       </button>
                     )
                   })}
@@ -1582,71 +1586,163 @@ export function ConnectLnBusinessWorkspace({
                 </div>
               </div>
 
-              {/* Synced 20 Trade Folders (250 Roles) Quick-Hire Browser */}
-              <div className="rounded-2xl border border-sky-200/80 dark:border-sky-800/60 bg-sky-50/40 dark:bg-sky-950/20 p-4 space-y-2.5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[#0A66C2] dark:text-sky-300 flex items-center gap-1.5">
-                    <FolderOpen className="h-4 w-4" />
-                    <span>20 Synced Trade Folders (250 Everyday Trades &amp; Service Roles) — 1-Click Hire</span>
-                  </h4>
-                  <span className="text-[11px] text-zinc-500">
-                    Click any synced role to prefill or post to {activeBiz.name}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {HANDYMAN_250_FOLDERS.map((folder) => (
-                    <button
-                      key={folder.folderId}
-                      type="button"
-                      onClick={() => setHiringFolderNumber(folder.folderNumber)}
-                      className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
-                        hiringFolderNumber === folder.folderNumber
-                          ? "bg-[#0A66C2] text-white border-[#0A66C2]"
-                          : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700"
-                      }`}
-                    >
-                      {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
-                    </button>
-                  ))}
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
-                  {HANDYMAN_250_ADMIN_JOBS.filter(
-                    (r) => hiringFolderNumber === "all" || r.folderNumber === hiringFolderNumber
-                  ).map((roleJob) => (
-                    <div
-                      key={roleJob.id}
-                      className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-2.5 flex items-center justify-between gap-2"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold truncate">
-                          #{roleJob.roleNumber} {roleJob.title}
-                        </p>
-                        <p className="text-[10.5px] text-emerald-700 font-semibold truncate">
-                          {roleJob.salary}
-                        </p>
+              {/* Decluttered Trade Role Templates Browser (250 Synced Roles) */}
+              {(() => {
+                const activeHiringFolder = HANDYMAN_250_FOLDERS.find(
+                  (f) => f.folderNumber === hiringFolderNumber
+                )
+                const qHiring = hiringRoleSearch.trim().toLowerCase()
+                const matchingHiringRoles = HANDYMAN_250_ADMIN_JOBS.filter((r) => {
+                  const folderOk =
+                    hiringFolderNumber === "all" || r.folderNumber === hiringFolderNumber
+                  const searchOk = !qHiring || r.title.toLowerCase().includes(qHiring)
+                  return folderOk && searchOk
+                })
+                const visibleHiringRoles = showAllHiringRoles
+                  ? matchingHiringRoles
+                  : matchingHiringRoles.slice(0, 6)
+
+                return (
+                  <div className="rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-900/60 p-4 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-[#0B1F3A] dark:text-zinc-100 flex items-center gap-1.5">
+                          <FolderOpen className="h-4 w-4 text-[#0067B8]" />
+                          <span>Trade Role Templates (250 Synced Roles)</span>
+                        </h4>
+                        <span className="rounded-full bg-sky-100 dark:bg-sky-950 text-[#0067B8] dark:text-sky-300 px-2.5 py-0.5 text-[10.5px] font-bold">
+                          {activeHiringFolder
+                            ? `${activeHiringFolder.icon} ${activeHiringFolder.folderName} (${matchingHiringRoles.length})`
+                            : `All 20 Folders (${matchingHiringRoles.length})`}
+                        </span>
                       </div>
                       <button
                         type="button"
-                        onClick={() =>
-                          void dispatchBizAction(
-                            {
-                              action: "post_business_job",
-                              businessId: activeBiz.id,
-                              title: roleJob.title,
-                              kind: "Employment",
-                              compensation: roleJob.salary,
-                            },
-                            `✓ Synced & posted "${roleJob.title}" to ${activeBiz.name}!`
-                          )
-                        }
-                        className="rounded-lg bg-sky-50 hover:bg-[#0A66C2] hover:text-white text-[#0A66C2] border border-sky-200 px-2.5 py-1 text-[10.5px] font-extrabold shrink-0 cursor-pointer"
+                        onClick={() => setShowAllHiringFolders((prev) => !prev)}
+                        className="rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#0067B8] px-2.5 py-1 text-[11px] font-bold text-[#0067B8] dark:text-sky-400 cursor-pointer"
                       >
-                        + Hire Role
+                        {showAllHiringFolders ? "Hide Folders ▲" : "Browse All 20 Folders ▾"}
                       </button>
                     </div>
-                  ))}
-                </div>
-              </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <select
+                        aria-label="Filter trade hiring templates by folder"
+                        value={hiringFolderNumber}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setHiringFolderNumber(v === "all" ? "all" : Number(v))
+                          setShowAllHiringRoles(false)
+                        }}
+                        className="rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-bold text-[#0B1F3A] dark:text-zinc-100 cursor-pointer"
+                      >
+                        <option value="all">All 20 Folders (250)</option>
+                        {HANDYMAN_250_FOLDERS.map((folder) => (
+                          <option key={folder.folderId} value={folder.folderNumber}>
+                            {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                          </option>
+                        ))}
+                      </select>
+                      <div className="relative">
+                        <Search className="h-3.5 w-3.5 text-zinc-400 absolute left-3 top-2.5" />
+                        <input
+                          type="text"
+                          value={hiringRoleSearch}
+                          onChange={(e) => setHiringRoleSearch(e.target.value)}
+                          placeholder="Search roles (e.g. handyman, electrician, HVAC)..."
+                          className="w-full rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 pl-8 pr-3 py-2 text-xs text-[#0B1F3A] dark:text-zinc-100"
+                        />
+                      </div>
+                    </div>
+
+                    {showAllHiringFolders && (
+                      <div className="flex flex-wrap gap-1.5 pt-1 border-t border-[#E7E2DA] dark:border-zinc-800">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setHiringFolderNumber("all")
+                            setShowAllHiringRoles(false)
+                          }}
+                          className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
+                            hiringFolderNumber === "all"
+                              ? "bg-[#0067B8] text-white border-[#0067B8]"
+                              : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-[#E7E2DA] dark:border-zinc-700"
+                          }`}
+                        >
+                          All 20 Folders (250)
+                        </button>
+                        {HANDYMAN_250_FOLDERS.map((folder) => (
+                          <button
+                            key={folder.folderId}
+                            type="button"
+                            onClick={() => {
+                              setHiringFolderNumber(folder.folderNumber)
+                              setShowAllHiringRoles(false)
+                            }}
+                            className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
+                              hiringFolderNumber === folder.folderNumber
+                                ? "bg-[#0067B8] text-white border-[#0067B8]"
+                                : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-[#E7E2DA] dark:border-zinc-700"
+                            }`}
+                          >
+                            {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+                      {visibleHiringRoles.map((roleJob) => (
+                        <div
+                          key={roleJob.id}
+                          className="rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 flex items-center justify-between gap-2.5 shadow-2xs"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-[#0B1F3A] dark:text-zinc-100 truncate">
+                              {roleJob.title}
+                            </p>
+                            <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold truncate mt-0.5">
+                              {roleJob.salary}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void dispatchBizAction(
+                                {
+                                  action: "post_business_job",
+                                  businessId: activeBiz.id,
+                                  title: roleJob.title,
+                                  kind: "Employment",
+                                  compensation: roleJob.salary,
+                                },
+                                `✓ Synced & posted "${roleJob.title}" to ${activeBiz.name}!`
+                              )
+                            }
+                            className="rounded-lg bg-sky-50 hover:bg-[#0067B8] hover:text-white text-[#0067B8] dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800 px-2.5 py-1.5 text-[11px] font-extrabold shrink-0 cursor-pointer transition-colors"
+                          >
+                            + Hire Role
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {matchingHiringRoles.length > 6 && (
+                      <div className="flex justify-center pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setShowAllHiringRoles((prev) => !prev)}
+                          className="rounded-full border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#0067B8] px-4 py-1.5 text-xs font-bold text-[#0067B8] dark:text-sky-400 cursor-pointer transition-colors"
+                        >
+                          {showAllHiringRoles
+                            ? "Show fewer ▲"
+                            : `Show all ${matchingHiringRoles.length} roles ▾`}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
 
               <div className="space-y-3">
                 {tenantJobs.map((job) => (
