@@ -5,6 +5,7 @@ import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { ConnectLnNavbar } from "@/components/connectln/ConnectLnNavbar"
+import { ConnectLn365LeftRail } from "@/components/connectln/ConnectLn365LeftRail"
 import { MeetingReminders } from "@/components/connectln/MeetingReminders"
 import { ConnectLnIncomingCallBanner } from "@/components/connectln/ConnectLnIncomingCallBanner"
 import { ConnectLnPhoneVerificationGate } from "@/components/connectln/ConnectLnPhoneVerificationGate"
@@ -2950,7 +2951,25 @@ export default function ConnectLnPage() {
         }}
       />
 
-      {/* Main Content Area */}
+      {/* Slim Office 365 Desktop Left App Rail */}
+      <ConnectLn365LeftRail
+        activeTab={activeTab}
+        onSelectTab={(tab) => {
+          if (tab === 'profile') setInspectedMember(null)
+          if (tab === 'network') {
+            setNetworkInitialSubTab('connections')
+            setNetworkResetTrigger((prev) => prev + 1)
+          }
+          setActiveTab(tab as any)
+          setSelectedTagFilter(null)
+        }}
+        unreadMessagesCount={1}
+        onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
+        isAdminUser={isSuperAdminUser(userData)}
+      />
+
+      {/* Main Content Area (Shifted beside 68px Desktop Rail on lg+) */}
+      <div className="lg:pl-[68px]">
       <main className="mx-auto max-w-7xl px-3 sm:px-6 pt-5 pb-24 lg:pb-12">
         {/* VIEW 1: HOME FEED */}
         {activeTab === 'home' && (
@@ -4260,6 +4279,7 @@ export default function ConnectLnPage() {
           />
         )}
       </main>
+      </div>
 
       {/* Unified Persistent Bottom-Right Dock (Messaging + Job Alerts + Ask Noctis; hidden on the full Messaging tab) */}
       {activeTab !== 'messaging' && (

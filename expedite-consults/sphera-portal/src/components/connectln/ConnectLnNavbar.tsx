@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
+import Link from "next/link"
 import {
   Search,
   House,
@@ -50,7 +51,9 @@ import {
   TrendingUp,
   Plus,
   Compass,
-  CheckCircle2
+  CheckCircle2,
+  PhoneCall,
+  Download
 } from "lucide-react"
 import { UserProfile, SuggestedConnection, getEnclaveConnectedMembers } from "@/lib/connectln-data"
 import { WORK_BUSINESS_MENU_ITEMS, WorkBusinessItemId } from "@/lib/work-business-data"
@@ -109,6 +112,7 @@ export function ConnectLnNavbar({
 }: ConnectLnNavbarProps) {
   const [isMeOpen, setIsMeOpen] = useState(false)
   const [isMoreOpen, setIsMoreOpen] = useState(false)
+  const [isAppLauncherOpen, setIsAppLauncherOpen] = useState(false)
   const [hoveredWorkBusinessId, setHoveredWorkBusinessId] = useState<WorkBusinessItemId>(activeWorkBusinessItem || 'find_work')
   const [showLegacyHubsInMore, setShowLegacyHubsInMore] = useState(false)
   const [showMeWorkspaceSwitcher, setShowMeWorkspaceSwitcher] = useState(false)
@@ -133,6 +137,7 @@ export function ConnectLnNavbar({
   const mobileMoreMenuRef = useRef<HTMLDivElement>(null)
   const moreDropdownRef = useRef<HTMLDivElement>(null)
   const meMenuRef = useRef<HTMLDivElement>(null)
+  const appLauncherRef = useRef<HTMLDivElement>(null)
 
   // Document-level click-outside and Escape key listener to close menus reliably
   useEffect(() => {
@@ -149,18 +154,22 @@ export function ConnectLnNavbar({
       if (isMeOpen && meMenuRef.current && !meMenuRef.current.contains(target)) {
         setIsMeOpen(false)
       }
+      if (isAppLauncherOpen && appLauncherRef.current && !appLauncherRef.current.contains(target)) {
+        setIsAppLauncherOpen(false)
+      }
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setIsMoreOpen(false)
         setIsMeOpen(false)
+        setIsAppLauncherOpen(false)
         setIsMobileSearchOpen(false)
         setIsMobileDrawerOpen(false)
       }
     }
 
-    if (isMoreOpen || isMeOpen) {
+    if (isMoreOpen || isMeOpen || isAppLauncherOpen) {
       document.addEventListener("mousedown", handleOutsideClick)
       document.addEventListener("keydown", handleKeyDown)
     }
@@ -169,7 +178,7 @@ export function ConnectLnNavbar({
       document.removeEventListener("mousedown", handleOutsideClick)
       document.removeEventListener("keydown", handleKeyDown)
     }
-  }, [isMoreOpen, isMeOpen])
+  }, [isMoreOpen, isMeOpen, isAppLauncherOpen])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -506,7 +515,7 @@ export function ConnectLnNavbar({
   return (
     <>
     <header
-      className="fixed top-0 left-0 right-0 z-50 w-full max-w-full border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 shadow-sm"
+      className="fixed top-0 left-0 right-0 z-50 w-full max-w-full border-b border-[#E7E2DA] bg-white/95 dark:border-zinc-800 dark:bg-zinc-950/95 backdrop-blur-md shadow-xs"
       style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
       {/* Mobile Expandable Search Bar Overlay (when search icon tapped on mobile) */}
@@ -559,10 +568,113 @@ export function ConnectLnNavbar({
         </div>
       )}
 
-      {/* Top Header: LinkedIn-Clean Brand Logo, Search Pill, and Uniform Monochrome Navigation */}
-      <div className="mx-auto flex min-h-[56px] h-[56px] lg:h-[52px] max-w-[1400px] items-center justify-between px-2.5 sm:px-4 gap-2">
-        {/* Left Side: Mobile Menu Trigger, Brand Logo & Search Input (Desktop + Mobile Pill) */}
-        <div className="flex items-center gap-2 min-w-0 flex-1 lg:flex-initial lg:shrink-0">
+      {/* Top Header: Office 365 App Launcher, Brand Logo, Spacious Search Pill & Clean Right Actions */}
+      <div className="mx-auto flex min-h-[56px] h-[56px] lg:h-[52px] max-w-[1600px] items-center justify-between px-2.5 sm:px-4 gap-2">
+        {/* Left Side: 9-Dot App Launcher (Desktop), Mobile Menu Drawer Button, Brand Logo & Search Input */}
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1 lg:flex-initial lg:shrink-0">
+          {/* Far-Left Office 365 9-Dot App Launcher (lg+) */}
+          <div ref={appLauncherRef} className="hidden lg:block relative shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setIsAppLauncherOpen((prev) => !prev)
+                setIsMeOpen(false)
+                setIsMoreOpen(false)
+              }}
+              className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors cursor-pointer ${
+                isAppLauncherOpen
+                  ? "bg-[#0067B8] text-white shadow-xs"
+                  : "text-[#0B1F3A] hover:bg-[#FAF7F2] dark:text-zinc-200 dark:hover:bg-zinc-800"
+              }`}
+              title="ConnectLn 365 App Launcher"
+              aria-label="Open ConnectLn 365 App Launcher"
+            >
+              <Grid3X3 strokeWidth={1.9} className="h-5 w-5" />
+            </button>
+
+            {isAppLauncherOpen && (
+              <div className="absolute left-0 top-11 z-[60] w-[356px] rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-[0_24px_60px_rgba(11,31,58,0.16)] animate-in fade-in zoom-in-95 space-y-3">
+                <div className="flex items-center justify-between border-b border-[#EFECE6] dark:border-zinc-800 pb-2.5">
+                  <span className="text-xs font-extrabold tracking-tight text-[#0B1F3A] dark:text-zinc-100">
+                    ConnectLn 365 Apps
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAppLauncherOpen(false)
+                      setIsMoreOpen(true)
+                    }}
+                    className="text-[11px] font-bold text-[#0067B8] dark:text-sky-400 hover:underline cursor-pointer"
+                  >
+                    All Business Hubs →
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: "home", label: "Home", icon: House, bg: "bg-[#0067B8]" },
+                    { id: "messaging", label: "Mail & Chat", icon: MessageSquare, bg: "bg-[#0F6CBD]" },
+                    { id: "vibecomms", label: "HD Calls", icon: PhoneCall, bg: "bg-emerald-600" },
+                    { id: "network", label: "Network", icon: Users, bg: "bg-indigo-600" },
+                    { id: "jobs", label: "Jobs", icon: Briefcase, bg: "bg-sky-700" },
+                    { id: "learning", label: "Learning", icon: GraduationCap, bg: "bg-amber-600" },
+                    { id: "marketplace", label: "Market", icon: ShoppingBag, bg: "bg-violet-600" },
+                    { id: "media", label: "Media", icon: Tv, bg: "bg-rose-600" },
+                    { id: "pulserooms", label: "Pulse", icon: Radio, bg: "bg-teal-600" },
+                    { id: "workbusiness", label: "Business", icon: Building2, bg: "bg-[#0B1F3A]" },
+                    { id: "__noctis", label: "Noctis AI", icon: Sparkles, bg: "bg-blue-700" },
+                    { id: "accountsecurity", label: "Security", icon: ShieldCheck, bg: "bg-zinc-700" },
+                  ].map((app) => {
+                    const AppIcon = app.icon
+                    const isAppActive =
+                      activeTab === app.id ||
+                      (app.id === "vibecomms" && activeTab === "vibe")
+                    return (
+                      <button
+                        key={app.id}
+                        type="button"
+                        onClick={() => {
+                          setIsAppLauncherOpen(false)
+                          if (app.id === "__noctis") {
+                            onOpenAIAssistant && onOpenAIAssistant()
+                          } else {
+                            onSelectTab(app.id)
+                          }
+                        }}
+                        className={`flex flex-col items-center justify-center rounded-xl p-2.5 text-center border transition-all cursor-pointer ${
+                          isAppActive
+                            ? "border-[#0067B8] bg-[#FAF7F2] dark:bg-zinc-800"
+                            : "border-transparent hover:border-[#E7E2DA] hover:bg-[#FAF7F2]/80 dark:hover:bg-zinc-800/70"
+                        }`}
+                      >
+                        <span
+                          className={`flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-2xs ${app.bg}`}
+                        >
+                          <AppIcon className="h-4.5 w-4.5" />
+                        </span>
+                        <span className="mt-1.5 text-[11px] font-semibold text-[#0B1F3A] dark:text-zinc-100 truncate w-full">
+                          {app.label}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <Link
+                  href="/connectin-portal#download-app"
+                  onClick={() => setIsAppLauncherOpen(false)}
+                  className="flex items-center justify-between rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-[#FAF7F2] dark:bg-zinc-800/70 px-3 py-2 text-xs font-bold text-[#0B1F3A] dark:text-zinc-100 hover:border-[#0067B8] transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <Download className="h-3.5 w-3.5 text-[#0067B8]" />
+                    <span>ConnectLn 365 Portal &amp; Mobile App</span>
+                  </span>
+                  <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
+                </Link>
+              </div>
+            )}
+          </div>
+
           {/* Prominent Mobile Menu Drawer Button (< lg) */}
           <button
             type="button"
@@ -580,8 +692,8 @@ export function ConnectLnNavbar({
 
           <button
             onClick={() => onSelectTab('home')}
-            className="flex items-center focus:outline-none group shrink-0 cursor-pointer"
-            title="ConnectLn Home"
+            className="flex items-center gap-1.5 focus:outline-none group shrink-0 cursor-pointer"
+            title="ConnectLn 365 Home"
           >
             <ConnectInLogo size="sm" showSubtitle={false} compactOnMobile className="shrink-0" />
           </button>
@@ -608,13 +720,13 @@ export function ConnectLnNavbar({
             </span>
           </button>
 
-          {/* Interactive Search Pill — LinkedIn 34px height, 14px regular font, subtle border */}
-          <div className="hidden lg:block relative w-[155px] xl:w-[175px] 2xl:w-[225px] transition-all duration-200">
+          {/* Spacious Office 365 Desktop Search Bar */}
+          <div className="hidden lg:block relative w-[270px] xl:w-[370px] 2xl:w-[440px] ml-2 transition-all duration-200">
             <div
-              className={`flex h-[34px] items-center gap-2 rounded-full bg-white px-3.5 transition-all dark:bg-zinc-900 border ${
+              className={`flex h-[36px] items-center gap-2 rounded-full bg-[#FAF7F2] px-3.5 transition-all dark:bg-zinc-900 border ${
                 isSearchFocused
-                  ? "ring-1 ring-[#191919] border-[#191919] shadow-xs dark:border-zinc-300"
-                  : "border-[#666666]/55 hover:border-[#191919]/80 dark:border-zinc-700"
+                  ? "ring-2 ring-[#0067B8]/30 border-[#0067B8] bg-white shadow-xs dark:border-sky-400"
+                  : "border-[#E7E2DA] hover:border-[#C9C2B6] dark:border-zinc-700"
               }`}
             >
               <Search
@@ -976,65 +1088,58 @@ export function ConnectLnNavbar({
           )}
         </div>
 
-        {/* Center-Right LinkedIn-Style Primary Navigation Tabs — Never Clipped or Horizontally Scrolled on Desktop */}
-        <div className="flex items-center gap-0.5 2xl:gap-1 ml-auto shrink-0">
-          <nav className="hidden lg:flex items-center h-[52px] gap-0 2xl:gap-0.5 shrink-0">
-            {primaryNavItems.map((item) => {
-              const Icon = item.icon
-              const isActive = activeTab === item.id
+        {/* Right Office 365 Utility Bar (Primary sections live cleanly in the Left Rail & 9-Dot App Launcher on lg+) */}
+        <div className="flex items-center gap-1 xl:gap-1.5 ml-auto shrink-0">
+          <nav className="hidden lg:flex items-center h-[52px] gap-1.5 shrink-0">
+            <Link
+              href="/connectin-portal#download-app"
+              className="hidden xl:inline-flex items-center gap-1.5 rounded-full border border-[#E7E2DA] dark:border-zinc-700 bg-[#FAF7F2] dark:bg-zinc-900 hover:border-[#0067B8] px-3 py-1.5 text-xs font-bold text-[#0B1F3A] dark:text-zinc-200 transition-colors shrink-0"
+              title="Open ConnectLn 365 Portal & Mobile Downloads"
+            >
+              <Download className="h-3.5 w-3.5 text-[#0067B8]" />
+              <span>365 Portal</span>
+            </Link>
 
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onSelectTab(item.id)}
-                  className={`relative flex h-[52px] min-w-[38px] xl:min-w-[44px] 2xl:min-w-[54px] flex-col items-center justify-center px-1 xl:px-1.5 2xl:px-2 border-b-2 transition-colors group shrink-0 cursor-pointer ${
-                    isActive
-                      ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
-                      : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
-                  }`}
-                  title={item.label}
-                >
-                  <div className="relative flex items-center justify-center">
-                    <Icon
-                      strokeWidth={isActive ? 2.2 : 1.75}
-                      className="h-[20px] w-[20px] transition-colors"
-                    />
-                    {item.badge > 0 && (
-                      <span
-                        style={{ backgroundColor: "#CB112D", color: "#FFFFFF", fontWeight: 600 }}
-                        className="absolute -right-2.5 -top-1.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full px-1 text-[10.5px] leading-none text-white shadow-2xs"
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                  </div>
-                  <span
-                    style={{ fontWeight: 400 }}
-                    className="hidden xl:inline-block text-[12px] leading-[1.33333] mt-0.5 whitespace-nowrap"
-                  >
-                    {item.shortLabel || item.label}
-                  </span>
-                </button>
-              )
-            })}
-
-            {/* Ask Noctis — Uniform LinkedIn Icon-Over-Label Nav Item */}
             <button
               type="button"
               onClick={() => {
                 if (onOpenAIAssistant) onOpenAIAssistant()
               }}
-              className="relative flex h-[52px] min-w-[38px] xl:min-w-[48px] 2xl:min-w-[58px] flex-col items-center justify-center px-1 xl:px-1.5 2xl:px-2 border-b-2 border-transparent text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white transition-colors group shrink-0 cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 dark:border-sky-800 bg-sky-50/90 dark:bg-sky-950/50 hover:bg-sky-100 px-3 py-1.5 text-xs font-bold text-[#0067B8] dark:text-sky-300 transition-colors shrink-0 cursor-pointer"
               title="Ask Noctis AI"
             >
-              <Sparkles strokeWidth={1.75} className="h-[20px] w-[20px]" />
-              <span
-                style={{ fontWeight: 400 }}
-                className="hidden xl:inline-block text-[12px] leading-[1.33333] mt-0.5 whitespace-nowrap"
-              >
-                {t("nav_ask_noctis", "Ask Noctis")}
-              </span>
+              <Sparkles strokeWidth={2} className="h-3.5 w-3.5" />
+              <span>{t("nav_ask_noctis", "Ask Noctis")}</span>
             </button>
+
+            {(() => {
+              const alertsItem = primaryNavItems.find((i) => i.id === "notifications")
+              const alertsBadge = alertsItem?.badge || 0
+              const alertsActive = activeTab === "notifications"
+              return (
+                <button
+                  type="button"
+                  onClick={() => onSelectTab("notifications")}
+                  className={`relative flex h-9 w-9 items-center justify-center rounded-xl transition-colors shrink-0 cursor-pointer ${
+                    alertsActive
+                      ? "bg-[#FAF7F2] text-[#0067B8] dark:bg-zinc-800 dark:text-sky-400"
+                      : "text-[#4B5563] hover:bg-[#FAF7F2] hover:text-[#0B1F3A] dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+                  }`}
+                  title={t("nav_alerts", "Alerts")}
+                  aria-label={t("nav_alerts", "Alerts")}
+                >
+                  <Bell strokeWidth={alertsActive ? 2.2 : 1.8} className="h-4.5 w-4.5" />
+                  {alertsBadge > 0 && (
+                    <span
+                      style={{ backgroundColor: "#CB112D", color: "#FFFFFF", fontWeight: 600 }}
+                      className="absolute right-0.5 top-0.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[9.5px] leading-none text-white shadow-2xs"
+                    >
+                      {alertsBadge}
+                    </span>
+                  )}
+                </button>
+              )
+            })()}
           </nav>
 
           {/* Mobile Ask Noctis Trigger (< lg) — Compact Monochrome Icon Matching Top Bar */}
@@ -1208,6 +1313,21 @@ export function ConnectLnNavbar({
                         <HelpCircle className="h-5 w-5 text-zinc-600 dark:text-zinc-400 shrink-0" />
                         <span>Help</span>
                       </button>
+
+                      {/* ConnectLn 365 Portal & Mobile Downloads */}
+                      <Link
+                        href="/connectin-portal#download-app"
+                        onClick={() => setIsMeOpen(false)}
+                        className="w-full rounded-lg px-2.5 py-2.5 flex items-center justify-between gap-3 text-left text-sm font-semibold text-[#0067B8] dark:text-sky-400 hover:bg-sky-50/70 dark:hover:bg-zinc-800 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Download className="h-5 w-5 shrink-0" />
+                          <span>365 Portal &amp; Mobile App</span>
+                        </div>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-[#0067B8] dark:text-sky-300">
+                          APK/iOS
+                        </span>
+                      </Link>
 
                       {/* Language & Theme */}
                       <div className="rounded-lg px-2.5 py-2 flex items-center justify-between gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
@@ -2530,6 +2650,14 @@ export function ConnectLnNavbar({
                   <span className="flex items-center gap-1.5">🔐 Passkeys &amp; Security</span>
                   <span className="text-zinc-400">→</span>
                 </button>
+                <Link
+                  href="/connectin-portal#download-app"
+                  onClick={() => setIsMobileDrawerOpen(false)}
+                  className="w-full flex items-center justify-between p-2 rounded-xl bg-sky-50/80 dark:bg-sky-950/30 hover:bg-sky-100/80 text-xs font-bold text-[#0067B8] dark:text-sky-300 border border-sky-200/70 dark:border-sky-800/60"
+                >
+                  <span className="flex items-center gap-1.5">📲 365 Portal &amp; Mobile App (APK / iOS)</span>
+                  <span>→</span>
+                </Link>
                 {isAdminUser && (
                   <button
                     type="button"

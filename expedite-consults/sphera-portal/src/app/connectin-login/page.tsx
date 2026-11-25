@@ -239,7 +239,12 @@ export default function ConnectInLoginPage() {
       cidParam
     )
 
-    if (!isInvite) return
+    if (!isInvite) {
+      if (urlParams.get("mode") === "join") {
+        setActiveView("join")
+      }
+      return
+    }
 
     // 1. Strictly clear any existing inviter session/cookies/avatar so the inviter's credentials or face are NEVER used
     try {
@@ -958,67 +963,86 @@ export default function ConnectInLoginPage() {
 
   return (
     <div
-      className="min-h-screen bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] flex flex-col justify-between font-sans transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white"
+      className="relative min-h-screen overflow-hidden bg-[#FAF7F2] dark:bg-zinc-950 text-[#0B1F3A] dark:text-zinc-100 flex flex-col justify-between font-sans transition-colors duration-300 selection:bg-[#0067B8] selection:text-white"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      {/* ─── 1. TOP CONNECTLN NAVBAR ─── */}
+      {/* Subtle M365-Style Pastel Fluid Waves Backdrop */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden dark:opacity-20">
+        <div className="absolute -top-32 -left-24 h-[460px] w-[460px] rounded-full bg-gradient-to-br from-sky-200/70 via-blue-100/50 to-transparent blur-3xl" />
+        <div className="absolute top-1/4 -right-28 h-[520px] w-[520px] rounded-full bg-gradient-to-bl from-indigo-200/55 via-sky-100/45 to-transparent blur-3xl" />
+        <div className="absolute -bottom-32 left-1/3 h-[420px] w-[520px] rounded-full bg-gradient-to-tr from-amber-100/70 via-rose-100/40 to-transparent blur-3xl" />
+      </div>
+
+      {/* ─── 1. FLOATING PILL M365 CONNECTLN HEADER ─── */}
       <header
-        className="w-full bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-3 sm:px-6 md:px-12 pb-2.5 sm:pb-3 flex items-center justify-between shadow-xs"
-        style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 10px)" }}
+        className="relative z-20 w-full px-3 sm:px-6 pb-2"
+        style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 12px)" }}
       >
-        <Link href="/connectin" className="flex items-center gap-1.5 group shrink-0">
-          <ConnectInLogo size="md" showSubtitle={true} />
-        </Link>
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-2 rounded-full border border-[#E7E2DA] dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-3 sm:px-5 py-2 shadow-[0_8px_30px_rgba(11,31,58,0.07)]">
+          <div className="flex items-center gap-4 min-w-0">
+            <Link href="/connectin-portal" className="flex items-center gap-1.5 group shrink-0">
+              <ConnectInLogo size="sm" showSubtitle={false} />
+            </Link>
+            <nav className="hidden md:flex items-center gap-4 text-xs font-semibold text-[#4B5563] dark:text-zinc-300">
+              <Link href="/connectin-portal" className="hover:text-[#0B1F3A] dark:hover:text-white transition-colors">
+                ConnectLn 365 Portal
+              </Link>
+              <Link href="/connectin-portal#download-app" className="hover:text-[#0B1F3A] dark:hover:text-white transition-colors">
+                Download App
+              </Link>
+              <Link href="/connectin-portal#mobile-app" className="hover:text-[#0B1F3A] dark:hover:text-white transition-colors">
+                Mobile QR
+              </Link>
+            </nav>
+          </div>
 
-        {/* Right Switch Button: If on sign in, show Join now; if on join, show Sign in */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-          {/* Theme & Background Color Switcher */}
-          <ThemeColorSwitcher compact={true} align="right" />
+          {/* Right Switch Button: If on sign in, show Create account; if on join, show Sign in */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <ThemeColorSwitcher compact={true} align="right" />
+            <LanguageSwitcher compact={true} align="right" />
 
-          {/* Global Multi-Language Switcher */}
-          <LanguageSwitcher compact={true} align="right" />
-
-          {activeView === 'signin' ? (
-            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-              <span className="text-zinc-500 dark:text-zinc-400 hidden md:inline">
-                {t("new_to_connectin", "New to ConnectIn?")}
-              </span>
-              <button
-                onClick={() => {
-                  setActiveView('join')
-                  setJoinStep('form')
-                  setErrorMessage(null)
-                  setSuccessMessage(null)
-                }}
-                className="rounded-full border border-[#0A66C2] px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold text-[#0A66C2] dark:text-sky-400 hover:bg-[#0A66C2]/10 transition-colors cursor-pointer touch-manipulation"
-              >
-                {t("join_now_btn", "Join now")}
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-              <span className="text-zinc-500 dark:text-zinc-400 hidden md:inline">
-                {t("already_on_connectin", "Already on ConnectIn?")}
-              </span>
-              <button
-                onClick={() => {
-                  setActiveView('signin')
-                  setSignInStep('credentials')
-                  setErrorMessage(null)
-                  setSuccessMessage(null)
-                }}
-                className="rounded-full border border-[#0A66C2] px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold text-[#0A66C2] dark:text-sky-400 hover:bg-[#0A66C2]/10 transition-colors cursor-pointer touch-manipulation"
-              >
-                {t("sign_in_btn", "Sign in")}
-              </button>
-            </div>
-          )}
+            {activeView === 'signin' ? (
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                <span className="text-zinc-500 dark:text-zinc-400 hidden lg:inline text-xs">
+                  {t("new_to_connectin", "New to ConnectLn?")}
+                </span>
+                <button
+                  onClick={() => {
+                    setActiveView('join')
+                    setJoinStep('form')
+                    setErrorMessage(null)
+                    setSuccessMessage(null)
+                  }}
+                  className="rounded-full bg-[#0B1F3A] dark:bg-[#0067B8] px-3.5 sm:px-4 py-1.5 text-xs font-bold text-white hover:opacity-90 transition-all cursor-pointer touch-manipulation shadow-xs"
+                >
+                  {t("join_now_btn", "Create free account")}
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                <span className="text-zinc-500 dark:text-zinc-400 hidden lg:inline text-xs">
+                  {t("already_on_connectin", "Already have an account?")}
+                </span>
+                <button
+                  onClick={() => {
+                    setActiveView('signin')
+                    setSignInStep('credentials')
+                    setErrorMessage(null)
+                    setSuccessMessage(null)
+                  }}
+                  className="rounded-full border border-[#0B1F3A]/30 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3.5 sm:px-4 py-1.5 text-xs font-bold text-[#0B1F3A] dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors cursor-pointer touch-manipulation"
+                >
+                  {t("sign_in_btn", "Sign in")}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* ─── 2. MAIN CENTER CONTENT CARD ─── */}
-      <main className="flex-1 flex flex-col items-center justify-center p-3 sm:p-6 my-2 sm:my-4 w-full">
-        <div className="w-full max-w-[420px] bg-white dark:bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
+      {/* ─── 2. MAIN CENTER CONTENT CARD (M365 Focused Card) ─── */}
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center p-3 sm:p-6 my-2 sm:my-4 w-full">
+        <div className="w-full max-w-[440px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-[24px] border border-[#E7E2DA] dark:border-zinc-800 p-6 sm:p-8 shadow-[0_24px_60px_rgba(11,31,58,0.08)] space-y-5 sm:space-y-6">
 
           {/* Invitation Banner when opened from an email/SMS invitation link */}
           {inviteContext && (
@@ -1908,16 +1932,17 @@ export default function ConnectInLoginPage() {
         </div>
       </main>
 
-      {/* ─── 4. CONNECTLN CLEAN FOOTER ─── */}
-      <footer className="w-full bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 py-4 px-6 text-center text-[11px] text-zinc-500 space-y-1">
+      {/* ─── 4. CONNECTLN 365 CLEAN FOOTER ─── */}
+      <footer className="relative z-10 w-full py-5 px-6 text-center text-[11px] text-zinc-500 dark:text-zinc-400 space-y-1.5">
         <div className="flex items-center justify-center gap-4 flex-wrap">
+          <Link href="/connectin-portal" className="font-semibold text-[#0067B8] dark:text-sky-400 hover:underline">ConnectLn 365 Portal</Link>
+          <Link href="/connectin-portal#download-app" className="hover:underline">Download App (Android &amp; iOS)</Link>
           <Link href="/about-us" className="hover:underline">{t("footer_about", "About")}</Link>
           <Link href="/assessment" className="hover:underline">{t("footer_security", "Security Framework")}</Link>
           <Link href="/legal/privacy-policy" className="hover:underline">{t("footer_privacy", "Privacy Policy")}</Link>
-          <Link href="/services" className="hover:underline">{t("footer_services", "Ecosystem Services")}</Link>
           <Link href="/contact-us" className="hover:underline">{t("footer_support", "Support")}</Link>
         </div>
-        <p className="text-zinc-400">Expedite Consults LLC © 2026 · ConnectIn Zero-Trust Identity Protocol</p>
+        <p className="text-zinc-400">Expedite Consults LLC © 2026 · ConnectLn Zero-Trust Identity Protocol</p>
       </footer>
 
       {/* ─── 5. Direct Google & Microsoft Identity Modals ─── */}
