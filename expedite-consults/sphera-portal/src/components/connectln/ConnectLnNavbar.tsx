@@ -55,8 +55,10 @@ import {
   PhoneCall,
   Download,
   PlayCircle,
+  ClipboardList,
   FileSignature,
   FileText,
+  Kanban,
   Table2,
   Presentation,
   Receipt
@@ -760,6 +762,20 @@ export function ConnectLnNavbar({
                         sub: "Invoices & Ledger",
                         icon: Receipt,
                         bg: "bg-[#0F766E]",
+                      },
+                      {
+                        id: "boards",
+                        label: "Boards",
+                        sub: "Kanban & Sprints",
+                        icon: Kanban,
+                        bg: "bg-[#B45309]",
+                      },
+                      {
+                        id: "forms",
+                        label: "Forms",
+                        sub: "Intake & Surveys",
+                        icon: ClipboardList,
+                        bg: "bg-[#9333EA]",
                       },
                     ].map((pApp) => {
                       const PIcon = pApp.icon
@@ -2983,6 +2999,46 @@ export function ConnectLnNavbar({
                         </div>
                         <div className="text-[9.5px] text-[#6B7280] dark:text-zinc-400 truncate">
                           Billing &amp; Ledger
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSelectTab("boards")
+                        setIsMobileDrawerOpen(false)
+                      }}
+                      className="flex items-center gap-2 rounded-xl border border-transparent bg-white/90 dark:bg-zinc-900/90 hover:border-[#B45309] p-2 text-left cursor-pointer"
+                    >
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white bg-[#B45309]">
+                        <Kanban className="h-3.5 w-3.5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-extrabold text-[#0B1F3A] dark:text-zinc-100">
+                          Boards
+                        </div>
+                        <div className="text-[9.5px] text-[#6B7280] dark:text-zinc-400 truncate">
+                          Kanban &amp; Tasks
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSelectTab("forms")
+                        setIsMobileDrawerOpen(false)
+                      }}
+                      className="flex items-center gap-2 rounded-xl border border-transparent bg-white/90 dark:bg-zinc-900/90 hover:border-[#9333EA] p-2 text-left cursor-pointer"
+                    >
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white bg-[#9333EA]">
+                        <ClipboardList className="h-3.5 w-3.5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-extrabold text-[#0B1F3A] dark:text-zinc-100">
+                          Forms
+                        </div>
+                        <div className="text-[9.5px] text-[#6B7280] dark:text-zinc-400 truncate">
+                          Intake &amp; Surveys
                         </div>
                       </div>
                     </button>

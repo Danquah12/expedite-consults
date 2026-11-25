@@ -145,7 +145,7 @@ export function ConnectLn360LeftRail({
             {
               id: "sign",
               shortLabel: "Power",
-              title: "ConnectLn Power Apps — Sign, Invoice & Professional Workflow Tools",
+              title: "ConnectLn Power Apps — Sign, Invoice, Boards & Forms",
               icon: LayoutGrid,
               accentClass: "text-[#4338CA] dark:text-indigo-400",
             },
@@ -153,7 +153,8 @@ export function ConnectLn360LeftRail({
             const SIcon = sItem.icon
             const isSActive =
               activeTab === sItem.id ||
-              (sItem.id === "sign" && activeTab === "invoice")
+              (sItem.id === "sign" &&
+                (activeTab === "invoice" || activeTab === "boards" || activeTab === "forms"))
             return (
               <button
                 key={sItem.id}

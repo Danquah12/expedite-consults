@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  ClipboardList,
   Copy,
   Download,
   ExternalLink,
@@ -19,6 +20,7 @@ import {
   FileText,
   Globe,
   GraduationCap,
+  Kanban,
   Laptop,
   Mail,
   MessageSquare,
@@ -449,6 +451,22 @@ const SUITE_APPS: Array<{
     bg: "bg-[#0F766E]",
     cta: "Open ConnectLn Invoice",
     href: "/connectin?tab=invoice",
+  },
+  {
+    name: "ConnectLn Boards",
+    desc: "First-party ConnectLn Power App — organize sprints, field crews, checklists, billable hours & hand off directly to invoicing.",
+    icon: Kanban,
+    bg: "bg-[#B45309]",
+    cta: "Open ConnectLn Boards",
+    href: "/connectin?tab=boards",
+  },
+  {
+    name: "ConnectLn Forms",
+    desc: "First-party ConnectLn Power App — build intake forms & surveys, validate responses, visualize analytics & route straight to project boards.",
+    icon: ClipboardList,
+    bg: "bg-[#9333EA]",
+    cta: "Open ConnectLn Forms",
+    href: "/connectin?tab=forms",
   },
 ]
 

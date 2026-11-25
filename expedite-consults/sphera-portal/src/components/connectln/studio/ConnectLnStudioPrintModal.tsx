@@ -9,12 +9,16 @@ import {
   makeCellKey,
 } from "@/lib/connectln-sheets-engine"
 import {
+  buildPrintableBoardReportHtml,
   buildPrintableDocumentHtml,
+  buildPrintableFormHtml,
   buildPrintableInvoiceHtml,
   buildPrintableSheetHtml,
   buildPrintableSignedContractHtml,
   buildPrintableSlidesHtml,
   printHtmlViaHiddenIframe,
+  type PrintableBoardInput,
+  type PrintableFormInput,
   type PrintableInvoiceInput,
   type PrintableSheetTabInput,
   type PrintableSignEnvelopeInput,
@@ -64,6 +68,14 @@ export type ConnectLnStudioPrintModalProps =
   | (CommonPrintProps & {
       mode: "invoice"
       invoice: PrintableInvoiceInput
+    })
+  | (CommonPrintProps & {
+      mode: "boards"
+      board: PrintableBoardInput
+    })
+  | (CommonPrintProps & {
+      mode: "forms"
+      form: PrintableFormInput
     })
 
 function sheetTabToPrintable(tab: StudioSheetTab): PrintableSheetTabInput {
@@ -145,6 +157,12 @@ export function ConnectLnStudioPrintModal(props: ConnectLnStudioPrintModalProps)
   const [invoiceShowPayments, setInvoiceShowPayments] = useState(true)
   const [invoiceGrayscale, setInvoiceGrayscale] = useState(false)
 
+  // Boards & Forms local print settings
+  const [boardIncludeChecklists, setBoardIncludeChecklists] = useState(true)
+  const [boardGrayscale, setBoardGrayscale] = useState(false)
+  const [formPrintView, setFormPrintView] = useState<"blank" | "summary">("summary")
+  const [formGrayscale, setFormGrayscale] = useState(false)
+
   const [printToast, setPrintToast] = useState<string | null>(null)
 
   const appLabel =
@@ -156,15 +174,31 @@ export function ConnectLnStudioPrintModal(props: ConnectLnStudioPrintModalProps)
       ? "Sign"
       : props.mode === "invoice"
       ? "Invoice"
+      : props.mode === "boards"
+      ? "Boards"
+      : props.mode === "forms"
+      ? "Forms"
       : "Slides"
   const exportExt =
     props.mode === "docs" || props.mode === "sign"
       ? ".docx"
-      : props.mode === "sheets" || props.mode === "invoice"
+      : props.mode === "sheets" || props.mode === "invoice" || props.mode === "boards" || props.mode === "forms"
       ? ".xlsx"
       : ".pptx"
 
   const printableHtml = useMemo(() => {
+    if (props.mode === "boards") {
+      return buildPrintableBoardReportHtml(props.board, {
+        includeChecklists: boardIncludeChecklists,
+        grayscale: boardGrayscale,
+      })
+    }
+    if (props.mode === "forms") {
+      return buildPrintableFormHtml(props.form, {
+        viewMode: formPrintView,
+        grayscale: formGrayscale,
+      })
+    }
     if (props.mode === "invoice") {
       return buildPrintableInvoiceHtml(props.invoice, {
         showPaymentHistory: invoiceShowPayments,
@@ -247,6 +281,10 @@ export function ConnectLnStudioPrintModal(props: ConnectLnStudioPrintModalProps)
     signGrayscale,
     invoiceShowPayments,
     invoiceGrayscale,
+    boardIncludeChecklists,
+    boardGrayscale,
+    formPrintView,
+    formGrayscale,
   ])
 
   if (!props.isOpen) return null
@@ -693,6 +731,75 @@ export function ConnectLnStudioPrintModal(props: ConnectLnStudioPrintModalProps)
                     <span>Black &amp; White Ink Mode</span>
                   </label>
                 </div>
+              </div>
+            )}
+
+            {props.mode === "boards" && (
+              <div className="space-y-3 text-xs">
+                <div className="rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 space-y-1">
+                  <p className="text-[11px] font-extrabold text-[#B45309] uppercase">
+                    Board Status Summary
+                  </p>
+                  <p className="font-mono text-[11px]">{props.board.boardCode}</p>
+                  <p className="text-[11px] text-zinc-500">
+                    Completion: {props.board.metrics.completionPct}% ({props.board.metrics.doneTasks}/
+                    {props.board.metrics.totalTasks} tasks)
+                  </p>
+                </div>
+                <div className="space-y-1.5 pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={boardIncludeChecklists}
+                      onChange={(e) => setBoardIncludeChecklists(e.target.checked)}
+                    />
+                    <span>Include Task Checklists</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={boardGrayscale}
+                      onChange={(e) => setBoardGrayscale(e.target.checked)}
+                    />
+                    <span>Black &amp; White Ink Mode</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {props.mode === "forms" && (
+              <div className="space-y-3 text-xs">
+                <div className="rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 space-y-1">
+                  <p className="text-[11px] font-extrabold text-[#9333EA] uppercase">
+                    Form Summary
+                  </p>
+                  <p className="font-mono text-[11px]">{props.form.formCode}</p>
+                  <p className="text-[11px] text-zinc-500">
+                    Responses: {props.form.analytics.totalResponses}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-zinc-500 mb-1">
+                    Print View Mode
+                  </label>
+                  <select
+                    aria-label="Forms Print View Mode"
+                    value={formPrintView}
+                    onChange={(e) => setFormPrintView(e.target.value as "blank" | "summary")}
+                    className="w-full rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 font-semibold"
+                  >
+                    <option value="summary">Analytics &amp; Responses Summary</option>
+                    <option value="blank">Printable Blank Worksheet</option>
+                  </select>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formGrayscale}
+                    onChange={(e) => setFormGrayscale(e.target.checked)}
+                  />
+                  <span>Black &amp; White Ink Mode</span>
+                </label>
               </div>
             )}
           </div>

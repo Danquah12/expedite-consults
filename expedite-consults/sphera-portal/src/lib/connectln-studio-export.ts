@@ -2142,3 +2142,306 @@ export function buildPrintableInvoiceHtml(
 </body>
 </html>`
 }
+
+export interface PrintableBoardInput {
+  boardCode: string
+  title: string
+  category: string
+  clientOrTeam: string
+  columns: Array<{ id: string; title: string; colorHex: string }>
+  tasks: Array<{
+    code: string
+    columnId: string
+    title: string
+    priority: string
+    assignee: string
+    dueDate: string
+    estimatedHours: number
+    loggedHours: number
+    hourlyRate: number
+    billable: boolean
+    checklist?: Array<{ text: string; done: boolean }>
+  }>
+  metrics: {
+    totalTasks: number
+    doneTasks: number
+    completionPct: number
+    totalEstimatedHours: number
+    totalLoggedHours: number
+    billableValue: number
+  }
+}
+
+export function buildPrintableBoardReportHtml(
+  board: PrintableBoardInput,
+  opts?: { includeChecklists?: boolean; grayscale?: boolean }
+): string {
+  const safeTitle = escapeHtml(board.title || 'ConnectLn Project Board')
+  const safeCode = escapeHtml(board.boardCode || 'CLN-BRD')
+  const colNameById = new Map((board.columns || []).map((c) => [c.id, c.title]))
+  const filterCss = opts?.grayscale ? 'filter: grayscale(100%);' : ''
+  const includeChecklists = opts?.includeChecklists !== false
+
+  const columnsSummaryHtml = (board.columns || [])
+    .map((col) => {
+      const count = (board.tasks || []).filter((t) => t.columnId === col.id).length
+      return `<div style="border:1px solid #cbd5e1;border-top:4px solid ${escapeHtml(
+        col.colorHex || '#B45309'
+      )};border-radius:8px;padding:10px 12px;background:#f8fafc;">
+        <div style="font-size:10.5px;font-weight:800;color:#475569;text-transform:uppercase;">${escapeHtml(
+          col.title
+        )}</div>
+        <div style="font-size:20px;font-weight:800;color:#0b1f3a;margin-top:2px;">${count}</div>
+      </div>`
+    })
+    .join('')
+
+  const taskRowsHtml = (board.tasks || [])
+    .map((t) => {
+      const stage = colNameById.get(t.columnId) || t.columnId
+      const chkList =
+        includeChecklists && t.checklist && t.checklist.length > 0
+          ? `<div style="margin-top:4px;font-size:10.5px;color:#475569;">${t.checklist
+              .map((c) => `${c.done ? '☑' : '☐'} ${escapeHtml(c.text)}`)
+              .join(' &nbsp;·&nbsp; ')}</div>`
+          : ''
+      return `<tr>
+        <td style="font-family:monospace;font-weight:700;">${escapeHtml(t.code)}</td>
+        <td><strong>${escapeHtml(t.title)}</strong>${chkList}</td>
+        <td>${escapeHtml(stage)}</td>
+        <td style="text-transform:uppercase;font-weight:700;">${escapeHtml(t.priority)}</td>
+        <td>${escapeHtml(t.assignee)}</td>
+        <td>${escapeHtml(t.dueDate || '—')}</td>
+        <td style="text-align:right;font-family:monospace;">${t.loggedHours.toFixed(1)} / ${t.estimatedHours.toFixed(1)}h</td>
+        <td style="text-align:center;">${t.billable ? 'Yes' : 'No'}</td>
+      </tr>`
+    })
+    .join('')
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>${safeTitle} — ${safeCode}</title>
+  <style>
+    @page { size: letter landscape; margin: 0.55in; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 18px;
+      background: #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0b1f3a;
+      ${filterCss}
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .sheet {
+      max-width: 1020px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 32px 38px;
+      border-radius: 8px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+    }
+    .hdr { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #B45309; padding-bottom: 12px; margin-bottom: 16px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px; }
+    .kpi { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; background: #fffbeb; }
+    .col-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    .tbl th, .tbl td { border: 1px solid #cbd5e1; padding: 7px 9px; text-align: left; vertical-align: top; }
+    .tbl th { background: #f1f5f9; font-size: 10.5px; text-transform: uppercase; color: #334155; }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .sheet { box-shadow: none; margin: 0; padding: 0; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <section class="sheet">
+    <header class="hdr">
+      <div>
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:0.08em;color:#B45309;text-transform:uppercase;">ConnectLn Boards · Project Status &amp; Workload Report</div>
+        <h1 style="margin:4px 0 2px 0;font-size:22px;">${safeTitle}</h1>
+        <div style="font-size:12px;color:#475569;">${escapeHtml(board.category)} · ${escapeHtml(board.clientOrTeam)}</div>
+      </div>
+      <div style="text-align:right;font-family:monospace;font-size:12px;font-weight:700;">
+        <div>${safeCode}</div>
+        <div style="font-size:11px;color:#475569;margin-top:4px;">Generated ${escapeHtml(new Date().toISOString().slice(0, 10))}</div>
+      </div>
+    </header>
+    <div class="kpi-grid">
+      <div class="kpi"><div style="font-size:10px;font-weight:800;color:#92400E;">COMPLETION</div><div style="font-size:18px;font-weight:800;">${board.metrics.completionPct}% (${board.metrics.doneTasks}/${board.metrics.totalTasks})</div></div>
+      <div class="kpi"><div style="font-size:10px;font-weight:800;color:#92400E;">LOGGED HOURS</div><div style="font-size:18px;font-weight:800;">${board.metrics.totalLoggedHours.toFixed(1)}h</div></div>
+      <div class="kpi"><div style="font-size:10px;font-weight:800;color:#92400E;">ESTIMATED SCOPE</div><div style="font-size:18px;font-weight:800;">${board.metrics.totalEstimatedHours.toFixed(1)}h</div></div>
+      <div class="kpi"><div style="font-size:10px;font-weight:800;color:#92400E;">BILLABLE VALUE</div><div style="font-size:18px;font-weight:800;">\$${board.metrics.billableValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div></div>
+    </div>
+    <div class="col-grid">${columnsSummaryHtml}</div>
+    <table class="tbl">
+      <thead>
+        <tr><th>Code</th><th>Task &amp; Checklists</th><th>Stage</th><th>Priority</th><th>Assignee</th><th>Due Date</th><th style="text-align:right;">Hours</th><th style="text-align:center;">Billable</th></tr>
+      </thead>
+      <tbody>${taskRowsHtml}</tbody>
+    </table>
+  </section>
+</body>
+</html>`
+}
+
+export interface PrintableFormInput {
+  formCode: string
+  title: string
+  category: string
+  description: string
+  isOpen: boolean
+  fields: Array<{
+    id: string
+    label: string
+    type: string
+    required: boolean
+    options?: string[]
+  }>
+  responses: Array<{
+    submittedAt: string
+    respondentName: string
+    answers: Record<string, string | number | boolean>
+  }>
+  analytics: {
+    totalResponses: number
+    completionRatePct: number
+    averageRating: number | null
+  }
+}
+
+export function buildPrintableFormHtml(
+  form: PrintableFormInput,
+  opts?: { viewMode?: 'blank' | 'summary'; grayscale?: boolean }
+): string {
+  const safeTitle = escapeHtml(form.title || 'ConnectLn Form')
+  const safeCode = escapeHtml(form.formCode || 'CLN-FRM')
+  const mode = opts?.viewMode || 'summary'
+  const filterCss = opts?.grayscale ? 'filter: grayscale(100%);' : ''
+
+  const blankFieldsHtml = (form.fields || [])
+    .map((f, idx) => {
+      const reqTag = f.required ? ' <span style="color:#E11D48;">*</span>' : ''
+      let answerBox = '<div style="border:1px solid #cbd5e1;border-radius:6px;height:30px;margin-top:6px;"></div>'
+      if (f.type === 'long_text') {
+        answerBox = '<div style="border:1px solid #cbd5e1;border-radius:6px;height:66px;margin-top:6px;"></div>'
+      } else if (f.type === 'select' && f.options && f.options.length > 0) {
+        answerBox = `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;">${f.options
+          .map((o) => `<span>☐ ${escapeHtml(o)}</span>`)
+          .join('')}</div>`
+      } else if (f.type === 'checkbox') {
+        answerBox = '<div style="margin-top:6px;font-size:11.5px;">☐ Confirmed / Checked</div>'
+      } else if (f.type === 'rating') {
+        answerBox = '<div style="margin-top:6px;font-size:12px;">○ 1 &nbsp;&nbsp; ○ 2 &nbsp;&nbsp; ○ 3 &nbsp;&nbsp; ○ 4 &nbsp;&nbsp; ○ 5</div>'
+      }
+      return `<div style="margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #f1f5f9;">
+        <div style="font-size:12px;font-weight:700;">${idx + 1}. ${escapeHtml(f.label)}${reqTag}</div>
+        ${answerBox}
+      </div>`
+    })
+    .join('')
+
+  const responseHeadHtml = ['Respondent', 'Submitted', ...(form.fields || []).slice(0, 5).map((f) => f.label)]
+    .map((h) => `<th>${escapeHtml(h)}</th>`)
+    .join('')
+
+  const responseRowsHtml = (form.responses || [])
+    .map((r) => {
+      const cells = [
+        `<td><strong>${escapeHtml(r.respondentName)}</strong></td>`,
+        `<td style="font-family:monospace;font-size:10.5px;">${escapeHtml(r.submittedAt.slice(0, 10))}</td>`,
+        ...(form.fields || []).slice(0, 5).map((f) => {
+          const val = r.answers[f.id]
+          const str = typeof val === 'boolean' ? (val ? 'Yes' : 'No') : String(val ?? '—')
+          return `<td>${escapeHtml(str)}</td>`
+        }),
+      ].join('')
+      return `<tr>${cells}</tr>`
+    })
+    .join('')
+
+  const bodySectionHtml =
+    mode === 'blank'
+      ? `<div>${blankFieldsHtml}</div>`
+      : `<div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;">
+            <div style="border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;background:#faf5ff;">
+              <div style="font-size:10px;font-weight:800;color:#7e22ce;">TOTAL RESPONSES</div>
+              <div style="font-size:20px;font-weight:800;">${form.analytics.totalResponses}</div>
+            </div>
+            <div style="border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;background:#faf5ff;">
+              <div style="font-size:10px;font-weight:800;color:#7e22ce;">COMPLETION RATE</div>
+              <div style="font-size:20px;font-weight:800;">${form.analytics.completionRatePct}%</div>
+            </div>
+            <div style="border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;background:#faf5ff;">
+              <div style="font-size:10px;font-weight:800;color:#7e22ce;">AVG RATING</div>
+              <div style="font-size:20px;font-weight:800;">${form.analytics.averageRating !== null ? `${form.analytics.averageRating} / 5` : 'N/A'}</div>
+            </div>
+          </div>
+          <h3 style="font-size:12px;text-transform:uppercase;color:#7e22ce;margin:0 0 8px 0;">Submitted Responses Log</h3>
+          <table class="tbl"><thead><tr>${responseHeadHtml}</tr></thead><tbody>${
+          responseRowsHtml || '<tr><td colspan="7">No responses recorded yet.</td></tr>'
+        }</tbody></table>
+        </div>`
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>${safeTitle} — ${safeCode}</title>
+  <style>
+    @page { size: letter portrait; margin: 0.65in; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0b1f3a;
+      ${filterCss}
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .sheet {
+      max-width: 816px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 36px 44px;
+      border-radius: 8px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+    }
+    .hdr { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #9333EA; padding-bottom: 14px; margin-bottom: 18px; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .tbl th, .tbl td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
+    .tbl th { background: #f1f5f9; font-size: 10px; text-transform: uppercase; color: #334155; }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .sheet { box-shadow: none; margin: 0; padding: 0; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <section class="sheet">
+    <header class="hdr">
+      <div>
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:0.08em;color:#9333EA;text-transform:uppercase;">ConnectLn Forms &amp; Workflows · ${
+          mode === 'blank' ? 'Printable Worksheet' : 'Responses Summary Report'
+        }</div>
+        <h1 style="margin:4px 0 2px 0;font-size:21px;">${safeTitle}</h1>
+        <div style="font-size:12px;color:#475569;">${escapeHtml(form.category)} — ${escapeHtml(form.description)}</div>
+      </div>
+      <div style="text-align:right;font-family:monospace;font-size:11.5px;font-weight:700;">
+        <div>${safeCode}</div>
+        <div style="margin-top:4px;color:${form.isOpen ? '#065F46' : '#64748B'};">${
+          form.isOpen ? 'OPEN' : 'CLOSED'
+        }</div>
+      </div>
+    </header>
+    ${bodySectionHtml}
+  </section>
+</body>
+</html>`
+}

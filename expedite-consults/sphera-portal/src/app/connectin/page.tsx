@@ -240,6 +240,8 @@ export default function ConnectLnPage() {
     | 'slides'
     | 'sign'
     | 'invoice'
+    | 'boards'
+    | 'forms'
   >('home')
   const [workBusinessSection, setWorkBusinessSection] = useState<WorkBusinessItemId>('find_work')
 
@@ -965,6 +967,10 @@ export default function ConnectLnPage() {
           ? "sign"
           : tabParam === "invoice" || tabParam === "invoices" || tabParam === "billing" || tabParam === "ledger" || tabParam === "estimates"
           ? "invoice"
+          : tabParam === "boards" || tabParam === "board" || tabParam === "kanban" || tabParam === "tasks" || tabParam === "projects"
+          ? "boards"
+          : tabParam === "forms" || tabParam === "form" || tabParam === "survey" || tabParam === "surveys" || tabParam === "intake"
+          ? "forms"
           : pulseIdParam || pulseTitleParam || tabParam === "pulse" || tabParam === "pulserooms"
           ? "pulserooms"
           : videoParam || plateParam || postIdParam || tabParam === "home"
@@ -3002,7 +3008,9 @@ export default function ConnectLnPage() {
           activeTab === 'sheets' ||
           activeTab === 'slides' ||
           activeTab === 'sign' ||
-          activeTab === 'invoice'
+          activeTab === 'invoice' ||
+          activeTab === 'boards' ||
+          activeTab === 'forms'
             ? "mx-auto max-w-[1480px] px-2 sm:px-4 pt-3 pb-24 lg:pb-4"
             : "mx-auto max-w-7xl px-3 sm:px-6 pt-5 pb-24 lg:pb-12"
         }
@@ -4323,8 +4331,8 @@ export default function ConnectLnPage() {
           />
         )}
 
-        {/* VIEWS 20–24: CONNECTLN 360 STUDIO & POWER APPS — DOCS, SHEETS, SLIDES, SIGN & INVOICE */}
-        {(activeTab === 'docs' || activeTab === 'sheets' || activeTab === 'slides' || activeTab === 'sign' || activeTab === 'invoice') && (
+        {/* VIEWS 20–26: CONNECTLN 360 STUDIO & POWER APPS — DOCS, SHEETS, SLIDES, SIGN, INVOICE, BOARDS & FORMS */}
+        {(activeTab === 'docs' || activeTab === 'sheets' || activeTab === 'slides' || activeTab === 'sign' || activeTab === 'invoice' || activeTab === 'boards' || activeTab === 'forms') && (
           <ConnectLnStudioSuiteView
             activeApp={activeTab}
             user={userData}
@@ -4370,7 +4378,9 @@ export default function ConnectLnPage() {
         activeTab !== 'sheets' &&
         activeTab !== 'slides' &&
         activeTab !== 'sign' &&
-        activeTab !== 'invoice' && (
+        activeTab !== 'invoice' &&
+        activeTab !== 'boards' &&
+        activeTab !== 'forms' && (
         <FloatingMessagingDock
           currentUser={userData}
           onOpenFullMessaging={() => setActiveTab('messaging')}

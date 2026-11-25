@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { ArrowLeft, CheckCircle2, FileSignature, FileText, Layers, Presentation, Receipt, Table2 } from "lucide-react"
+import { ArrowLeft, CheckCircle2, ClipboardList, FileSignature, FileText, Kanban, Layers, Presentation, Receipt, Table2 } from "lucide-react"
 import type { UserProfile } from "@/lib/connectln-data"
 import type { StudioDocRecord, StudioSheetTab } from "@/lib/connectln-studio-storage"
 import { ConnectLnDocsEditor, type StudioSharePayload } from "./ConnectLnDocsEditor"
@@ -9,8 +9,10 @@ import { ConnectLnSheetsEditor } from "./ConnectLnSheetsEditor"
 import { ConnectLnSlidesEditor } from "./ConnectLnSlidesEditor"
 import { ConnectLnSignApp } from "./ConnectLnSignApp"
 import { ConnectLnInvoiceApp } from "./ConnectLnInvoiceApp"
+import { ConnectLnBoardsApp } from "./ConnectLnBoardsApp"
+import { ConnectLnFormsApp } from "./ConnectLnFormsApp"
 
-export type StudioAppId = "docs" | "sheets" | "slides" | "sign" | "invoice"
+export type StudioAppId = "docs" | "sheets" | "slides" | "sign" | "invoice" | "boards" | "forms"
 
 interface ConnectLnStudioSuiteViewProps {
   activeApp: StudioAppId
@@ -74,6 +76,24 @@ const STUDIO_APPS: Array<{
     badgeClass: "bg-[#0F766E] text-white",
     activePillClass: "bg-[#0F766E] text-white shadow-xs",
   },
+  {
+    id: "boards",
+    name: "ConnectLn Boards",
+    tagline: "Kanban Sprints & Trackers",
+    group: "power",
+    icon: Kanban,
+    badgeClass: "bg-[#B45309] text-white",
+    activePillClass: "bg-[#B45309] text-white shadow-xs",
+  },
+  {
+    id: "forms",
+    name: "ConnectLn Forms",
+    tagline: "Intake Surveys & Analytics",
+    group: "power",
+    icon: ClipboardList,
+    badgeClass: "bg-[#9333EA] text-white",
+    activePillClass: "bg-[#9333EA] text-white shadow-xs",
+  },
 ]
 
 export function ConnectLnStudioSuiteView({
@@ -88,6 +108,10 @@ export function ConnectLnStudioSuiteView({
   const [pendingInvoiceSheet, setPendingInvoiceSheet] = useState<{
     workbookTitle: string
     sheet: StudioSheetTab
+  } | null>(null)
+  const [pendingBoardTasks, setPendingBoardTasks] = useState<{
+    boardTitle: string
+    tasks: Array<{ title: string; description: string; assignee?: string; tags?: string[] }>
   } | null>(null)
   const currentAppMeta = STUDIO_APPS.find((a) => a.id === activeApp) || STUDIO_APPS[0]
   const CurrentIcon = currentAppMeta.icon
@@ -136,6 +160,10 @@ export function ConnectLnStudioSuiteView({
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
               {activeApp === "invoice"
                 ? "First-party billing & accounting studio — build invoices, convert estimates, log payments & track net cash flow."
+                : activeApp === "boards"
+                ? "First-party Kanban sprint & job tracker — manage deliverables, checklists, hours & hand off directly to ConnectLn Invoice."
+                : activeApp === "forms"
+                ? "First-party form & survey builder — capture client intake, track live analytics & send submissions straight to Boards."
                 : currentAppMeta.group === "power"
                 ? "First-party professional workflow app — draw or type signatures, route approvals & seal contracts with SHA-256 certificates."
                 : "First-party proprietary workspace — own your documents, formula sheets & decks with standard .docx, .xlsx & .pptx export."}
@@ -267,6 +295,28 @@ export function ConnectLnStudioSuiteView({
               authorName: user.name || "ConnectLn Member",
             })
             onSwitchApp("sign")
+          }}
+          onShareToFeed={onShareToFeed ? handleShare : undefined}
+        />
+      )}
+      {activeApp === "boards" && (
+        <ConnectLnBoardsApp
+          user={user}
+          pendingTasksFromForm={pendingBoardTasks}
+          onClearPendingTasks={() => setPendingBoardTasks(null)}
+          onBillToInvoice={(payload) => {
+            setPendingInvoiceSheet(payload)
+            onSwitchApp("invoice")
+          }}
+          onShareToFeed={onShareToFeed ? handleShare : undefined}
+        />
+      )}
+      {activeApp === "forms" && (
+        <ConnectLnFormsApp
+          user={user}
+          onSendResponsesToBoards={(payload) => {
+            setPendingBoardTasks(payload)
+            onSwitchApp("boards")
           }}
           onShareToFeed={onShareToFeed ? handleShare : undefined}
         />
