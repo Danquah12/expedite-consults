@@ -1,15 +1,16 @@
 "use client"
 
 import React, { useState } from "react"
-import { ArrowLeft, CheckCircle2, FileSignature, FileText, Layers, Presentation, Table2 } from "lucide-react"
+import { ArrowLeft, CheckCircle2, FileSignature, FileText, Layers, Presentation, Receipt, Table2 } from "lucide-react"
 import type { UserProfile } from "@/lib/connectln-data"
-import type { StudioDocRecord } from "@/lib/connectln-studio-storage"
+import type { StudioDocRecord, StudioSheetTab } from "@/lib/connectln-studio-storage"
 import { ConnectLnDocsEditor, type StudioSharePayload } from "./ConnectLnDocsEditor"
 import { ConnectLnSheetsEditor } from "./ConnectLnSheetsEditor"
 import { ConnectLnSlidesEditor } from "./ConnectLnSlidesEditor"
 import { ConnectLnSignApp } from "./ConnectLnSignApp"
+import { ConnectLnInvoiceApp } from "./ConnectLnInvoiceApp"
 
-export type StudioAppId = "docs" | "sheets" | "slides" | "sign"
+export type StudioAppId = "docs" | "sheets" | "slides" | "sign" | "invoice"
 
 interface ConnectLnStudioSuiteViewProps {
   activeApp: StudioAppId
@@ -64,6 +65,15 @@ const STUDIO_APPS: Array<{
     badgeClass: "bg-[#4338CA] text-white",
     activePillClass: "bg-[#4338CA] text-white shadow-xs",
   },
+  {
+    id: "invoice",
+    name: "ConnectLn Invoice & Ledger",
+    tagline: "Invoices, Estimates & Cash Flow",
+    group: "power",
+    icon: Receipt,
+    badgeClass: "bg-[#0F766E] text-white",
+    activePillClass: "bg-[#0F766E] text-white shadow-xs",
+  },
 ]
 
 export function ConnectLnStudioSuiteView({
@@ -75,6 +85,10 @@ export function ConnectLnStudioSuiteView({
 }: ConnectLnStudioSuiteViewProps) {
   const [sharedBanner, setSharedBanner] = useState<string | null>(null)
   const [pendingSignDoc, setPendingSignDoc] = useState<StudioDocRecord | null>(null)
+  const [pendingInvoiceSheet, setPendingInvoiceSheet] = useState<{
+    workbookTitle: string
+    sheet: StudioSheetTab
+  } | null>(null)
   const currentAppMeta = STUDIO_APPS.find((a) => a.id === activeApp) || STUDIO_APPS[0]
   const CurrentIcon = currentAppMeta.icon
 
@@ -120,7 +134,9 @@ export function ConnectLnStudioSuiteView({
               </span>
             </div>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-              {currentAppMeta.group === "power"
+              {activeApp === "invoice"
+                ? "First-party billing & accounting studio — build invoices, convert estimates, log payments & track net cash flow."
+                : currentAppMeta.group === "power"
                 ? "First-party professional workflow app — draw or type signatures, route approvals & seal contracts with SHA-256 certificates."
                 : "First-party proprietary workspace — own your documents, formula sheets & decks with standard .docx, .xlsx & .pptx export."}
             </p>
@@ -147,7 +163,7 @@ export function ConnectLnStudioSuiteView({
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />
-                  <span>{app.name.replace("ConnectLn ", "")}</span>
+                  <span>{app.name.replace("ConnectLn ", "").replace(" & Ledger", "")}</span>
                 </button>
               )
             })}
@@ -170,7 +186,7 @@ export function ConnectLnStudioSuiteView({
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />
-                  <span>{app.name.replace("ConnectLn ", "")}</span>
+                  <span>{app.name.replace("ConnectLn ", "").replace(" & Ledger", "")}</span>
                 </button>
               )
             })}
@@ -214,7 +230,14 @@ export function ConnectLnStudioSuiteView({
         />
       )}
       {activeApp === "sheets" && (
-        <ConnectLnSheetsEditor user={user} onShareToFeed={onShareToFeed ? handleShare : undefined} />
+        <ConnectLnSheetsEditor
+          user={user}
+          onShareToFeed={onShareToFeed ? handleShare : undefined}
+          onSendToInvoice={(payload) => {
+            setPendingInvoiceSheet(payload)
+            onSwitchApp("invoice")
+          }}
+        />
       )}
       {activeApp === "slides" && (
         <ConnectLnSlidesEditor user={user} onShareToFeed={onShareToFeed ? handleShare : undefined} />
@@ -224,6 +247,27 @@ export function ConnectLnStudioSuiteView({
           user={user}
           pendingImportDoc={pendingSignDoc}
           onClearPendingImport={() => setPendingSignDoc(null)}
+          onShareToFeed={onShareToFeed ? handleShare : undefined}
+        />
+      )}
+      {activeApp === "invoice" && (
+        <ConnectLnInvoiceApp
+          user={user}
+          pendingImportSheet={pendingInvoiceSheet}
+          onClearPendingImport={() => setPendingInvoiceSheet(null)}
+          onSendToSign={(doc) => {
+            const now = new Date().toISOString()
+            setPendingSignDoc({
+              id: doc.id,
+              title: doc.title,
+              category: doc.category || "Billing Authorization",
+              contentHtml: doc.contentHtml,
+              createdAt: now,
+              updatedAt: now,
+              authorName: user.name || "ConnectLn Member",
+            })
+            onSwitchApp("sign")
+          }}
           onShareToFeed={onShareToFeed ? handleShare : undefined}
         />
       )}

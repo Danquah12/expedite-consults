@@ -145,13 +145,15 @@ export function ConnectLn360LeftRail({
             {
               id: "sign",
               shortLabel: "Power",
-              title: "ConnectLn Power Apps — E-Signatures & Professional Workflow Tools",
+              title: "ConnectLn Power Apps — Sign, Invoice & Professional Workflow Tools",
               icon: LayoutGrid,
               accentClass: "text-[#4338CA] dark:text-indigo-400",
             },
           ].map((sItem) => {
             const SIcon = sItem.icon
-            const isSActive = activeTab === sItem.id
+            const isSActive =
+              activeTab === sItem.id ||
+              (sItem.id === "sign" && activeTab === "invoice")
             return (
               <button
                 key={sItem.id}

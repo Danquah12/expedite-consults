@@ -239,6 +239,7 @@ export default function ConnectLnPage() {
     | 'sheets'
     | 'slides'
     | 'sign'
+    | 'invoice'
   >('home')
   const [workBusinessSection, setWorkBusinessSection] = useState<WorkBusinessItemId>('find_work')
 
@@ -962,6 +963,8 @@ export default function ConnectLnPage() {
           ? "slides"
           : tabParam === "sign" || tabParam === "esign" || tabParam === "esignature" || tabParam === "signature" || tabParam === "power"
           ? "sign"
+          : tabParam === "invoice" || tabParam === "invoices" || tabParam === "billing" || tabParam === "ledger" || tabParam === "estimates"
+          ? "invoice"
           : pulseIdParam || pulseTitleParam || tabParam === "pulse" || tabParam === "pulserooms"
           ? "pulserooms"
           : videoParam || plateParam || postIdParam || tabParam === "home"
@@ -2998,7 +3001,8 @@ export default function ConnectLnPage() {
           activeTab === 'docs' ||
           activeTab === 'sheets' ||
           activeTab === 'slides' ||
-          activeTab === 'sign'
+          activeTab === 'sign' ||
+          activeTab === 'invoice'
             ? "mx-auto max-w-[1480px] px-2 sm:px-4 pt-3 pb-24 lg:pb-4"
             : "mx-auto max-w-7xl px-3 sm:px-6 pt-5 pb-24 lg:pb-12"
         }
@@ -4319,8 +4323,8 @@ export default function ConnectLnPage() {
           />
         )}
 
-        {/* VIEWS 20–23: CONNECTLN 360 STUDIO & POWER APPS — DOCS, SHEETS, SLIDES & SIGN */}
-        {(activeTab === 'docs' || activeTab === 'sheets' || activeTab === 'slides' || activeTab === 'sign') && (
+        {/* VIEWS 20–24: CONNECTLN 360 STUDIO & POWER APPS — DOCS, SHEETS, SLIDES, SIGN & INVOICE */}
+        {(activeTab === 'docs' || activeTab === 'sheets' || activeTab === 'slides' || activeTab === 'sign' || activeTab === 'invoice') && (
           <ConnectLnStudioSuiteView
             activeApp={activeTab}
             user={userData}
@@ -4365,7 +4369,8 @@ export default function ConnectLnPage() {
         activeTab !== 'docs' &&
         activeTab !== 'sheets' &&
         activeTab !== 'slides' &&
-        activeTab !== 'sign' && (
+        activeTab !== 'sign' &&
+        activeTab !== 'invoice' && (
         <FloatingMessagingDock
           currentUser={userData}
           onOpenFullMessaging={() => setActiveTab('messaging')}

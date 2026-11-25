@@ -114,7 +114,7 @@ import { ConnectLnStudioPrintModal } from "./ConnectLnStudioPrintModal"
 export interface StudioSharePayload {
   title: string
   summary: string
-  appLabel: "ConnectLn Docs" | "ConnectLn Sheets" | "ConnectLn Slides" | "ConnectLn Sign"
+  appLabel: "ConnectLn Docs" | "ConnectLn Sheets" | "ConnectLn Slides" | "ConnectLn Sign" | "ConnectLn Invoice"
   slides?: Array<{
     slideNumber: number
     title: string

@@ -33,6 +33,7 @@ import {
   PieChart,
   Plus,
   Printer,
+  Receipt,
   Redo2,
   RefreshCw,
   Rows,
@@ -84,6 +85,7 @@ import { ConnectLnStudioPrintModal } from "./ConnectLnStudioPrintModal"
 interface ConnectLnSheetsEditorProps {
   user: UserProfile
   onShareToFeed?: (payload: StudioSharePayload) => void
+  onSendToInvoice?: (payload: { workbookTitle: string; sheet: StudioSheetTab }) => void
 }
 
 type SheetsRibbonTab = "home" | "insert" | "formulas" | "data" | "view"
@@ -181,7 +183,7 @@ function buildChartSvgMarkup(
   )} 160">${bars}</svg></div>`
 }
 
-export function ConnectLnSheetsEditor({ user, onShareToFeed }: ConnectLnSheetsEditorProps) {
+export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: ConnectLnSheetsEditorProps) {
   const [workbooks, setWorkbooks] = useState<StudioWorkbookRecord[]>(() =>
     loadStudioWorkbooks(user)
   )
@@ -1194,6 +1196,23 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed }: ConnectLnSheetsEd
               <span className="rounded-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
                 {statusNotice}
               </span>
+            )}
+
+            {onSendToInvoice && activeWorkbook && (
+              <button
+                type="button"
+                onClick={() =>
+                  onSendToInvoice({
+                    workbookTitle: activeWorkbook.title,
+                    sheet: activeSheet,
+                  })
+                }
+                title="Convert this sheet into a client invoice in ConnectLn Invoice & Ledger"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#0F766E] bg-teal-50 dark:bg-teal-950/50 hover:bg-teal-100 px-3 py-1.5 text-xs font-extrabold text-[#0F766E] dark:text-teal-300 cursor-pointer"
+              >
+                <Receipt className="h-3.5 w-3.5" />
+                Create Invoice
+              </button>
             )}
 
             <button

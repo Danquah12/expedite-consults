@@ -58,7 +58,8 @@ import {
   FileSignature,
   FileText,
   Table2,
-  Presentation
+  Presentation,
+  Receipt
 } from "lucide-react"
 import { UserProfile, SuggestedConnection, getEnclaveConnectedMembers } from "@/lib/connectln-data"
 import { WORK_BUSINESS_MENU_ITEMS, WorkBusinessItemId } from "@/lib/work-business-data"
@@ -744,14 +745,21 @@ export function ConnectLnNavbar({
                       Built by ConnectLn
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 gap-1.5">
+                  <div className="grid grid-cols-2 gap-1.5">
                     {[
                       {
                         id: "sign",
                         label: "Sign",
-                        sub: "E-Signatures, Contract Routing & SHA-256 Certificates",
+                        sub: "E-Signatures & Audit",
                         icon: FileSignature,
                         bg: "bg-[#4338CA]",
+                      },
+                      {
+                        id: "invoice",
+                        label: "Invoice",
+                        sub: "Invoices & Ledger",
+                        icon: Receipt,
+                        bg: "bg-[#0F766E]",
                       },
                     ].map((pApp) => {
                       const PIcon = pApp.icon
@@ -2937,14 +2945,14 @@ export function ConnectLnNavbar({
                       Built by ConnectLn
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 gap-1.5">
+                  <div className="grid grid-cols-2 gap-1.5">
                     <button
                       type="button"
                       onClick={() => {
                         onSelectTab("sign")
                         setIsMobileDrawerOpen(false)
                       }}
-                      className="flex items-center gap-2.5 rounded-xl border border-transparent bg-white/90 dark:bg-zinc-900/90 hover:border-[#4338CA] p-2 text-left cursor-pointer"
+                      className="flex items-center gap-2 rounded-xl border border-transparent bg-white/90 dark:bg-zinc-900/90 hover:border-[#4338CA] p-2 text-left cursor-pointer"
                     >
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white bg-[#4338CA]">
                         <FileSignature className="h-3.5 w-3.5" />
@@ -2954,7 +2962,27 @@ export function ConnectLnNavbar({
                           Sign
                         </div>
                         <div className="text-[9.5px] text-[#6B7280] dark:text-zinc-400 truncate">
-                          E-Signatures &amp; Audit Certificates
+                          E-Signatures
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSelectTab("invoice")
+                        setIsMobileDrawerOpen(false)
+                      }}
+                      className="flex items-center gap-2 rounded-xl border border-transparent bg-white/90 dark:bg-zinc-900/90 hover:border-[#0F766E] p-2 text-left cursor-pointer"
+                    >
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white bg-[#0F766E]">
+                        <Receipt className="h-3.5 w-3.5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-extrabold text-[#0B1F3A] dark:text-zinc-100">
+                          Invoice
+                        </div>
+                        <div className="text-[9.5px] text-[#6B7280] dark:text-zinc-400 truncate">
+                          Billing &amp; Ledger
                         </div>
                       </div>
                     </button>

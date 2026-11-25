@@ -26,6 +26,7 @@ import {
   PlayCircle,
   Plus,
   Presentation,
+  Receipt,
   Search,
   ShieldCheck,
   Smartphone,
@@ -440,6 +441,14 @@ const SUITE_APPS: Array<{
     bg: "bg-[#4338CA]",
     cta: "Open ConnectLn Sign",
     href: "/connectin?tab=sign",
+  },
+  {
+    name: "ConnectLn Invoice & Ledger",
+    desc: "First-party ConnectLn Power App — build invoices and estimates, log payments, track expenses and net cash flow, and print client statements.",
+    icon: Receipt,
+    bg: "bg-[#0F766E]",
+    cta: "Open ConnectLn Invoice",
+    href: "/connectin?tab=invoice",
   },
 ]
 

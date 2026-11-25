@@ -10,10 +10,12 @@ import {
 } from "@/lib/connectln-sheets-engine"
 import {
   buildPrintableDocumentHtml,
+  buildPrintableInvoiceHtml,
   buildPrintableSheetHtml,
   buildPrintableSignedContractHtml,
   buildPrintableSlidesHtml,
   printHtmlViaHiddenIframe,
+  type PrintableInvoiceInput,
   type PrintableSheetTabInput,
   type PrintableSignEnvelopeInput,
   type SlideExportItem,
@@ -58,6 +60,10 @@ export type ConnectLnStudioPrintModalProps =
   | (CommonPrintProps & {
       mode: "sign"
       envelope: PrintableSignEnvelopeInput
+    })
+  | (CommonPrintProps & {
+      mode: "invoice"
+      invoice: PrintableInvoiceInput
     })
 
 function sheetTabToPrintable(tab: StudioSheetTab): PrintableSheetTabInput {
@@ -135,6 +141,10 @@ export function ConnectLnStudioPrintModal(props: ConnectLnStudioPrintModalProps)
   const [signIncludeCert, setSignIncludeCert] = useState(true)
   const [signGrayscale, setSignGrayscale] = useState(false)
 
+  // Invoice local print settings
+  const [invoiceShowPayments, setInvoiceShowPayments] = useState(true)
+  const [invoiceGrayscale, setInvoiceGrayscale] = useState(false)
+
   const [printToast, setPrintToast] = useState<string | null>(null)
 
   const appLabel =
@@ -144,15 +154,23 @@ export function ConnectLnStudioPrintModal(props: ConnectLnStudioPrintModalProps)
       ? "Sheets"
       : props.mode === "sign"
       ? "Sign"
+      : props.mode === "invoice"
+      ? "Invoice"
       : "Slides"
   const exportExt =
     props.mode === "docs" || props.mode === "sign"
       ? ".docx"
-      : props.mode === "sheets"
+      : props.mode === "sheets" || props.mode === "invoice"
       ? ".xlsx"
       : ".pptx"
 
   const printableHtml = useMemo(() => {
+    if (props.mode === "invoice") {
+      return buildPrintableInvoiceHtml(props.invoice, {
+        showPaymentHistory: invoiceShowPayments,
+        grayscale: invoiceGrayscale,
+      })
+    }
     if (props.mode === "sign") {
       return buildPrintableSignedContractHtml(props.envelope, {
         includeAuditCertificate: signIncludeCert,
@@ -227,6 +245,8 @@ export function ConnectLnStudioPrintModal(props: ConnectLnStudioPrintModalProps)
     slidesNumbers,
     signIncludeCert,
     signGrayscale,
+    invoiceShowPayments,
+    invoiceGrayscale,
   ])
 
   if (!props.isOpen) return null
@@ -635,6 +655,40 @@ export function ConnectLnStudioPrintModal(props: ConnectLnStudioPrintModalProps)
                       type="checkbox"
                       checked={signGrayscale}
                       onChange={(e) => setSignGrayscale(e.target.checked)}
+                    />
+                    <span>Black &amp; White Ink Mode</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {props.mode === "invoice" && (
+              <div className="space-y-3 text-xs">
+                <div className="rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 space-y-1">
+                  <p className="text-[11px] font-extrabold text-[#0F766E] uppercase">
+                    Invoice Summary
+                  </p>
+                  <p className="font-mono text-[11px]">{props.invoice.invoiceNumber}</p>
+                  <p className="text-[11px] text-zinc-500">
+                    Total: {props.invoice.currencySymbol}
+                    {props.invoice.grandTotal.toFixed(2)} · Balance: {props.invoice.currencySymbol}
+                    {props.invoice.balanceDue.toFixed(2)}
+                  </p>
+                </div>
+                <div className="space-y-1.5 pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={invoiceShowPayments}
+                      onChange={(e) => setInvoiceShowPayments(e.target.checked)}
+                    />
+                    <span>Include Payment Receipt History</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={invoiceGrayscale}
+                      onChange={(e) => setInvoiceGrayscale(e.target.checked)}
                     />
                     <span>Black &amp; White Ink Mode</span>
                   </label>

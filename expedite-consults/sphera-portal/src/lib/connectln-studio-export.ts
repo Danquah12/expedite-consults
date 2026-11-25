@@ -1899,3 +1899,246 @@ export function buildPrintableSignedContractHtml(
 </body>
 </html>`
 }
+
+export interface PrintableInvoiceInput {
+  invoiceNumber: string
+  kind: 'invoice' | 'estimate' | 'receipt'
+  status: string
+  currencySymbol: string
+  title: string
+  poNumber?: string
+  issueDate: string
+  dueDate: string
+  paymentTerms: string
+  senderCompany: string
+  senderName: string
+  senderEmail: string
+  senderAddress: string
+  clientCompany: string
+  clientName: string
+  clientEmail: string
+  clientAddress: string
+  items: Array<{
+    description: string
+    category: string
+    qty: number
+    unitPrice: number
+    taxable?: boolean
+  }>
+  subtotal: number
+  discountAmount: number
+  taxRatePct: number
+  taxAmount: number
+  retainagePct: number
+  retainageAmount: number
+  grandTotal: number
+  amountPaid: number
+  balanceDue: number
+  payments?: Array<{
+    amount: number
+    date: string
+    method: string
+    reference: string
+    note?: string
+  }>
+  notes?: string
+  paymentInstructions?: string
+}
+
+export function buildPrintableInvoiceHtml(
+  invoice: PrintableInvoiceInput,
+  opts?: { showPaymentHistory?: boolean; grayscale?: boolean }
+): string {
+  const sym = escapeHtml(invoice.currencySymbol || '$')
+  const fmt = (val: number) =>
+    `${sym}${(Math.round((Number.isFinite(val) ? val : 0) * 100) / 100).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`
+
+  const kindHeading =
+    invoice.kind === 'estimate'
+      ? 'PROJECT ESTIMATE'
+      : invoice.kind === 'receipt'
+      ? 'PAYMENT RECEIPT'
+      : 'INVOICE'
+
+  const statusUpper = String(invoice.status || 'draft').toUpperCase()
+  const statusLabel =
+    statusUpper === 'PAID'
+      ? 'PAID IN FULL'
+      : statusUpper === 'PARTIAL'
+      ? 'PARTIAL PAYMENT'
+      : statusUpper === 'OVERDUE'
+      ? 'OVERDUE'
+      : invoice.kind === 'estimate'
+      ? `ESTIMATE · ${statusUpper}`
+      : statusUpper === 'SENT'
+      ? 'OPEN · SENT'
+      : statusUpper
+
+  const statusColors =
+    statusUpper === 'PAID'
+      ? { bg: '#DCFCE7', fg: '#065F46' }
+      : statusUpper === 'OVERDUE'
+      ? { bg: '#FFE4E6', fg: '#9F1239' }
+      : statusUpper === 'PARTIAL'
+      ? { bg: '#E0F2FE', fg: '#075985' }
+      : { bg: '#F1F5F9', fg: '#334155' }
+
+  const filterCss = opts?.grayscale ? 'filter: grayscale(100%);' : ''
+
+  const itemRowsHtml = (invoice.items || [])
+    .map(
+      (item, idx) => `<tr>
+        <td>${idx + 1}</td>
+        <td><strong>${escapeHtml(item.description || 'Line Item')}</strong><div style="font-size:10.5px;color:#64748b;">${escapeHtml(
+        item.category || ''
+      )}</div></td>
+        <td style="text-align:right;">${Number(item.qty) || 0}</td>
+        <td style="text-align:right;">${fmt(Number(item.unitPrice) || 0)}</td>
+        <td style="text-align:center;">${item.taxable ? 'Yes' : '—'}</td>
+        <td style="text-align:right;font-weight:700;">${fmt((Number(item.qty) || 0) * (Number(item.unitPrice) || 0))}</td>
+      </tr>`
+    )
+    .join('')
+
+  const paymentsHtml =
+    opts?.showPaymentHistory !== false && invoice.payments && invoice.payments.length > 0
+      ? `<div style="margin-top:22px;break-inside:avoid;">
+          <h3 style="margin:0 0 8px 0;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#0F766E;">Payment History</h3>
+          <table class="tbl">
+            <thead><tr><th>Date</th><th>Method</th><th>Reference</th><th>Notes</th><th style="text-align:right;">Amount</th></tr></thead>
+            <tbody>
+              ${invoice.payments
+                .map(
+                  (p) =>
+                    `<tr><td>${escapeHtml(p.date)}</td><td>${escapeHtml(p.method)}</td><td style="font-family:monospace;">${escapeHtml(
+                      p.reference
+                    )}</td><td>${escapeHtml(p.note || '—')}</td><td style="text-align:right;font-weight:700;color:#065F46;">${fmt(
+                      p.amount
+                    )}</td></tr>`
+                )
+                .join('')}
+            </tbody>
+          </table>
+        </div>`
+      : ''
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(kindHeading)} ${escapeHtml(invoice.invoiceNumber)} — ${escapeHtml(invoice.title)}</title>
+  <style>
+    @page { size: letter portrait; margin: 0.65in; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0b1f3a;
+      ${filterCss}
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .sheet {
+      max-width: 816px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 40px 46px;
+      border-radius: 8px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+    }
+    .hdr { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0F766E; padding-bottom: 16px; margin-bottom: 18px; }
+    .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; font-size: 12px; }
+    .party-box { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; background: #f8fafc; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .tbl th, .tbl td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
+    .tbl th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #334155; }
+    .totals-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
+    .totals-box { width: 290px; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; font-size: 12px; }
+    .totals-row { display: flex; justify-content: space-between; padding: 7px 12px; border-bottom: 1px solid #e2e8f0; }
+    .totals-row:last-child { border-bottom: none; }
+    .totals-grand { background: #0F766E; color: #ffffff; font-weight: 800; font-size: 13.5px; }
+    .notes-box { margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 11.5px; color: #334155; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .sheet { box-shadow: none; margin: 0; padding: 0; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <section class="sheet">
+    <header class="hdr">
+      <div>
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:0.09em;color:#0F766E;text-transform:uppercase;">ConnectLn Invoice &amp; Ledger · Power Apps</div>
+        <h1 style="margin:4px 0 2px 0;font-size:24px;color:#0B1F3A;">${escapeHtml(kindHeading)}</h1>
+        <div style="font-size:13px;font-weight:700;color:#334155;">${escapeHtml(invoice.title)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="display:inline-block;border-radius:999px;padding:4px 12px;font-size:11px;font-weight:800;background:${
+          statusColors.bg
+        };color:${statusColors.fg};margin-bottom:8px;">${escapeHtml(statusLabel)}</div>
+        <div style="font-family:monospace;font-size:12px;font-weight:700;">#${escapeHtml(invoice.invoiceNumber)}</div>
+        <div style="font-size:11px;color:#475569;margin-top:3px;">Issued: ${escapeHtml(invoice.issueDate)}</div>
+        <div style="font-size:11px;color:#475569;">Due: ${escapeHtml(invoice.dueDate)} (${escapeHtml(invoice.paymentTerms)})</div>
+        ${invoice.poNumber ? `<div style="font-size:11px;color:#475569;">PO / Ref: ${escapeHtml(invoice.poNumber)}</div>` : ''}
+      </div>
+    </header>
+
+    <div class="parties">
+      <div class="party-box">
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:#64748b;margin-bottom:4px;">From</div>
+        <div style="font-weight:800;font-size:13px;">${escapeHtml(invoice.senderCompany || invoice.senderName)}</div>
+        <div>${escapeHtml(invoice.senderName)}</div>
+        <div style="color:#475569;">${escapeHtml(invoice.senderEmail)}</div>
+        <div style="color:#475569;margin-top:2px;">${escapeHtml(invoice.senderAddress)}</div>
+      </div>
+      <div class="party-box">
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Bill To</div>
+        <div style="font-weight:800;font-size:13px;">${escapeHtml(invoice.clientCompany || invoice.clientName)}</div>
+        <div>${escapeHtml(invoice.clientName)}</div>
+        <div style="color:#475569;">${escapeHtml(invoice.clientEmail)}</div>
+        <div style="color:#475569;margin-top:2px;">${escapeHtml(invoice.clientAddress)}</div>
+      </div>
+    </div>
+
+    <table class="tbl">
+      <thead>
+        <tr><th style="width:36px;">#</th><th>Description &amp; Category</th><th style="text-align:right;width:64px;">Qty</th><th style="text-align:right;width:105px;">Rate</th><th style="text-align:center;width:54px;">Tax</th><th style="text-align:right;width:115px;">Amount</th></tr>
+      </thead>
+      <tbody>${itemRowsHtml}</tbody>
+    </table>
+
+    <div class="totals-wrap">
+      <div class="totals-box">
+        <div class="totals-row"><span>Subtotal</span><span>${fmt(invoice.subtotal)}</span></div>
+        ${
+          invoice.discountAmount > 0
+            ? `<div class="totals-row"><span>Discount</span><span>-${fmt(invoice.discountAmount)}</span></div>`
+            : ''
+        }
+        <div class="totals-row"><span>Tax (${invoice.taxRatePct}%)</span><span>${fmt(invoice.taxAmount)}</span></div>
+        ${
+          invoice.retainageAmount > 0
+            ? `<div class="totals-row"><span>Retainage (${invoice.retainagePct}%)</span><span>-${fmt(invoice.retainageAmount)}</span></div>`
+            : ''
+        }
+        <div class="totals-row" style="font-weight:800;background:#f8fafc;"><span>Total</span><span>${fmt(invoice.grandTotal)}</span></div>
+        <div class="totals-row" style="color:#065F46;"><span>Amount Paid</span><span>-${fmt(invoice.amountPaid)}</span></div>
+        <div class="totals-row totals-grand"><span>Balance Due</span><span>${fmt(invoice.balanceDue)}</span></div>
+      </div>
+    </div>
+
+    ${paymentsHtml}
+
+    <div class="notes-box">
+      <div><strong>Notes &amp; Scope</strong><p style="margin:4px 0 0 0;">${escapeHtml(invoice.notes || '—')}</p></div>
+      <div><strong>Payment Instructions</strong><p style="margin:4px 0 0 0;">${escapeHtml(invoice.paymentInstructions || '—')}</p></div>
+    </div>
+  </section>
+</body>
+</html>`
+}
