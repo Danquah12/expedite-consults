@@ -134,6 +134,7 @@ import {
   resolveProfessionForUser
 } from "@/lib/connectin-videos"
 import { buildProfessionTieredFeedPosts } from "@/lib/connectin-profession-feed"
+import { ConnectLnStagedVideoModal } from "@/components/connectln/ConnectLnStagedVideoModal"
 import { LiveHarvestedMediaShowcase } from "@/components/connectln/LiveHarvestedMediaShowcase"
 import {
   loadStoredHarvestedItems,
@@ -4573,6 +4574,9 @@ export default function ConnectLnPage() {
           </div>
         </div>
       )}
+
+      {/* Dedicated In-Platform ConnectLn Staged Video & "More Videos" Theater Player */}
+      <ConnectLnStagedVideoModal user={userData} feedPosts={posts} />
     </div>
   )
 }

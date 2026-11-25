@@ -149,8 +149,6 @@ export function VideoShareBanner({
         notifyExclusiveVideoPlay(bannerPlayerIdRef.current)
         setIsPlayingInline(true)
       }
-    } else if (videoUrl) {
-      window.open(videoUrl, "_blank", "noopener,noreferrer")
     }
   }
 

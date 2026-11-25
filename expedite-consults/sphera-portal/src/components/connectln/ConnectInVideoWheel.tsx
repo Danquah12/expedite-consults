@@ -43,6 +43,7 @@ import { resolveUserProfilePicture, isKwesiAccount } from "@/lib/connectin-stora
 import { buildSharePreviewUrl } from "@/lib/connectin-share"
 import { VideoShareBanner } from "./VideoShareBanner"
 import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
+import { stageConnectLnVideo } from "@/lib/connectln-video-stage"
 import {
   useAutoplayVideosPref,
   registerViewportVideoSlot,
@@ -1173,13 +1174,38 @@ export function ConnectInVideoWheel({
                 <div ref={modalPlayerRef} className="relative h-[220px] sm:h-[260px] w-full bg-black">
                   {activeVideo.searchUrl ? (
                     <div className="h-full w-full flex flex-col items-center justify-center gap-3 p-4 text-center bg-linear-to-br from-[#1C1916] to-[#3a1f19]">
-                      <p className="text-sm font-bold text-[#EFE8DC]">No verified video for this career yet</p>
-                      <p className="text-xs text-[#EFE8DC]/70 max-w-xs">Watch real career videos for {activeVideo.title.replace(/ — Career Masterclass.*$/, '')} on YouTube.</p>
+                      <p className="text-sm font-bold text-[#EFE8DC]">Staging a verified ConnectLn video inside this portal</p>
+                      <p className="text-xs text-[#EFE8DC]/70 max-w-xs">Watch verified career masterclasses directly inside ConnectLn without leaving the platform.</p>
                       <button
-                        onClick={() => window.open(activeVideo.searchUrl, '_blank', 'noopener,noreferrer')}
+                        type="button"
+                        onClick={() => {
+                          const fallbackTalk =
+                            filteredTalks.find((t) => !t.searchUrl && Boolean(t.youtubeId)) ||
+                            allTalks.find((t) => !t.searchUrl && Boolean(t.youtubeId)) ||
+                            EDUCATIONAL_WHEEL_TALKS[0]
+                          if (!fallbackTalk) return
+                          setActiveVideo(null)
+                          stageConnectLnVideo(
+                            {
+                              youtubeId: fallbackTalk.youtubeId,
+                              sourceProvider: "youtube",
+                              title: fallbackTalk.title,
+                              speaker: fallbackTalk.speaker,
+                              speakerRole: fallbackTalk.speakerTitle,
+                              serialPlate: fallbackTalk.serialPlate,
+                              durationLabel: fallbackTalk.duration,
+                              description: fallbackTalk.summary,
+                              takeaways: fallbackTalk.takeaways,
+                              thumbnailUrl: fallbackTalk.thumbnailUrl,
+                              categoryLabel: fallbackTalk.categoryLabel,
+                              enclaveId: fallbackTalk.enclaveId,
+                            },
+                            { openMoreVideos: true }
+                          )
+                        }}
                         className="rounded-full bg-[#A64532] hover:bg-[#8c3a2a] text-white px-4 py-2 text-xs font-bold cursor-pointer"
                       >
-                        ▶ Watch Career Masterclass Video
+                        ▶ Watch Video Inside ConnectLn
                       </button>
                     </div>
                   ) : (
@@ -1327,15 +1353,6 @@ export function ConnectInVideoWheel({
                       >
                         {copyFeedback ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                         <span style={{ color: '#FFFFFF' }}>{copyFeedback ? "Copied!" : "Copy Link"}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => window.open(activeVideo.searchUrl || `https://www.youtube.com/watch?v=${activeVideo.youtubeId}`, '_blank', 'noopener,noreferrer')}
-                        style={{ display: 'none' }}
-                        className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        <span style={{ color: '#FFFFFF' }}>YouTube</span>
                       </button>
                       <button
                         type="button"

@@ -1,10 +1,16 @@
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
-import { Play, ExternalLink, ShieldCheck } from "lucide-react"
+import { Play, ShieldCheck, Film, PlayCircle, RotateCcw, X, Maximize2 } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
 import type { LearnVideoSourceProvider } from "@/lib/skilled-trades-learn-by-doing-data"
+import {
+  stageConnectLnVideo,
+  getConnectLnMoreVideosCatalog,
+  extractPlayableYoutubeId,
+  type StagedConnectLnVideo,
+} from "@/lib/connectln-video-stage"
 
 export const CONNECTLN_VIDEO_PLAY_EVENT = "connectln:exclusive-video-play"
 
@@ -91,6 +97,9 @@ interface ConnectLnStudioPlayerProps {
   onExclusiveStop?: () => void
   onPlaybackTimeChange?: (seconds: number, durationSeconds: number) => void
   seekRequest?: { seconds: number; nonce: number } | null
+  isStagedPlayer?: boolean
+  relatedVideos?: StagedConnectLnVideo[]
+  onSelectMoreVideo?: (video: StagedConnectLnVideo) => void
 }
 
 function inferProviderFromUrls(
@@ -120,51 +129,43 @@ function inferProviderFromUrls(
 
 function getProviderMeta(provider: LearnVideoSourceProvider): {
   badge: string
-  ctaLabel: string
   pillClass: string
 } {
   switch (provider) {
     case "vimeo":
       return {
-        badge: "Vimeo",
-        ctaLabel: "Watch on Vimeo",
+        badge: "Vimeo · In ConnectLn",
         pillClass: "bg-sky-500/20 text-sky-200 border-sky-400/30",
       }
     case "archive_org":
       return {
         badge: "Internet Archive · Open",
-        ctaLabel: "View on Internet Archive",
         pillClass: "bg-emerald-500/20 text-emerald-200 border-emerald-400/30",
       }
     case "ted":
       return {
-        badge: "TED Talks",
-        ctaLabel: "Watch on TED",
+        badge: "TED Talks · In ConnectLn",
         pillClass: "bg-rose-500/20 text-rose-200 border-rose-400/30",
       }
     case "peertube":
       return {
         badge: "PeerTube · Federated",
-        ctaLabel: "Watch on PeerTube",
         pillClass: "bg-orange-500/20 text-orange-200 border-orange-400/30",
       }
     case "dailymotion":
       return {
-        badge: "Dailymotion",
-        ctaLabel: "Watch on Dailymotion",
+        badge: "Dailymotion · In ConnectLn",
         pillClass: "bg-indigo-500/20 text-indigo-200 border-indigo-400/30",
       }
     case "connectln_native":
       return {
         badge: "ConnectLn Original",
-        ctaLabel: "ConnectLn Studio Lesson",
         pillClass: "bg-amber-500/20 text-amber-200 border-amber-400/30",
       }
     case "youtube":
     default:
       return {
-        badge: "YouTube",
-        ctaLabel: "Watch on YouTube",
+        badge: "ConnectLn Studio",
         pillClass: "bg-red-500/20 text-red-200 border-red-400/30",
       }
   }
@@ -195,6 +196,9 @@ export function ConnectLnStudioPlayer({
   onExclusiveStop,
   onPlaybackTimeChange,
   seekRequest = null,
+  isStagedPlayer = false,
+  relatedVideos,
+  onSelectMoreVideo,
 }: ConnectLnStudioPlayerProps) {
   const { language } = useLanguage()
   const effectiveProvider = inferProviderFromUrls(sourceProvider, directVideoUrl, embedUrl, youtubeId)
@@ -234,6 +238,12 @@ export function ConnectLnStudioPlayer({
 
   const [isPlaying, setIsPlaying] = useState<boolean>(autoPlay)
   const [isStoppedByOther, setIsStoppedByOther] = useState<boolean>(false)
+  const [playbackPhase, setPlaybackPhase] = useState<"playing" | "paused" | "ended">(
+    autoPlay ? "playing" : "paused"
+  )
+  const [showMoreVideosOverlay, setShowMoreVideosOverlay] = useState<boolean>(false)
+  const dismissedPauseOverlayRef = useRef<boolean>(false)
+  const lastInterceptedYtIdRef = useRef<string>("")
   const wasPlayingBeforeCallRef = useRef<boolean>(false)
   const isPlayingStateRef = useRef<boolean>(autoPlay)
   isPlayingStateRef.current = isPlaying
@@ -247,6 +257,55 @@ export function ConnectLnStudioPlayer({
     return 180
   })
 
+  const moreVideosList = useMemo(
+    () =>
+      getConnectLnMoreVideosCatalog({
+        currentYoutubeId: youtubeId,
+        currentDirectUrl: directVideoUrl,
+        currentTitle: title,
+        customRelated: relatedVideos,
+        limit: 12,
+      }),
+    [youtubeId, directVideoUrl, title, relatedVideos]
+  )
+
+  const currentVideoAsStaged = useMemo<StagedConnectLnVideo>(
+    () => ({
+      youtubeId: youtubeId || undefined,
+      directVideoUrl,
+      embedUrl,
+      sourceProvider: effectiveProvider,
+      title,
+      speaker,
+      speakerRole,
+      serialPlate,
+      durationLabel,
+      description,
+      takeaways,
+      thumbnailUrl:
+        posterImageUrl ||
+        (youtubeId ? `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg` : undefined),
+      sourceLanguage,
+      sourceLanguageLabel,
+    }),
+    [
+      youtubeId,
+      directVideoUrl,
+      embedUrl,
+      effectiveProvider,
+      title,
+      speaker,
+      speakerRole,
+      serialPlate,
+      durationLabel,
+      description,
+      takeaways,
+      posterImageUrl,
+      sourceLanguage,
+      sourceLanguageLabel,
+    ]
+  )
+
   const sendYtCommand = useCallback((func: string, args: any[] = []) => {
     const win = ytIframeRef.current?.contentWindow
     if (!win) return
@@ -259,6 +318,36 @@ export function ConnectLnStudioPlayer({
       "*"
     )
   }, [])
+
+  const onSelectMoreVideoRef = useRef(onSelectMoreVideo)
+  onSelectMoreVideoRef.current = onSelectMoreVideo
+
+  const openInConnectLnStage = useCallback(
+    (videoToStage: StagedConnectLnVideo) => {
+      setShowMoreVideosOverlay(false)
+      dismissedPauseOverlayRef.current = false
+      if (onSelectMoreVideoRef.current) {
+        onSelectMoreVideoRef.current(videoToStage)
+        return
+      }
+      if (isHtml5Direct && html5VideoRef.current) {
+        html5VideoRef.current.pause()
+      } else if (effectiveProvider === "youtube") {
+        sendYtCommand("mute")
+        sendYtCommand("pauseVideo")
+      }
+      setIsPlaying(false)
+      setIsStoppedByOther(true)
+      stageConnectLnVideo(videoToStage, {
+        openMoreVideos: true,
+        relatedVideos: moreVideosList,
+      })
+    },
+    [effectiveProvider, isHtml5Direct, moreVideosList, sendYtCommand]
+  )
+
+  const openInConnectLnStageRef = useRef(openInConnectLnStage)
+  openInConnectLnStageRef.current = openInConnectLnStage
 
   const shouldMuteForTranslation = useCallback(() => {
     if (isVoiceDuckingRef.current || isInterpretingNeededRef.current) return true
@@ -348,11 +437,15 @@ export function ConnectLnStudioPlayer({
     }
   }, [effectivePlayerId, effectiveProvider, isHtml5Direct, sendYtCommand])
 
-  // YouTube official IFrame postMessage telemetry listener (no click hijacking, no forced override of user pause)
+  // YouTube official IFrame postMessage telemetry listener (intercepts in-iframe suggested clicks into ConnectLn Stage Player)
   useEffect(() => {
     setIsStoppedByOther(false)
     setCurrentTime(0)
     setIsPlaying(autoPlay)
+    setPlaybackPhase(autoPlay ? "playing" : "paused")
+    setShowMoreVideosOverlay(false)
+    dismissedPauseOverlayRef.current = false
+    lastInterceptedYtIdRef.current = ""
     if (autoPlay) {
       notifyExclusiveVideoPlay(effectivePlayerId)
     }
@@ -366,6 +459,38 @@ export function ConnectLnStudioPlayer({
       try {
         const data = JSON.parse(e.data)
         if (data.event === "infoDelivery" && data.info) {
+          const rawReportedId =
+            typeof data.info.videoData?.video_id === "string"
+              ? data.info.videoData.video_id.trim()
+              : ""
+          const reportedYtId = extractPlayableYoutubeId(rawReportedId)
+          if (
+            reportedYtId &&
+            reportedYtId !== youtubeId &&
+            reportedYtId !== lastInterceptedYtIdRef.current
+          ) {
+            lastInterceptedYtIdRef.current = reportedYtId
+            const vTitle =
+              (typeof data.info.videoData?.title === "string" &&
+                data.info.videoData.title.trim()) ||
+              "ConnectLn Video Briefing"
+            const vAuthor =
+              (typeof data.info.videoData?.author === "string" &&
+                data.info.videoData.author.trim()) ||
+              "ConnectLn Studio"
+            openInConnectLnStageRef.current({
+              youtubeId: reportedYtId,
+              sourceProvider: "youtube",
+              title: vTitle,
+              speaker: vAuthor,
+              serialPlate: "CLN-NEXT",
+              thumbnailUrl: `https://i.ytimg.com/vi/${reportedYtId}/hqdefault.jpg`,
+              description:
+                "Playing inside ConnectLn Stage Player — zero external transitions.",
+            })
+            return
+          }
+
           if (typeof data.info.currentTime === "number") {
             setCurrentTime(data.info.currentTime)
           }
@@ -378,10 +503,14 @@ export function ConnectLnStudioPlayer({
               sendYtCommand("mute")
               sendYtCommand("pauseVideo")
               setIsPlaying(false)
+              setPlaybackPhase("paused")
               return
             }
             if (pState === 1) {
               setIsPlaying(true)
+              setPlaybackPhase("playing")
+              setShowMoreVideosOverlay(false)
+              dismissedPauseOverlayRef.current = false
               if ((window as any).__connectlnActiveVideoPlayerId !== effectivePlayerId) {
                 notifyExclusiveVideoPlay(effectivePlayerId)
               }
@@ -389,8 +518,17 @@ export function ConnectLnStudioPlayer({
                 sendYtCommand("setVolume", [0])
                 sendYtCommand("mute")
               }
-            } else if (pState === 2 || pState === 0) {
+            } else if (pState === 2) {
               setIsPlaying(false)
+              setPlaybackPhase("paused")
+              if (!dismissedPauseOverlayRef.current) {
+                setShowMoreVideosOverlay(true)
+              }
+            } else if (pState === 0) {
+              setIsPlaying(false)
+              setPlaybackPhase("ended")
+              dismissedPauseOverlayRef.current = false
+              setShowMoreVideosOverlay(true)
             }
           }
         }
@@ -411,7 +549,7 @@ export function ConnectLnStudioPlayer({
       window.removeEventListener("message", handleMessage)
       clearInterval(poll)
     }
-  }, [youtubeId, effectiveProvider, autoPlay, effectivePlayerId, sendYtCommand, shouldMuteForTranslation])
+  }, [youtubeId, directVideoUrl, effectiveProvider, autoPlay, effectivePlayerId, sendYtCommand, shouldMuteForTranslation])
 
   // Gentle timer tick for non-YouTube external iframes so docked Noctis Interpreter tracks progress
   useEffect(() => {
@@ -482,28 +620,26 @@ export function ConnectLnStudioPlayer({
     posterImageUrl ||
     (youtubeId ? `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg` : undefined)
 
-  const externalWatchUrl = useMemo(() => {
-    if (effectiveProvider === "connectln_native") return ""
-    if (sourceVideoUrl && /^https?:\/\//i.test(sourceVideoUrl)) return sourceVideoUrl
-    if (effectiveProvider === "youtube" && youtubeId) {
-      return `https://www.youtube.com/watch?v=${youtubeId}`
-    }
-    return ""
-  }, [effectiveProvider, sourceVideoUrl, youtubeId])
-
   const providerMeta = getProviderMeta(effectiveProvider)
 
   const compliantYouTubeSrc = useMemo(() => {
     if (!youtubeId) return ""
     const muteFlag = initialMuted || shouldMuteForTranslation() ? 1 : hasSessionAudioActivation() ? 0 : 1
+    const originUrl =
+      typeof window !== "undefined" && window.location?.origin
+        ? window.location.origin
+        : "https://conectln.com"
     const params = new URLSearchParams({
       autoplay: autoPlay ? "1" : "0",
       mute: String(muteFlag),
       controls: "1",
       fs: "1",
       rel: "0",
+      iv_load_policy: "3",
+      modestbranding: "1",
       playsinline: "1",
       enablejsapi: "1",
+      origin: originUrl,
       cc_load_policy: initialLangRef.current !== normalizedSourceLang ? "1" : "0",
       cc_lang_pref: initialLangRef.current,
       hl: initialLangRef.current,
@@ -514,9 +650,22 @@ export function ConnectLnStudioPlayer({
   const handleResumePlayer = () => {
     notifyExclusiveVideoPlay(effectivePlayerId)
     setIsStoppedByOther(false)
+    setShowMoreVideosOverlay(false)
+    dismissedPauseOverlayRef.current = false
+    setPlaybackPhase("playing")
     setIsPlaying(true)
     if (isHtml5Direct && html5VideoRef.current) {
+      if (playbackPhase === "ended") {
+        try {
+          html5VideoRef.current.currentTime = 0
+        } catch {}
+      }
       html5VideoRef.current.play().catch(() => {})
+    } else if (effectiveProvider === "youtube") {
+      if (playbackPhase === "ended") {
+        sendYtCommand("seekTo", [0, true])
+      }
+      sendYtCommand("playVideo")
     }
   }
 
@@ -565,9 +714,25 @@ export function ConnectLnStudioPlayer({
             onPlay={() => {
               notifyExclusiveVideoPlay(effectivePlayerId)
               setIsPlaying(true)
+              setPlaybackPhase("playing")
+              setShowMoreVideosOverlay(false)
+              dismissedPauseOverlayRef.current = false
             }}
-            onPause={() => setIsPlaying(false)}
-            onEnded={() => setIsPlaying(false)}
+            onPause={(e) => {
+              setIsPlaying(false)
+              if (!e.currentTarget.seeking && !e.currentTarget.ended) {
+                setPlaybackPhase("paused")
+                if (!dismissedPauseOverlayRef.current) {
+                  setShowMoreVideosOverlay(true)
+                }
+              }
+            }}
+            onEnded={() => {
+              setIsPlaying(false)
+              setPlaybackPhase("ended")
+              dismissedPauseOverlayRef.current = false
+              setShowMoreVideosOverlay(true)
+            }}
             onLoadedMetadata={(e) => {
               const d = e.currentTarget.duration
               if (Number.isFinite(d) && d > 0) setDuration(d)
@@ -614,9 +779,117 @@ export function ConnectLnStudioPlayer({
             Video stream unavailable
           </div>
         )}
+
+        {/* Native ConnectLn "More Videos" Overlay Covering Paused/Ended Canvas (Keeps Users Inside ConnectLn) */}
+        {showMoreVideosOverlay && !isStoppedByOther && (
+          <div className="absolute inset-0 z-20 flex flex-col justify-between bg-gradient-to-t from-black/95 via-black/85 to-black/75 p-3 sm:p-4 text-white backdrop-blur-[2px]">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-900/90 border border-white/20 px-2.5 py-1 text-[10px] font-bold text-amber-300">
+                <Film className="h-3 w-3" />
+                <span>
+                  ConnectLn Player ·{" "}
+                  {playbackPhase === "ended"
+                    ? "Up Next on ConnectLn"
+                    : "Paused · More Videos in ConnectLn"}
+                </span>
+              </span>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleResumePlayer}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#0A66C2] hover:bg-[#004182] px-3 py-1 text-[11px] font-bold text-white shadow-md cursor-pointer"
+                >
+                  {playbackPhase === "ended" ? (
+                    <RotateCcw className="h-3 w-3" />
+                  ) : (
+                    <Play className="h-3 w-3 fill-white" />
+                  )}
+                  <span>{playbackPhase === "ended" ? "Replay" : "Resume"}</span>
+                </button>
+                {!isStagedPlayer && (
+                  <button
+                    type="button"
+                    onClick={() => openInConnectLnStage(currentVideoAsStaged)}
+                    className="inline-flex items-center gap-1 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 px-2.5 py-1 text-[11px] font-bold text-white cursor-pointer"
+                  >
+                    <Maximize2 className="h-3 w-3" />
+                    <span>Stage Player</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    dismissedPauseOverlayRef.current = true
+                    setShowMoreVideosOverlay(false)
+                  }}
+                  aria-label="Dismiss More Videos overlay"
+                  className="rounded-full bg-black/60 hover:bg-black/85 border border-white/20 p-1 text-zinc-200 hover:text-white cursor-pointer"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2 mt-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs sm:text-sm font-extrabold text-white">
+                  More Videos to Watch in ConnectLn
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    openInConnectLnStage(moreVideosList[0] || currentVideoAsStaged)
+                  }
+                  className="inline-flex items-center gap-1 rounded-full bg-amber-500 hover:bg-amber-400 px-3 py-1 text-[11px] font-extrabold text-zinc-950 shadow-sm cursor-pointer shrink-0"
+                >
+                  <span>Stage New Player →</span>
+                </button>
+              </div>
+
+              <div className="flex gap-2.5 overflow-x-auto pb-1">
+                {moreVideosList.slice(0, 8).map((vid, idx) => (
+                  <button
+                    key={`${vid.youtubeId || vid.directVideoUrl || vid.title}-${idx}`}
+                    type="button"
+                    onClick={() => openInConnectLnStage(vid)}
+                    className="group flex w-44 sm:w-52 shrink-0 flex-col overflow-hidden rounded-xl border border-white/20 bg-zinc-900/95 hover:border-amber-400 text-left shadow-lg transition-all cursor-pointer"
+                  >
+                    <div className="relative h-22 sm:h-24 w-full bg-black overflow-hidden">
+                      {vid.thumbnailUrl ? (
+                        <img
+                          src={vid.thumbnailUrl}
+                          alt={vid.title}
+                          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center bg-zinc-800 text-zinc-400 text-xs">
+                          ConnectLn Video
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0A66C2]/95 text-white shadow-md">
+                          <Play className="h-3.5 w-3.5 fill-white ml-0.5" />
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-2 space-y-0.5">
+                      <p className="text-[11px] font-bold text-white line-clamp-2 leading-snug group-hover:text-amber-300">
+                        {vid.title}
+                      </p>
+                      <p className="text-[10px] text-zinc-400 truncate">
+                        {vid.speaker || "ConnectLn Studio"}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Compliant Attribution & License Strip Positioned Strictly BELOW the Video Frame */}
+      {/* Compliant In-Platform Attribution Strip Positioned Strictly BELOW the Video Frame */}
       <div className="flex flex-wrap items-center justify-between gap-2 bg-zinc-950 border-t border-zinc-800/90 px-3 py-1.5 text-[11px] text-zinc-300">
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
           <span
@@ -633,21 +906,29 @@ export function ConnectLnStudioPlayer({
           )}
         </div>
 
-        {externalWatchUrl ? (
-          <a
-            href={externalWatchUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 rounded-full border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 hover:border-zinc-500 px-2.5 py-0.5 text-[10px] font-bold text-zinc-100 transition-colors shrink-0"
+        <div className="flex items-center gap-2 shrink-0">
+          {!isStagedPlayer && (
+            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-300">
+              <ShieldCheck className="h-3 w-3" />
+              <span>Plays inside ConnectLn</span>
+            </span>
+          )}
+          <button
+            type="button"
+            data-connectln-more-videos="true"
+            onClick={() =>
+              openInConnectLnStage(
+                isStagedPlayer && moreVideosList[0]
+                  ? moreVideosList[0]
+                  : currentVideoAsStaged
+              )
+            }
+            className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/40 bg-[#0A66C2]/20 hover:bg-[#0A66C2] px-2.5 py-0.5 text-[10px] font-bold text-sky-100 hover:text-white transition-colors shrink-0 cursor-pointer"
           >
-            <span>{providerMeta.ctaLabel}</span>
-            <ExternalLink className="h-2.5 w-2.5" />
-          </a>
-        ) : (
-          <span className="text-[10px] font-semibold text-emerald-300 shrink-0">
-            Hosted on ConnectLn
-          </span>
-        )}
+            <PlayCircle className="h-3 w-3" />
+            <span>More Videos</span>
+          </button>
+        </div>
       </div>
 
       {/* DOCKED NOCTIS LIVE VIDEO LANGUAGE INTERPRETER & VOICE DUBBING BAR (Cleanly Below Video Frame) */}
@@ -669,6 +950,9 @@ export function ConnectLnStudioPlayer({
           onRequestPlayVideo={() => {
             notifyExclusiveVideoPlay(effectivePlayerId)
             setIsStoppedByOther(false)
+            setShowMoreVideosOverlay(false)
+            dismissedPauseOverlayRef.current = false
+            setPlaybackPhase("playing")
             if (isHtml5Direct && html5VideoRef.current) {
               html5VideoRef.current.muted = shouldMuteForTranslation()
               html5VideoRef.current.play().catch(() => {})
