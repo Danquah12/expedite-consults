@@ -1669,6 +1669,11 @@ export function NoctisVideoInterpreterPopup({
       } catch {}
 
       audio.src = audioUrl
+      try {
+        ;(audio as any).preservesPitch = true
+        audio.defaultPlaybackRate = playbackRate
+        audio.playbackRate = playbackRate
+      } catch {}
 
       audio.onplaying = () => {
         win.__noctisSharedAudioUnlocked = true
