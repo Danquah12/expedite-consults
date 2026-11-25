@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { ConnectLnNavbar } from "@/components/connectln/ConnectLnNavbar"
 import { ConnectLn360LeftRail } from "@/components/connectln/ConnectLn360LeftRail"
+import { ConnectLn360UniverseAppView } from "@/components/connectln/ConnectLn360UniverseAppView"
 import { MeetingReminders } from "@/components/connectln/MeetingReminders"
 import { ConnectLnIncomingCallBanner } from "@/components/connectln/ConnectLnIncomingCallBanner"
 import { ConnectLnPhoneVerificationGate } from "@/components/connectln/ConnectLnPhoneVerificationGate"
@@ -230,6 +231,8 @@ export default function ConnectLnPage() {
     | 'profile'
     | 'vibe'
     | 'workbusiness'
+    | 'noctissocial'
+    | 'noctisclinic'
   >('home')
   const [workBusinessSection, setWorkBusinessSection] = useState<WorkBusinessItemId>('find_work')
 
@@ -941,6 +944,10 @@ export default function ConnectLnPage() {
       const resolvedUrlTab =
         joinCallParam || tabParam === "vibecomms"
           ? "vibecomms"
+          : tabParam === "noctissocial" || tabParam === "noctis-social" || tabParam === "noctis.social"
+          ? "noctissocial"
+          : tabParam === "noctisclinic" || tabParam === "noctis-clinic" || tabParam === "noctis"
+          ? "noctisclinic"
           : pulseIdParam || pulseTitleParam || tabParam === "pulse" || tabParam === "pulserooms"
           ? "pulserooms"
           : videoParam || plateParam || postIdParam || tabParam === "home"
@@ -2970,7 +2977,13 @@ export default function ConnectLnPage() {
 
       {/* Main Content Area (Shifted beside 68px Desktop Rail on lg+) */}
       <div className="lg:pl-[68px]">
-      <main className="mx-auto max-w-7xl px-3 sm:px-6 pt-5 pb-24 lg:pb-12">
+      <main
+        className={
+          activeTab === 'noctissocial' || activeTab === 'noctisclinic'
+            ? "mx-auto max-w-[1480px] px-2 sm:px-4 pt-3 pb-24 lg:pb-4"
+            : "mx-auto max-w-7xl px-3 sm:px-6 pt-5 pb-24 lg:pb-12"
+        }
+      >
         {/* VIEW 1: HOME FEED */}
         {activeTab === 'home' && (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
@@ -4278,11 +4291,19 @@ export default function ConnectLnPage() {
             onReturnToMessaging={handleReturnFromStudioToMessaging}
           />
         )}
+
+        {/* VIEWS 18 & 19: CONNECTLN 360 UNIVERSE — NOCTIS SOCIAL & NOCTIS CLINIC */}
+        {(activeTab === 'noctissocial' || activeTab === 'noctisclinic') && (
+          <ConnectLn360UniverseAppView
+            appId={activeTab}
+            onSwitchApp={(tab) => setActiveTab(tab as any)}
+          />
+        )}
       </main>
       </div>
 
-      {/* Unified Persistent Bottom-Right Dock (Messaging + Job Alerts + Ask Noctis; hidden on the full Messaging tab) */}
-      {activeTab !== 'messaging' && (
+      {/* Unified Persistent Bottom-Right Dock (Messaging + Job Alerts + Ask Noctis; hidden on full Messaging & embedded 360 Universe apps) */}
+      {activeTab !== 'messaging' && activeTab !== 'noctissocial' && activeTab !== 'noctisclinic' && (
         <FloatingMessagingDock
           currentUser={userData}
           onOpenFullMessaging={() => setActiveTab('messaging')}

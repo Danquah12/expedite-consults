@@ -53,7 +53,8 @@ import {
   Compass,
   CheckCircle2,
   PhoneCall,
-  Download
+  Download,
+  PlayCircle
 } from "lucide-react"
 import { UserProfile, SuggestedConnection, getEnclaveConnectedMembers } from "@/lib/connectln-data"
 import { WORK_BUSINESS_MENU_ITEMS, WorkBusinessItemId } from "@/lib/work-business-data"
@@ -425,8 +426,10 @@ export function ConnectLnNavbar({
     { id: "labs", label: "R&D Papers, Patents & Labs", icon: "🧪", badge: "Research", desc: "Peer-reviewed technical papers, benchmarks, and datasets", url: undefined },
     { id: "profile", label: "My Profile & Portfolio", icon: "👤", badge: "Account", desc: "View and customize your professional profile, skills, and resume", url: undefined },
     { id: "security", label: "Account Security & IAM Settings", icon: "🔑", badge: "Security", desc: "Passkeys, MFA, active sessions, and privacy controls", url: undefined },
+    { id: "noctissocial", label: "Noctis Social (noctis.social)", icon: "🎬", badge: "360 Universe", desc: "Create, learn, and connect in 60 seconds — embedded inside ConnectLn 360", url: undefined },
+    { id: "noctisclinic", label: "Noctis Clinic (dstrike.app/noctis)", icon: "⚡", badge: "360 Universe", desc: "Watch a Spark. Pass a drill. Take the stamp — embedded inside ConnectLn 360", url: undefined },
     { id: "ext-desknote", label: "Desk Note", icon: "📓", badge: "Live App", desc: "Unified digital notebook, field logs & collaborative workspace (https://desk-note.app/)", url: "https://desk-note.app/" },
-    { id: "ext-noctis-ai", label: "Ask Noctis AI", icon: "🌌", badge: "Live App", desc: "Autonomous Cyber & Enterprise Intelligence Assistant (dstrike.app/noctis)", url: "https://dstrike.app/noctis" },
+    { id: "ext-noctis-ai", label: "Ask Noctis AI", icon: "🌌", badge: "Live App", desc: "Autonomous Cyber & Enterprise Intelligence Assistant (www.dstrike.app/noctis)", url: "https://www.dstrike.app/noctis" },
     { id: "ext-pdfadore", label: "PDFAdore Document Suite", icon: "📑", badge: "Live App", desc: "Sign, convert, redact, and analyze PDF documents", url: "https://www.pdfadore.com" },
     { id: "ext-launchpad", label: "Expedite Launchpad Hub", icon: "⚡", badge: "Live App", desc: "Unified Expedite Consults enterprise application portal", url: "https://launchpad.expediteconsults.com" },
   ]
@@ -656,6 +659,88 @@ export function ConnectLnNavbar({
                           {app.label}
                         </span>
                       </button>
+                    )
+                  })}
+                </div>
+
+                {/* ConnectLn 360 Universe */}
+                <div className="rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2]/80 dark:bg-zinc-950/60 p-2 space-y-1.5">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0067B8] dark:text-sky-400">
+                      ConnectLn 360 Universe
+                    </span>
+                    <span className="text-[10px] font-semibold text-[#6B7280] dark:text-zinc-400">
+                      Unified Apps
+                    </span>
+                  </div>
+                  {[
+                    {
+                      id: "noctissocial",
+                      name: "Noctis Social",
+                      host: "noctis.social",
+                      desc: "60s video, learning & community",
+                      href: "https://noctis.social",
+                      icon: PlayCircle,
+                      accentBg: "bg-fuchsia-600",
+                    },
+                    {
+                      id: "noctisclinic",
+                      name: "Noctis Clinic",
+                      host: "www.dstrike.app/noctis",
+                      desc: "Watch a Spark · Pass a drill · Take the stamp",
+                      href: "https://www.dstrike.app/noctis",
+                      icon: Zap,
+                      accentBg: "bg-cyan-600",
+                    },
+                  ].map((uApp) => {
+                    const UIcon = uApp.icon
+                    const isUActive = activeTab === uApp.id
+                    return (
+                      <div
+                        key={uApp.id}
+                        className={`flex items-center justify-between gap-2 rounded-xl border px-2 py-1.5 transition-colors ${
+                          isUActive
+                            ? "border-[#0067B8] bg-white dark:bg-zinc-800"
+                            : "border-transparent bg-white/80 dark:bg-zinc-900/70 hover:border-[#E7E2DA] dark:hover:border-zinc-700"
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAppLauncherOpen(false)
+                            onSelectTab(uApp.id)
+                          }}
+                          className="flex flex-1 min-w-0 items-center gap-2.5 text-left cursor-pointer"
+                        >
+                          <span
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white shadow-2xs ${uApp.accentBg}`}
+                          >
+                            <UIcon className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-[#0B1F3A] dark:text-zinc-100 truncate">
+                              {uApp.name}{" "}
+                              <span className="font-mono text-[10px] font-medium text-[#6B7280] dark:text-zinc-400">
+                                ({uApp.host})
+                              </span>
+                            </p>
+                            <p className="text-[10.5px] text-[#4B5563] dark:text-zinc-400 truncate">
+                              {uApp.desc}
+                            </p>
+                          </div>
+                        </button>
+                        <a
+                          href={uApp.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setIsAppLauncherOpen(false)}
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[#4B5563] hover:text-[#0067B8] hover:bg-[#FAF7F2] dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
+                          title={`Open ${uApp.name} in new tab (${uApp.href})`}
+                          aria-label={`Open ${uApp.name} in new tab`}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
                     )
                   })}
                 </div>
@@ -1589,6 +1674,8 @@ export function ConnectLnNavbar({
         >
           {[
             { id: '__more', label: 'For Business', icon: Grid3X3, badge: 0, kind: 'blue' },
+            { id: 'noctissocial', label: 'Noctis Social', icon: PlayCircle, badge: 0, kind: 'purple' },
+            { id: 'noctisclinic', label: 'Noctis Clinic', icon: Zap, badge: 0, kind: 'cyan' },
             ...primaryNavItems
               .filter((i) => !['home', 'network', 'jobs', 'messaging', 'notifications'].includes(i.id))
               .map((i) => ({
@@ -1730,6 +1817,30 @@ export function ConnectLnNavbar({
                   className="inline-flex items-center gap-1 rounded-lg bg-[#0A66C2] hover:bg-[#004182] px-3 py-1 text-[11px] font-extrabold text-white transition-colors cursor-pointer"
                 >
                   <span>🏢 Open Business Workspace →</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectTab("noctissocial")
+                    setIsMoreOpen(false)
+                  }}
+                  className="hidden sm:inline-flex items-center gap-1 rounded-lg bg-fuchsia-50 dark:bg-fuchsia-950/60 border border-fuchsia-200 dark:border-fuchsia-800 px-2.5 py-1 text-[11px] font-bold text-fuchsia-800 dark:text-fuchsia-200 hover:bg-fuchsia-100 transition-colors cursor-pointer"
+                  title="Open Noctis Social (https://noctis.social) inside ConnectLn 360"
+                >
+                  <PlayCircle className="h-3 w-3" />
+                  <span>Noctis Social</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectTab("noctisclinic")
+                    setIsMoreOpen(false)
+                  }}
+                  className="hidden sm:inline-flex items-center gap-1 rounded-lg bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800 px-2.5 py-1 text-[11px] font-bold text-cyan-800 dark:text-cyan-200 hover:bg-cyan-100 transition-colors cursor-pointer"
+                  title="Open Noctis Clinic (https://www.dstrike.app/noctis) inside ConnectLn 360"
+                >
+                  <Zap className="h-3 w-3" />
+                  <span>Noctis Clinic</span>
                 </button>
                 <a
                   href="https://desk-note.app/"
@@ -2650,6 +2761,89 @@ export function ConnectLnNavbar({
                   <span className="flex items-center gap-1.5">🔐 Passkeys &amp; Security</span>
                   <span className="text-zinc-400">→</span>
                 </button>
+
+                {/* ConnectLn 360 Universe Mobile Quick Launch */}
+                <div className="rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2]/80 dark:bg-zinc-950/60 p-2 space-y-1.5">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0067B8] dark:text-sky-400">
+                      ConnectLn 360 Universe
+                    </span>
+                    <span className="text-[10px] font-semibold text-[#6B7280] dark:text-zinc-400">
+                      Unified Apps
+                    </span>
+                  </div>
+                  {[
+                    {
+                      id: "noctissocial",
+                      name: "Noctis Social",
+                      host: "noctis.social",
+                      desc: "60s video, learning & community",
+                      href: "https://noctis.social",
+                      icon: PlayCircle,
+                      accentBg: "bg-fuchsia-600",
+                    },
+                    {
+                      id: "noctisclinic",
+                      name: "Noctis Clinic",
+                      host: "www.dstrike.app/noctis",
+                      desc: "Watch a Spark · Pass a drill · Take the stamp",
+                      href: "https://www.dstrike.app/noctis",
+                      icon: Zap,
+                      accentBg: "bg-cyan-600",
+                    },
+                  ].map((uApp) => {
+                    const UIcon = uApp.icon
+                    const isUActive = activeTab === uApp.id
+                    return (
+                      <div
+                        key={uApp.id}
+                        className={`flex items-center justify-between gap-2 rounded-xl border px-2 py-1.5 transition-colors ${
+                          isUActive
+                            ? "border-[#0067B8] bg-white dark:bg-zinc-800"
+                            : "border-transparent bg-white/80 dark:bg-zinc-900/70 hover:border-[#E7E2DA] dark:hover:border-zinc-700"
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onSelectTab(uApp.id)
+                            setIsMobileDrawerOpen(false)
+                          }}
+                          className="flex flex-1 min-w-0 items-center gap-2.5 text-left cursor-pointer"
+                        >
+                          <span
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white shadow-2xs ${uApp.accentBg}`}
+                          >
+                            <UIcon className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-[#0B1F3A] dark:text-zinc-100 truncate">
+                              {uApp.name}{" "}
+                              <span className="font-mono text-[10px] font-medium text-[#6B7280] dark:text-zinc-400">
+                                ({uApp.host})
+                              </span>
+                            </p>
+                            <p className="text-[10.5px] text-[#4B5563] dark:text-zinc-400 truncate">
+                              {uApp.desc}
+                            </p>
+                          </div>
+                        </button>
+                        <a
+                          href={uApp.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setIsMobileDrawerOpen(false)}
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[#4B5563] hover:text-[#0067B8] hover:bg-[#FAF7F2] dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
+                          title={`Open ${uApp.name} in new tab (${uApp.href})`}
+                          aria-label={`Open ${uApp.name} in new tab`}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
+                    )
+                  })}
+                </div>
+
                 <Link
                   href="/connectin-portal#download-app"
                   onClick={() => setIsMobileDrawerOpen(false)}

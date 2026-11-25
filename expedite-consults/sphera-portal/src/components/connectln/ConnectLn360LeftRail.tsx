@@ -16,6 +16,8 @@ import {
   Sparkles,
   Download,
   ShieldCheck,
+  PlayCircle,
+  Zap,
 } from "lucide-react"
 
 interface ConnectLn360LeftRailProps {
@@ -108,6 +110,63 @@ export function ConnectLn360LeftRail({
             </button>
           )
         })}
+
+        {/* ConnectLn 360 Universe */}
+        <div className="w-full pt-1.5 mt-1 border-t border-[#E7E2DA] dark:border-zinc-800 flex flex-col items-center gap-0.5">
+          <span className="text-[9px] font-extrabold tracking-widest uppercase text-[#0067B8] dark:text-sky-400">
+            360
+          </span>
+          {[
+            {
+              id: "noctissocial",
+              shortLabel: "Social",
+              title: "Noctis Social (https://noctis.social) — Create, learn & connect in 60s",
+              icon: PlayCircle,
+              accentClass: "text-fuchsia-600 dark:text-fuchsia-400",
+            },
+            {
+              id: "noctisclinic",
+              shortLabel: "Clinic",
+              title: "Noctis Clinic (https://www.dstrike.app/noctis) — Sparks, Drills & Stamps",
+              icon: Zap,
+              accentClass: "text-cyan-600 dark:text-cyan-400",
+            },
+          ].map((uItem) => {
+            const UIcon = uItem.icon
+            const isUActive = activeTab === uItem.id
+            return (
+              <button
+                key={uItem.id}
+                type="button"
+                onClick={() => onSelectTab(uItem.id)}
+                title={uItem.title}
+                className={`group relative flex w-full flex-col items-center justify-center rounded-xl py-2 px-1 transition-all cursor-pointer ${
+                  isUActive
+                    ? "bg-white dark:bg-zinc-900 shadow-[0_2px_10px_rgba(11,31,58,0.06)] border border-[#E7E2DA] dark:border-zinc-700 text-[#0B1F3A] dark:text-white"
+                    : "text-zinc-600 dark:text-zinc-400 hover:bg-white/70 dark:hover:bg-zinc-900/70 hover:text-[#0B1F3A] dark:hover:text-white border border-transparent"
+                }`}
+              >
+                {isUActive && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-[#0067B8] dark:bg-sky-400"
+                  />
+                )}
+                <UIcon
+                  strokeWidth={isUActive ? 2.2 : 1.85}
+                  className={`h-[18px] w-[18px] transition-colors ${uItem.accentClass}`}
+                />
+                <span
+                  className={`mt-1 text-[10px] leading-tight tracking-tight truncate max-w-full ${
+                    isUActive ? "font-bold" : "font-medium"
+                  }`}
+                >
+                  {uItem.shortLabel}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </nav>
 
       <div className="flex flex-col items-center gap-1 border-t border-[#E7E2DA] dark:border-zinc-800 pt-2 px-1 shrink-0">

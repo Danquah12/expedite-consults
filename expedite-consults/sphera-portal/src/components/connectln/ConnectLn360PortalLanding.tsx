@@ -14,12 +14,14 @@ import {
   ChevronUp,
   Copy,
   Download,
+  ExternalLink,
   Globe,
   GraduationCap,
   Laptop,
   Mail,
   MessageSquare,
   PhoneCall,
+  PlayCircle,
   Plus,
   Search,
   ShieldCheck,
@@ -29,6 +31,7 @@ import {
   Users,
   Video,
   X,
+  Zap,
 } from "lucide-react"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 
@@ -320,7 +323,16 @@ const PLAN_TIERS = {
   ],
 }
 
-const SUITE_APPS = [
+const SUITE_APPS: Array<{
+  name: string
+  desc: string
+  icon: React.ComponentType<{ className?: string }>
+  bg: string
+  cta: string
+  href?: string
+  externalUrl?: string
+  domainLabel?: string
+}> = [
   {
     name: "Mail & Chat",
     desc: "Organized inbox, threaded direct messages, file attachments, and instant push notifications across web and mobile.",
@@ -362,6 +374,26 @@ const SUITE_APPS = [
     icon: ShieldCheck,
     bg: "bg-[#0B1F3A]",
     cta: "View Security",
+  },
+  {
+    name: "Noctis Social",
+    desc: "Create, learn, and connect in 60 seconds inside the ConnectLn 360 Universe — live short-form creator & community hub at noctis.social.",
+    icon: PlayCircle,
+    bg: "bg-fuchsia-600",
+    cta: "Open Noctis Social",
+    href: "/connectin?tab=noctissocial",
+    externalUrl: "https://noctis.social",
+    domainLabel: "noctis.social",
+  },
+  {
+    name: "Noctis Clinic",
+    desc: "Watch a Spark. Pass a drill. Take the stamp. Interactive rapid-mastery drills & intelligence clinic integrated directly at www.dstrike.app/noctis.",
+    icon: Zap,
+    bg: "bg-cyan-600",
+    cta: "Open Noctis Clinic",
+    href: "/connectin?tab=noctisclinic",
+    externalUrl: "https://www.dstrike.app/noctis",
+    domainLabel: "www.dstrike.app/noctis",
   },
 ]
 
@@ -544,6 +576,57 @@ export function ConnectLn360PortalLanding() {
               </button>
             )
           })}
+        </div>
+
+        {/* ConnectLn 360 Universe Unified Ecosystem Bar */}
+        <div className="mt-5 flex flex-wrap items-center gap-2.5 rounded-2xl border border-[#E7E2DA] bg-white/90 px-4 py-3 shadow-2xs">
+          <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-[#0067B8] pr-1">
+            360 Universe:
+          </span>
+          <Link
+            href="/connectin"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#E7E2DA] bg-[#FAF7F2] hover:border-[#0067B8] px-3 py-1 text-xs font-bold text-[#0B1F3A] transition-colors"
+          >
+            <Building2 className="h-3.5 w-3.5 text-[#0067B8]" />
+            <span>ConnectLn Core</span>
+            <span className="text-[10px] font-mono text-[#6B7280]">conectln.com</span>
+          </Link>
+          <Link
+            href="/connectin?tab=noctissocial"
+            className="inline-flex items-center gap-1.5 rounded-full border border-fuchsia-200 bg-fuchsia-50/70 hover:border-fuchsia-400 px-3 py-1 text-xs font-bold text-fuchsia-900 transition-colors"
+          >
+            <PlayCircle className="h-3.5 w-3.5 text-fuchsia-600" />
+            <span>Noctis Social</span>
+            <span className="text-[10px] font-mono text-fuchsia-700/80">noctis.social</span>
+          </Link>
+          <a
+            href="https://noctis.social"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open Noctis Social directly"
+            className="text-[10px] font-semibold text-fuchsia-700 hover:underline -ml-1 mr-1"
+            title="https://noctis.social"
+          >
+            ↗
+          </a>
+          <Link
+            href="/connectin?tab=noctisclinic"
+            className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50/70 hover:border-cyan-400 px-3 py-1 text-xs font-bold text-cyan-950 transition-colors"
+          >
+            <Zap className="h-3.5 w-3.5 text-cyan-600" />
+            <span>Noctis Clinic</span>
+            <span className="text-[10px] font-mono text-cyan-800/80">www.dstrike.app/noctis</span>
+          </Link>
+          <a
+            href="https://www.dstrike.app/noctis"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open Noctis Clinic directly"
+            className="text-[10px] font-semibold text-cyan-800 hover:underline -ml-1"
+            title="https://www.dstrike.app/noctis"
+          >
+            ↗
+          </a>
         </div>
 
         <div className="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -1148,7 +1231,7 @@ export function ConnectLn360PortalLanding() {
           </Link>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {SUITE_APPS.map((app) => {
             const Icon = app.icon
             return (
@@ -1157,16 +1240,30 @@ export function ConnectLn360PortalLanding() {
                 className="flex flex-col justify-between rounded-2xl border border-[#E7E2DA] bg-white p-6 shadow-xs hover:shadow-md transition-shadow"
               >
                 <div>
-                  <div
-                    className={`inline-flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-xs ${app.bg}`}
-                  >
-                    <Icon className="h-5 w-5" />
+                  <div className="flex items-start justify-between gap-2">
+                    <div
+                      className={`inline-flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-xs ${app.bg}`}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    {app.externalUrl && (
+                      <a
+                        href={app.externalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-full border border-[#E7E2DA] bg-[#FAF7F2] px-2.5 py-1 text-[10.5px] font-semibold text-[#4B5563] hover:border-[#0067B8] hover:text-[#0067B8] transition-colors"
+                        title={`Visit ${app.externalUrl}`}
+                      >
+                        <span>{app.domainLabel}</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
                   </div>
                   <h3 className="mt-4 text-base font-bold text-[#0B1F3A]">{app.name}</h3>
                   <p className="mt-1.5 text-xs leading-relaxed text-[#4B5563]">{app.desc}</p>
                 </div>
                 <Link
-                  href="/connectin"
+                  href={app.href || "/connectin"}
                   className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[#0B1F3A] hover:text-[#0067B8]"
                 >
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-[#0B1F3A] text-white">
