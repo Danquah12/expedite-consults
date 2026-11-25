@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
@@ -34,6 +34,16 @@ import {
   Zap,
 } from "lucide-react"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
+import { useLanguage } from "@/context/LanguageContext"
+import type { LanguageCode } from "@/lib/translations"
+
+const FOOTER_CURRENCIES = {
+  USD: { code: "USD", label: "US Dollar $", symbol: "$", rate: 1 },
+  EUR: { code: "EUR", label: "Euro €", symbol: "€", rate: 0.92 },
+  GBP: { code: "GBP", label: "British Pound £", symbol: "£", rate: 0.79 },
+  GHS: { code: "GHS", label: "Ghana Cedi ₵", symbol: "₵", rate: 15.5 },
+  CAD: { code: "CAD", label: "Canadian Dollar C$", symbol: "C$", rate: 1.38 },
+} as const
 
 const PORTAL_QR_PATH =
   "M2,2H3V3H2zM3,2H4V3H3zM4,2H5V3H4zM5,2H6V3H5zM6,2H7V3H6zM7,2H8V3H7zM8,2H9V3H8zM11,2H12V3H11zM12,2H13V3H12zM13,2H14V3H13zM14,2H15V3H14zM15,2H16V3H15zM18,2H19V3H18zM19,2H20V3H19zM20,2H21V3H20zM21,2H22V3H21zM22,2H23V3H22zM24,2H25V3H24zM25,2H26V3H25zM26,2H27V3H26zM27,2H28V3H27zM28,2H29V3H28zM29,2H30V3H29zM30,2H31V3H30zM2,3H3V4H2zM8,3H9V4H8zM11,3H12V4H11zM14,3H15V4H14zM16,3H17V4H16zM17,3H18V4H17zM18,3H19V4H18zM19,3H20V4H19zM22,3H23V4H22zM24,3H25V4H24zM30,3H31V4H30zM2,4H3V5H2zM4,4H5V5H4zM5,4H6V5H5zM6,4H7V5H6zM8,4H9V5H8zM10,4H11V5H10zM14,4H15V5H14zM17,4H18V5H17zM21,4H22V5H21zM24,4H25V5H24zM26,4H27V5H26zM27,4H28V5H27zM28,4H29V5H28zM30,4H31V5H30zM2,5H3V6H2zM4,5H5V6H4zM5,5H6V6H5zM6,5H7V6H6zM8,5H9V6H8zM10,5H11V6H10zM11,5H12V6H11zM12,5H13V6H12zM17,5H18V6H17zM19,5H20V6H19zM24,5H25V6H24zM26,5H27V6H26zM27,5H28V6H27zM28,5H29V6H28zM30,5H31V6H30zM2,6H3V7H2zM4,6H5V7H4zM5,6H6V7H5zM6,6H7V7H6zM8,6H9V7H8zM10,6H11V7H10zM11,6H12V7H11zM14,6H15V7H14zM15,6H16V7H15zM18,6H19V7H18zM19,6H20V7H19zM20,6H21V7H20zM21,6H22V7H21zM22,6H23V7H22zM24,6H25V7H24zM26,6H27V7H26zM27,6H28V7H27zM28,6H29V7H28zM30,6H31V7H30zM2,7H3V8H2zM8,7H9V8H8zM10,7H11V8H10zM11,7H12V8H11zM13,7H14V8H13zM15,7H16V8H15zM16,7H17V8H16zM17,7H18V8H17zM19,7H20V8H19zM22,7H23V8H22zM24,7H25V8H24zM30,7H31V8H30zM2,8H3V9H2zM3,8H4V9H3zM4,8H5V9H4zM5,8H6V9H5zM6,8H7V9H6zM7,8H8V9H7zM8,8H9V9H8zM10,8H11V9H10zM12,8H13V9H12zM14,8H15V9H14zM16,8H17V9H16zM18,8H19V9H18zM20,8H21V9H20zM22,8H23V9H22zM24,8H25V9H24zM25,8H26V9H25zM26,8H27V9H26zM27,8H28V9H27zM28,8H29V9H28zM29,8H30V9H29zM30,8H31V9H30zM10,9H11V10H10zM11,9H12V10H11zM12,9H13V10H12zM13,9H14V10H13zM14,9H15V10H14zM15,9H16V10H15zM17,9H18V10H17zM18,9H19V10H18zM20,9H21V10H20zM21,9H22V10H21zM22,9H23V10H22zM2,10H3V11H2zM4,10H5V11H4zM5,10H6V11H5zM6,10H7V11H6zM7,10H8V11H7zM8,10H9V11H8zM13,10H14V11H13zM16,10H17V11H16zM17,10H18V11H17zM18,10H19V11H18zM19,10H20V11H19zM21,10H22V11H21zM24,10H25V11H24zM25,10H26V11H25zM26,10H27V11H26zM27,10H28V11H27zM28,10H29V11H28zM2,11H3V12H2zM4,11H5V12H4zM5,11H6V12H5zM10,11H11V12H10zM12,11H13V12H12zM18,11H19V12H18zM19,11H20V12H19zM20,11H21V12H20zM21,11H22V12H21zM23,11H24V12H23zM24,11H25V12H24zM25,11H26V12H25zM26,11H27V12H26zM30,11H31V12H30zM2,12H3V13H2zM4,12H5V13H4zM6,12H7V13H6zM7,12H8V13H7zM8,12H9V13H8zM10,12H11V13H10zM11,12H12V13H11zM12,12H13V13H12zM13,12H14V13H13zM17,12H18V13H17zM19,12H20V13H19zM22,12H23V13H22zM23,12H24V13H23zM25,12H26V13H25zM26,12H27V13H26zM2,13H3V14H2zM3,13H4V14H3zM10,13H11V14H10zM11,13H12V14H11zM12,13H13V14H12zM16,13H17V14H16zM20,13H21V14H20zM22,13H23V14H22zM24,13H25V14H24zM25,13H26V14H25zM26,13H27V14H26zM27,13H28V14H27zM29,13H30V14H29zM2,14H3V15H2zM6,14H7V15H6zM8,14H9V15H8zM11,14H12V15H11zM14,14H15V15H14zM17,14H18V15H17zM18,14H19V15H18zM19,14H20V15H19zM21,14H22V15H21zM27,14H28V15H27zM28,14H29V15H28zM7,15H8V16H7zM10,15H11V16H10zM12,15H13V16H12zM13,15H14V16H13zM14,15H15V16H14zM15,15H16V16H15zM16,15H17V16H16zM18,15H19V16H18zM20,15H21V16H20zM21,15H22V16H21zM22,15H23V16H22zM24,15H25V16H24zM25,15H26V16H25zM26,15H27V16H26zM30,15H31V16H30zM2,16H3V17H2zM4,16H5V17H4zM5,16H6V17H5zM7,16H8V17H7zM8,16H9V17H8zM11,16H12V17H11zM12,16H13V17H12zM14,16H15V17H14zM15,16H16V17H15zM16,16H17V17H16zM17,16H18V17H17zM18,16H19V17H18zM22,16H23V17H22zM27,16H28V17H27zM28,16H29V17H28zM3,17H4V18H3zM4,17H5V18H4zM5,17H6V18H5zM6,17H7V18H6zM9,17H10V18H9zM13,17H14V18H13zM14,17H15V18H14zM15,17H16V18H15zM18,17H19V18H18zM21,17H22V18H21zM22,17H23V18H22zM23,17H24V18H23zM25,17H26V18H25zM29,17H30V18H29zM3,18H4V19H3zM6,18H7V19H6zM8,18H9V19H8zM10,18H11V19H10zM12,18H13V19H12zM13,18H14V19H13zM16,18H17V19H16zM19,18H20V19H19zM21,18H22V19H21zM27,18H28V19H27zM28,18H29V19H28zM2,19H3V20H2zM3,19H4V20H3zM5,19H6V20H5zM6,19H7V20H6zM9,19H10V20H9zM10,19H11V20H10zM13,19H14V20H13zM18,19H19V20H18zM20,19H21V20H20zM21,19H22V20H21zM22,19H23V20H22zM23,19H24V20H23zM24,19H25V20H24zM25,19H26V20H25zM26,19H27V20H26zM28,19H29V20H28zM30,19H31V20H30zM2,20H3V21H2zM4,20H5V21H4zM5,20H6V21H5zM7,20H8V21H7zM8,20H9V21H8zM10,20H11V21H10zM11,20H12V21H11zM12,20H13V21H12zM17,20H18V21H17zM19,20H20V21H19zM20,20H21V21H20zM22,20H23V21H22zM24,20H25V21H24zM25,20H26V21H25zM28,20H29V21H28zM2,21H3V22H2zM4,21H5V22H4zM5,21H6V22H5zM6,21H7V22H6zM11,21H12V22H11zM13,21H14V22H13zM14,21H15V22H14zM16,21H17V22H16zM17,21H18V22H17zM21,21H22V22H21zM23,21H24V22H23zM25,21H26V22H25zM29,21H30V22H29zM2,22H3V23H2zM5,22H6V23H5zM7,22H8V23H7zM8,22H9V23H8zM11,22H12V23H11zM17,22H18V23H17zM18,22H19V23H18zM19,22H20V23H19zM22,22H23V23H22zM23,22H24V23H23zM24,22H25V23H24zM25,22H26V23H25zM26,22H27V23H26zM28,22H29V23H28zM29,22H30V23H29zM30,22H31V23H30zM10,23H11V24H10zM11,23H12V24H11zM13,23H14V24H13zM15,23H16V24H15zM16,23H17V24H16zM18,23H19V24H18zM22,23H23V24H22zM26,23H27V24H26zM27,23H28V24H27zM28,23H29V24H28zM29,23H30V24H29zM30,23H31V24H30zM2,24H3V25H2zM3,24H4V25H3zM4,24H5V25H4zM5,24H6V25H5zM6,24H7V25H6zM7,24H8V25H7zM8,24H9V25H8zM11,24H12V25H11zM12,24H13V25H12zM13,24H14V25H13zM15,24H16V25H15zM16,24H17V25H16zM17,24H18V25H17zM18,24H19V25H18zM21,24H22V25H21zM22,24H23V25H22zM24,24H25V25H24zM26,24H27V25H26zM27,24H28V25H27zM28,24H29V25H28zM2,25H3V26H2zM8,25H9V26H8zM10,25H11V26H10zM11,25H12V26H11zM12,25H13V26H12zM14,25H15V26H14zM15,25H16V26H15zM17,25H18V26H17zM18,25H19V26H18zM20,25H21V26H20zM21,25H22V26H21zM22,25H23V26H22zM26,25H27V26H26zM2,26H3V27H2zM4,26H5V27H4zM5,26H6V27H5zM6,26H7V27H6zM8,26H9V27H8zM10,26H11V27H10zM11,26H12V27H11zM12,26H13V27H12zM13,26H14V27H13zM14,26H15V27H14zM16,26H17V27H16zM19,26H20V27H19zM22,26H23V27H22zM23,26H24V27H23zM24,26H25V27H24zM25,26H26V27H25zM26,26H27V27H26zM28,26H29V27H28zM2,27H3V28H2zM4,27H5V28H4zM5,27H6V28H5zM6,27H7V28H6zM8,27H9V28H8zM10,27H11V28H10zM11,27H12V28H11zM14,27H15V28H14zM15,27H16V28H15zM19,27H20V28H19zM20,27H21V28H20zM22,27H23V28H22zM27,27H28V28H27zM28,27H29V28H28zM29,27H30V28H29zM30,27H31V28H30zM2,28H3V29H2zM4,28H5V29H4zM5,28H6V29H5zM6,28H7V29H6zM8,28H9V29H8zM10,28H11V29H10zM11,28H12V29H11zM14,28H15V29H14zM16,28H17V29H16zM17,28H18V29H17zM20,28H21V29H20zM21,28H22V29H21zM22,28H23V29H22zM23,28H24V29H23zM24,28H25V29H24zM25,28H26V29H25zM26,28H27V29H26zM27,28H28V29H27zM28,28H29V29H28zM29,28H30V29H29zM2,29H3V30H2zM8,29H9V30H8zM11,29H12V30H11zM13,29H14V30H13zM14,29H15V30H14zM18,29H19V30H18zM22,29H23V30H22zM24,29H25V30H24zM25,29H26V30H25zM27,29H28V30H27zM29,29H30V30H29zM2,30H3V31H2zM3,30H4V31H3zM4,30H5V31H4zM5,30H6V31H5zM6,30H7V31H6zM7,30H8V31H7zM8,30H9V31H8zM10,30H11V31H10zM12,30H13V31H12zM14,30H15V31H14zM16,30H17V31H16zM19,30H20V31H19zM23,30H24V31H23zM24,30H25V31H24zM26,30H27V31H26zM28,30H29V31H28z"
@@ -469,6 +479,24 @@ export function ConnectLn360PortalLanding() {
   const [showIosGuideModal, setShowIosGuideModal] = useState(false)
   const [showNoctisWidget, setShowNoctisWidget] = useState(true)
   const [noctisAnswer, setNoctisAnswer] = useState<string | null>(null)
+  const { language, setLanguage, languages } = useLanguage()
+  const [selectedCurrency, setSelectedCurrency] =
+    useState<keyof typeof FOOTER_CURRENCIES>("USD")
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const formatCurrencyPrice = (rawPrice: string) => {
+    const cur = FOOTER_CURRENCIES[selectedCurrency] || FOOTER_CURRENCIES.USD
+    if (rawPrice === "Custom") return "Custom"
+    if (rawPrice === "$0") return `${cur.symbol}0`
+    if (selectedCurrency === "USD") return rawPrice
+    const num = Number(rawPrice.replace(/[^0-9.]/g, ""))
+    if (!Number.isFinite(num) || num <= 0) return rawPrice
+    return `${cur.symbol}${(num * cur.rate).toFixed(2)}`
+  }
 
   const currentOverview =
     OVERVIEW_FEATURES.find((f) => f.id === activeAccordionId) || OVERVIEW_FEATURES[0]
@@ -1022,10 +1050,12 @@ export function ConnectLn360PortalLanding() {
                     <div className="mt-5">
                       {billingCycle === "yearly" && plan.strikePrice && (
                         <p className="text-xl font-medium text-[#6B7280] line-through">
-                          {plan.strikePrice}
+                          {formatCurrencyPrice(plan.strikePrice)}
                         </p>
                       )}
-                      <p className="text-3xl font-bold text-[#0B1F3A]">{displayPrice}</p>
+                      <p className="text-3xl font-bold text-[#0B1F3A]">
+                        {formatCurrencyPrice(displayPrice)}
+                      </p>
                       <p className="mt-1 text-xs text-[#6B7280]">/{displayUnit}</p>
                     </div>
                     <p className="mt-4 text-xs leading-relaxed text-[#4B5563]">
@@ -1407,21 +1437,455 @@ export function ConnectLn360PortalLanding() {
         </div>
       </section>
 
-      {/* ─── PORTAL FOOTER ─── */}
-      <footer className="border-t border-[#E7E2DA] bg-white/80 py-6 px-4 sm:px-8 text-center text-xs text-[#6B7280]">
-        <div className="mx-auto max-w-6xl flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <ConnectInLogo size="xs" showSubtitle={false} />
-            <span className="font-semibold text-[#0B1F3A]">ConnectLn 360 Portal</span>
+      {/* ─── ENTERPRISE MIDNIGHT CONNECTLN 360 PORTAL FOOTER ─── */}
+      <footer className="bg-gradient-to-b from-[#04071E] via-[#060B2B] to-[#040822] text-white border-t border-white/10 pt-14 pb-24 sm:pb-16 px-4 sm:px-8">
+        <div className="mx-auto max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10">
+          {/* Left Brand & Utility Column */}
+          <div className="lg:col-span-4 flex flex-col justify-between space-y-8">
+            <div className="space-y-5">
+              <Link href="/connectin-portal" className="inline-flex items-center gap-2.5">
+                <ConnectInLogo size="md" showSubtitle={false} inverted />
+                <span className="rounded-full bg-[#0067B8]/30 border border-sky-400/30 px-2.5 py-0.5 text-[11px] font-bold text-sky-200">
+                  360
+                </span>
+              </Link>
+
+              {/* Download Center Card */}
+              <a
+                href="#download-app"
+                className="flex items-center gap-3.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 p-3 max-w-[270px] transition-colors group"
+              >
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#0067B8] shadow-md group-hover:scale-105 transition-transform">
+                  <Download className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 text-left">
+                  <p className="text-xs font-bold text-white leading-tight">Download Center</p>
+                  <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                    Get the most out of ConnectLn 360
+                  </p>
+                </div>
+              </a>
+
+              {/* Live Language & Currency Selectors */}
+              <div className="space-y-2.5 pt-1">
+                <select
+                  aria-label="Select portal language"
+                  value={mounted ? language : "en"}
+                  onChange={(e) => setLanguage(e.target.value as LanguageCode)}
+                  className="w-full max-w-[270px] rounded-lg border border-white/15 bg-[#12193A] px-3.5 py-2.5 text-xs font-semibold text-white cursor-pointer focus:border-sky-400 focus:outline-none"
+                >
+                  {languages.map((lang) => (
+                    <option key={lang.code} value={lang.code} className="bg-[#0B1230] text-white">
+                      {lang.name}
+                      {lang.localName && lang.localName !== lang.name ? ` · ${lang.localName}` : ""}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  aria-label="Select display currency"
+                  value={selectedCurrency}
+                  onChange={(e) =>
+                    setSelectedCurrency(e.target.value as keyof typeof FOOTER_CURRENCIES)
+                  }
+                  className="w-full max-w-[270px] rounded-lg border border-white/15 bg-[#12193A] px-3.5 py-2.5 text-xs font-semibold text-white cursor-pointer focus:border-sky-400 focus:outline-none block"
+                >
+                  {Object.values(FOOTER_CURRENCIES).map((cur) => (
+                    <option key={cur.code} value={cur.code} className="bg-[#0B1230] text-white">
+                      {cur.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <p className="text-xs text-slate-400 font-medium">Get in touch</p>
+              <div className="space-y-1 text-sm font-semibold text-white">
+                <p>
+                  <a href="mailto:support@conectln.com" className="hover:text-sky-300 transition-colors">
+                    support@conectln.com
+                  </a>
+                </p>
+                <p className="text-xs text-slate-300 font-normal flex flex-wrap items-center gap-3">
+                  <Link href="/connectin" className="hover:text-white hover:underline">
+                    conectln.com
+                  </Link>
+                  <span aria-hidden="true">·</span>
+                  <a
+                    href="https://www.expediteconsults.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-white hover:underline"
+                  >
+                    expediteconsults.com
+                  </a>
+                </p>
+              </div>
+
+              {/* ConnectLn 360 Ecosystem & Social Icon Row */}
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <Link
+                  href="/connectin"
+                  aria-label="ConnectLn Core Workspace"
+                  title="ConnectLn Core (/connectin)"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  <Building2 className="h-4 w-4" />
+                </Link>
+                <a
+                  href="https://noctis.social"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Noctis Social"
+                  title="Noctis Social (noctis.social)"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  <PlayCircle className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://www.dstrike.app/noctis"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Noctis Clinic"
+                  title="Noctis Clinic (www.dstrike.app/noctis)"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  <Zap className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://expedite-consults.vercel.app/launchpad"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Expedite Launchpad"
+                  title="Expedite Launchpad (67+ Platforms)"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  <Globe className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://expedite-consults.vercel.app/trueplace"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="TruePlace HomeOS"
+                  title="TruePlace Real Estate & HomeOS"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link href="/connectin-login" className="hover:underline">Sign in</Link>
-            <Link href="/connectin-login?mode=join" className="hover:underline">Create account</Link>
-            <a href="/connectln.apk" download="connectln.apk" className="hover:underline">Android APK</a>
-            <Link href="/assessment" className="hover:underline">Security</Link>
-            <Link href="/legal/privacy-policy" className="hover:underline">Privacy</Link>
+
+          {/* Column 1: About */}
+          <div className="lg:col-span-2 space-y-3">
+            <h3 className="text-sm font-bold text-white">About</h3>
+            <ul className="space-y-2 text-xs text-slate-300">
+              <li>
+                <a href="#overview" className="hover:text-white hover:underline transition-colors">
+                  ConnectLn 360 Overview
+                </a>
+              </li>
+              <li>
+                <Link href="/connectin" className="hover:text-white hover:underline transition-colors">
+                  ConnectLn Workspace
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="https://noctis.social"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  Noctis Social
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.dstrike.app/noctis"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  Noctis Clinic
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://expedite-consults.vercel.app/launchpad"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  Expedite Launchpad
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://expedite-consults.vercel.app/trueplace"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  TruePlace HomeOS
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://expedite-consults.vercel.app/trueplace?tab=hometruth"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  TruePlace HomeTruth
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://expedite-consults.vercel.app/trueplace?tab=passport&intake=1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  Housing Passport Intake
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.expediteconsults.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  Enterprise Advisory
+                </a>
+              </li>
+              <li>
+                <Link href="/connectin?tab=jobs" className="hover:text-white hover:underline transition-colors">
+                  Verified Jobs
+                </Link>
+              </li>
+              <li>
+                <Link href="/connectin?tab=learning" className="hover:text-white hover:underline transition-colors">
+                  Learning Academy
+                </Link>
+              </li>
+            </ul>
           </div>
-          <span>Expedite Consults LLC © 2026</span>
+
+          {/* Column 2: Download */}
+          <div className="lg:col-span-2 space-y-3">
+            <h3 className="text-sm font-bold text-white">Download</h3>
+            <ul className="space-y-2 text-xs text-slate-300">
+              <li>
+                <Link href="/connectin-login" className="hover:text-white hover:underline transition-colors">
+                  ConnectLn 360 Web Portal
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="/connectln.apk"
+                  download="connectln.apk"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  Android Direct APK
+                </a>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setShowIosGuideModal(true)}
+                  className="text-left hover:text-white hover:underline transition-colors cursor-pointer"
+                >
+                  iPhone &amp; iPad Web App
+                </button>
+              </li>
+              <li>
+                <a href="#download-app" className="hover:text-white hover:underline transition-colors">
+                  Windows Desktop App
+                </a>
+              </li>
+              <li>
+                <a href="#download-app" className="hover:text-white hover:underline transition-colors">
+                  macOS Desktop App
+                </a>
+              </li>
+              <li>
+                <a href="#mobile-app" className="hover:text-white hover:underline transition-colors">
+                  Mobile QR Code
+                </a>
+              </li>
+              <li>
+                <Link href="/connectin?tab=vibecomms" className="hover:text-white hover:underline transition-colors">
+                  Vibe Calls &amp; Studio
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="https://desk-note.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  DeskNote E2EE App
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 3: Workspace & Plans */}
+          <div className="lg:col-span-2 space-y-3">
+            <h3 className="text-sm font-bold text-white">Workspace &amp; Plans</h3>
+            <ul className="space-y-2 text-xs text-slate-300">
+              <li>
+                <Link
+                  href="/connectin-login?mode=join"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  Create Free Account
+                </Link>
+              </li>
+              <li>
+                <Link href="/connectin-login" className="hover:text-white hover:underline transition-colors">
+                  Sign In
+                </Link>
+              </li>
+              <li>
+                <a href="#plans" className="hover:text-white hover:underline transition-colors">
+                  Plans &amp; Pricing
+                </a>
+              </li>
+              <li>
+                <a href="#tour" className="hover:text-white hover:underline transition-colors">
+                  Interactive Preview
+                </a>
+              </li>
+              <li>
+                <a href="#noctis-ai" className="hover:text-white hover:underline transition-colors">
+                  Noctis AI Workflows
+                </a>
+              </li>
+              <li>
+                <Link
+                  href="/connectin?tab=workbusiness"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  For Business &amp; RFPs
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/connectin?tab=marketplace"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  Enterprise Marketplace
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/connectin?tab=veterans"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  Veterans Network
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/connectin?tab=franchises"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  Franchise Directory
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 4: Support */}
+          <div className="lg:col-span-2 space-y-3">
+            <h3 className="text-sm font-bold text-white">Support</h3>
+            <ul className="space-y-2 text-xs text-slate-300">
+              <li>
+                <a href="#faq" className="hover:text-white hover:underline transition-colors">
+                  Frequently Asked Questions
+                </a>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setShowNoctisWidget(true)}
+                  className="text-left hover:text-white hover:underline transition-colors cursor-pointer"
+                >
+                  Ask Noctis Assistant
+                </button>
+              </li>
+              <li>
+                <Link href="/connectin" className="hover:text-white hover:underline transition-colors">
+                  Account &amp; Passkeys
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/connectin?tab=careersuite"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  Resume &amp; CareerSuite
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/connectin?tab=pulserooms"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  Pulse Audio Rooms
+                </Link>
+              </li>
+              <li>
+                <a href="#tips" className="hover:text-white hover:underline transition-colors">
+                  Latest Updates &amp; Guides
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.expediteconsults.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white hover:underline transition-colors"
+                >
+                  Expedite Support Desk
+                </a>
+              </li>
+              <li>
+                <Link href="/connectin-login" className="hover:text-white hover:underline transition-colors">
+                  Privacy, Security &amp; Trust Policies
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Legal Bar */}
+        <div className="mx-auto max-w-6xl mt-12 pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-400">
+          <span>© 2026 Expedite Consults LLC · ConnectLn 360 Universe. All rights reserved.</span>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link href="/connectin-login" className="hover:text-white hover:underline">
+              Sign in
+            </Link>
+            <Link href="/connectin-login?mode=join" className="hover:text-white hover:underline">
+              Create Account
+            </Link>
+            <a href="/connectln.apk" download="connectln.apk" className="hover:text-white hover:underline">
+              Android APK
+            </a>
+            <a
+              href="https://www.expediteconsults.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white hover:underline"
+            >
+              Expedite Consults
+            </a>
+          </div>
         </div>
       </footer>
 

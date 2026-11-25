@@ -9,6 +9,7 @@ import {
   Minimize2,
   PlayCircle,
   RefreshCw,
+  X,
   Zap,
 } from "lucide-react"
 
@@ -64,6 +65,7 @@ export function ConnectLn360UniverseAppView({
   const [iframeKey, setIframeKey] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showAuthTip, setShowAuthTip] = useState(true)
 
   useEffect(() => {
     setIsLoading(true)
@@ -192,6 +194,36 @@ export function ConnectLn360UniverseAppView({
           </a>
         </div>
       </div>
+
+      {/* Dismissible Cross-App Sign-In Helper Bar */}
+      {showAuthTip && (
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2 bg-amber-50/90 dark:bg-amber-950/35 border-b border-amber-200/80 dark:border-amber-800/60 text-xs text-amber-950 dark:text-amber-100 shrink-0">
+          <p className="text-[11.5px] font-medium leading-snug flex-1 min-w-0">
+            {appId === "noctisclinic"
+              ? "Noctis Clinic uses its own separate login from ConnectLn. Use Instant Guest Access, Forgot password?, or sign in via a full tab if your browser restricts embedded cookies."
+              : "Noctis Social uses its own account session. If sign-in cookies are restricted inside the embedded frame, open it in a full tab."}
+          </p>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <a
+              href={app.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-lg bg-[#0B1F3A] hover:bg-[#163259] text-white px-2.5 py-1 text-[11px] font-bold transition-colors"
+            >
+              <span>{appId === "noctisclinic" ? "Sign in via Full Tab" : "Open Full Tab"}</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+            <button
+              type="button"
+              onClick={() => setShowAuthTip(false)}
+              aria-label="Dismiss sign-in helper"
+              className="rounded-lg p-1 text-amber-800 hover:bg-amber-200/60 dark:text-amber-200 dark:hover:bg-amber-900/60 cursor-pointer"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Live Embedded App Viewport */}
       <div

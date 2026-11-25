@@ -8,6 +8,7 @@ interface ConnectInLogoProps {
   className?: string
   variant?: "full" | "icon-only"
   compactOnMobile?: boolean
+  inverted?: boolean
 }
 
 export function ConnectInLogo({
@@ -15,7 +16,8 @@ export function ConnectInLogo({
   showSubtitle = true,
   className = "",
   variant = "full",
-  compactOnMobile = false
+  compactOnMobile = false,
+  inverted = false
 }: ConnectInLogoProps) {
   const iconSizes = {
     xs: "h-6 w-6",
@@ -60,10 +62,12 @@ export function ConnectInLogo({
         <div className={`${compactOnMobile ? "hidden sm:flex" : "flex"} flex-col leading-none shrink-0`}>
           <div className="relative flex items-center shrink-0" data-no-translate="true" translate="no">
             <span
-              className={`notranslate font-semibold tracking-tight text-[#191919] dark:text-zinc-100 font-sans ${titleSizes[size]}`}
+              className={`notranslate font-semibold tracking-tight font-sans ${titleSizes[size]} ${
+                inverted ? "text-white" : "text-[#191919] dark:text-zinc-100"
+              }`}
               style={{ letterSpacing: "-0.02em" }}
             >
-              Connect<span className="text-[#191919] dark:text-zinc-100">L</span>n
+              Connect<span className={inverted ? "text-white" : "text-[#191919] dark:text-zinc-100"}>L</span>n
             </span>
 
             {/* Official Terracotta Underline only shown on full hero/subtitle lockups */}
@@ -77,7 +81,9 @@ export function ConnectInLogo({
 
           {showSubtitle && (
             <span
-              className={`font-medium text-zinc-500 dark:text-zinc-400 mt-1.5 whitespace-nowrap tracking-normal hidden min-[440px]:inline ${subtitleSizes[size]}`}
+              className={`font-medium mt-1.5 whitespace-nowrap tracking-normal hidden min-[440px]:inline ${subtitleSizes[size]} ${
+                inverted ? "text-slate-300" : "text-zinc-500 dark:text-zinc-400"
+              }`}
             >
               Tickets, vouches, and real work
             </span>
