@@ -231,15 +231,39 @@ async function runVitsChunk(model, ids) {
   const out = await session.run(inputs)
   const outName = session.outputNames[0]
   const raw = out[outName]?.data
-  if (!raw || typeof raw.length !== "number") {
+  if (!raw || typeof raw.length !== "number" || raw.length === 0) {
     return new Float32Array(0)
   }
 
-  const clean = new Float32Array(raw.length)
+  // 1. Remove DC offset so chunks never click when concatenated
+  let sum = 0
+  let validCount = 0
   for (let i = 0; i < raw.length; i++) {
-    const v = raw[i]
-    clean[i] = Number.isFinite(v) ? v : 0
+    if (Number.isFinite(raw[i])) {
+      sum += raw[i]
+      validCount++
+    }
   }
+  const mean = validCount > 0 ? sum / validCount : 0
+
+  // 2. Apply subtle speech presence lift (gentle 1-pole pre-emphasis y[n] = x[n] - 0.16*x[n-1])
+  //    to sharpen consonant articulation in 16kHz VITS speech without adding harshness
+  const clean = new Float32Array(raw.length)
+  let prev = 0
+  for (let i = 0; i < raw.length; i++) {
+    const centered = Number.isFinite(raw[i]) ? raw[i] - mean : 0
+    clean[i] = centered - 0.16 * prev
+    prev = centered
+  }
+
+  // 3. Apply smooth 10ms fade-in & fade-out ramps at chunk boundaries
+  const fadeSamples = Math.min(160, Math.floor(clean.length / 6))
+  for (let i = 0; i < fadeSamples; i++) {
+    const ramp = i / fadeSamples
+    clean[i] *= ramp
+    clean[clean.length - 1 - i] *= ramp
+  }
+
   return clean
 }
 
@@ -294,35 +318,41 @@ async function handleSynthesize(msg) {
   if (cancelledRequestIds.has(requestId)) return
   if (priority === "high" && requestId < latestHighRequestId) return
 
-  const chunkWaveforms = []
-  for (const chunk of chunks) {
+  /** @type {Array<{ wave: Float32Array, pauseAfterMs: number }>} */
+  const chunkEntries = []
+  for (const item of chunks) {
     if (cancelledRequestIds.has(requestId)) return
     if (priority === "high" && requestId < latestHighRequestId) return
-    const ids = tokenizeForVits(chunk, model.vocab, model.blankId)
+    const chunkText = typeof item === "string" ? item : item?.text || ""
+    const pauseAfterMs = typeof item === "object" && typeof item?.pauseAfterMs === "number" ? item.pauseAfterMs : 220
+    const ids = tokenizeForVits(chunkText, model.vocab, model.blankId)
     if (ids.length <= 1) continue
     const wave = await runVitsChunk(model, ids)
     if (wave.length > 0) {
-      chunkWaveforms.push(wave)
+      chunkEntries.push({ wave, pauseAfterMs })
     }
   }
 
   if (cancelledRequestIds.has(requestId)) return
-  if (chunkWaveforms.length === 0) {
+  if (chunkEntries.length === 0) {
     throw new Error(`No waveform produced for ${lang}`)
   }
 
-  const pauseSamples = Math.round(model.sampleRate * 0.18)
-  const totalLength =
-    chunkWaveforms.reduce((acc, w) => acc + w.length, 0) +
-    Math.max(0, chunkWaveforms.length - 1) * pauseSamples
+  let totalLength = 0
+  chunkEntries.forEach((entry, idx) => {
+    totalLength += entry.wave.length
+    if (idx < chunkEntries.length - 1) {
+      totalLength += Math.round((model.sampleRate * entry.pauseAfterMs) / 1000)
+    }
+  })
 
   const combined = new Float32Array(totalLength)
   let cursor = 0
-  chunkWaveforms.forEach((wave, idx) => {
-    combined.set(wave, cursor)
-    cursor += wave.length
-    if (idx < chunkWaveforms.length - 1) {
-      cursor += pauseSamples
+  chunkEntries.forEach((entry, idx) => {
+    combined.set(entry.wave, cursor)
+    cursor += entry.wave.length
+    if (idx < chunkEntries.length - 1) {
+      cursor += Math.round((model.sampleRate * entry.pauseAfterMs) / 1000)
     }
   })
 

@@ -22,6 +22,32 @@ const TRANSLATE_TARGET_MAP: Record<string, string> = {
   zh: "zh-CN",
 }
 
+/**
+ * Fixes literal/awkward machine-translation artifacts and leftover English jargon
+ * so African language subtitles and speech sound natural to native speakers.
+ */
+function polishAfricanTranslation(text: string, targetLang: string): string {
+  if (!text) return text
+  if (targetLang === "ak") {
+    return text
+      .replace(/^Hey\s+obiara\b[,!]*/i, "Me ma mo akwaaba,")
+      .replace(/\bHey\s+obiara\b/gi, "akwaaba")
+      .replace(/\bspeed\s*square\b/gi, "susudua ahinanan")
+      .replace(/\bdimensional\s*lumber\b/gi, "nnua a wɔasusuw")
+      .replace(/\blumber\b/gi, "dua")
+      .replace(/\bangles?\b/gi, "ntwea")
+      .replace(/\ba awu\b/gi, "")
+      .replace(/\bsotɔɔ no mu\b/gi, "adwumayɛbea ha")
+      .replace(/\bworkshop\b/gi, "adwumayɛbea")
+      .replace(/\bmiter\b/gi, "ntwea nkyekyɛmu")
+      .replace(/\bcrosscut\b/gi, "dua twa")
+      .replace(/\s+/g, " ")
+      .replace(/\s+([.,!?])/g, "$1")
+      .trim()
+  }
+  return text
+}
+
 async function translateSingleText(text: string, targetLang: string): Promise<string> {
   const trimmed = (text || "").trim()
   if (!trimmed) return text
@@ -44,7 +70,7 @@ async function translateSingleText(text: string, targetLang: string): Promise<st
     const translated = Array.isArray(data?.[0])
       ? data[0].map((seg: any) => seg?.[0] || "").join("")
       : ""
-    return translated ? translated.trim() : text
+    return translated ? polishAfricanTranslation(translated.trim(), targetLang) : text
   } catch {
     return text
   }

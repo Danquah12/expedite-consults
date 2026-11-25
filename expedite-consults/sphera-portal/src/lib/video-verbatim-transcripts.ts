@@ -298,6 +298,87 @@ export const VERBATIM_VIDEO_TRANSCRIPTS_BY_ID: Record<string, VerbatimTranscript
 }
 
 /**
+ * Pure, idiomatic Ghanaian Asante Twi spoken scripts for core ConnectLn lessons.
+ * Written with clean Twi orthography (ɛ, ɔ), natural phrasing, and zero untranslated English jargon
+ * so Ghanaian native speakers recognize every sentence immediately.
+ */
+export const NATIVE_TWI_VERBATIM_TRANSCRIPTS_BY_ID: Record<string, VerbatimTranscriptSegment[]> = {
+  gNhWpuWvtEA: [
+    { timestamp: "00:00", startSec: 0, text: "Me ma mo akwaaba. Ɛnnɛ mɛkyerɛ mo sɛnea yɛde susudua ahinanan hyɛ ntwea agyiraeɛ, na yɛhwɛ sɛ dua no ano teɛ pɛpɛɛpɛ." },
+    { timestamp: "00:09", startSec: 9, text: "Hwɛ ano a ɛwɔ soro ha yi, yɛfrɛ no ban. Mia saa ban no so denneennen wɔ dua no ano tẽẽ no ho." },
+    { timestamp: "00:19", startSec: 19, text: "Afei fa wo nsa kura susudua no mu yie, na fa duadwumfo pɛnsere twa nsensaneeɛ wɔ ano tẽẽ no ho. Ɛno ma wunya ntwea a ɛyɛ digrii aduɔkron pɛpɛɛpɛ." },
+    { timestamp: "00:30", startSec: 30, text: "Sɛ wohia ntwea a ɛyɛ digrii aduanan num nso a, ma ban no ntena dua no ano saa ara, na twa nsensaneeɛ wɔ ano tenten no so." },
+    { timestamp: "00:41", startSec: 41, text: "Afei hwɛ ban no ntwea a wɔakyerɛw so sɛ daneba. Ma saa baabi no nsi dua no ano, na dane susudua no brɛoo." },
+    { timestamp: "00:52", startSec: 52, text: "Hwɛ akontaabuo a ɛwɔ akyiri hɔ no. Sɛ digrii aduasa ba dua no ano pɛ a, mia so na twa wo nsensaneeɛ." },
+    { timestamp: "01:04", startSec: 64, text: "Wubetumi nso de tokuru nketewa a ɛwɔ mfinimfini hɔ no adi dwuma. Fa pɛnsere no hyɛ mu, na twe susudua no fa dua no so tẽẽ." },
+    { timestamp: "01:16", startSec: 76, text: "Awiei koraa no, ansa na wobɛbɔ dadewa anaa skru biara, fa susudua no hyɛ ntwea no mu hwɛ sɛ biribiara hyia pɛpɛɛpɛ a hann biara mfa mu." },
+  ],
+  GHiOk_8mlq0: [
+    { timestamp: "00:00", startSec: 0, text: "Me ma mo akwaaba ba duadwuma bea ha. Ɛnnɛ mɛkyerɛ mo adwuma miako miako a yɛde afiri a ɛkyekyere dua bɔ mu yɛ." },
+    { timestamp: "00:10", startSec: 10, text: "Nea ɛdi kan ne nea wode nsa baako mia so ntɛmntɛm no. Yɛde kyekyere dua to pon so bere a yɛresen ho anaa yɛrepɛɛ so." },
+    { timestamp: "00:21", startSec: 21, text: "Nea ɛtɔ so mmienu ne dadeɛ kyinkyimmu a ɛwɔ ahoɔden kɛseɛ. Sɛ wokyinkyim no a, ɛmia dua no so denneennen sen rɔba deɛ no." },
+    { timestamp: "00:32", startSec: 32, text: "Fa dua sin ketewa to dadeɛ no ne dua pa no ntam, sɛnea dadeɛ no rensɛe dua fɛfɛ no anim." },
+    { timestamp: "00:43", startSec: 43, text: "Sɛ yɛrefam apon akɛseɛ abom a, yɛde dadeɛ tenten a ɛteɛ pɛpɛɛpɛ na ɛkyekyere, sɛnea apon no renkyea." },
+    { timestamp: "00:55", startSec: 55, text: "Fa dadeɛ baako to aseɛ, na fa foforɔ to soro, sɛnea ahoɔden no bɛkyɛ pɛpɛɛpɛ na apon no ada hɔ tẽẽ." },
+    { timestamp: "01:07", startSec: 67, text: "Kyinkyim no brɛoo kɔsi sɛ amane ketewa bi bɛpue wɔ ntam hɔ. Mmia so dodo mma amane no nyinaa mmpue." },
+  ],
+  TQYhIhaDsl8: [
+    { timestamp: "00:00", startSec: 0, text: "Kaa afidie mu ngo nhwehwɛmu nnye simma mmienu koraa, na ɛbɔ w'afidie no ho ban fi sɛeɛ ho." },
+    { timestamp: "00:10", startSec: 10, text: "Nea ɛdi kan no, gyina kaa no wɔ asase tẽẽ so, na dum afidie no bɛyɛ simma du ma ngo no nyinaa nsiane nkɔ aseɛ." },
+    { timestamp: "00:21", startSec: 21, text: "Bue kaa no anim, na hwehwɛ dadeɛ dua a ne ti yɛ kɔkɔɔ anaa akokɔsradeɛ. Twe fi mu na fa ntoma fitaa kura aseɛ." },
+    { timestamp: "00:32", startSec: 32, text: "Popa dadeɛ no ho ma ɛho ntew fitaa wɔ twe a ɛdi kan no mu. Ngo a afidie no apete wɔ mu no remma wonhu nokware no." },
+    { timestamp: "00:43", startSec: 43, text: "San de dadeɛ no hyɛ mu kɔsi aseɛ tɔnn, na afei twe bio na hwɛ baabi a ngo no akɔduru wɔ nsensaneeɛ mmienu no ntam." },
+    { timestamp: "00:55", startSec: 55, text: "Sɛ ngo no gyina nsensaneeɛ a ɛwɔ aseɛ ne nea ɛwɔ soro no ntam a, ɛkyerɛ sɛ ngo no dɔɔso yie." },
+    { timestamp: "01:07", startSec: 67, text: "Hwɛ ngo no ahosuo nso wɔ ntoma no so. Sɛ ɛyɛ fitaa te sɛ nufusuo a, ɛkyerɛ sɛ nsuo akɔfra ngo no mu." },
+  ],
+  "9FV2L7btUEE": [
+    { timestamp: "00:00", startSec: 0, text: "Sɛ kanea kɔkɔɔ a ɛkyerɛ afidie haw sɔ wɔ kaa no anim a, nsiesie biribiara kwa. Fa nhwehwɛmu afiri ka ho na kenkan asɛm a kaa no reka." },
+    { timestamp: "00:11", startSec: 11, text: "Hwɛ kaa no anim wɔ ofirikafoɔ nsa benkum ase, na wobɛhu tokuru a wɔde nhwehwɛmu afiri no hama hyɛ mu." },
+    { timestamp: "00:22", startSec: 22, text: "Hyɛ hama no mu denneennen, na dane safe no ma kanea no nyinaa nsɔ wɔ kaa no anim." },
+    { timestamp: "00:34", startSec: 34, text: "Wɔ afiri no anim no, mia baabi a ɛkenkan mfomsoɔ nkyerɛwdeɛ. Yɛahu sɛ ɛkyerɛ sɛ mframa dɔɔso dodo wɔ afidie no mu." },
+    { timestamp: "00:58", startSec: 58, text: "Ansa na wobɛpepa mfomsoɔ no afi hɔ no, hwɛ kaa no ahoɔden ne ne hyew bere a mfomsoɔ no baeɛ no ansa." },
+    { timestamp: "01:10", startSec: 70, text: "Kae sɛ saa afiri yi kyerɛ baabi a ɔhaw no wɔ, nti hwehwɛ ahama ne mframa kwan mu yie ansa na woasesa biribiara." },
+  ],
+  f_23fk6aEHA: [
+    { timestamp: "00:00", startSec: 0, text: "Adwuma pa fã kɛseɛ wɔ adansie mu aduru ka mu gyina sɛnea wosiesie ɔfasuo no ansa na woafi aseɛ aka aduru no." },
+    { timestamp: "00:11", startSec: 11, text: "Sɛɛ ntoma duruduru wɔ fam na aduru no ammɔ mfa fam, na yi anyinam nkanea mponso nyinaa fi ɔfasuo no ho." },
+    { timestamp: "00:22", startSec: 22, text: "Fa kanea hyerɛnkyerɛnn to ɔfasuo no nkyɛn ma wobɛhu ntokuru ne mmeaeɛ a ɛnkɔ tẽẽ nyinaa pefee." },
+    { timestamp: "00:34", startSec: 34, text: "Fa dɔteɛ fitaa no bi hyɛ sekan tɛtrɛtɛ no ano, na fa tua ntokuru no nyinaa mu ma ɛda hɔ tẽẽ." },
+    { timestamp: "00:46", startSec: 46, text: "Sɛ ɛwo fitaa pɛ a, fa krataa a ɛtwitwi ho twitwi so brɛoo kɔsi sɛ ɔfasuo no anim bɛyɛ torɔm." },
+  ],
+  HNefCphXHoc: [
+    { timestamp: "00:00", startSec: 0, text: "Ɛnnɛ mɛkyerɛ mo sɛnea adwumayɛfoɔ nam nsa so twa aduru ano tẽẽ wɔ ɔdan atifi a ɛnnsɛe baabiara." },
+    { timestamp: "00:10", startSec: 10, text: "Fa aduruka bɛrɔs a ne ti kyea no bɔ aduru no mu kakra bi wɔ aseɛ hɔ nkutoo." },
+    { timestamp: "00:21", startSec: 21, text: "Bɔ bɛrɔs no ho kakra wɔ bokiti no mu, na fi aseɛ ka bɛyɛ nsateakwaa fa fi dua no ano." },
+    { timestamp: "00:33", startSec: 33, text: "Wɔ prɛko a ɛtɔ so mmienu so no, mia bɛrɔs no so brɛoo na twa nsensaneeɛ pɛpɛɛpɛ fa dua no ano ho." },
+  ],
+  "fFMBzVv-5Zs": [
+    { timestamp: "00:00", startSec: 0, text: "Sɛ nsuo dorobɛn pae wɔ fie a, anibereɛ aba. Ɛnnɛ mɛkyerɛ mo baabi a wɔdum efie no nyinaa nsuo kwan." },
+    { timestamp: "00:11", startSec: 11, text: "Sɛ ɛyɛ asubura baako pɛ na ɛretu a, hwɛ aseɛ na dane dadeɛ akɔnwa no kɔ nifa so kɔsi sɛ ɛbɛdum." },
+    { timestamp: "00:22", startSec: 22, text: "Sɛ nsuo no refi ɔfasuo mu a, kɔ baabi a efie no nsuo pɔmpɔ kɛseɛ no hyɛne dan no mu." },
+    { timestamp: "00:34", startSec: 34, text: "Dane saa akɔnwa tẽẽ no digrii aduɔkron ma no ntwa pɔmpɔ no mu, na nsuo no nyinaa bɛgyina ntɛm ara." },
+  ],
+  DLO1LMjQN34: [
+    { timestamp: "00:00", startSec: 0, text: "Anyinam ahoɔden nhwehwɛmu afiri yɛ adwinnadeɛ titiriw wɔ anyinam adwuma mu. Ma yɛnhwɛ sɛnea wɔsiesie ne hama yɛ nhwehwɛmu dwoodwoo." },
+    { timestamp: "00:11", startSec: 11, text: "Nea ɛdi kan no, fa hama tuntum no hyɛ aseɛ tokuru a wɔakyerɛw so sɛ kom no mu, na fa hama kɔkɔɔ no hyɛ beaeɛ a ɛsusuw ahoɔden." },
+    { timestamp: "00:24", startSec: 24, text: "Dane akɔnwa no kɔ efie anyinam ahoɔden susuw so, na fa nkatabo no ka tokuru no mu. Wobɛhu sɛ ɛkyerɛ ɔha ne aduonu." },
+    { timestamp: "00:49", startSec: 49, text: "Kae sɛ ansa na wobɛsusuw ahama kwan mu biara no, dum efie no anyinam ahoɔden nyinaa ansa na asiane biara amma." },
+  ],
+}
+
+export function getNativeLocalizedVerbatimSegments(
+  lang: string,
+  youtubeId: string | undefined
+): string[] | null {
+  if (lang === "ak" && youtubeId && NATIVE_TWI_VERBATIM_TRANSCRIPTS_BY_ID[youtubeId]) {
+    return NATIVE_TWI_VERBATIM_TRANSCRIPTS_BY_ID[youtubeId].map(
+      (seg) => `[${seg.timestamp}] ${seg.text}`
+    )
+  }
+  return null
+}
+
+/**
  * Converts any lesson/video description & takeaways into a direct first-person
  * verbatim spoken transcript (with timestamps) when a video ID is not in the explicit map.
  * Never produces third-person meta-commentary ("Learners explore...", "The instructor demonstrates...").

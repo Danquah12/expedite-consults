@@ -64,16 +64,22 @@ const KHAYA_LANG_MAP: Record<string, string> = {
   ha: "ha",
 }
 
-const HF_MMS_ISO_MAP: Record<string, string> = {
-  ak: "aka",
-  ee: "ewe",
-  ha: "hau",
-  yo: "yor",
-  om: "orm",
-  rw: "kin",
-  sn: "sna",
-  lg: "lug",
-  pa: "pan",
+const HF_MMS_MODEL_CANDIDATES: Record<string, string[]> = {
+  ak: ["FarmerlineML/main_twi_TTS", "facebook/mms-tts-aka"],
+  ee: ["facebook/mms-tts-ewe"],
+  ha: ["facebook/mms-tts-hau"],
+  yo: ["facebook/mms-tts-yor"],
+  om: ["facebook/mms-tts-orm"],
+  rw: ["facebook/mms-tts-kin"],
+  sn: ["facebook/mms-tts-sna"],
+  lg: ["facebook/mms-tts-lug"],
+  pa: ["facebook/mms-tts-pan"],
+}
+
+const YARNGPT_VOICE_MAP: Record<string, string> = {
+  yo: "idera",
+  ig: "adaora",
+  ha: "umar",
 }
 
 const GEMINI_LANG_NAME_MAP: Record<string, string> = {
@@ -525,7 +531,7 @@ async function synthesizeStudioHumanVoiceAttempt(text: string, voiceName: string
         .replace(/>/g, "&gt;")
       const localeMatch = /^([a-z]{2,3}-[A-Z]{2})/i.exec(voiceName)
       const voiceLocale = localeMatch ? localeMatch[1] : "en-US"
-      const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='${voiceLocale}'><voice name='${voiceName}'><prosody pitch='+0Hz' rate='+0%' volume='+20%'>${escaped}</prosody></voice></speak>`
+      const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='${voiceLocale}'><voice name='${voiceName}'><prosody pitch='+0Hz' rate='-4%' volume='+10%'>${escaped}</prosody></voice></speak>`
       const ssmlMsg =
         `X-RequestId:${reqId}\r\n` +
         `Content-Type:application/ssml+xml\r\n` +
@@ -772,34 +778,72 @@ async function synthesizeWithKhayaTTS(
   }
 }
 
-async function synthesizeWithHuggingFaceMMS(
+async function synthesizeWithYarnGPT(
   text: string,
-  lang: string
+  lang: string,
+  isFemale: boolean
 ): Promise<{ buffer: Buffer; contentType: string; actor: string } | null> {
-  const token = (process.env.HF_TOKEN || process.env.HUGGINGFACE_API_KEY || "").trim()
-  const iso = HF_MMS_ISO_MAP[lang]
-  if (!token || !iso) return null
+  const apiKey = (process.env.YARNGPT_API_KEY || "").trim()
+  const defaultVoice = YARNGPT_VOICE_MAP[lang]
+  if (!apiKey || !defaultVoice) return null
+  const voice = lang === "yo" ? (isFemale ? "idera" : "tayo") : lang === "ig" ? (isFemale ? "adaora" : "chinenye") : defaultVoice
   try {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 9500)
-    const res = await fetch(`https://router.huggingface.co/hf-inference/models/facebook/mms-tts-${iso}`, {
+    const res = await fetch("https://yarngpt.ai/api/v1/tts", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ inputs: text.slice(0, 260) }),
+      body: JSON.stringify({
+        text: text.slice(0, 260),
+        voice,
+      }),
       signal: controller.signal,
     })
     clearTimeout(timer)
     if (!res.ok) return null
     const arr = await res.arrayBuffer()
     if (arr.byteLength < 256) return null
-    const contentType = res.headers.get("content-type") || "audio/flac"
-    return { buffer: Buffer.from(arr), contentType, actor: `hf-mms-tts-${iso}` }
+    const contentType = res.headers.get("content-type") || "audio/mp3"
+    return { buffer: Buffer.from(arr), contentType, actor: `yarngpt-${voice}` }
   } catch {
     return null
   }
+}
+
+async function synthesizeWithHuggingFaceMMS(
+  text: string,
+  lang: string
+): Promise<{ buffer: Buffer; contentType: string; actor: string } | null> {
+  const token = (process.env.HF_TOKEN || process.env.HUGGINGFACE_API_KEY || "").trim()
+  const models = HF_MMS_MODEL_CANDIDATES[lang]
+  if (!token || !models || models.length === 0) return null
+  for (const modelRepo of models) {
+    try {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 9500)
+      const res = await fetch(`https://router.huggingface.co/hf-inference/models/${modelRepo}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ inputs: text.slice(0, 260) }),
+        signal: controller.signal,
+      })
+      clearTimeout(timer)
+      if (!res.ok) continue
+      const arr = await res.arrayBuffer()
+      if (arr.byteLength < 256) continue
+      const contentType = res.headers.get("content-type") || "audio/flac"
+      return { buffer: Buffer.from(arr), contentType, actor: `hf-${modelRepo}` }
+    } catch {
+      // try next candidate
+    }
+  }
+  return null
 }
 
 async function synthesizeWithGeminiTTS(
@@ -866,20 +910,22 @@ export async function GET(req: NextRequest) {
 
   if (searchParams.get("capabilities") === "1") {
     const hasKhaya = Boolean((process.env.KHAYA_API_KEY || "").trim())
+    const hasYarn = Boolean((process.env.YARNGPT_API_KEY || "").trim())
     const hasHf = Boolean((process.env.HF_TOKEN || process.env.HUGGINGFACE_API_KEY || "").trim())
     const hasGemini = Boolean((process.env.GEMINI_API_KEY || "").trim())
     const serverNativeLangs = [
       ...Object.keys(EDGE_NATIVE_VOICE_ACTORS),
       ...Object.keys(GOOGLE_NATIVE_TTS_MAP),
       ...(hasKhaya ? Object.keys(KHAYA_LANG_MAP) : []),
-      ...(hasHf ? Object.keys(HF_MMS_ISO_MAP) : []),
+      ...(hasYarn ? Object.keys(YARNGPT_VOICE_MAP) : []),
+      ...(hasHf ? Object.keys(HF_MMS_MODEL_CANDIDATES) : []),
       ...(hasGemini ? Object.keys(GEMINI_LANG_NAME_MAP) : []),
     ]
     return NextResponse.json({
       serverNativeLangs: Array.from(new Set(serverNativeLangs)),
       clientMmsLangs: Array.from(CLIENT_NATIVE_MMS_LANGS),
       subtitlesOnlyLangs: hasGemini ? [] : Array.from(CLOUD_KEY_ONLY_LANGS),
-      providers: { edge: true, google: true, khaya: hasKhaya, hf: hasHf, gemini: hasGemini },
+      providers: { edge: true, google: true, khaya: hasKhaya, yarngpt: hasYarn, hf: hasHf, gemini: hasGemini },
     })
   }
 
@@ -909,6 +955,21 @@ export async function GET(req: NextRequest) {
         "Content-Type": khayaRes.contentType,
         "X-Voice-Actor": khayaRes.actor,
         "X-Voice-Engine": "khaya-native",
+        "X-Voice-Authenticity": "native",
+        "Cache-Control": "public, max-age=86400, s-maxage=86400",
+      },
+    })
+  }
+
+  // 1b. Optional YarnGPT Nigerian native TTS (if YARNGPT_API_KEY configured)
+  const yarnRes = await synthesizeWithYarnGPT(cleanSpeechText, rawLang, useFemale)
+  if (yarnRes) {
+    return new NextResponse(new Uint8Array(yarnRes.buffer), {
+      status: 200,
+      headers: {
+        "Content-Type": yarnRes.contentType,
+        "X-Voice-Actor": yarnRes.actor,
+        "X-Voice-Engine": "yarngpt-native",
         "X-Voice-Authenticity": "native",
         "Cache-Control": "public, max-age=86400, s-maxage=86400",
       },

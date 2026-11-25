@@ -5,7 +5,7 @@ import { Sparkles, Volume2, VolumeX, Globe, X, Subtitles, Send, CheckCircle2, Ra
 import { useLanguage } from "@/context/LanguageContext"
 import { LanguageCode, SUPPORTED_LANGUAGES } from "@/lib/translations"
 import { translateLinesLive, translateTextLive } from "@/lib/live-page-translator"
-import { getVerbatimSpokenSegmentsForVideo } from "@/lib/video-verbatim-transcripts"
+import { getVerbatimSpokenSegmentsForVideo, getNativeLocalizedVerbatimSegments } from "@/lib/video-verbatim-transcripts"
 import { getLanguageVoiceProfile } from "@/lib/noctis-voice-profiles"
 import {
   cancelPendingNativeMmsSpeech,
@@ -1194,12 +1194,13 @@ function getInitialVideoScript(
   const dict = NATIVE_VIDEO_PHRASES[targetLang] || {}
   const instantTitle = dict[cleanTitle] || cleanTitle
   const instantDesc = dict[cleanDesc] || cleanDesc
+  const nativeSteps = getNativeLocalizedVerbatimSegments(targetLang, youtubeId)
 
   return {
     title: instantTitle,
     overview: instantDesc,
-    steps: verbatimEnglishSteps,
-    isFullyTranslated: false,
+    steps: nativeSteps || verbatimEnglishSteps,
+    isFullyTranslated: Boolean(nativeSteps),
   }
 }
 
@@ -1646,7 +1647,7 @@ export function NoctisVideoInterpreterPopup({
       return
     }
 
-    const playAudioUrlOnSharedElement = (audioUrl: string, onPlaybackStarted?: () => void) => {
+    const playAudioUrlOnSharedElement = (audioUrl: string, playbackRate = 1.0, onPlaybackStarted?: () => void) => {
       const audio = getSharedNoctisAudio()
       if (!audio) return
       if (!isSpeakingRef.current || win.__activeNoctisInterpreterId !== instanceIdRef.current || win.__noctisAudioPlaySeq !== mySeq) {
@@ -1664,7 +1665,7 @@ export function NoctisVideoInterpreterPopup({
       audio.volume = 1.0
       try {
         ;(audio as any).preservesPitch = true
-        audio.playbackRate = 1.0
+        audio.playbackRate = playbackRate
       } catch {}
 
       audio.src = audioUrl
@@ -1763,7 +1764,7 @@ export function NoctisVideoInterpreterPopup({
           }
 
           setVoiceStatusNote(profile.nativeSpeakerLabel)
-          playAudioUrlOnSharedElement(blobUrl, () => {
+          playAudioUrlOnSharedElement(blobUrl, 0.9, () => {
             if (nextSentenceText && scriptAlreadyTranslated) {
               prefetchNativeMmsSpeech(nextSentenceText, targetLang)
             }
@@ -1791,7 +1792,7 @@ export function NoctisVideoInterpreterPopup({
       return
     }
 
-    // Server-Native Neural / Regional Voice (/api/connectin/tts?v=native6)
+    // Server-Native Neural / Regional Voice (/api/connectin/tts?v=native7)
     setVoiceStatusNote(profile.nativeSpeakerLabel)
 
     // Preload the NEXT verbatim spoken line in the background so there is zero gap between sentences
@@ -1799,7 +1800,7 @@ export function NoctisVideoInterpreterPopup({
       try {
         const preloadAudio = getSharedNoctisPreloadAudio()
         if (preloadAudio) {
-          preloadAudio.src = `/api/connectin/tts?v=native6&lang=${encodeURIComponent(
+          preloadAudio.src = `/api/connectin/tts?v=native7&lang=${encodeURIComponent(
             targetLang
           )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
             nextSentenceText.slice(0, 260)
@@ -1811,11 +1812,12 @@ export function NoctisVideoInterpreterPopup({
 
     try {
       playAudioUrlOnSharedElement(
-        `/api/connectin/tts?v=native6&lang=${encodeURIComponent(
+        `/api/connectin/tts?v=native7&lang=${encodeURIComponent(
           targetLang
         )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
           sentenceText.slice(0, 260)
-        )}`
+        )}`,
+        1.0
       )
     } catch {
       // Wait for next sentence or user interaction
@@ -1900,7 +1902,8 @@ export function NoctisVideoInterpreterPopup({
           description && description.trim().length > 5
             ? cleanSourceTextForTranslation(description)
             : cleanTitle
-        const verbatimEnglishSteps = getVerbatimSpokenSegmentsForVideo(
+        const nativeSteps = getNativeLocalizedVerbatimSegments(targetCode, youtubeId)
+        const verbatimEnglishSteps = nativeSteps || getVerbatimSpokenSegmentsForVideo(
           youtubeId,
           cleanTitle,
           cleanDesc,
@@ -1911,6 +1914,9 @@ export function NoctisVideoInterpreterPopup({
           cleanDesc,
           verbatimEnglishSteps
         )
+        if (nativeSteps) {
+          readyScriptKeyRef.current = cacheKey
+        }
       }
       spokenLangAndTitleRef.current = cacheKey
       startContinuousInterpretation(0)
@@ -2129,6 +2135,45 @@ export function NoctisVideoInterpreterPopup({
         ) {
           spokenLangAndTitleRef.current = cacheKey
           startContinuousInterpretation(0)
+        }
+        return
+      }
+
+      const nativeLocalizedSteps = getNativeLocalizedVerbatimSegments(targetLang, youtubeId)
+      if (nativeLocalizedSteps) {
+        const dict = NATIVE_VIDEO_PHRASES[targetLang] || {}
+        const translatedHeader = await translateLinesLive([cleanTitle, cleanDesc], targetLang, true).catch(() => [cleanTitle, cleanDesc])
+        if (!cancelled) {
+          const finalTitle = dict[cleanTitle] || translatedHeader[0] || cleanTitle
+          const finalOverview = dict[cleanDesc] || translatedHeader[1] || cleanDesc
+          TRANSLATED_VIDEO_SCRIPT_CACHE.set(cacheKey, {
+            title: finalTitle,
+            overview: finalOverview,
+            steps: nativeLocalizedSteps,
+            isFullyTranslated: true,
+          })
+          setTranslatedTitle(finalTitle)
+          setTranslatedOverview(finalOverview)
+          setTranslatedSteps(nativeLocalizedSteps)
+          sentencesRef.current = buildContinuousInterpreterSentences(
+            finalTitle,
+            finalOverview,
+            nativeLocalizedSteps
+          )
+          readyScriptKeyRef.current = cacheKey
+          setIsLoadingTranslation(false)
+          const alreadyStartedThisSession =
+            isSpeakingRef.current && spokenLangAndTitleRef.current === cacheKey
+          if (
+            audioLangRef.current === targetLang &&
+            (targetLang !== sourceLangRef.current || forceSpeakRef.current) &&
+            (isPlayingRef.current || isPopupOpenRef.current) &&
+            !userManuallyPausedDubRef.current &&
+            !alreadyStartedThisSession
+          ) {
+            spokenLangAndTitleRef.current = cacheKey
+            startContinuousInterpretation(0)
+          }
         }
         return
       }

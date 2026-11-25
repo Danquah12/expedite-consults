@@ -151,6 +151,11 @@ export function getLanguageVoiceProfile(code: LanguageCode): LanguageVoiceProfil
   }
 }
 
+export interface SpeakableChunk {
+  text: string
+  pauseAfterMs: number
+}
+
 const AKAN_UNITS = ["hwee", "baako", "mmienu", "mmiɛnsa", "nnan", "nnum", "nsia", "nson", "nwɔtwe", "nkron"]
 const AKAN_TENS = [
   "",
@@ -179,7 +184,6 @@ function numberToAkanWords(n: number): string {
   if (int < 1000) {
     const hundreds = Math.floor(int / 100)
     const rem = int % 100
-    const hWord = hundreds === 1 ? "ɔha" : `ahanu ${hundreds === 2 ? "" : AKAN_UNITS[hundreds]}`.trim()
     const prefix =
       hundreds === 1
         ? "ɔha"
@@ -199,7 +203,6 @@ function numberToAkanWords(n: number): string {
         ? "ahanwɔtwe"
         : "ahankron"
     return rem === 0 ? prefix : `${prefix} ne ${numberToAkanWords(rem)}`
-    void hWord
   }
   return String(int)
     .split("")
@@ -207,10 +210,33 @@ function numberToAkanWords(n: number): string {
     .join(" ")
 }
 
+const BASIC_NUM_MAP_BY_LANG: Record<string, string[]> = {
+  yo: ["odo", "okan", "eji", "eta", "erin", "arun", "efa", "eje", "ejo", "esan", "ewa"],
+  ig: ["efu", "otu", "abuo", "ato", "ano", "ise", "isii", "asaa", "asato", "itoolu", "iri"],
+  ee: ["ɖekɛ", "ɖeka", "eve", "etɔ̃", "ene", "atɔ̃", "ade", "adre", "enyi", "asieke", "ewo"],
+  rw: ["zeru", "rimwe", "kabiri", "gatatu", "kane", "gatanu", "gatandatu", "karindwi", "umunani", "icyenda", "icumi"],
+  wo: ["tus", "benn", "ñaar", "ñett", "ñent", "juróom", "juróom-benn", "juróom-ñaar", "juróom-ñett", "juróom-ñent", "fukk"],
+  om: ["zeeroo", "tokko", "lama", "sadii", "afur", "shan", "jaha", "torba", "saddeet", "sagal", "kudhan"],
+}
+
+function expandNumbersForLang(text: string, lang: LanguageCode): string {
+  const words = BASIC_NUM_MAP_BY_LANG[lang]
+  if (!words) return text.replace(/\b\d+\b/g, " ")
+  return text.replace(/\b(\d+)\b/g, (_m, digits) => {
+    const num = Number(digits)
+    if (num >= 0 && num <= 10) return words[num]
+    return String(digits)
+      .split("")
+      .map((d) => words[Number(d)] || "")
+      .join(" ")
+  })
+}
+
 /**
  * Character-level VITS models (Meta MMS) require clean orthographic text matching their trained charset:
  * no unexpanded numbers/symbols ("90°"), no emojis, and clean sentence punctuation pauses.
- * Crucially: this PRESERVES genuine indigenous vowels/diacritics (ɛ, ɔ, á, ɛ, ɖ, ƒ, ŋ, ʋ, ẹ, ọ, ṣ, etc.).
+ * Crucially: folds nasal/accented vowels BEFORE filtering so `fã → fa` and `tẽẽ → tee` are never dropped,
+ * while preserving genuine indigenous vowels (ɛ, ɔ, ɖ, ƒ, ŋ, ʋ, ẹ, ọ, ṣ, etc.) and clause boundaries.
  */
 export function normalizeTextForMms(rawText: string, lang: LanguageCode): string {
   let text = (rawText || "")
@@ -218,53 +244,63 @@ export function normalizeTextForMms(rawText: string, lang: LanguageCode): string
     .replace(/^\s*\(\d{1,2}:\d{2}(?::\d{2})?\)\s*/g, "")
     .replace(/[🔊⏸🎬🎯🤖✨✓✕•·|]/g, " ")
     .replace(/[—–]/g, ", ")
+    .replace(/[’‘]/g, "'")
     .replace(/["“”«»()[\]{}]/g, " ")
     .replace(/ConnectLn/gi, lang === "ak" ? "kɔnɛktlin" : "konektlin")
     .replace(/Noctis/gi, "noktis")
 
   if (lang === "ak") {
-    // Expand common numbers & degree angles into authentic Asante Twi words
+    // Expand angles, numbers, and common untranslated English technical words into genuine Asante Twi
     text = text
       .replace(/(\d+)\s*°/g, (_m, num) => `digrii ${numberToAkanWords(Number(num))}`)
       .replace(/\b(\d+)\b/g, (_m, num) => numberToAkanWords(Number(num)))
-      // Clean Unicode normalization to composed forms and lowercase preserving ɛ, ɔ, á
       .normalize("NFC")
       .toLowerCase()
-      // Map stray loanword letters not present in Meta's Akan MMS-TTS vocab (a-z sans c,j,q,v,x,z plus ɛ,ɔ,á)
-      .replace(/video/g, "fidio")
-      .replace(/speed\s*square/g, "susudua ahinanan")
-      .replace(/obd-?ii/g, "o bi di mmienu")
+      // Fold nasalized & accented Akan vowels to vocab-supported base vowels BEFORE filtering!
+      // Preserve `ɛ`, `ɔ`, and `á` (all three exist in onnx-community/mms-tts-aka-ONNX vocab.json)
+      .replace(/ɛ[\u0300-\u036f]+|[ɛ̃ɛ̀ɛ́ɛ̂]/g, "ɛ")
+      .replace(/ɔ[\u0300-\u036f]+|[ɔ̃ɔ̀ɔ́ɔ̂]/g, "ɔ")
+      .replace(/[ãàâäå]/g, "a")
+      .replace(/[ẽèéêë]/g, "e")
+      .replace(/[ĩìíîï]/g, "i")
+      .replace(/[õòóôö]/g, "o")
+      .replace(/[ũùúûü]/g, "u")
+      // Remove any remaining combining diacritics except composed `á`
+      .replace(/[\u0300-\u036f]/g, "")
+      // Normalize loanwords / lingering English terms cleanly into Twi phonetics
+      .replace(/\bspeed\s*square\b/g, "susudua ahinanan")
+      .replace(/\bdimensional\s*lumber\b/g, "nnua a wɔasusuw")
+      .replace(/\blumber\b/g, "dua")
+      .replace(/\bangles?\b/g, "ntwea")
+      .replace(/\bhey\b/g, "akwaaba")
+      .replace(/\bvideo\b/g, "sini")
+      .replace(/\bobd-?ii\b/g, "o bi di mmienu")
+      // Replace letters outside Meta's Akan MMS-TTS vocab (a-z sans c,j,q,v,x,z)
       .replace(/q/g, "kw")
       .replace(/x/g, "ks")
-      .replace(/c(?=[ei])/g, "s")
+      .replace(/c(?=[eiɛ])/g, "s")
       .replace(/c/g, "k")
       .replace(/j/g, "gy")
       .replace(/v/g, "f")
       .replace(/z/g, "s")
-      // Replace any remaining apostrophes/symbols outside MMS Akan vocab
-      .replace(/[;:?!.]+/g, ". ")
-      .replace(/,/g, " ")
-      .replace(/[^a-zɛɔá\s\-'.]/g, " ")
+      // Preserve sentence and clause boundary punctuation for natural VITS pause timing
+      .replace(/[;:\u2026]+/g, ", ")
+      .replace(/[?!.]+/g, ". ")
+      .replace(/[^a-zɛɔá\s\-'.,]/g, " ")
   } else if (lang === "yo") {
-    text = text
-      .replace(/(\d+)\s*°/g, "$1 ")
-      .replace(/\b(\d+)\b/g, " ")
+    text = expandNumbersForLang(text.replace(/(\d+)\s*°/g, "$1 "), "yo")
       .normalize("NFC")
       .toLowerCase()
   } else if (lang === "ig") {
-    // rnjema-unima/mms-tts-ibo-baseline uses Yoruba VITS charset (no subdotted ị / ụ / ṅ), map those closest vowels
-    text = text
-      .replace(/(\d+)\s*°/g, "digrii ")
-      .replace(/\b(\d+)\b/g, " ")
+    // rnjema-unima/mms-tts-ibo-baseline uses Yoruba VITS charset (no subdotted ị / ụ / ṅ)
+    text = expandNumbersForLang(text.replace(/(\d+)\s*°/g, "digrii "), "ig")
       .normalize("NFC")
       .toLowerCase()
       .replace(/ị/g, "i")
       .replace(/ụ/g, "u")
       .replace(/ṅ/g, "n")
   } else {
-    text = text
-      .replace(/(\d+)\s*°/g, " ")
-      .replace(/\b(\d+)\b/g, " ")
+    text = expandNumbersForLang(text.replace(/(\d+)\s*°/g, " "), lang)
       .normalize("NFC")
       .toLowerCase()
   }
@@ -273,34 +309,59 @@ export function normalizeTextForMms(rawText: string, lang: LanguageCode): string
 }
 
 /**
- * Splits a normalized utterance into clause-sized chunks (3..120 chars) so VITS
- * generates natural rhythm and intonation without rushing long run-on sentences.
+ * Splits a normalized utterance into natural breathing clauses (max 68 chars each)
+ * with authentic pause durations: 360ms after sentence stops, 220ms after commas/clauses.
  */
-export function splitMmsSpeakableChunks(normalizedText: string): string[] {
+export function splitMmsSpeakableChunks(normalizedText: string): SpeakableChunk[] {
   const cleaned = (normalizedText || "").trim()
   if (!cleaned) return []
-  const rawParts = cleaned
-    .split(/[.!?]+/)
-    .map((p) => p.replace(/\s+/g, " ").trim())
-    .filter((p) => p.length > 0)
 
-  const chunks: string[] = []
-  for (const part of rawParts) {
-    if (part.length <= 120) {
-      chunks.push(part)
-      continue
+  // Split by sentence boundaries first so sentence breaks receive a fuller pause
+  const sentences = cleaned
+    .split(/(?<=[.!?])\s+|[.!?]+/)
+    .map((s) => s.replace(/^[.,;\s]+|[.,;\s]+$/g, "").trim())
+    .filter((s) => s.length > 0)
+
+  const chunks: SpeakableChunk[] = []
+
+  const pushWrapped = (textPart: string, endPauseMs: number) => {
+    const cleanPart = textPart.replace(/[.,;:!?]/g, "").replace(/\s+/g, " ").trim()
+    if (!cleanPart) return
+    if (cleanPart.length <= 68) {
+      chunks.push({ text: cleanPart, pauseAfterMs: endPauseMs })
+      return
     }
-    const words = part.split(" ")
+    const words = cleanPart.split(" ")
     let buf = ""
+    const subParts: string[] = []
     for (const w of words) {
-      if ((buf + " " + w).trim().length <= 105) {
+      if ((buf + " " + w).trim().length <= 65) {
         buf = (buf + " " + w).trim()
       } else {
-        if (buf) chunks.push(buf)
+        if (buf) subParts.push(buf)
         buf = w
       }
     }
-    if (buf) chunks.push(buf)
+    if (buf) subParts.push(buf)
+    subParts.forEach((sp, i) => {
+      chunks.push({
+        text: sp,
+        pauseAfterMs: i === subParts.length - 1 ? endPauseMs : 160,
+      })
+    })
   }
+
+  for (const sentence of sentences) {
+    const clauses = sentence
+      .split(/\s*[,;:]\s*/)
+      .map((c) => c.trim())
+      .filter(Boolean)
+
+    clauses.forEach((clause, idx) => {
+      const isLastClause = idx === clauses.length - 1
+      pushWrapped(clause, isLastClause ? 360 : 220)
+    })
+  }
+
   return chunks
 }
