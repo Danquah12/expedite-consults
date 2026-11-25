@@ -82,19 +82,19 @@ const YARNGPT_VOICE_MAP: Record<string, string> = {
   ha: "umar",
 }
 
-const GEMINI_LANG_NAME_MAP: Record<string, string> = {
-  ak: "Asante Twi (Ghanaian Akan)",
-  ee: "Ewe (Ghana and Togo)",
-  gaa: "Ga (Accra, Ghana)",
-  ha: "Hausa",
-  yo: "Yoruba",
-  ig: "Igbo",
-  om: "Afaan Oromoo",
-  rw: "Kinyarwanda",
-  sn: "chiShona",
-  xh: "isiXhosa",
-  wo: "Wolof",
-  lg: "Luganda",
+const GEMINI_LANG_STYLE_MAP: Record<string, string> = {
+  ak: "Ghanaian Asante Twi (from Kumasi/Accra, Ghana)",
+  ee: "Ghanaian and Togolese Eʋegbe (Ewe)",
+  gaa: "Ghanaian Gã (from Accra, Ghana)",
+  ha: "Northern Nigerian / West African Hausa",
+  yo: "Nigerian Yorùbá (from Lagos/Ibadan, Nigeria)",
+  ig: "Nigerian Igbo (Southeastern Nigeria)",
+  om: "Ethiopian Afaan Oromoo (Oromo)",
+  rw: "Rwandan Kinyarwanda",
+  sn: "Zimbabwean chiShona (Shona)",
+  xh: "South African isiXhosa (Xhosa)",
+  wo: "Senegalese Wolof",
+  lg: "Ugandan Oluganda (Luganda)",
   pa: "Punjabi",
 }
 
@@ -853,8 +853,8 @@ async function synthesizeWithGeminiTTS(
 ): Promise<{ buffer: Buffer; contentType: string; actor: string } | null> {
   const apiKey = (process.env.GEMINI_API_KEY || "").trim()
   if (!apiKey) return null
-  const langLabel = GEMINI_LANG_NAME_MAP[lang] || lang
-  const voiceName = isFemale ? "Kore" : "Puck"
+  const styleDesc = GEMINI_LANG_STYLE_MAP[lang] || lang
+  const voiceName = isFemale ? "Kore" : "Orus"
   try {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 11000)
@@ -868,9 +868,10 @@ async function synthesizeWithGeminiTTS(
         body: JSON.stringify({
           contents: [
             {
+              role: "user",
               parts: [
                 {
-                  text: `Speak the following ${langLabel} text naturally and clearly as a native speaker without adding extra commentary:\n\n${text.slice(
+                  text: `Read the following ${styleDesc} aloud clearly, warmly, and naturally at a comfortable conversational pace, speaking ONLY the exact text below without adding any introduction or extra words:\n\n${text.slice(
                     0,
                     260
                   )}`,
@@ -896,10 +897,12 @@ async function synthesizeWithGeminiTTS(
     const raw = Buffer.from(inline.data, "base64")
     if (raw.byteLength < 256) return null
     const mime = String(inline.mimeType || "")
+    const rateMatch = /rate=(\d+)/i.exec(mime)
+    const sampleRate = rateMatch ? Number(rateMatch[1]) || 24000 : 24000
     if (mime.includes("L16") || mime.includes("pcm")) {
-      return { buffer: pcm16ToWavBuffer(raw, 24000, 1), contentType: "audio/wav", actor: `gemini-${voiceName}` }
+      return { buffer: pcm16ToWavBuffer(raw, sampleRate, 1), contentType: "audio/wav", actor: `gemini-2.5-${voiceName}` }
     }
-    return { buffer: raw, contentType: mime || "audio/wav", actor: `gemini-${voiceName}` }
+    return { buffer: raw, contentType: mime || "audio/wav", actor: `gemini-2.5-${voiceName}` }
   } catch {
     return null
   }
@@ -919,7 +922,7 @@ export async function GET(req: NextRequest) {
       ...(hasKhaya ? Object.keys(KHAYA_LANG_MAP) : []),
       ...(hasYarn ? Object.keys(YARNGPT_VOICE_MAP) : []),
       ...(hasHf ? Object.keys(HF_MMS_MODEL_CANDIDATES) : []),
-      ...(hasGemini ? Object.keys(GEMINI_LANG_NAME_MAP) : []),
+      ...(hasGemini ? Object.keys(GEMINI_LANG_STYLE_MAP) : []),
     ]
     return NextResponse.json({
       serverNativeLangs: Array.from(new Set(serverNativeLangs)),
@@ -976,23 +979,27 @@ export async function GET(req: NextRequest) {
     })
   }
 
-  // 2. Optional HuggingFace Meta MMS-TTS Server Inference (if HF_TOKEN configured)
-  const hfRes = await synthesizeWithHuggingFaceMMS(cleanSpeechText, rawLang)
-  if (hfRes) {
-    return new NextResponse(new Uint8Array(hfRes.buffer), {
-      status: 200,
-      headers: {
-        "Content-Type": hfRes.contentType,
-        "X-Voice-Actor": hfRes.actor,
-        "X-Voice-Engine": "hf-mms-native",
-        "X-Voice-Authenticity": "native",
-        "Cache-Control": "public, max-age=86400, s-maxage=86400",
-      },
-    })
+  // 2. Native Microsoft Edge Neural Voices (32 languages with genuine native human actors)
+  const nativeEdgePair = EDGE_NATIVE_VOICE_ACTORS[rawLang]
+
+  // 3. Priority Gemini 2.5 Flash 24kHz HD Native TTS for ALL 14 non-Edge languages (when GEMINI_API_KEY is set)
+  //    Takes priority over lower-quality 16kHz MMS and legacy Google Translate TTS so every country sounds human & studio-grade!
+  if (!nativeEdgePair) {
+    const geminiNonEdge = await synthesizeWithGeminiTTS(cleanSpeechText, rawLang, useFemale)
+    if (geminiNonEdge) {
+      return new NextResponse(new Uint8Array(geminiNonEdge.buffer), {
+        status: 200,
+        headers: {
+          "Content-Type": geminiNonEdge.contentType,
+          "X-Voice-Actor": geminiNonEdge.actor,
+          "X-Voice-Engine": "gemini-native",
+          "X-Voice-Authenticity": "native",
+          "Cache-Control": "public, max-age=86400, s-maxage=86400",
+        },
+      })
+    }
   }
 
-  // 3. Verified Native Microsoft Edge Neural Voices (32 languages with genuine native actors)
-  const nativeEdgePair = EDGE_NATIVE_VOICE_ACTORS[rawLang]
   if (nativeEdgePair) {
     const primaryActor = useFemale ? nativeEdgePair.female : nativeEdgePair.male
     const altActor = useFemale ? nativeEdgePair.male : nativeEdgePair.female
@@ -1011,7 +1018,22 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // 4. Verified Native Google Regional TTS (Hausa, Punjabi, or backup for Edge-native languages in SAME language only!)
+  // 4. Optional HuggingFace Meta MMS-TTS Server Inference (if HF_TOKEN configured)
+  const hfRes = await synthesizeWithHuggingFaceMMS(cleanSpeechText, rawLang)
+  if (hfRes) {
+    return new NextResponse(new Uint8Array(hfRes.buffer), {
+      status: 200,
+      headers: {
+        "Content-Type": hfRes.contentType,
+        "X-Voice-Actor": hfRes.actor,
+        "X-Voice-Engine": "hf-mms-native",
+        "X-Voice-Authenticity": "native",
+        "Cache-Control": "public, max-age=86400, s-maxage=86400",
+      },
+    })
+  }
+
+  // 5. Verified Native Google Regional TTS (Hausa, Punjabi, or backup for Edge-native languages in SAME language only!)
   const googleNativeTl = GOOGLE_NATIVE_TTS_MAP[rawLang] || (nativeEdgePair ? PRIMARY_TTS_LANG_MAP[rawLang] : undefined)
   if (googleNativeTl) {
     const googleBuf = await fetchStreamAudioBackup(cleanSpeechText.slice(0, 200), googleNativeTl)
@@ -1029,19 +1051,21 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // 5. Optional Gemini 2.5 Flash Native Multilingual TTS (if GEMINI_API_KEY configured)
-  const geminiRes = await synthesizeWithGeminiTTS(cleanSpeechText, rawLang, useFemale)
-  if (geminiRes) {
-    return new NextResponse(new Uint8Array(geminiRes.buffer), {
-      status: 200,
-      headers: {
-        "Content-Type": geminiRes.contentType,
-        "X-Voice-Actor": geminiRes.actor,
-        "X-Voice-Engine": "gemini-native",
-        "X-Voice-Authenticity": "native",
-        "Cache-Control": "public, max-age=86400, s-maxage=86400",
-      },
-    })
+  // 6. Gemini 2.5 Flash backup for Edge-native languages if both Edge & Google failed
+  if (nativeEdgePair) {
+    const geminiBackup = await synthesizeWithGeminiTTS(cleanSpeechText, rawLang, useFemale)
+    if (geminiBackup) {
+      return new NextResponse(new Uint8Array(geminiBackup.buffer), {
+        status: 200,
+        headers: {
+          "Content-Type": geminiBackup.contentType,
+          "X-Voice-Actor": geminiBackup.actor,
+          "X-Voice-Engine": "gemini-native",
+          "X-Voice-Authenticity": "native",
+          "Cache-Control": "public, max-age=86400, s-maxage=86400",
+        },
+      })
+    }
   }
 
   // 6. Honest Client-Side Meta MMS OR Subtitles-Only responses (NEVER fake Twi/African languages with Swahili/Zulu!)

@@ -235,7 +235,7 @@ async function runVitsChunk(model, ids) {
     return new Float32Array(0)
   }
 
-  // 1. Remove DC offset so chunks never click when concatenated
+  // 1. Clean DC offset removal only (keep raw VITS harmonic spectrum intact without buzzing pre-emphasis)
   let sum = 0
   let validCount = 0
   for (let i = 0; i < raw.length; i++) {
@@ -246,18 +246,13 @@ async function runVitsChunk(model, ids) {
   }
   const mean = validCount > 0 ? sum / validCount : 0
 
-  // 2. Apply subtle speech presence lift (gentle 1-pole pre-emphasis y[n] = x[n] - 0.16*x[n-1])
-  //    to sharpen consonant articulation in 16kHz VITS speech without adding harshness
   const clean = new Float32Array(raw.length)
-  let prev = 0
   for (let i = 0; i < raw.length; i++) {
-    const centered = Number.isFinite(raw[i]) ? raw[i] - mean : 0
-    clean[i] = centered - 0.16 * prev
-    prev = centered
+    clean[i] = Number.isFinite(raw[i]) ? raw[i] - mean : 0
   }
 
-  // 3. Apply smooth 10ms fade-in & fade-out ramps at chunk boundaries
-  const fadeSamples = Math.min(160, Math.floor(clean.length / 6))
+  // 2. Gentle 4ms edge fades so trailing syllables are never clipped
+  const fadeSamples = Math.min(64, Math.floor(clean.length / 10))
   for (let i = 0; i < fadeSamples; i++) {
     const ramp = i / fadeSamples
     clean[i] *= ramp
@@ -338,7 +333,8 @@ async function handleSynthesize(msg) {
     throw new Error(`No waveform produced for ${lang}`)
   }
 
-  let totalLength = 0
+  const trailingPadSamples = Math.round(model.sampleRate * 0.1)
+  let totalLength = trailingPadSamples
   chunkEntries.forEach((entry, idx) => {
     totalLength += entry.wave.length
     if (idx < chunkEntries.length - 1) {

@@ -1269,6 +1269,33 @@ function primeSharedAudioOnUserGesture() {
 
 const QUICK_AUDIO_LANG_CHIPS: LanguageCode[] = ["es", "pl", "fr", "zh", "vi", "en", "ak", "ar"]
 
+let sharedCapabilitiesPromise: Promise<Set<string> | null> | null = null
+let cachedCapabilitiesSet: Set<string> | null = null
+
+function fetchServerNativeCapabilities(): Promise<Set<string> | null> {
+  if (typeof window === "undefined") return Promise.resolve(null)
+  if (cachedCapabilitiesSet) return Promise.resolve(cachedCapabilitiesSet)
+  const win = window as any
+  if (Array.isArray(win.__noctisServerNativeLangs)) {
+    cachedCapabilitiesSet = new Set(win.__noctisServerNativeLangs)
+    return Promise.resolve(cachedCapabilitiesSet)
+  }
+  if (!sharedCapabilitiesPromise) {
+    sharedCapabilitiesPromise = fetch("/api/connectin/tts?capabilities=1")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.serverNativeLangs)) {
+          win.__noctisServerNativeLangs = data.serverNativeLangs
+          cachedCapabilitiesSet = new Set(data.serverNativeLangs)
+          return cachedCapabilitiesSet
+        }
+        return null
+      })
+      .catch(() => null)
+  }
+  return sharedCapabilitiesPromise
+}
+
 export function NoctisVideoInterpreterPopup({
   youtubeId,
   title,
@@ -1354,7 +1381,9 @@ export function NoctisVideoInterpreterPopup({
   const [qaAnswer, setQaAnswer] = useState<string | null>(null)
   const [isAsking, setIsAsking] = useState(false)
   const [voiceStatusNote, setVoiceStatusNote] = useState<string | null>(null)
-  const serverNativeLangsRef = useRef<Set<string> | null>(null)
+  const [serverNativeLangsSet, setServerNativeLangsSet] = useState<Set<string> | null>(() => cachedCapabilitiesSet)
+  const serverNativeLangsRef = useRef<Set<string> | null>(cachedCapabilitiesSet)
+  serverNativeLangsRef.current = serverNativeLangsSet
   const subtitleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const isSpeakingRef = useRef(false)
@@ -1533,23 +1562,18 @@ export function NoctisVideoInterpreterPopup({
     }
   }, [])
 
-  // Query live server TTS capabilities once (upgrades languages automatically when KHAYA_API_KEY / HF_TOKEN / GEMINI_API_KEY are set)
+  // Query live server TTS capabilities once (upgrades all 46 languages to 24kHz server HD audio when GEMINI_API_KEY / KHAYA_API_KEY / YARNGPT_API_KEY / HF_TOKEN are set)
   useEffect(() => {
-    if (typeof window === "undefined") return
-    const win = window as any
-    if (Array.isArray(win.__noctisServerNativeLangs)) {
-      serverNativeLangsRef.current = new Set(win.__noctisServerNativeLangs)
-      return
+    let active = true
+    fetchServerNativeCapabilities().then((set) => {
+      if (active && set) {
+        serverNativeLangsRef.current = set
+        setServerNativeLangsSet(set)
+      }
+    })
+    return () => {
+      active = false
     }
-    fetch("/api/connectin/tts?capabilities=1")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data && Array.isArray(data.serverNativeLangs)) {
-          win.__noctisServerNativeLangs = data.serverNativeLangs
-          serverNativeLangsRef.current = new Set(data.serverNativeLangs)
-        }
-      })
-      .catch(() => {})
   }, [])
 
   // Stop this instance if another video card claims exclusive interpreter
@@ -1629,204 +1653,227 @@ export function NoctisVideoInterpreterPopup({
     }
 
     const profile = getLanguageVoiceProfile(targetLang)
-    const serverHasOverride = Boolean(serverNativeLangsRef.current?.has(targetLang))
-    const effectiveMode = serverHasOverride ? "server-native" : profile.mode
 
-    if (effectiveMode === "subtitles-only") {
-      setShowSubtitlesStrip(true)
-      setVoiceStatusNote("Live Translated Subtitles · Native Voice Coming Soon")
-      if (onMuteOriginalVideoRef.current) {
-        onMuteOriginalVideoRef.current(false)
-      }
-      setPageVideoElementsDucking(false)
-      const readDurationMs = Math.max(3800, Math.min(8500, sentenceText.length * 65))
-      if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current)
-      subtitleTimerRef.current = setTimeout(() => {
-        scheduleNextSentence(120)
-      }, readDurationMs)
-      return
-    }
-
-    const playAudioUrlOnSharedElement = (audioUrl: string, playbackRate = 1.0, onPlaybackStarted?: () => void) => {
-      const audio = getSharedNoctisAudio()
-      if (!audio) return
+    const startPlaybackPipeline = (activeCapSet: Set<string> | null) => {
       if (!isSpeakingRef.current || win.__activeNoctisInterpreterId !== instanceIdRef.current || win.__noctisAudioPlaySeq !== mySeq) {
         return
       }
+      const serverHasOverride = Boolean(activeCapSet?.has(targetLang))
+      const effectiveMode = serverHasOverride ? "server-native" : profile.mode
 
-      audio.onended = null
-      audio.onerror = null
-      audio.onplaying = null
-      try {
-        audio.pause()
-      } catch {}
+      if (effectiveMode === "subtitles-only") {
+        setShowSubtitlesStrip(true)
+        setVoiceStatusNote("Live Translated Subtitles · Native Voice Coming Soon")
+        if (onMuteOriginalVideoRef.current) {
+          onMuteOriginalVideoRef.current(false)
+        }
+        setPageVideoElementsDucking(false)
+        const readDurationMs = Math.max(3800, Math.min(8500, sentenceText.length * 65))
+        if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current)
+        subtitleTimerRef.current = setTimeout(() => {
+          scheduleNextSentence(120)
+        }, readDurationMs)
+        return
+      }
 
-      audio.muted = false
-      audio.volume = 1.0
-      try {
-        ;(audio as any).preservesPitch = true
-        audio.playbackRate = playbackRate
-      } catch {}
+      const playAudioUrlOnSharedElement = (audioUrl: string, playbackRate = 1.0, onPlaybackStarted?: () => void) => {
+        const audio = getSharedNoctisAudio()
+        if (!audio) return
+        if (!isSpeakingRef.current || win.__activeNoctisInterpreterId !== instanceIdRef.current || win.__noctisAudioPlaySeq !== mySeq) {
+          return
+        }
 
-      audio.src = audioUrl
-      try {
-        ;(audio as any).preservesPitch = true
-        audio.defaultPlaybackRate = playbackRate
-        audio.playbackRate = playbackRate
-      } catch {}
+        audio.onended = null
+        audio.onerror = null
+        audio.onplaying = null
+        try {
+          audio.pause()
+        } catch {}
 
-      audio.onplaying = () => {
-        win.__noctisSharedAudioUnlocked = true
-        if (
-          win.__activeNoctisInterpreterId === instanceIdRef.current &&
-          win.__noctisAudioPlaySeq === mySeq
-        ) {
-          if (onMuteOriginalVideoRef.current) {
-            onMuteOriginalVideoRef.current(true)
+        audio.muted = false
+        audio.volume = 1.0
+        try {
+          ;(audio as any).preservesPitch = true
+          audio.playbackRate = playbackRate
+        } catch {}
+
+        audio.src = audioUrl
+        try {
+          ;(audio as any).preservesPitch = true
+          audio.defaultPlaybackRate = playbackRate
+          audio.playbackRate = playbackRate
+        } catch {}
+
+        audio.onplaying = () => {
+          win.__noctisSharedAudioUnlocked = true
+          if (
+            win.__activeNoctisInterpreterId === instanceIdRef.current &&
+            win.__noctisAudioPlaySeq === mySeq
+          ) {
+            if (onMuteOriginalVideoRef.current) {
+              onMuteOriginalVideoRef.current(true)
+            }
+            setPageVideoElementsDucking(true)
+            onPlaybackStarted?.()
           }
-          setPageVideoElementsDucking(true)
-          onPlaybackStarted?.()
         }
-      }
 
-      audio.onended = () => {
-        if (
-          win.__activeNoctisInterpreterId === instanceIdRef.current &&
-          win.__noctisAudioPlaySeq === mySeq
-        ) {
-          scheduleNextSentence(140)
-        }
-      }
-      audio.onerror = () => {
-        if (
-          win.__activeNoctisInterpreterId === instanceIdRef.current &&
-          win.__noctisAudioPlaySeq === mySeq
-        ) {
-          scheduleNextSentence(600)
-        }
-      }
-
-      const playPromise = audio.play()
-      if (playPromise && typeof playPromise.catch === "function") {
-        playPromise.catch((err: any) => {
-          const errName = String(err?.name || "")
-          if (errName === "AbortError") {
-            return
+        audio.onended = () => {
+          if (
+            win.__activeNoctisInterpreterId === instanceIdRef.current &&
+            win.__noctisAudioPlaySeq === mySeq
+          ) {
+            scheduleNextSentence(140)
           }
-          if (errName === "NotAllowedError") {
+        }
+        audio.onerror = () => {
+          if (
+            win.__activeNoctisInterpreterId === instanceIdRef.current &&
+            win.__noctisAudioPlaySeq === mySeq
+          ) {
+            scheduleNextSentence(600)
+          }
+        }
+
+        const playPromise = audio.play()
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch((err: any) => {
+            const errName = String(err?.name || "")
+            if (errName === "AbortError") {
+              return
+            }
+            if (errName === "NotAllowedError") {
+              if (
+                win.__activeNoctisInterpreterId === instanceIdRef.current &&
+                win.__noctisAudioPlaySeq === mySeq
+              ) {
+                isSpeakingRef.current = false
+                setIsSpeaking(false)
+                setVoiceStatusNote(null)
+                if (onMuteOriginalVideoRef.current) {
+                  onMuteOriginalVideoRef.current(false)
+                }
+                setPageVideoElementsDucking(false)
+              }
+              return
+            }
             if (
               win.__activeNoctisInterpreterId === instanceIdRef.current &&
               win.__noctisAudioPlaySeq === mySeq
             ) {
-              isSpeakingRef.current = false
-              setIsSpeaking(false)
-              setVoiceStatusNote(null)
+              scheduleNextSentence(800)
+            }
+          })
+        }
+      }
+
+      if (effectiveMode === "client-mms-native") {
+        setVoiceStatusNote(`${profile.engineLabel} · Preparing native voice...`)
+        ;(async () => {
+          try {
+            let textInTargetLang = sentenceText
+            if (targetLang !== "en" && !scriptAlreadyTranslated) {
+              textInTargetLang = await translateTextLive(sentenceText, targetLang, true)
+              if (win.__noctisAudioPlaySeq !== mySeq || !isSpeakingRef.current) return
+            }
+
+            const blobUrl = await synthesizeNativeMmsSpeech(textInTargetLang, targetLang, {
+              onProgress: (pct, stage) => {
+                if (win.__noctisAudioPlaySeq !== mySeq) return
+                if (pct < 100) {
+                  setVoiceStatusNote(`${profile.engineLabel} · ${pct}% (${stage})`)
+                } else {
+                  setVoiceStatusNote(profile.nativeSpeakerLabel)
+                }
+              },
+            })
+
+            if (
+              !isSpeakingRef.current ||
+              win.__activeNoctisInterpreterId !== instanceIdRef.current ||
+              win.__noctisAudioPlaySeq !== mySeq
+            ) {
+              return
+            }
+
+            setVoiceStatusNote(profile.nativeSpeakerLabel)
+            playAudioUrlOnSharedElement(blobUrl, 1.0, () => {
+              if (nextSentenceText && scriptAlreadyTranslated) {
+                prefetchNativeMmsSpeech(nextSentenceText, targetLang)
+              }
+            })
+          } catch {
+            if (
+              isSpeakingRef.current &&
+              win.__activeNoctisInterpreterId === instanceIdRef.current &&
+              win.__noctisAudioPlaySeq === mySeq
+            ) {
+              setShowSubtitlesStrip(true)
+              setVoiceStatusNote("Live Subtitles · Native voice model unavailable offline")
               if (onMuteOriginalVideoRef.current) {
                 onMuteOriginalVideoRef.current(false)
               }
               setPageVideoElementsDucking(false)
+              const readDurationMs = Math.max(3800, Math.min(8000, sentenceText.length * 60))
+              if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current)
+              subtitleTimerRef.current = setTimeout(() => {
+                scheduleNextSentence(150)
+              }, readDurationMs)
             }
-            return
           }
-          if (
-            win.__activeNoctisInterpreterId === instanceIdRef.current &&
-            win.__noctisAudioPlaySeq === mySeq
-          ) {
-            scheduleNextSentence(800)
+        })()
+        return
+      }
+
+      // Server-Native Neural / Gemini HD Voice (/api/connectin/tts?v=native8)
+      setVoiceStatusNote(
+        profile.mode === "server-native" ? profile.nativeSpeakerLabel : "Studio HD Native Voice"
+      )
+
+      if (nextSentenceText) {
+        try {
+          const preloadAudio = getSharedNoctisPreloadAudio()
+          if (preloadAudio) {
+            preloadAudio.src = `/api/connectin/tts?v=native8&lang=${encodeURIComponent(
+              targetLang
+            )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
+              nextSentenceText.slice(0, 260)
+            )}`
+            preloadAudio.load()
           }
-        })
+        } catch {}
+      }
+
+      try {
+        playAudioUrlOnSharedElement(
+          `/api/connectin/tts?v=native8&lang=${encodeURIComponent(
+            targetLang
+          )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
+            sentenceText.slice(0, 260)
+          )}`,
+          1.0
+        )
+      } catch {
+        // Wait for next sentence or user interaction
       }
     }
 
-    if (effectiveMode === "client-mms-native") {
-      setVoiceStatusNote(`${profile.engineLabel} · Preparing native voice...`)
-      ;(async () => {
-        try {
-          // Ensure we NEVER feed untranslated English text into a native Akan/Yoruba/Igbo/Wolof/Ewe/Kinyarwanda/Oromo voice model
-          let textInTargetLang = sentenceText
-          if (targetLang !== "en" && !scriptAlreadyTranslated) {
-            textInTargetLang = await translateTextLive(sentenceText, targetLang, true)
-            if (win.__noctisAudioPlaySeq !== mySeq || !isSpeakingRef.current) return
-          }
-
-          const blobUrl = await synthesizeNativeMmsSpeech(textInTargetLang, targetLang, {
-            onProgress: (pct, stage) => {
-              if (win.__noctisAudioPlaySeq !== mySeq) return
-              if (pct < 100) {
-                setVoiceStatusNote(`${profile.engineLabel} · ${pct}% (${stage})`)
-              } else {
-                setVoiceStatusNote(profile.nativeSpeakerLabel)
-              }
-            },
-          })
-
-          if (
-            !isSpeakingRef.current ||
-            win.__activeNoctisInterpreterId !== instanceIdRef.current ||
-            win.__noctisAudioPlaySeq !== mySeq
-          ) {
-            return
-          }
-
-          setVoiceStatusNote(profile.nativeSpeakerLabel)
-          playAudioUrlOnSharedElement(blobUrl, 0.9, () => {
-            if (nextSentenceText && scriptAlreadyTranslated) {
-              prefetchNativeMmsSpeech(nextSentenceText, targetLang)
-            }
-          })
-        } catch {
-          if (
-            isSpeakingRef.current &&
-            win.__activeNoctisInterpreterId === instanceIdRef.current &&
-            win.__noctisAudioPlaySeq === mySeq
-          ) {
-            setShowSubtitlesStrip(true)
-            setVoiceStatusNote("Live Subtitles · Native voice model unavailable offline")
-            if (onMuteOriginalVideoRef.current) {
-              onMuteOriginalVideoRef.current(false)
-            }
-            setPageVideoElementsDucking(false)
-            const readDurationMs = Math.max(3800, Math.min(8000, sentenceText.length * 60))
-            if (subtitleTimerRef.current) clearTimeout(subtitleTimerRef.current)
-            subtitleTimerRef.current = setTimeout(() => {
-              scheduleNextSentence(150)
-            }, readDurationMs)
-          }
+    // For non-Edge languages, await live server capability check (max 1200ms) first so Gemini 24kHz HD is used automatically whenever enabled
+    if (profile.mode !== "server-native" && !serverNativeLangsRef.current) {
+      Promise.race([
+        fetchServerNativeCapabilities(),
+        new Promise<Set<string> | null>((resolve) => setTimeout(() => resolve(null), 1200)),
+      ]).then((capSet) => {
+        if (capSet) {
+          serverNativeLangsRef.current = capSet
+          setServerNativeLangsSet(capSet)
         }
-      })()
+        startPlaybackPipeline(capSet || serverNativeLangsRef.current)
+      })
       return
     }
 
-    // Server-Native Neural / Regional Voice (/api/connectin/tts?v=native7)
-    setVoiceStatusNote(profile.nativeSpeakerLabel)
-
-    // Preload the NEXT verbatim spoken line in the background so there is zero gap between sentences
-    if (nextSentenceText) {
-      try {
-        const preloadAudio = getSharedNoctisPreloadAudio()
-        if (preloadAudio) {
-          preloadAudio.src = `/api/connectin/tts?v=native7&lang=${encodeURIComponent(
-            targetLang
-          )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
-            nextSentenceText.slice(0, 260)
-          )}`
-          preloadAudio.load()
-        }
-      } catch {}
-    }
-
-    try {
-      playAudioUrlOnSharedElement(
-        `/api/connectin/tts?v=native7&lang=${encodeURIComponent(
-          targetLang
-        )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
-          sentenceText.slice(0, 260)
-        )}`,
-        1.0
-      )
-    } catch {
-      // Wait for next sentence or user interaction
-    }
+    startPlaybackPipeline(serverNativeLangsRef.current)
   }, [scriptIdKey, setPageVideoElementsDucking])
 
   const startContinuousInterpretation = useCallback(
@@ -2461,7 +2508,7 @@ export function NoctisVideoInterpreterPopup({
               >
                 {languages.map((l) => {
                   const vp = getLanguageVoiceProfile(l.code)
-                  const isSubOnly = vp.mode === "subtitles-only" && !serverNativeLangsRef.current?.has(l.code)
+                  const isSubOnly = vp.mode === "subtitles-only" && !serverNativeLangsSet?.has(l.code)
                   return (
                     <option key={l.code} value={l.code} style={{ backgroundColor: "#09090B", color: "#FFFFFF" }}>
                       {isSubOnly ? "💬 " : "🔊 "}
@@ -2555,7 +2602,7 @@ export function NoctisVideoInterpreterPopup({
               >
                 {languages.map((l) => {
                   const vp = getLanguageVoiceProfile(l.code)
-                  const isSubOnly = vp.mode === "subtitles-only" && !serverNativeLangsRef.current?.has(l.code)
+                  const isSubOnly = vp.mode === "subtitles-only" && !serverNativeLangsSet?.has(l.code)
                   return (
                     <option key={l.code} value={l.code} style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}>
                       {isSubOnly ? "💬 " : "🔊 "}
@@ -2748,7 +2795,7 @@ export function NoctisVideoInterpreterPopup({
                   >
                     {languages.map((l) => {
                       const vp = getLanguageVoiceProfile(l.code)
-                      const isSubOnly = vp.mode === "subtitles-only" && !serverNativeLangsRef.current?.has(l.code)
+                      const isSubOnly = vp.mode === "subtitles-only" && !serverNativeLangsSet?.has(l.code)
                       return (
                         <option key={l.code} value={l.code} style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}>
                           {isSubOnly ? "💬 " : "🔊 "}
@@ -2874,7 +2921,7 @@ export function NoctisVideoInterpreterPopup({
               >
                 {languages.map((l) => {
                   const vp = getLanguageVoiceProfile(l.code)
-                  const isSubOnly = vp.mode === "subtitles-only" && !serverNativeLangsRef.current?.has(l.code)
+                  const isSubOnly = vp.mode === "subtitles-only" && !serverNativeLangsSet?.has(l.code)
                   return (
                     <option
                       key={l.code}

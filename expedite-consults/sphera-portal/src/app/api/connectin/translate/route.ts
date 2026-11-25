@@ -76,6 +76,79 @@ async function translateSingleText(text: string, targetLang: string): Promise<st
   }
 }
 
+const GEMINI_IDIOMATIC_LANG_LABELS: Record<string, string> = {
+  ak: "Asante Twi (Ghanaian Akan, natural Kumasi/Accra spoken style using clean Twi orthography ɛ and ɔ)",
+  ee: "Eʋegbe (Ghana/Togo Ewe, natural spoken style using ɛ, ɔ, ɖ, ƒ, ŋ, ʋ)",
+  gaa: "Gã (Accra, Ghana spoken style using ɛ, ɔ, ŋ)",
+  yo: "Yorùbá (natural Nigerian spoken style with proper tonal diacritics)",
+  ig: "Igbo (natural Nigerian spoken style)",
+  ha: "Hausa (natural Northern Nigerian/West African spoken style)",
+  om: "Afaan Oromoo (natural Ethiopian spoken style)",
+  rw: "Ikinyarwanda (natural Rwandan spoken style)",
+  sn: "chiShona (natural Zimbabwean spoken style)",
+  xh: "isiXhosa (natural South African spoken style)",
+  wo: "Wolof (natural Senegalese spoken style)",
+  lg: "Oluganda (natural Ugandan spoken style)",
+  sw: "Kiswahili (natural East African spoken style)",
+  zu: "isiZulu (natural South African spoken style)",
+  am: "Amharic (natural Ethiopian spoken style in Ge'ez script)",
+  so: "Af-Soomaali (natural Somali spoken style)",
+  pa: "Punjabi (natural spoken Gurmukhi Punjabi)",
+}
+
+async function translateBatchWithGemini(texts: string[], targetLang: string): Promise<string[] | null> {
+  const apiKey = (process.env.GEMINI_API_KEY || "").trim()
+  const langDesc = GEMINI_IDIOMATIC_LANG_LABELS[targetLang]
+  if (!apiKey || !langDesc || texts.length === 0) return null
+
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 8000)
+    const prompt =
+      `Translate each string in the JSON array below into natural, idiomatic, everyday spoken ${langDesc}.\n` +
+      `Rules:\n` +
+      `- Translate every concept naturally for native listeners (never leave untranslated English words like "speed square", "lumber", "angles", or "hey" unless it is a proper brand/person name like Noctis).\n` +
+      `- Write numbers as spoken words when appropriate and keep sentences concise and clear for speech.\n` +
+      `- Return strictly a JSON array of strings with the EXACT same length (${texts.length}) and order.`
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
+        apiKey
+      )}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: `${prompt}\n\n${JSON.stringify(texts)}` }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: "application/json",
+          },
+        }),
+        signal: controller.signal,
+      }
+    )
+    clearTimeout(timer)
+    if (!res.ok) return null
+    const data = await res.json()
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text
+    if (!rawText) return null
+    const parsed = JSON.parse(rawText)
+    if (!Array.isArray(parsed) || parsed.length !== texts.length) return null
+    return parsed.map((item, idx) => {
+      const s = typeof item === "string" ? item.trim() : ""
+      return s ? polishAfricanTranslation(s, targetLang) : texts[idx]
+    })
+  } catch {
+    return null
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -86,7 +159,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ translations: texts })
     }
 
-    // Batch with separator first for speed, fallback to individual if count mismatches
+    // 1. Prefer Gemini 2.5 Flash idiomatic native translation when GEMINI_API_KEY is configured
+    const geminiTranslations = await translateBatchWithGemini(texts, targetLang)
+    if (geminiTranslations) {
+      return NextResponse.json({ translations: geminiTranslations })
+    }
+
+    // 2. Fallback: batch with separator first for speed, fallback to individual if count mismatches
     const joined = texts.join("\n ||| \n")
     const batchResult = await translateSingleText(joined, targetLang)
     const splitParts = batchResult.split(/\s*\|\|\|\s*/)
