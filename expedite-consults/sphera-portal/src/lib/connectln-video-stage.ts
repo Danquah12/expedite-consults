@@ -103,6 +103,38 @@ function normalizeStagedVideo(v: StagedConnectLnVideo): StagedConnectLnVideo {
   }
 }
 
+const TOPIC_STOP_WORDS = new Set([
+  "with", "from", "into", "your", "using", "basics", "video", "part",
+  "session", "hands", "weekly", "briefing", "connectln", "master", "guide",
+  "learn", "introduction", "intro", "overview", "series", "episode", "lesson",
+  "how", "what", "when", "where", "why", "this", "that", "these", "those",
+  "and", "for", "the", "are", "was", "were", "about", "checking", "marking",
+])
+
+function extractTitleTopicTokens(title?: string): string[] {
+  if (!title) return []
+  const cleaned = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length >= 4 && !TOPIC_STOP_WORDS.has(w))
+  return [...new Set(cleaned)].slice(0, 8)
+}
+
+function scoreTopicMatch(candidate: StagedConnectLnVideo, tokens: string[]): number {
+  if (tokens.length === 0) return 0
+  const haystack = `${candidate.title} ${candidate.categoryLabel || ""} ${candidate.enclaveId || ""} ${candidate.description || ""}`.toLowerCase()
+  let score = 0
+  for (const tok of tokens) {
+    if (haystack.includes(tok)) {
+      score += 2
+    } else if (tok.length >= 6 && haystack.includes(tok.slice(0, 5))) {
+      score += 1
+    }
+  }
+  return score
+}
+
 export function getConnectLnMoreVideosCatalog(
   params: MoreVideosCatalogParams
 ): StagedConnectLnVideo[] {
@@ -119,12 +151,12 @@ export function getConnectLnMoreVideosCatalog(
   const excludedYt = extractPlayableYoutubeId(currentYoutubeId)
   const excludedDirect = currentDirectUrl?.trim()
   const excludedTitle = currentTitle?.trim().toLowerCase()
+  const topicTokens = extractTitleTopicTokens(currentTitle)
 
   const seenKeys = new Set<string>()
-  const results: StagedConnectLnVideo[] = []
+  const baseResults: StagedConnectLnVideo[] = []
 
   const pushCandidate = (candidate: StagedConnectLnVideo) => {
-    if (results.length >= limit) return
     const normalized = normalizeStagedVideo(candidate)
     if (!isPlayableEntry(normalized)) return
 
@@ -146,7 +178,7 @@ export function getConnectLnMoreVideosCatalog(
       normalized.title.trim().toLowerCase()
     if (!dedupeKey || seenKeys.has(dedupeKey)) return
     seenKeys.add(dedupeKey)
-    results.push(normalized)
+    baseResults.push(normalized)
   }
 
   // 1. Caller-provided related candidates
@@ -156,7 +188,6 @@ export function getConnectLnMoreVideosCatalog(
 
   // 2. Playable video posts from the Home feed
   for (const post of feedPosts) {
-    if (results.length >= limit) break
     const media = post?.media
     if (!media || media.type !== "video") continue
     const yt = extractPlayableYoutubeId(media.youtubeId || media.url)
@@ -207,7 +238,6 @@ export function getConnectLnMoreVideosCatalog(
   // 3. Matching-enclave verified talks from The Wheel
   if (enclaveId && enclaveId !== "all") {
     for (const talk of EDUCATIONAL_WHEEL_TALKS) {
-      if (results.length >= limit) break
       if (talk.enclaveId === enclaveId) pushWheelTalk(talk)
     }
   }
@@ -226,7 +256,6 @@ export function getConnectLnMoreVideosCatalog(
       : SKILLED_TRADES_LEARN_BY_DOING_LESSONS
 
   for (const lesson of sortedLessons) {
-    if (results.length >= limit) break
     if (!lesson.embedAvailable) continue
     const yt = extractPlayableYoutubeId(lesson.youtubeId)
     if (!yt && !lesson.directVideoUrl && !lesson.embedUrl) continue
@@ -252,9 +281,17 @@ export function getConnectLnMoreVideosCatalog(
 
   // 5. Remaining verified Wheel talks across professions
   for (const talk of EDUCATIONAL_WHEEL_TALKS) {
-    if (results.length >= limit) break
     pushWheelTalk(talk)
   }
 
-  return results
+  if (topicTokens.length === 0) {
+    return baseResults.slice(0, limit)
+  }
+
+  const prioritized = baseResults
+    .map((item, idx) => ({ item, idx, score: scoreTopicMatch(item, topicTokens) }))
+    .sort((a, b) => (b.score !== a.score ? b.score - a.score : a.idx - b.idx))
+    .map((entry) => entry.item)
+
+  return prioritized.slice(0, limit)
 }

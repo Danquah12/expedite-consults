@@ -1,7 +1,21 @@
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
-import { Play, ShieldCheck, Film, PlayCircle, RotateCcw, X, Maximize2 } from "lucide-react"
+import {
+  Play,
+  Pause,
+  ShieldCheck,
+  Film,
+  PlayCircle,
+  RotateCcw,
+  RotateCw,
+  X,
+  Maximize2,
+  Minimize2,
+  Volume2,
+  VolumeX,
+  ChevronLeft,
+} from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
 import type { LearnVideoSourceProvider } from "@/lib/skilled-trades-learn-by-doing-data"
@@ -171,6 +185,17 @@ function getProviderMeta(provider: LearnVideoSourceProvider): {
   }
 }
 
+function formatMediaTime(sec: number): string {
+  const safe = Math.max(0, Math.floor(Number.isFinite(sec) ? sec : 0))
+  const hrs = Math.floor(safe / 3600)
+  const mins = Math.floor((safe % 3600) / 60)
+  const secs = safe % 60
+  if (hrs > 0) {
+    return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
+  }
+  return `${mins}:${String(secs).padStart(2, "0")}`
+}
+
 export function ConnectLnStudioPlayer({
   youtubeId = "",
   sourceProvider,
@@ -201,18 +226,63 @@ export function ConnectLnStudioPlayer({
   onSelectMoreVideo,
 }: ConnectLnStudioPlayerProps) {
   const { language } = useLanguage()
-  const effectiveProvider = inferProviderFromUrls(sourceProvider, directVideoUrl, embedUrl, youtubeId)
+
+  const [inlineVideoOverride, setInlineVideoOverride] = useState<StagedConnectLnVideo | null>(null)
+  const [inlineVideoHistory, setInlineVideoHistory] = useState<StagedConnectLnVideo[]>([])
+
+  useEffect(() => {
+    setInlineVideoOverride(null)
+    setInlineVideoHistory([])
+  }, [youtubeId, directVideoUrl, embedUrl, title])
+
+  const activeYoutubeId = inlineVideoOverride ? inlineVideoOverride.youtubeId || "" : youtubeId
+  const activeDirectVideoUrl = inlineVideoOverride ? inlineVideoOverride.directVideoUrl : directVideoUrl
+  const activeEmbedUrl = inlineVideoOverride ? inlineVideoOverride.embedUrl : embedUrl
+  const activeSourceVideoUrl = inlineVideoOverride ? undefined : sourceVideoUrl
+  const activeTitle = inlineVideoOverride?.title || title
+  const activeSpeaker = inlineVideoOverride?.speaker || speaker
+  const activeSpeakerRole = inlineVideoOverride?.speakerRole || speakerRole
+  const activeSerialPlate = inlineVideoOverride?.serialPlate || serialPlate
+  const activePosterImageUrl = inlineVideoOverride?.thumbnailUrl || posterImageUrl
+  const activeDurationLabel = inlineVideoOverride?.durationLabel || durationLabel
+  const activeDescription = inlineVideoOverride?.description || description
+  const activeTakeaways = inlineVideoOverride?.takeaways || takeaways
+  const activeSourceLangRaw = inlineVideoOverride?.sourceLanguage || sourceLanguage
+  const activeSourceLangLabel = inlineVideoOverride?.sourceLanguageLabel || sourceLanguageLabel
+  const effectiveAutoPlay = inlineVideoOverride ? true : autoPlay
+
+  const effectiveProvider = inferProviderFromUrls(
+    inlineVideoOverride?.sourceProvider ?? sourceProvider,
+    activeDirectVideoUrl,
+    activeEmbedUrl,
+    activeYoutubeId
+  )
   const [html5FallbackToEmbed, setHtml5FallbackToEmbed] = useState<boolean>(false)
   const isHtml5Direct =
     !html5FallbackToEmbed &&
-    Boolean(directVideoUrl) &&
+    Boolean(activeDirectVideoUrl) &&
     (effectiveProvider === "connectln_native" || effectiveProvider === "archive_org")
 
   useEffect(() => {
     setHtml5FallbackToEmbed(false)
-  }, [directVideoUrl, embedUrl])
+  }, [activeDirectVideoUrl, activeEmbedUrl])
 
-  const normalizedSourceLang = (sourceLanguage || "en").toLowerCase()
+  const [playerOrigin, setPlayerOrigin] = useState<string>(() =>
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : "https://conectln.com"
+  )
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      window.location?.origin &&
+      window.location.origin !== playerOrigin
+    ) {
+      setPlayerOrigin(window.location.origin)
+    }
+  }, [playerOrigin])
+
+  const normalizedSourceLang = (activeSourceLangRaw || "en").toLowerCase()
   const preferredNoctisLang =
     typeof window !== "undefined" && (window as any).__noctisPreferredAudioLang
       ? String((window as any).__noctisPreferredAudioLang).toLowerCase()
@@ -236,73 +306,116 @@ export function ConnectLnStudioPlayer({
   onPlaybackTimeChangeRef.current = onPlaybackTimeChange
   const lastReportedSecRef = useRef<number>(-1)
 
-  const [isPlaying, setIsPlaying] = useState<boolean>(autoPlay)
+  const [isPlaying, setIsPlaying] = useState<boolean>(effectiveAutoPlay)
   const [isStoppedByOther, setIsStoppedByOther] = useState<boolean>(false)
   const [playbackPhase, setPlaybackPhase] = useState<"playing" | "paused" | "ended">(
-    autoPlay ? "playing" : "paused"
+    effectiveAutoPlay ? "playing" : "paused"
   )
   const [showMoreVideosOverlay, setShowMoreVideosOverlay] = useState<boolean>(false)
   const dismissedPauseOverlayRef = useRef<boolean>(false)
   const lastInterceptedYtIdRef = useRef<string>("")
   const wasPlayingBeforeCallRef = useRef<boolean>(false)
-  const isPlayingStateRef = useRef<boolean>(autoPlay)
+  const isPlayingStateRef = useRef<boolean>(effectiveAutoPlay)
   isPlayingStateRef.current = isPlaying
   const isVoiceDuckingRef = useRef<boolean>(false)
+  const [isMutedState, setIsMutedState] = useState<boolean>(() => {
+    if (initialMuted || isVoiceDuckingRef.current || isInterpretingNeededRef.current) return true
+    return !hasSessionAudioActivation()
+  })
+  const [controlsVisible, setControlsVisible] = useState<boolean>(true)
+  const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false)
   const [currentTime, setCurrentTime] = useState<number>(0)
   const [duration, setDuration] = useState<number>(() => {
-    const parts = (durationLabel || "").split(":").map(Number)
+    const parts = (activeDurationLabel || "").split(":").map(Number)
     if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
       return Math.max(60, parts[0] * 60 + parts[1])
     }
     return 180
   })
 
+  useEffect(() => {
+    const parts = (activeDurationLabel || "").split(":").map(Number)
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      setDuration(Math.max(60, parts[0] * 60 + parts[1]))
+    } else {
+      setDuration(180)
+    }
+  }, [activeDurationLabel, activeYoutubeId])
+
+  useEffect(() => {
+    const onFsChange = () => {
+      setIsFullscreen(
+        Boolean(
+          document.fullscreenElement &&
+            (document.fullscreenElement === containerRef.current ||
+              containerRef.current?.contains(document.fullscreenElement))
+        )
+      )
+    }
+    document.addEventListener("fullscreenchange", onFsChange)
+    return () => {
+      document.removeEventListener("fullscreenchange", onFsChange)
+      if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current)
+    }
+  }, [])
+
+  const revealControlsTemporarily = useCallback(() => {
+    setControlsVisible(true)
+    if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current)
+    hideControlsTimerRef.current = setTimeout(() => {
+      if (isPlayingStateRef.current) {
+        setControlsVisible(false)
+      }
+    }, 3200)
+  }, [])
+
   const moreVideosList = useMemo(
     () =>
       getConnectLnMoreVideosCatalog({
-        currentYoutubeId: youtubeId,
-        currentDirectUrl: directVideoUrl,
-        currentTitle: title,
+        currentYoutubeId: activeYoutubeId,
+        currentDirectUrl: activeDirectVideoUrl,
+        currentTitle: activeTitle,
         customRelated: relatedVideos,
         limit: 12,
       }),
-    [youtubeId, directVideoUrl, title, relatedVideos]
+    [activeYoutubeId, activeDirectVideoUrl, activeTitle, relatedVideos]
   )
 
   const currentVideoAsStaged = useMemo<StagedConnectLnVideo>(
     () => ({
-      youtubeId: youtubeId || undefined,
-      directVideoUrl,
-      embedUrl,
+      youtubeId: activeYoutubeId || undefined,
+      directVideoUrl: activeDirectVideoUrl,
+      embedUrl: activeEmbedUrl,
       sourceProvider: effectiveProvider,
-      title,
-      speaker,
-      speakerRole,
-      serialPlate,
-      durationLabel,
-      description,
-      takeaways,
+      title: activeTitle,
+      speaker: activeSpeaker,
+      speakerRole: activeSpeakerRole,
+      serialPlate: activeSerialPlate,
+      durationLabel: activeDurationLabel,
+      description: activeDescription,
+      takeaways: activeTakeaways,
       thumbnailUrl:
-        posterImageUrl ||
-        (youtubeId ? `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg` : undefined),
-      sourceLanguage,
-      sourceLanguageLabel,
+        activePosterImageUrl ||
+        (activeYoutubeId ? `https://i.ytimg.com/vi/${activeYoutubeId}/hqdefault.jpg` : undefined),
+      sourceLanguage: activeSourceLangRaw,
+      sourceLanguageLabel: activeSourceLangLabel,
     }),
     [
-      youtubeId,
-      directVideoUrl,
-      embedUrl,
+      activeYoutubeId,
+      activeDirectVideoUrl,
+      activeEmbedUrl,
       effectiveProvider,
-      title,
-      speaker,
-      speakerRole,
-      serialPlate,
-      durationLabel,
-      description,
-      takeaways,
-      posterImageUrl,
-      sourceLanguage,
-      sourceLanguageLabel,
+      activeTitle,
+      activeSpeaker,
+      activeSpeakerRole,
+      activeSerialPlate,
+      activeDurationLabel,
+      activeDescription,
+      activeTakeaways,
+      activePosterImageUrl,
+      activeSourceLangRaw,
+      activeSourceLangLabel,
     ]
   )
 
@@ -321,6 +434,45 @@ export function ConnectLnStudioPlayer({
 
   const onSelectMoreVideoRef = useRef(onSelectMoreVideo)
   onSelectMoreVideoRef.current = onSelectMoreVideo
+
+  const playVideoInline = useCallback(
+    (videoToPlay: StagedConnectLnVideo) => {
+      setShowMoreVideosOverlay(false)
+      dismissedPauseOverlayRef.current = false
+      if (onSelectMoreVideoRef.current) {
+        onSelectMoreVideoRef.current(videoToPlay)
+        return
+      }
+      setInlineVideoHistory((prev) => [...prev, currentVideoAsStaged])
+      setInlineVideoOverride(videoToPlay)
+      setIsStoppedByOther(false)
+      setPlaybackPhase("playing")
+      setIsPlaying(true)
+      setCurrentTime(0)
+      notifyExclusiveVideoPlay(effectivePlayerId)
+      revealControlsTemporarily()
+    },
+    [currentVideoAsStaged, effectivePlayerId, revealControlsTemporarily]
+  )
+
+  const playVideoInlineRef = useRef(playVideoInline)
+  playVideoInlineRef.current = playVideoInline
+
+  const handleReturnToPreviousInlineVideo = useCallback(() => {
+    if (inlineVideoHistory.length === 0) return
+    const previous = inlineVideoHistory[inlineVideoHistory.length - 1]
+    const nextHistory = inlineVideoHistory.slice(0, -1)
+    setInlineVideoHistory(nextHistory)
+    setInlineVideoOverride(nextHistory.length === 0 ? null : previous)
+    setShowMoreVideosOverlay(false)
+    dismissedPauseOverlayRef.current = false
+    setIsStoppedByOther(false)
+    setPlaybackPhase("playing")
+    setIsPlaying(true)
+    setCurrentTime(0)
+    notifyExclusiveVideoPlay(effectivePlayerId)
+    revealControlsTemporarily()
+  }, [effectivePlayerId, inlineVideoHistory, revealControlsTemporarily])
 
   const openInConnectLnStage = useCallback(
     (videoToStage: StagedConnectLnVideo) => {
@@ -346,9 +498,6 @@ export function ConnectLnStudioPlayer({
     [effectiveProvider, isHtml5Direct, moreVideosList, sendYtCommand]
   )
 
-  const openInConnectLnStageRef = useRef(openInConnectLnStage)
-  openInConnectLnStageRef.current = openInConnectLnStage
-
   const shouldMuteForTranslation = useCallback(() => {
     if (isVoiceDuckingRef.current || isInterpretingNeededRef.current) return true
     if (typeof window !== "undefined" && (window as any).__noctisPreferredAudioLang) {
@@ -365,15 +514,18 @@ export function ConnectLnStudioPlayer({
       if (isHtml5Direct && html5VideoRef.current) {
         html5VideoRef.current.muted = muteActive
         html5VideoRef.current.volume = muteActive ? 0 : 1
+        setIsMutedState(muteActive)
         return
       }
       if (effectiveProvider === "youtube") {
         if (muteActive) {
           sendYtCommand("setVolume", [0])
           sendYtCommand("mute")
+          setIsMutedState(true)
         } else if (!initialMuted && hasSessionAudioActivation()) {
           sendYtCommand("unMute")
           sendYtCommand("setVolume", [100])
+          setIsMutedState(false)
         }
       }
     },
@@ -437,20 +589,21 @@ export function ConnectLnStudioPlayer({
     }
   }, [effectivePlayerId, effectiveProvider, isHtml5Direct, sendYtCommand])
 
-  // YouTube official IFrame postMessage telemetry listener (intercepts in-iframe suggested clicks into ConnectLn Stage Player)
+  // YouTube official IFrame postMessage telemetry listener (routes any unexpected switch inline into ConnectLn)
   useEffect(() => {
     setIsStoppedByOther(false)
     setCurrentTime(0)
-    setIsPlaying(autoPlay)
-    setPlaybackPhase(autoPlay ? "playing" : "paused")
+    setIsPlaying(effectiveAutoPlay)
+    setPlaybackPhase(effectiveAutoPlay ? "playing" : "paused")
     setShowMoreVideosOverlay(false)
     dismissedPauseOverlayRef.current = false
     lastInterceptedYtIdRef.current = ""
-    if (autoPlay) {
+    setIsMutedState(initialMuted || shouldMuteForTranslation() || !hasSessionAudioActivation())
+    if (effectiveAutoPlay) {
       notifyExclusiveVideoPlay(effectivePlayerId)
     }
 
-    if (effectiveProvider !== "youtube" || !youtubeId) return
+    if (effectiveProvider !== "youtube" || !activeYoutubeId) return
 
     const handleMessage = (e: MessageEvent) => {
       const win = ytIframeRef.current?.contentWindow
@@ -466,7 +619,7 @@ export function ConnectLnStudioPlayer({
           const reportedYtId = extractPlayableYoutubeId(rawReportedId)
           if (
             reportedYtId &&
-            reportedYtId !== youtubeId &&
+            reportedYtId !== activeYoutubeId &&
             reportedYtId !== lastInterceptedYtIdRef.current
           ) {
             lastInterceptedYtIdRef.current = reportedYtId
@@ -478,7 +631,7 @@ export function ConnectLnStudioPlayer({
               (typeof data.info.videoData?.author === "string" &&
                 data.info.videoData.author.trim()) ||
               "ConnectLn Studio"
-            openInConnectLnStageRef.current({
+            playVideoInlineRef.current({
               youtubeId: reportedYtId,
               sourceProvider: "youtube",
               title: vTitle,
@@ -486,7 +639,7 @@ export function ConnectLnStudioPlayer({
               serialPlate: "CLN-NEXT",
               thumbnailUrl: `https://i.ytimg.com/vi/${reportedYtId}/hqdefault.jpg`,
               description:
-                "Playing inside ConnectLn Stage Player — zero external transitions.",
+                "Playing inside ConnectLn — zero external transitions.",
             })
             return
           }
@@ -496,6 +649,9 @@ export function ConnectLnStudioPlayer({
           }
           if (typeof data.info.duration === "number" && data.info.duration > 0) {
             setDuration(data.info.duration)
+          }
+          if (typeof data.info.muted === "boolean") {
+            setIsMutedState(data.info.muted)
           }
           if (typeof data.info.playerState === "number") {
             const pState = data.info.playerState
@@ -517,16 +673,19 @@ export function ConnectLnStudioPlayer({
               if (shouldMuteForTranslation()) {
                 sendYtCommand("setVolume", [0])
                 sendYtCommand("mute")
+                setIsMutedState(true)
               }
             } else if (pState === 2) {
               setIsPlaying(false)
               setPlaybackPhase("paused")
+              setControlsVisible(true)
               if (!dismissedPauseOverlayRef.current) {
                 setShowMoreVideosOverlay(true)
               }
             } else if (pState === 0) {
               setIsPlaying(false)
               setPlaybackPhase("ended")
+              setControlsVisible(true)
               dismissedPauseOverlayRef.current = false
               setShowMoreVideosOverlay(true)
             }
@@ -543,13 +702,13 @@ export function ConnectLnStudioPlayer({
       if (win) {
         win.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*")
       }
-    }, 1000)
+    }, 800)
 
     return () => {
       window.removeEventListener("message", handleMessage)
       clearInterval(poll)
     }
-  }, [youtubeId, directVideoUrl, effectiveProvider, autoPlay, effectivePlayerId, sendYtCommand, shouldMuteForTranslation])
+  }, [activeYoutubeId, activeDirectVideoUrl, effectiveProvider, effectiveAutoPlay, effectivePlayerId, initialMuted, sendYtCommand, shouldMuteForTranslation])
 
   // Gentle timer tick for non-YouTube external iframes so docked Noctis Interpreter tracks progress
   useEffect(() => {
@@ -594,7 +753,7 @@ export function ConnectLnStudioPlayer({
   // Computed official embed URL for iframe-based non-YouTube providers
   const resolvedExternalEmbedSrc = useMemo(() => {
     if (effectiveProvider === "youtube" || isHtml5Direct) return ""
-    const raw = (embedUrl || sourceVideoUrl || "").trim()
+    const raw = (activeEmbedUrl || activeSourceVideoUrl || "").trim()
     if (!raw) return ""
     if (effectiveProvider === "vimeo") {
       try {
@@ -603,10 +762,10 @@ export function ConnectLnStudioPlayer({
         if (!u.hostname.includes("player.vimeo.com")) {
           const m = u.pathname.match(/\/(\d{6,12})/)
           if (m?.[1]) {
-            return `https://player.vimeo.com/video/${m[1]}?autoplay=${autoPlay ? 1 : 0}&muted=${muteFlag}&dnt=1`
+            return `https://player.vimeo.com/video/${m[1]}?autoplay=${effectiveAutoPlay ? 1 : 0}&muted=${muteFlag}&dnt=1`
           }
         }
-        u.searchParams.set("autoplay", autoPlay ? "1" : "0")
+        u.searchParams.set("autoplay", effectiveAutoPlay ? "1" : "0")
         u.searchParams.set("muted", muteFlag)
         return u.toString()
       } catch {
@@ -614,40 +773,37 @@ export function ConnectLnStudioPlayer({
       }
     }
     return raw
-  }, [effectiveProvider, isHtml5Direct, embedUrl, sourceVideoUrl, autoPlay, initialMuted, shouldMuteForTranslation])
+  }, [effectiveProvider, isHtml5Direct, activeEmbedUrl, activeSourceVideoUrl, effectiveAutoPlay, initialMuted, shouldMuteForTranslation])
 
   const resolvedPoster =
-    posterImageUrl ||
-    (youtubeId ? `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg` : undefined)
+    activePosterImageUrl ||
+    (activeYoutubeId ? `https://i.ytimg.com/vi/${activeYoutubeId}/hqdefault.jpg` : undefined)
 
   const providerMeta = getProviderMeta(effectiveProvider)
 
   const compliantYouTubeSrc = useMemo(() => {
-    if (!youtubeId) return ""
+    if (!activeYoutubeId) return ""
     const muteFlag = initialMuted || shouldMuteForTranslation() ? 1 : hasSessionAudioActivation() ? 0 : 1
-    const originUrl =
-      typeof window !== "undefined" && window.location?.origin
-        ? window.location.origin
-        : "https://conectln.com"
     const params = new URLSearchParams({
-      autoplay: autoPlay ? "1" : "0",
+      autoplay: effectiveAutoPlay ? "1" : "0",
       mute: String(muteFlag),
-      controls: "1",
-      fs: "1",
+      controls: "0",
+      disablekb: "1",
+      fs: "0",
       rel: "0",
       iv_load_policy: "3",
       modestbranding: "1",
       playsinline: "1",
       enablejsapi: "1",
-      origin: originUrl,
+      origin: playerOrigin,
       cc_load_policy: initialLangRef.current !== normalizedSourceLang ? "1" : "0",
       cc_lang_pref: initialLangRef.current,
       hl: initialLangRef.current,
     })
-    return `https://www.youtube-nocookie.com/embed/${youtubeId}?${params.toString()}`
-  }, [youtubeId, autoPlay, initialMuted, normalizedSourceLang, shouldMuteForTranslation])
+    return `https://www.youtube-nocookie.com/embed/${activeYoutubeId}?${params.toString()}`
+  }, [activeYoutubeId, effectiveAutoPlay, initialMuted, normalizedSourceLang, playerOrigin, shouldMuteForTranslation])
 
-  const handleResumePlayer = () => {
+  const handleResumePlayer = useCallback(() => {
     notifyExclusiveVideoPlay(effectivePlayerId)
     setIsStoppedByOther(false)
     setShowMoreVideosOverlay(false)
@@ -667,21 +823,108 @@ export function ConnectLnStudioPlayer({
       }
       sendYtCommand("playVideo")
     }
-  }
+    revealControlsTemporarily()
+  }, [effectivePlayerId, effectiveProvider, isHtml5Direct, playbackPhase, revealControlsTemporarily, sendYtCommand])
+
+  const handleCanvasClick = useCallback(() => {
+    if (isPlaying) {
+      dismissedPauseOverlayRef.current = false
+      sendYtCommand("pauseVideo")
+      setIsPlaying(false)
+      setPlaybackPhase("paused")
+      setShowMoreVideosOverlay(true)
+      setControlsVisible(true)
+    } else {
+      handleResumePlayer()
+    }
+  }, [handleResumePlayer, isPlaying, sendYtCommand])
+
+  const toggleYouTubePlayPause = useCallback(() => {
+    if (isPlaying) {
+      dismissedPauseOverlayRef.current = true
+      sendYtCommand("pauseVideo")
+      setIsPlaying(false)
+      setPlaybackPhase("paused")
+      setControlsVisible(true)
+    } else {
+      handleResumePlayer()
+    }
+  }, [handleResumePlayer, isPlaying, sendYtCommand])
+
+  const seekYouTubeTo = useCallback(
+    (targetSec: number) => {
+      const clamped = Math.max(0, Math.min(Math.floor(duration), Math.floor(targetSec)))
+      sendYtCommand("seekTo", [clamped, true])
+      setCurrentTime(clamped)
+      revealControlsTemporarily()
+    },
+    [duration, revealControlsTemporarily, sendYtCommand]
+  )
+
+  const seekYouTubeBy = useCallback(
+    (deltaSec: number) => {
+      seekYouTubeTo(currentTime + deltaSec)
+    },
+    [currentTime, seekYouTubeTo]
+  )
+
+  const toggleYouTubeMute = useCallback(() => {
+    if (isMutedState) {
+      ;(window as any).__connectlnAudioUnlocked = true
+      sendYtCommand("unMute")
+      sendYtCommand("setVolume", [100])
+      setIsMutedState(false)
+    } else {
+      sendYtCommand("mute")
+      sendYtCommand("setVolume", [0])
+      setIsMutedState(true)
+    }
+    revealControlsTemporarily()
+  }, [isMutedState, revealControlsTemporarily, sendYtCommand])
+
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current
+    if (!el) return
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {})
+    } else {
+      el.requestFullscreen?.().catch(() => {})
+    }
+    revealControlsTemporarily()
+  }, [revealControlsTemporarily])
+
+  const openInPlayerMoreVideos = useCallback(() => {
+    dismissedPauseOverlayRef.current = false
+    setShowMoreVideosOverlay(true)
+    setControlsVisible(true)
+    if (isHtml5Direct && html5VideoRef.current && !html5VideoRef.current.paused) {
+      html5VideoRef.current.pause()
+      setIsPlaying(false)
+      setPlaybackPhase("paused")
+    } else if (effectiveProvider === "youtube" && isPlayingStateRef.current) {
+      sendYtCommand("pauseVideo")
+      setIsPlaying(false)
+      setPlaybackPhase("paused")
+    }
+  }, [effectiveProvider, isHtml5Direct, sendYtCommand])
 
   return (
     <div
       ref={containerRef}
       className={`flex flex-col w-full bg-black overflow-hidden ${className}`}
     >
-      {/* Full Uncropped 16:9 Video Canvas (Min >= 200x200px, Zero Obstructions Over YouTube/External Iframes) */}
-      <div className="relative w-full aspect-video min-h-[200px] bg-black overflow-hidden">
+      {/* Full Uncropped 16:9 Video Canvas (Strict Sandbox + Native ConnectLn Controls & In-Player Shelf) */}
+      <div
+        className="relative w-full aspect-video min-h-[200px] bg-black overflow-hidden group/canvas"
+        onMouseMove={revealControlsTemporarily}
+        onTouchStart={revealControlsTemporarily}
+      >
         {isStoppedByOther ? (
           <div className="relative h-full w-full flex flex-col items-center justify-center bg-zinc-950 text-white">
             {resolvedPoster && (
               <img
                 src={resolvedPoster}
-                alt={title}
+                alt={activeTitle}
                 className="absolute inset-0 h-full w-full object-cover opacity-50"
               />
             )}
@@ -695,20 +938,20 @@ export function ConnectLnStudioPlayer({
                 <span>Resume Video</span>
               </button>
               <p className="text-[11px] text-zinc-200 line-clamp-1 max-w-md drop-shadow">
-                {title}
+                {activeTitle}
               </p>
             </div>
           </div>
-        ) : isHtml5Direct && directVideoUrl ? (
+        ) : isHtml5Direct && activeDirectVideoUrl ? (
           <video
             ref={html5VideoRef}
-            key={directVideoUrl}
-            src={directVideoUrl}
+            key={activeDirectVideoUrl}
+            src={activeDirectVideoUrl}
             poster={resolvedPoster}
             controls
             playsInline
             preload="metadata"
-            autoPlay={autoPlay}
+            autoPlay={effectiveAutoPlay}
             muted={initialMuted || shouldMuteForTranslation()}
             data-connectln-player-id={effectivePlayerId}
             onPlay={() => {
@@ -741,34 +984,36 @@ export function ConnectLnStudioPlayer({
               setCurrentTime(e.currentTarget.currentTime || 0)
             }}
             onError={() => {
-              if (embedUrl) {
+              if (activeEmbedUrl) {
                 setHtml5FallbackToEmbed(true)
               }
             }}
             className="h-full w-full bg-black object-contain"
           />
-        ) : effectiveProvider === "youtube" && youtubeId ? (
+        ) : effectiveProvider === "youtube" && activeYoutubeId ? (
           <iframe
             ref={ytIframeRef}
-            key={youtubeId}
+            key={activeYoutubeId}
             src={compliantYouTubeSrc}
-            title={title}
+            title={activeTitle}
+            sandbox="allow-scripts allow-same-origin allow-presentation"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
+            tabIndex={-1}
             onLoad={() => {
               const win = ytIframeRef.current?.contentWindow
               if (win) {
                 win.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*")
               }
             }}
-            className="h-full w-full border-0"
+            className="h-full w-full border-0 pointer-events-none select-none"
           />
         ) : resolvedExternalEmbedSrc ? (
           <iframe
             key={resolvedExternalEmbedSrc}
             src={resolvedExternalEmbedSrc}
-            title={title}
+            title={activeTitle}
+            sandbox="allow-scripts allow-same-origin allow-presentation"
             allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
@@ -780,19 +1025,208 @@ export function ConnectLnStudioPlayer({
           </div>
         )}
 
+        {/* ConnectLn Native Custom Player Controls Overlay (Zero YouTube Popups/Links) */}
+        {effectiveProvider === "youtube" &&
+          activeYoutubeId &&
+          !isStoppedByOther &&
+          !showMoreVideosOverlay && (
+            <div
+              data-connectln-player-controls="true"
+              className="absolute inset-0 z-10 flex flex-col justify-between pointer-events-none"
+            >
+              {/* Transparent canvas click target to pause/play cleanly inside ConnectLn */}
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-hidden="true"
+                onClick={handleCanvasClick}
+                className="absolute inset-0 z-0 w-full h-full bg-transparent pointer-events-auto cursor-pointer focus:outline-none"
+              />
+
+              {/* Top Bar: Inline History Back + Active Title + Audio & More Videos */}
+              <div
+                className={`relative z-10 flex items-center justify-between gap-2 bg-gradient-to-b from-black/80 via-black/40 to-transparent px-3 py-2 text-white pointer-events-auto transition-opacity duration-200 ${
+                  controlsVisible || !isPlaying || inlineVideoHistory.length > 0 || isMutedState
+                    ? "opacity-100"
+                    : "opacity-0 group-hover/canvas:opacity-100"
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  {inlineVideoHistory.length > 0 && (
+                    <button
+                      type="button"
+                      data-connectln-inline-back="true"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleReturnToPreviousInlineVideo()
+                      }}
+                      className="inline-flex items-center gap-1 rounded-full bg-black/75 hover:bg-[#0A66C2] border border-white/25 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm cursor-pointer shrink-0 transition-colors"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                      <span>Back</span>
+                    </button>
+                  )}
+                  <span className="text-[11px] font-semibold text-white/95 line-clamp-1 drop-shadow">
+                    {activeTitle}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {isMutedState && !shouldMuteForTranslation() && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleYouTubeMute()
+                      }}
+                      className="inline-flex items-center gap-1 rounded-full bg-black/75 hover:bg-[#0A66C2] border border-white/25 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm cursor-pointer transition-colors"
+                    >
+                      <VolumeX className="h-3 w-3" />
+                      <span>Tap for sound</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    data-connectln-inplayer-more="true"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      openInPlayerMoreVideos()
+                    }}
+                    className="inline-flex items-center gap-1 rounded-full bg-zinc-900/85 hover:bg-[#0A66C2] border border-white/25 px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:text-white shadow-sm cursor-pointer transition-colors"
+                  >
+                    <Film className="h-3 w-3" />
+                    <span>More Videos</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Bottom Control Bar: Seek Slider, Play/Pause, -10s/+10s, Mute, Time, Videos, Fullscreen */}
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className={`relative z-10 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-3 pt-4 pb-2 text-white pointer-events-auto transition-opacity duration-200 space-y-1.5 ${
+                  controlsVisible || !isPlaying
+                    ? "opacity-100"
+                    : "opacity-0 group-hover/canvas:opacity-100"
+                }`}
+              >
+                <input
+                  type="range"
+                  aria-label="Seek video"
+                  min={0}
+                  max={Math.max(1, Math.floor(duration))}
+                  value={Math.min(Math.floor(currentTime), Math.floor(duration))}
+                  onChange={(e) => seekYouTubeTo(Number(e.target.value))}
+                  className="w-full h-1.5 accent-[#0A66C2] bg-white/25 rounded-lg cursor-pointer"
+                />
+
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <button
+                      type="button"
+                      onClick={toggleYouTubePlayPause}
+                      aria-label={isPlaying ? "Pause video" : "Play video"}
+                      className="inline-flex items-center justify-center rounded-full bg-white/15 hover:bg-[#0A66C2] p-1.5 text-white cursor-pointer transition-colors"
+                    >
+                      {isPlaying ? (
+                        <Pause className="h-3.5 w-3.5 fill-white" />
+                      ) : (
+                        <Play className="h-3.5 w-3.5 fill-white ml-0.5" />
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => seekYouTubeBy(-10)}
+                      aria-label="Rewind 10 seconds"
+                      className="hidden sm:inline-flex items-center gap-0.5 rounded-full bg-white/10 hover:bg-white/25 px-2 py-1 text-[10px] font-bold text-white cursor-pointer transition-colors"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      <span>10s</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => seekYouTubeBy(10)}
+                      aria-label="Forward 10 seconds"
+                      className="hidden sm:inline-flex items-center gap-0.5 rounded-full bg-white/10 hover:bg-white/25 px-2 py-1 text-[10px] font-bold text-white cursor-pointer transition-colors"
+                    >
+                      <span>10s</span>
+                      <RotateCw className="h-3 w-3" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={toggleYouTubeMute}
+                      aria-label={isMutedState ? "Unmute video" : "Mute video"}
+                      className="inline-flex items-center justify-center rounded-full bg-white/15 hover:bg-white/25 p-1.5 text-white cursor-pointer transition-colors"
+                    >
+                      {isMutedState ? (
+                        <VolumeX className="h-3.5 w-3.5" />
+                      ) : (
+                        <Volume2 className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+
+                    <span className="font-mono text-[10px] sm:text-[11px] text-zinc-200 select-none">
+                      {formatMediaTime(currentTime)} / {formatMediaTime(duration)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      data-connectln-inplayer-more-bottom="true"
+                      onClick={openInPlayerMoreVideos}
+                      className="inline-flex items-center gap-1 rounded-full bg-white/15 hover:bg-[#0A66C2] px-2.5 py-1 text-[10px] font-bold text-white cursor-pointer transition-colors"
+                    >
+                      <Film className="h-3 w-3 text-amber-300" />
+                      <span>Videos</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={toggleFullscreen}
+                      aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                      className="inline-flex items-center justify-center rounded-full bg-white/15 hover:bg-white/25 p-1.5 text-white cursor-pointer transition-colors"
+                    >
+                      {isFullscreen ? (
+                        <Minimize2 className="h-3.5 w-3.5" />
+                      ) : (
+                        <Maximize2 className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
         {/* Native ConnectLn "More Videos" Overlay Covering Paused/Ended Canvas (Keeps Users Inside ConnectLn) */}
         {showMoreVideosOverlay && !isStoppedByOther && (
           <div className="absolute inset-0 z-20 flex flex-col justify-between bg-gradient-to-t from-black/95 via-black/85 to-black/75 p-3 sm:p-4 text-white backdrop-blur-[2px]">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-900/90 border border-white/20 px-2.5 py-1 text-[10px] font-bold text-amber-300">
-                <Film className="h-3 w-3" />
-                <span>
-                  ConnectLn Player ·{" "}
-                  {playbackPhase === "ended"
-                    ? "Up Next on ConnectLn"
-                    : "Paused · More Videos in ConnectLn"}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {inlineVideoHistory.length > 0 && (
+                  <button
+                    type="button"
+                    data-connectln-inline-back="true"
+                    onClick={handleReturnToPreviousInlineVideo}
+                    className="inline-flex items-center gap-1 rounded-full bg-white/15 hover:bg-[#0A66C2] border border-white/25 px-2.5 py-1 text-[11px] font-bold text-white cursor-pointer"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    <span>Previous Video</span>
+                  </button>
+                )}
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-900/90 border border-white/20 px-2.5 py-1 text-[10px] font-bold text-amber-300">
+                  <Film className="h-3 w-3" />
+                  <span>
+                    ConnectLn Player ·{" "}
+                    {playbackPhase === "ended"
+                      ? "Up Next on ConnectLn"
+                      : "Paused · More Videos in ConnectLn"}
+                  </span>
                 </span>
-              </span>
+              </div>
 
               <div className="flex items-center gap-1.5">
                 <button
@@ -852,7 +1286,8 @@ export function ConnectLnStudioPlayer({
                   <button
                     key={`${vid.youtubeId || vid.directVideoUrl || vid.title}-${idx}`}
                     type="button"
-                    onClick={() => openInConnectLnStage(vid)}
+                    data-connectln-inplayer-video-card="true"
+                    onClick={() => playVideoInline(vid)}
                     className="group flex w-44 sm:w-52 shrink-0 flex-col overflow-hidden rounded-xl border border-white/20 bg-zinc-900/95 hover:border-amber-400 text-left shadow-lg transition-all cursor-pointer"
                   >
                     <div className="relative h-22 sm:h-24 w-full bg-black overflow-hidden">
@@ -898,7 +1333,7 @@ export function ConnectLnStudioPlayer({
             {effectiveProvider === "connectln_native" && <ShieldCheck className="h-3 w-3" />}
             {providerMeta.badge}
           </span>
-          <span className="truncate font-semibold text-zinc-100">{speaker}</span>
+          <span className="truncate font-semibold text-zinc-100">{activeSpeaker}</span>
           {licenseLabel && (
             <span className="text-[10px] text-zinc-400 hidden sm:inline">
               · {licenseLabel}
@@ -935,15 +1370,15 @@ export function ConnectLnStudioPlayer({
       {!isStoppedByOther && (
         <NoctisVideoInterpreterPopup
           dockedBelow={true}
-          youtubeId={youtubeId || undefined}
-          title={title}
-          speaker={speaker}
-          speakerRole={speakerRole}
-          serialPlate={serialPlate}
-          description={description}
-          takeaways={takeaways}
+          youtubeId={activeYoutubeId || undefined}
+          title={activeTitle}
+          speaker={activeSpeaker}
+          speakerRole={activeSpeakerRole}
+          serialPlate={activeSerialPlate}
+          description={activeDescription}
+          takeaways={activeTakeaways}
           sourceLanguage={normalizedSourceLang}
-          sourceLanguageLabel={sourceLanguageLabel}
+          sourceLanguageLabel={activeSourceLangLabel}
           currentTime={currentTime}
           duration={duration}
           isPlaying={isPlaying}
