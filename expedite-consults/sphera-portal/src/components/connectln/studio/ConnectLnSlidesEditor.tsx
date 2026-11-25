@@ -1,30 +1,49 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   ArrowDown,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  BarChart3,
   ChevronLeft,
   ChevronRight,
   Copy,
   Download,
+  Eraser,
+  Eye,
+  EyeOff,
   FilePlus2,
+  Grid,
   ImagePlus,
   LayoutTemplate,
   Maximize2,
+  MessageSquare,
+  MonitorPlay,
+  Palette,
   PanelLeftClose,
   PanelLeftOpen,
+  PenLine,
   Play,
   Plus,
   Presentation,
   Printer,
+  Redo2,
   Search,
   Share2,
+  Sparkles,
+  Square,
   Star,
   StickyNote,
+  Table2,
+  Timer,
   Trash2,
+  Type,
+  Undo2,
   X,
 } from "lucide-react"
 import type { UserProfile } from "@/lib/connectln-data"
@@ -32,7 +51,6 @@ import {
   buildPptxBytes,
   buildStandaloneHtmlDeck,
   downloadStudioFile,
-  escapeHtml,
   type SlideThemePalette,
 } from "@/lib/connectln-studio-export"
 import {
@@ -42,16 +60,21 @@ import {
   saveStudioDecks,
   STUDIO_SLIDE_THEMES,
   type DeckTemplateItem,
+  type SlideExtraElement,
   type SlideLayoutType,
+  type SlideTransitionType,
   type StudioDeckRecord,
   type StudioSlideItem,
 } from "@/lib/connectln-studio-storage"
 import type { StudioSharePayload } from "./ConnectLnDocsEditor"
+import { ConnectLnStudioPrintModal } from "./ConnectLnStudioPrintModal"
 
 interface ConnectLnSlidesEditorProps {
   user: UserProfile
   onShareToFeed?: (payload: StudioSharePayload) => void
 }
+
+type SlidesRibbonTab = "home" | "insert" | "design" | "transitions" | "slideshow"
 
 const LAYOUT_OPTIONS: Array<{ id: SlideLayoutType; label: string }> = [
   { id: "cover", label: "Title Cover" },
@@ -60,6 +83,10 @@ const LAYOUT_OPTIONS: Array<{ id: SlideLayoutType; label: string }> = [
   { id: "metrics", label: "KPI Metrics" },
   { id: "quote", label: "Quote & Takeaway" },
   { id: "visual_split", label: "Visual Split" },
+  { id: "section", label: "Section Header" },
+  { id: "table", label: "Editable Table" },
+  { id: "chart", label: "Live Chart" },
+  { id: "blank", label: "Blank Canvas" },
 ]
 
 function safeSlug(title: string): string {
@@ -81,6 +108,14 @@ function createEmptySlide(layout: SlideLayoutType = "bullets"): StudioSlideItem 
         title: "Presentation Title",
         subtitle: "Prepared with ConnectLn Slides",
         bullets: ["Verified Team Briefing", "2026"],
+      }
+    case "section":
+      return {
+        id: baseId,
+        layout: "section",
+        title: "Section 01 — Core Strategy",
+        subtitle: "Transitioning to operational milestones",
+        bullets: ["Section Milestone"],
       }
     case "two_column":
       return {
@@ -121,6 +156,46 @@ function createEmptySlide(layout: SlideLayoutType = "bullets"): StudioSlideItem 
         subtitle: "Field spotlight & highlights",
         bullets: ["Key visual takeaway #1", "Supporting operational detail #2"],
       }
+    case "table":
+      return {
+        id: baseId,
+        layout: "table",
+        title: "Schedule & Deliverable Matrix",
+        subtitle: "Editable project breakdown table",
+        tableData: {
+          headers: ["Phase", "Owner", "Timeline", "Status"],
+          rows: [
+            ["Mobilization", "Field Lead", "Week 1", "On Track"],
+            ["Inspection", "QA Officer", "Week 3", "Scheduled"],
+            ["Handover", "Client Rep", "Week 6", "Planned"],
+          ],
+        },
+      }
+    case "chart":
+      return {
+        id: baseId,
+        layout: "chart",
+        title: "Performance Breakdown",
+        subtitle: "Visual benchmark comparison",
+        chartData: {
+          kind: "bar",
+          title: "Quarterly Output ($K)",
+          items: [
+            { label: "Q1", value: 42 },
+            { label: "Q2", value: 58 },
+            { label: "Q3", value: 74 },
+            { label: "Q4", value: 92 },
+          ],
+        },
+      }
+    case "blank":
+      return {
+        id: baseId,
+        layout: "blank",
+        title: "Custom Canvas Slide",
+        subtitle: "Use the Insert tab to add text boxes, badges, charts, or visuals",
+        elements: [],
+      }
     case "bullets":
     default:
       return {
@@ -137,14 +212,35 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
   const [decks, setDecks] = useState<StudioDeckRecord[]>(() => loadStudioDecks(user))
   const [activeDeckId, setActiveDeckId] = useState<string>(() => decks[0]?.id || "")
   const [activeSlideIndex, setActiveSlideIndex] = useState(0)
+  const [ribbonTab, setRibbonTab] = useState<SlidesRibbonTab>("home")
   const [sidebarTab, setSidebarTab] = useState<"slides" | "decks">("slides")
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sorterMode, setSorterMode] = useState(false)
   const [deckSearch, setDeckSearch] = useState("")
   const [showNotesDrawer, setShowNotesDrawer] = useState(false)
-  const [showPresentNotes, setShowPresentNotes] = useState(false)
+  const [showCommentsDrawer, setShowCommentsDrawer] = useState(false)
+  const [commentDraft, setCommentDraft] = useState("")
+  const [showFindBar, setShowFindBar] = useState(false)
+  const [findTerm, setFindTerm] = useState("")
+  const [replaceTerm, setReplaceTerm] = useState("")
+
+  // Present & Presenter View states
   const [isPresenting, setIsPresenting] = useState(false)
+  const [presenterViewMode, setPresenterViewMode] = useState(false)
+  const [showPresentNotes, setShowPresentNotes] = useState(false)
+  const [autoPlaySec, setAutoPlaySec] = useState<0 | 3 | 5 | 10>(0)
+  const [revealStep, setRevealStep] = useState(99)
+  const [penActive, setPenActive] = useState(false)
+  const [inkStrokes, setInkStrokes] = useState<Array<Array<{ x: number; y: number }>>>([])
+  const [drawingNow, setDrawingNow] = useState(false)
+  const [presentSeconds, setPresentSeconds] = useState(0)
+
+  const [transitionPulseKey, setTransitionPulseKey] = useState(0)
+  const [showPrintModal, setShowPrintModal] = useState(false)
   const [showTemplatesModal, setShowTemplatesModal] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
+  const [undoDecks, setUndoDecks] = useState<StudioDeckRecord[]>([])
+  const [redoDecks, setRedoDecks] = useState<StudioDeckRecord[]>([])
   const [statusNotice, setStatusNotice] = useState<string | null>(null)
   const [savedLabel, setSavedLabel] = useState("Saved locally")
 
@@ -157,18 +253,68 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
   )
   const activeSlide = activeDeck?.slides[safeSlideIndex] || createEmptySlide("cover")
   const theme: SlideThemePalette = getSlideThemeById(activeDeck?.themeId || "sandstone-editorial")
+  const effectiveSlideBg = activeSlide.customBgHex || theme.bgHex
+  const aspectClass = activeDeck?.aspectRatio === "4:3" ? "aspect-[4/3]" : "aspect-[16/9]"
 
   useEffect(() => {
     saveStudioDecks(user, decks)
   }, [decks, user])
 
   useEffect(() => {
+    const onGlobalKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
+        e.preventDefault()
+        setShowPrintModal(true)
+      } else if (e.key === "F5" && !isPresenting) {
+        e.preventDefault()
+        setActiveSlideIndex(0)
+        setPresenterViewMode(false)
+        setIsPresenting(true)
+      }
+    }
+    window.addEventListener("keydown", onGlobalKey)
+    return () => window.removeEventListener("keydown", onGlobalKey)
+  }, [isPresenting])
+
+  useEffect(() => {
+    if (!isPresenting) {
+      setPresentSeconds(0)
+      setInkStrokes([])
+      setPenActive(false)
+      return
+    }
+    const timer = window.setInterval(() => setPresentSeconds((s) => s + 1), 1000)
+    return () => window.clearInterval(timer)
+  }, [isPresenting])
+
+  useEffect(() => {
+    if (!isPresenting || autoPlaySec === 0) return
+    const total = activeDeck?.slides.length || 1
+    const timer = window.setInterval(() => {
+      setActiveSlideIndex((idx) => (idx + 1 >= total ? 0 : idx + 1))
+    }, autoPlaySec * 1000)
+    return () => window.clearInterval(timer)
+  }, [isPresenting, autoPlaySec, activeDeck?.slides.length])
+
+  useEffect(() => {
+    if (!isPresenting) return
+    setRevealStep(activeSlide.animateBullets ? 1 : 99)
+    setInkStrokes([])
+  }, [activeSlideIndex, isPresenting, activeSlide.animateBullets])
+
+  useEffect(() => {
     if (!isPresenting) return
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setIsPresenting(false)
+        setPresenterViewMode(false)
       } else if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === " ") {
         e.preventDefault()
+        const maxBullets = activeSlide.bullets?.length || 0
+        if (activeSlide.animateBullets && revealStep < maxBullets) {
+          setRevealStep((r) => r + 1)
+          return
+        }
         setActiveSlideIndex((idx) =>
           Math.min((activeDeck?.slides.length || 1) - 1, idx + 1)
         )
@@ -179,7 +325,7 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [isPresenting, activeDeck?.slides.length])
+  }, [isPresenting, activeDeck?.slides.length, activeSlide.animateBullets, activeSlide.bullets?.length, revealStep])
 
   const notify = (msg: string) => {
     setStatusNotice(msg)
@@ -188,8 +334,15 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
     }, 3200)
   }
 
-  const updateActiveDeck = (updater: (deck: StudioDeckRecord) => StudioDeckRecord) => {
+  const updateActiveDeck = (
+    updater: (deck: StudioDeckRecord) => StudioDeckRecord,
+    recordHistory = true
+  ) => {
     if (!activeDeck) return
+    if (recordHistory) {
+      setUndoDecks((prev) => [...prev.slice(-19), JSON.parse(JSON.stringify(activeDeck))])
+      setRedoDecks([])
+    }
     const now = new Date().toISOString()
     setDecks((prev) =>
       prev.map((d) => (d.id === activeDeck.id ? { ...updater(d), updatedAt: now } : d))
@@ -199,30 +352,56 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
     )
   }
 
-  const updateActiveSlide = (patch: Partial<StudioSlideItem>) => {
-    updateActiveDeck((deck) => ({
-      ...deck,
-      slides: deck.slides.map((s, idx) => (idx === safeSlideIndex ? { ...s, ...patch } : s)),
-    }))
+  const handleDeckUndo = () => {
+    if (undoDecks.length === 0 || !activeDeck) return
+    const prevDeck = undoDecks[undoDecks.length - 1]
+    setUndoDecks((u) => u.slice(0, -1))
+    setRedoDecks((r) => [...r, JSON.parse(JSON.stringify(activeDeck))])
+    setDecks((prev) => prev.map((d) => (d.id === activeDeck.id ? prevDeck : d)))
+    notify("Undid deck change")
+  }
+
+  const handleDeckRedo = () => {
+    if (redoDecks.length === 0 || !activeDeck) return
+    const nextDeck = redoDecks[redoDecks.length - 1]
+    setRedoDecks((r) => r.slice(0, -1))
+    setUndoDecks((u) => [...u, JSON.parse(JSON.stringify(activeDeck))])
+    setDecks((prev) => prev.map((d) => (d.id === activeDeck.id ? nextDeck : d)))
+    notify("Redid deck change")
+  }
+
+  const updateActiveSlide = (patch: Partial<StudioSlideItem>, recordHistory = false) => {
+    updateActiveDeck(
+      (deck) => ({
+        ...deck,
+        slides: deck.slides.map((s, idx) => (idx === safeSlideIndex ? { ...s, ...patch } : s)),
+      }),
+      recordHistory
+    )
   }
 
   const handleLayoutChange = (nextLayout: SlideLayoutType) => {
     const defaults = createEmptySlide(nextLayout)
-    updateActiveSlide({
-      layout: nextLayout,
-      leftTitle: activeSlide.leftTitle || defaults.leftTitle,
-      leftBullets: activeSlide.leftBullets?.length ? activeSlide.leftBullets : defaults.leftBullets,
-      rightTitle: activeSlide.rightTitle || defaults.rightTitle,
-      rightBullets: activeSlide.rightBullets?.length ? activeSlide.rightBullets : defaults.rightBullets,
-      metrics: activeSlide.metrics?.length ? activeSlide.metrics : defaults.metrics,
-      quote: activeSlide.quote || defaults.quote,
-      quoteAuthor: activeSlide.quoteAuthor || defaults.quoteAuthor,
-      bullets: activeSlide.bullets?.length ? activeSlide.bullets : defaults.bullets,
-    })
+    updateActiveSlide(
+      {
+        layout: nextLayout,
+        leftTitle: activeSlide.leftTitle || defaults.leftTitle,
+        leftBullets: activeSlide.leftBullets?.length ? activeSlide.leftBullets : defaults.leftBullets,
+        rightTitle: activeSlide.rightTitle || defaults.rightTitle,
+        rightBullets: activeSlide.rightBullets?.length ? activeSlide.rightBullets : defaults.rightBullets,
+        metrics: activeSlide.metrics?.length ? activeSlide.metrics : defaults.metrics,
+        quote: activeSlide.quote || defaults.quote,
+        quoteAuthor: activeSlide.quoteAuthor || defaults.quoteAuthor,
+        bullets: activeSlide.bullets?.length ? activeSlide.bullets : defaults.bullets,
+        tableData: activeSlide.tableData || defaults.tableData,
+        chartData: activeSlide.chartData || defaults.chartData,
+      },
+      true
+    )
   }
 
-  const handleAddSlide = () => {
-    const nextSlide = createEmptySlide("bullets")
+  const handleAddSlide = (layout: SlideLayoutType = "bullets") => {
+    const nextSlide = createEmptySlide(layout)
     updateActiveDeck((deck) => ({
       ...deck,
       slides: [
@@ -240,7 +419,7 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
     const src = activeDeck.slides[idx]
     if (!src) return
     const copy: StudioSlideItem = {
-      ...src,
+      ...JSON.parse(JSON.stringify(src)),
       id: `slide_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       title: `${src.title} (Copy)`,
     }
@@ -278,6 +457,60 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
     notify("Slide removed")
   }
 
+  const handleInsertExtraElement = (kind: SlideExtraElement["kind"]) => {
+    const newEl: SlideExtraElement = {
+      id: `el_${Date.now()}`,
+      kind,
+      text:
+        kind === "callout"
+          ? "Key Highlight: Summarize takeaway here."
+          : kind === "badge"
+          ? "PRIORITY MILESTONE"
+          : kind === "arrow"
+          ? "Next Step → Proceed to Execution"
+          : "Custom Text Box — double click to edit",
+      bgHex: theme.surfaceHex,
+      textHex: kind === "badge" ? theme.accentHex : theme.textHex,
+    }
+    updateActiveSlide({ elements: [...(activeSlide.elements || []), newEl] }, true)
+    notify(`Inserted ${kind} element onto slide`)
+  }
+
+  const handleAddSlideComment = () => {
+    if (!commentDraft.trim()) return
+    const next = [
+      {
+        id: `sc_${Date.now()}`,
+        author: user.name || "Presenter",
+        text: commentDraft.trim(),
+        createdAt: new Date().toISOString(),
+      },
+      ...(activeSlide.comments || []),
+    ]
+    updateActiveSlide({ comments: next })
+    setCommentDraft("")
+  }
+
+  const handleFindReplaceDeck = () => {
+    if (!findTerm.trim() || !activeDeck) return
+    const escaped = findTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const re = new RegExp(escaped, "gi")
+    const replStr = (s?: string) => (s ? s.replace(re, replaceTerm) : s)
+    updateActiveDeck((deck) => ({
+      ...deck,
+      slides: deck.slides.map((s) => ({
+        ...s,
+        title: replStr(s.title) || s.title,
+        subtitle: replStr(s.subtitle),
+        quote: replStr(s.quote),
+        bullets: s.bullets?.map((b) => b.replace(re, replaceTerm)),
+        leftBullets: s.leftBullets?.map((b) => b.replace(re, replaceTerm)),
+        rightBullets: s.rightBullets?.map((b) => b.replace(re, replaceTerm)),
+      })),
+    }))
+    notify(`Replaced "${findTerm}" across all slides`)
+  }
+
   const handleCreateDeckFromTemplate = (tpl: DeckTemplateItem) => {
     const now = new Date().toISOString()
     const newDeck: StudioDeckRecord = {
@@ -289,6 +522,8 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
       createdAt: now,
       updatedAt: now,
       authorName: user.name || "ConnectLn Member",
+      aspectRatio: "16:9",
+      showSlideNumbers: true,
     }
     setDecks((prev) => [newDeck, ...prev])
     setActiveDeckId(newDeck.id)
@@ -317,7 +552,12 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
     const slug = safeSlug(activeDeck.title)
 
     if (kind === "pptx") {
-      const bytes = buildPptxBytes(activeDeck.title, activeDeck.slides, theme)
+      const bytes = buildPptxBytes(
+        activeDeck.title,
+        activeDeck.slides,
+        theme,
+        activeDeck.aspectRatio || "16:9"
+      )
       downloadStudioFile(
         bytes,
         `${slug}.pptx`,
@@ -328,39 +568,24 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
     }
 
     if (kind === "html") {
-      const html = buildStandaloneHtmlDeck(activeDeck.title, activeDeck.slides, theme)
+      const visible = activeDeck.slides.filter((s) => !s.hidden)
+      const html = buildStandaloneHtmlDeck(
+        activeDeck.title,
+        visible.length > 0 ? visible : activeDeck.slides,
+        theme
+      )
       downloadStudioFile(html, `${slug}-deck.html`, "text/html;charset=utf-8")
       notify(`Exported ${slug}-deck.html`)
       return
     }
 
-    const printSlidesHtml = activeDeck.slides
-      .map(
-        (s, idx) =>
-          `<div style="page-break-after:always;border:1px solid #d1d5db;border-radius:12px;padding:42px;margin-bottom:24px;background:${theme.bgHex};color:${theme.textHex};">
-            <h1 style="margin:0 0 8px 0;color:${theme.primaryHex};">${escapeHtml(s.title)}</h1>
-            ${s.subtitle ? `<p style="margin:0 0 18px 0;color:${theme.mutedHex};">${escapeHtml(s.subtitle)}</p>` : ""}
-            <ul>${(s.bullets || []).map((b) => `<li>${escapeHtml(b)}</li>`).join("")}</ul>
-            <p style="font-size:11px;opacity:0.6;margin-top:24px;">Slide ${idx + 1} · ConnectLn Slides</p>
-          </div>`
-      )
-      .join("")
-    const win = window.open("", "_blank", "width=960,height=720")
-    if (!win) {
-      notify("Allow pop-ups to print slides")
-      return
-    }
-    win.document.write(
-      `<!DOCTYPE html><html><head><title>${escapeHtml(activeDeck.title)}</title></head><body style="font-family:sans-serif;padding:24px;">${printSlidesHtml}</body></html>`
-    )
-    win.document.close()
-    win.focus()
-    setTimeout(() => win.print(), 250)
+    setShowPrintModal(true)
   }
 
   const handleShareDeck = () => {
     if (!activeDeck || !onShareToFeed) return
-    const feedSlides = activeDeck.slides.map((s, idx) => ({
+    const visible = activeDeck.slides.filter((s) => !s.hidden)
+    const feedSlides = visible.map((s, idx) => ({
       slideNumber: idx + 1,
       title: s.title,
       content:
@@ -373,7 +598,7 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
     }))
     onShareToFeed({
       title: activeDeck.title,
-      summary: `Published ${activeDeck.slides.length}-slide deck "${activeDeck.title}" from ConnectLn Slides.`,
+      summary: `Published ${visible.length}-slide deck "${activeDeck.title}" from ConnectLn Slides.`,
       appLabel: "ConnectLn Slides",
       slides: feedSlides,
     })
@@ -385,8 +610,8 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
     return !q || d.title.toLowerCase().includes(q) || d.category.toLowerCase().includes(q)
   })
 
-  const renderPresentSlideBody = (slide: StudioSlideItem) => {
-    if (slide.layout === "cover") {
+  const renderSlidePreviewVisual = (slide: StudioSlideItem, stepLimit = 99) => {
+    if (slide.layout === "cover" || slide.layout === "section") {
       return (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-6 space-y-5">
           <h1
@@ -402,7 +627,7 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
           )}
           {slide.bullets && slide.bullets.length > 0 && (
             <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
-              {slide.bullets.map((tag, i) => (
+              {slide.bullets.slice(0, stepLimit).map((tag, i) => (
                 <span
                   key={i}
                   style={{ backgroundColor: theme.surfaceHex, color: theme.accentHex }}
@@ -420,30 +645,16 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
     if (slide.layout === "two_column") {
       return (
         <div className="flex-1 grid grid-cols-2 gap-6 items-start pt-4">
-          <div
-            style={{ backgroundColor: theme.surfaceHex }}
-            className="rounded-2xl p-6 border border-white/10 space-y-3 h-full"
-          >
-            <h3 style={{ color: theme.accentHex }} className="text-xl font-extrabold">
-              {slide.leftTitle || "Left Track"}
-            </h3>
-            <ul className="space-y-2.5 text-base sm:text-lg list-disc pl-5">
-              {(slide.leftBullets || []).map((b, i) => (
-                <li key={i}>{b}</li>
-              ))}
+          <div style={{ backgroundColor: theme.surfaceHex }} className="rounded-2xl p-6 border border-white/10 space-y-3 h-full">
+            <h3 style={{ color: theme.accentHex }} className="text-xl font-extrabold">{slide.leftTitle || "Left Track"}</h3>
+            <ul className="space-y-2 text-base sm:text-lg list-disc pl-5">
+              {(slide.leftBullets || []).map((b, i) => <li key={i}>{b}</li>)}
             </ul>
           </div>
-          <div
-            style={{ backgroundColor: theme.surfaceHex }}
-            className="rounded-2xl p-6 border border-white/10 space-y-3 h-full"
-          >
-            <h3 style={{ color: theme.accentHex }} className="text-xl font-extrabold">
-              {slide.rightTitle || "Right Track"}
-            </h3>
-            <ul className="space-y-2.5 text-base sm:text-lg list-disc pl-5">
-              {(slide.rightBullets || []).map((b, i) => (
-                <li key={i}>{b}</li>
-              ))}
+          <div style={{ backgroundColor: theme.surfaceHex }} className="rounded-2xl p-6 border border-white/10 space-y-3 h-full">
+            <h3 style={{ color: theme.accentHex }} className="text-xl font-extrabold">{slide.rightTitle || "Right Track"}</h3>
+            <ul className="space-y-2 text-base sm:text-lg list-disc pl-5">
+              {(slide.rightBullets || []).map((b, i) => <li key={i}>{b}</li>)}
             </ul>
           </div>
         </div>
@@ -454,20 +665,10 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
       return (
         <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-5 items-center pt-4">
           {(slide.metrics || []).map((m, i) => (
-            <div
-              key={i}
-              style={{ backgroundColor: theme.surfaceHex }}
-              className="rounded-2xl p-6 border border-white/10 space-y-2 text-center"
-            >
-              <div style={{ color: theme.accentHex }} className="text-4xl font-black">
-                {m.value}
-              </div>
+            <div key={i} style={{ backgroundColor: theme.surfaceHex }} className="rounded-2xl p-6 border border-white/10 space-y-2 text-center">
+              <div style={{ color: theme.accentHex }} className="text-4xl font-black">{m.value}</div>
               <div className="text-base font-bold">{m.label}</div>
-              {m.delta && (
-                <div style={{ color: theme.mutedHex }} className="text-xs font-semibold">
-                  {m.delta}
-                </div>
-              )}
+              {m.delta && <div style={{ color: theme.mutedHex }} className="text-xs font-semibold">{m.delta}</div>}
             </div>
           ))}
         </div>
@@ -481,10 +682,54 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
             “{slide.quote || slide.subtitle || ""}”
           </blockquote>
           {slide.quoteAuthor && (
-            <p style={{ color: theme.accentHex }} className="text-lg font-extrabold">
-              — {slide.quoteAuthor}
-            </p>
+            <p style={{ color: theme.accentHex }} className="text-lg font-extrabold">— {slide.quoteAuthor}</p>
           )}
+        </div>
+      )
+    }
+
+    if (slide.layout === "table" && slide.tableData) {
+      return (
+        <div className="flex-1 overflow-auto pt-4">
+          <table className="w-full border-collapse text-sm sm:text-base">
+            <thead>
+              <tr>
+                {slide.tableData.headers.map((h, i) => (
+                  <th key={i} style={{ backgroundColor: theme.surfaceHex, color: theme.accentHex }} className="border border-white/20 px-4 py-2 text-left font-extrabold">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {slide.tableData.rows.map((r, rIdx) => (
+                <tr key={rIdx}>
+                  {r.map((cell, cIdx) => (
+                    <td key={cIdx} className="border border-white/15 px-4 py-2">{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+
+    if (slide.layout === "chart" && slide.chartData) {
+      const items = slide.chartData.items
+      const maxV = Math.max(1, ...items.map((x) => x.value))
+      return (
+        <div style={{ backgroundColor: theme.surfaceHex }} className="flex-1 rounded-2xl p-6 border border-white/10 flex flex-col justify-between mt-3">
+          <p style={{ color: theme.accentHex }} className="text-base font-extrabold">{slide.chartData.title}</p>
+          <div className="flex-1 flex items-end gap-6 pt-4 pb-2">
+            {items.map((it, idx) => (
+              <div key={idx} className="flex-1 flex flex-col items-center justify-end h-full gap-2">
+                <span className="text-sm font-mono font-bold">{it.value}</span>
+                <div style={{ height: `${Math.max(10, Math.round((it.value / maxV) * 100))}%`, backgroundColor: theme.accentHex }} className="w-full max-w-[64px] rounded-t-lg" />
+                <span className="text-xs font-bold">{it.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )
     }
@@ -493,44 +738,53 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
       return (
         <div className="flex-1 grid grid-cols-2 gap-6 items-center pt-2">
           <ul className="space-y-3 text-lg sm:text-xl list-disc pl-6">
-            {(slide.bullets || []).map((b, i) => (
-              <li key={i}>{b}</li>
-            ))}
+            {(slide.bullets || []).slice(0, stepLimit).map((b, i) => <li key={i}>{b}</li>)}
           </ul>
-          <div
-            style={{ backgroundColor: theme.surfaceHex }}
-            className="rounded-2xl overflow-hidden border border-white/10 aspect-video flex items-center justify-center"
-          >
-            {slide.imageUrl ? (
-              <img
-                src={slide.imageUrl}
-                alt={slide.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span style={{ color: theme.mutedHex }} className="text-sm font-semibold">
-                Visual Frame
-              </span>
-            )}
+          <div style={{ backgroundColor: theme.surfaceHex }} className="rounded-2xl overflow-hidden border border-white/10 aspect-video flex items-center justify-center">
+            {slide.imageUrl ? <img src={slide.imageUrl} alt={slide.title} className="w-full h-full object-cover" /> : <span style={{ color: theme.mutedHex }}>Visual Frame</span>}
           </div>
         </div>
       )
     }
 
     return (
-      <div className="flex-1 pt-4">
+      <div className="flex-1 pt-4 space-y-4">
         <ul className="space-y-3.5 text-lg sm:text-2xl list-disc pl-7">
-          {(slide.bullets || []).map((b, i) => (
+          {(slide.bullets || []).slice(0, stepLimit).map((b, i) => (
             <li key={i}>{b}</li>
           ))}
         </ul>
+        {slide.elements && slide.elements.length > 0 && (
+          <div className="flex flex-wrap gap-3 pt-2">
+            {slide.elements.map((el) => (
+              <div
+                key={el.id}
+                style={{ backgroundColor: el.bgHex, color: el.textHex }}
+                className="rounded-xl px-4 py-2 text-sm font-bold border border-white/15"
+              >
+                {el.text}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     )
   }
 
+  const transitionAnimStyle: React.CSSProperties =
+    activeSlide.transition && activeSlide.transition !== "none"
+      ? { transition: `all ${activeSlide.transitionDurationMs || 400}ms ease` }
+      : {}
+
+  const formatTimer = (sec: number) => {
+    const m = Math.floor(sec / 60)
+    const s = sec % 60
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+  }
+
   return (
-    <div className="flex flex-col lg:flex-row rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm min-h-[760px]">
-      {/* Left Sidebar: Slide Filmstrip OR Deck Library */}
+    <div className="flex flex-col lg:flex-row rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm min-h-[780px]">
+      {/* Left Filmstrip / Deck Library Sidebar */}
       {sidebarOpen && (
         <aside className="w-full lg:w-[270px] shrink-0 border-b lg:border-b-0 lg:border-r border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2]/80 dark:bg-zinc-950/60 flex flex-col">
           <div className="p-2.5 border-b border-[#E7E2DA] dark:border-zinc-800 space-y-2">
@@ -539,9 +793,7 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
                 type="button"
                 onClick={() => setSidebarTab("slides")}
                 className={`rounded-lg py-1.5 text-xs font-bold cursor-pointer ${
-                  sidebarTab === "slides"
-                    ? "bg-white dark:bg-zinc-800 text-[#C84B28] shadow-2xs"
-                    : "text-zinc-600 dark:text-zinc-400"
+                  sidebarTab === "slides" ? "bg-white dark:bg-zinc-800 text-[#C84B28] shadow-2xs" : "text-zinc-600 dark:text-zinc-400"
                 }`}
               >
                 Slides ({activeDeck?.slides.length || 0})
@@ -550,9 +802,7 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
                 type="button"
                 onClick={() => setSidebarTab("decks")}
                 className={`rounded-lg py-1.5 text-xs font-bold cursor-pointer ${
-                  sidebarTab === "decks"
-                    ? "bg-white dark:bg-zinc-800 text-[#C84B28] shadow-2xs"
-                    : "text-zinc-600 dark:text-zinc-400"
+                  sidebarTab === "decks" ? "bg-white dark:bg-zinc-800 text-[#C84B28] shadow-2xs" : "text-zinc-600 dark:text-zinc-400"
                 }`}
               >
                 My Decks ({decks.length})
@@ -562,7 +812,7 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
             {sidebarTab === "slides" ? (
               <button
                 type="button"
-                onClick={handleAddSlide}
+                onClick={() => handleAddSlide("bullets")}
                 className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#C84B28] hover:bg-[#a93c1e] text-white py-1.5 text-xs font-bold cursor-pointer"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -582,7 +832,7 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
                   <button
                     type="button"
                     onClick={() => setShowTemplatesModal(true)}
-                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-semibold cursor-pointer"
+                    className="inline-flex items-center justify-center rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs cursor-pointer"
                   >
                     <LayoutTemplate className="h-3.5 w-3.5 text-[#C84B28]" />
                   </button>
@@ -608,8 +858,10 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
                 return (
                   <div
                     key={s.id}
-                    onClick={() => setActiveSlideIndex(idx)}
+                    onClick={() => { setActiveSlideIndex(idx); setSorterMode(false) }}
                     className={`group rounded-xl border p-2 transition-all cursor-pointer ${
+                      s.hidden ? "opacity-50" : ""
+                    } ${
                       isSelected
                         ? "border-[#C84B28] ring-2 ring-[#C84B28]/20 bg-white dark:bg-zinc-900"
                         : "border-[#E7E2DA] dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:border-[#C84B28]/60"
@@ -617,71 +869,24 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-[10px] font-extrabold text-zinc-500">
-                        SLIDE {idx + 1} · {s.layout.replace("_", " ").toUpperCase()}
+                        {idx + 1}. {s.layout.replace("_", " ").toUpperCase()} {s.hidden ? "(HIDDEN)" : ""}
                       </span>
                       <div className="flex items-center gap-0.5 opacity-80 group-hover:opacity-100">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleMoveSlide(idx, -1)
-                          }}
-                          title="Move up"
-                          className="p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
-                        >
-                          <ArrowUp className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleMoveSlide(idx, 1)
-                          }}
-                          title="Move down"
-                          className="p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
-                        >
-                          <ArrowDown className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDuplicateSlide(idx)
-                          }}
-                          title="Duplicate slide"
-                          className="p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
-                        >
-                          <Copy className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteSlide(idx)
-                          }}
-                          title="Delete slide"
-                          className="p-0.5 rounded hover:text-rose-600 cursor-pointer"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); handleMoveSlide(idx, -1) }} title="Move up" className="p-0.5 rounded hover:bg-zinc-100 cursor-pointer"><ArrowUp className="h-3 w-3" /></button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); handleMoveSlide(idx, 1) }} title="Move down" className="p-0.5 rounded hover:bg-zinc-100 cursor-pointer"><ArrowDown className="h-3 w-3" /></button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); handleDuplicateSlide(idx) }} title="Duplicate" className="p-0.5 rounded hover:bg-zinc-100 cursor-pointer"><Copy className="h-3 w-3" /></button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); handleDeleteSlide(idx) }} title="Delete" className="p-0.5 rounded hover:text-rose-600 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
                       </div>
                     </div>
 
-                    {/* Mini Visual Preview Card */}
                     <div
-                      style={{ backgroundColor: theme.bgHex, color: theme.textHex }}
+                      style={{ backgroundColor: s.customBgHex || theme.bgHex, color: theme.textHex }}
                       className="rounded-lg p-2.5 aspect-[16/9] flex flex-col justify-between overflow-hidden border border-black/10"
                     >
-                      <p
-                        style={{ color: theme.primaryHex }}
-                        className="text-[10.5px] font-extrabold leading-snug line-clamp-2"
-                      >
+                      <p style={{ color: theme.primaryHex }} className="text-[10.5px] font-extrabold leading-snug line-clamp-2">
                         {s.title || "Untitled Slide"}
                       </p>
-                      <p
-                        style={{ color: theme.mutedHex }}
-                        className="text-[9px] line-clamp-2 opacity-90"
-                      >
+                      <p style={{ color: theme.mutedHex }} className="text-[9px] line-clamp-2 opacity-90">
                         {s.quote || s.bullets?.[0] || s.subtitle || ""}
                       </p>
                     </div>
@@ -696,41 +901,25 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
                 return (
                   <div
                     key={d.id}
-                    onClick={() => {
-                      setActiveDeckId(d.id)
-                      setActiveSlideIndex(0)
-                      setSidebarTab("slides")
-                    }}
+                    onClick={() => { setActiveDeckId(d.id); setActiveSlideIndex(0); setSidebarTab("slides") }}
                     className={`group rounded-xl border p-2.5 cursor-pointer ${
-                      isSel
-                        ? "border-[#C84B28] bg-white dark:bg-zinc-900 shadow-xs"
-                        : "border-transparent hover:border-[#E7E2DA] hover:bg-white/70 dark:hover:bg-zinc-900/60"
+                      isSel ? "border-[#C84B28] bg-white dark:bg-zinc-900 shadow-xs" : "border-transparent hover:border-[#E7E2DA] hover:bg-white/70"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-1.5">
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-[#0B1F3A] dark:text-zinc-100 truncate">
-                          {d.title}
-                        </p>
-                        <p className="text-[10.5px] text-zinc-500 mt-0.5 truncate">
-                          {d.slides.length} slides · {d.category}
-                        </p>
+                        <p className="text-xs font-bold text-[#0B1F3A] dark:text-zinc-100 truncate">{d.title}</p>
+                        <p className="text-[10.5px] text-zinc-500 mt-0.5 truncate">{d.slides.length} slides · {d.category}</p>
                       </div>
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
-                          setDecks((prev) =>
-                            prev.map((x) => (x.id === d.id ? { ...x, starred: !x.starred } : x))
-                          )
+                          setDecks((prev) => prev.map((x) => (x.id === d.id ? { ...x, starred: !x.starred } : x)))
                         }}
                         className="p-1 rounded cursor-pointer"
                       >
-                        <Star
-                          className={`h-3.5 w-3.5 ${
-                            d.starred ? "fill-amber-400 text-amber-500" : "text-zinc-400"
-                          }`}
-                        />
+                        <Star className={`h-3.5 w-3.5 ${d.starred ? "fill-amber-400 text-amber-500" : "text-zinc-400"}`} />
                       </button>
                     </div>
                   </div>
@@ -741,28 +930,24 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
         </aside>
       )}
 
-      {/* Main Slide Canvas Area */}
+      {/* Main Deck Studio Area */}
       <div className="flex-1 min-w-0 flex flex-col">
-        {/* Top Deck Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2.5 border-b border-[#E7E2DA] dark:border-zinc-800">
+        {/* Top Deck Action Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2 border-b border-[#E7E2DA] dark:border-zinc-800">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <button
               type="button"
               onClick={() => setSidebarOpen((s) => !s)}
               className="rounded-lg p-1.5 border border-[#E7E2DA] dark:border-zinc-700 hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer shrink-0"
             >
-              {sidebarOpen ? (
-                <PanelLeftClose className="h-4 w-4" />
-              ) : (
-                <PanelLeftOpen className="h-4 w-4" />
-              )}
+              {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
             </button>
             <input
               type="text"
               aria-label="Deck title"
               value={activeDeck?.title || ""}
-              onChange={(e) => updateActiveDeck((d) => ({ ...d, title: e.target.value }))}
-              className="min-w-[160px] flex-1 max-w-md rounded-lg border border-transparent hover:border-[#E7E2DA] focus:border-[#C84B28] bg-transparent px-2 py-1 text-sm sm:text-base font-extrabold text-[#0B1F3A] dark:text-white outline-none"
+              onChange={(e) => updateActiveDeck((d) => ({ ...d, title: e.target.value }), false)}
+              className="min-w-[150px] flex-1 max-w-md rounded-lg border border-transparent hover:border-[#E7E2DA] focus:border-[#C84B28] bg-transparent px-2 py-1 text-sm sm:text-base font-extrabold text-[#0B1F3A] dark:text-white outline-none"
             />
             <span className="hidden sm:inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 px-2.5 py-0.5 text-[11px] font-semibold text-[#C84B28] dark:text-orange-300">
               {savedLabel}
@@ -778,11 +963,36 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
 
             <button
               type="button"
-              onClick={() => setIsPresenting(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#0067B8] hover:bg-[#00559b] text-white px-3.5 py-1.5 text-xs font-bold shadow-xs cursor-pointer"
+              onClick={() => {
+                setPresenterViewMode(false)
+                setIsPresenting(true)
+              }}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#0067B8] hover:bg-[#00559b] text-white px-3 py-1.5 text-xs font-bold shadow-xs cursor-pointer"
             >
               <Play className="h-3.5 w-3.5 fill-current" />
               Present
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPresenterViewMode(true)
+                setIsPresenting(true)
+              }}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#0067B8] text-[#0067B8] bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 px-3 py-1.5 text-xs font-bold cursor-pointer"
+            >
+              <MonitorPlay className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Presenter View</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowPrintModal(true)}
+              title="Print Slides, Handouts, or Speaker Notes (Ctrl+P)"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#C84B28] bg-orange-50 dark:bg-orange-950/50 hover:bg-orange-100 px-3 py-1.5 text-xs font-extrabold text-[#C84B28] dark:text-orange-300 cursor-pointer"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              Print
             </button>
 
             <div className="relative">
@@ -796,29 +1006,17 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
               </button>
               {showExportMenu && (
                 <div className="absolute right-0 top-10 z-30 w-56 rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1.5 shadow-xl space-y-1">
-                  <button
-                    type="button"
-                    onClick={() => handleExport("pptx")}
-                    className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer"
-                  >
+                  <button type="button" onClick={() => handleExport("pptx")} className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer">
                     <span>Standard Deck (.pptx)</span>
                     <span className="text-[10px] font-mono text-[#C84B28]">OpenXML</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleExport("html")}
-                    className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer"
-                  >
+                  <button type="button" onClick={() => handleExport("html")} className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer">
                     <span>Interactive Web Deck (.html)</span>
                     <span className="text-[10px] font-mono text-zinc-400">HTML5</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleExport("print")}
-                    className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer"
-                  >
+                  <button type="button" onClick={() => handleExport("print")} className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer">
                     <Printer className="h-3.5 w-3.5 text-[#C84B28]" />
-                    <span>Print / Save PDF Slides</span>
+                    <span>Print Slides / Handouts</span>
                   </button>
                 </div>
               )}
@@ -837,508 +1035,840 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
           </div>
         </div>
 
-        {/* Layout + Theme Ribbon */}
-        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950/70">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-bold text-zinc-500 mr-1">Layout:</span>
-            {LAYOUT_OPTIONS.map((opt) => (
+        {/* 5-Tab Ribbon */}
+        <div className="flex items-center justify-between gap-2 px-3 pt-1.5 border-b border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950">
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+            {(
+              [
+                { id: "home", label: "Home" },
+                { id: "insert", label: "Insert" },
+                { id: "design", label: "Design" },
+                { id: "transitions", label: "Transitions" },
+                { id: "slideshow", label: "Slide Show" },
+              ] as const
+            ).map((tab) => (
               <button
-                key={opt.id}
+                key={tab.id}
                 type="button"
-                onClick={() => handleLayoutChange(opt.id)}
-                className={`rounded-lg px-2.5 py-1 text-[11px] font-bold cursor-pointer ${
-                  activeSlide.layout === opt.id
-                    ? "bg-[#C84B28] text-white"
-                    : "bg-white dark:bg-zinc-900 border border-[#E7E2DA] dark:border-zinc-700 text-[#0B1F3A] dark:text-zinc-200 hover:border-[#C84B28]"
+                onClick={() => setRibbonTab(tab.id)}
+                className={`px-3 py-1.5 text-xs font-extrabold rounded-t-lg border-b-2 transition-colors cursor-pointer ${
+                  ribbonTab === tab.id
+                    ? "border-[#C84B28] bg-white dark:bg-zinc-900 text-[#C84B28] dark:text-orange-400"
+                    : "border-transparent text-zinc-600 dark:text-zinc-400 hover:text-[#0B1F3A]"
                 }`}
               >
-                {opt.label}
+                {tab.label}
               </button>
             ))}
           </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-zinc-500">Theme:</span>
-            <div className="flex items-center gap-1.5">
-              {STUDIO_SLIDE_THEMES.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  title={t.name}
-                  onClick={() => updateActiveDeck((d) => ({ ...d, themeId: t.id }))}
-                  style={{ backgroundColor: t.bgHex, borderColor: t.accentHex }}
-                  className={`h-5 w-5 rounded-full border-2 cursor-pointer transition-transform ${
-                    theme.id === t.id ? "scale-125 ring-2 ring-[#C84B28]" : ""
-                  }`}
-                />
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowNotesDrawer((n) => !n)}
-              className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-bold cursor-pointer ${
-                showNotesDrawer
-                  ? "border-[#C84B28] bg-orange-50 text-[#C84B28]"
-                  : "border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900"
-              }`}
-            >
-              <StickyNote className="h-3.5 w-3.5" />
-              Notes
-            </button>
-          </div>
+          <span className="hidden md:inline text-[10.5px] font-mono text-zinc-500 pr-1">
+            {activeDeck?.aspectRatio || "16:9"} · {STUDIO_SLIDE_THEMES.length} Themes · Handouts &amp; Presenter View
+          </span>
         </div>
 
-        {/* Interactive 16:9 Canvas Stage */}
-        <div className="flex-1 overflow-y-auto bg-[#EFECE6] dark:bg-zinc-950 p-4 sm:p-8 flex flex-col items-center justify-center">
-          <div
-            style={{ backgroundColor: theme.bgHex, color: theme.textHex }}
-            className="w-full max-w-[920px] min-h-[480px] lg:aspect-[16/9] rounded-2xl border border-black/15 shadow-[0_24px_60px_rgba(11,31,58,0.16)] p-6 sm:p-10 flex flex-col justify-between gap-4"
-          >
-            {/* Title & Subtitle Area */}
-            <div className={activeSlide.layout === "cover" ? "text-center pt-4" : ""}>
-              <input
-                type="text"
-                aria-label="Slide title"
-                value={activeSlide.title}
-                onChange={(e) => updateActiveSlide({ title: e.target.value })}
-                style={{ color: theme.primaryHex }}
-                className={`w-full bg-transparent outline-none border border-transparent hover:border-white/25 focus:border-[#38BDF8] rounded-lg px-2 py-1 font-black tracking-tight ${
-                  activeSlide.layout === "cover"
-                    ? "text-center text-2xl sm:text-4xl"
-                    : "text-xl sm:text-3xl"
-                }`}
-              />
-              <input
-                type="text"
-                aria-label="Slide subtitle"
-                value={activeSlide.subtitle || ""}
-                onChange={(e) => updateActiveSlide({ subtitle: e.target.value })}
-                placeholder="Add slide subtitle or context..."
-                style={{ color: theme.mutedHex }}
-                className={`w-full bg-transparent outline-none border border-transparent hover:border-white/20 focus:border-[#38BDF8] rounded-lg px-2 py-1 text-sm sm:text-base mt-1 ${
-                  activeSlide.layout === "cover" ? "text-center" : ""
-                }`}
-              />
-            </div>
+        {/* Ribbon Tool Strip */}
+        <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 border-b border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2]/70 dark:bg-zinc-950/70 text-xs">
+          {ribbonTab === "home" && (
+            <>
+              <button type="button" onClick={handleDeckUndo} disabled={undoDecks.length === 0} title="Undo" className="p-1.5 rounded-lg hover:bg-white disabled:opacity-35 cursor-pointer"><Undo2 className="h-3.5 w-3.5" /></button>
+              <button type="button" onClick={handleDeckRedo} disabled={redoDecks.length === 0} title="Redo" className="p-1.5 rounded-lg hover:bg-white disabled:opacity-35 cursor-pointer"><Redo2 className="h-3.5 w-3.5" /></button>
+              <button type="button" onClick={() => handleAddSlide("bullets")} className="inline-flex items-center gap-1 rounded-lg bg-[#C84B28] text-white px-2.5 py-1 font-bold cursor-pointer"><Plus className="h-3.5 w-3.5" />New Slide</button>
+              <button type="button" onClick={() => handleDuplicateSlide(safeSlideIndex)} className="rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2 py-1 font-semibold cursor-pointer">Duplicate</button>
 
-            {/* Dynamic Editable Slide Body by Layout */}
-            {activeSlide.layout === "two_column" ? (
-              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {(
-                  [
-                    {
-                      titleKey: "leftTitle" as const,
-                      bulletsKey: "leftBullets" as const,
-                      titleVal: activeSlide.leftTitle || "",
-                      bulletsVal: activeSlide.leftBullets || [],
-                    },
-                    {
-                      titleKey: "rightTitle" as const,
-                      bulletsKey: "rightBullets" as const,
-                      titleVal: activeSlide.rightTitle || "",
-                      bulletsVal: activeSlide.rightBullets || [],
-                    },
-                  ] as const
-                ).map((col) => (
-                  <div
-                    key={col.titleKey}
-                    style={{ backgroundColor: theme.surfaceHex }}
-                    className="rounded-xl p-4 border border-white/15 space-y-2.5 flex flex-col"
-                  >
-                    <input
-                      type="text"
-                      value={col.titleVal}
-                      onChange={(e) => updateActiveSlide({ [col.titleKey]: e.target.value })}
-                      style={{ color: theme.accentHex }}
-                      className="bg-transparent font-extrabold text-base outline-none border-b border-white/15 pb-1"
-                    />
-                    <div className="space-y-1.5 flex-1">
-                      {col.bulletsVal.map((b, bIdx) => (
-                        <div key={bIdx} className="flex items-center gap-2">
-                          <span style={{ color: theme.accentHex }}>•</span>
-                          <input
-                            type="text"
-                            value={b}
-                            onChange={(e) => {
-                              const next = [...col.bulletsVal]
-                              next[bIdx] = e.target.value
-                              updateActiveSlide({ [col.bulletsKey]: next })
-                            }}
-                            className="flex-1 bg-transparent text-sm outline-none border-b border-transparent focus:border-white/30"
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateActiveSlide({
-                                [col.bulletsKey]: col.bulletsVal.filter((_, i) => i !== bIdx),
-                              })
-                            }
-                            className="opacity-50 hover:opacity-100 text-xs cursor-pointer"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateActiveSlide({
-                          [col.bulletsKey]: [...col.bulletsVal, "New column point"],
-                        })
-                      }
-                      style={{ color: theme.accentHex }}
-                      className="text-xs font-bold text-left hover:underline cursor-pointer"
-                    >
-                      + Add item
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : activeSlide.layout === "metrics" ? (
-              <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
-                {(activeSlide.metrics || []).map((m, mIdx) => (
-                  <div
-                    key={mIdx}
-                    style={{ backgroundColor: theme.surfaceHex }}
-                    className="rounded-xl p-4 border border-white/15 space-y-2 text-center"
-                  >
-                    <input
-                      type="text"
-                      value={m.value}
-                      onChange={(e) => {
-                        const next = [...(activeSlide.metrics || [])]
-                        next[mIdx] = { ...m, value: e.target.value }
-                        updateActiveSlide({ metrics: next })
-                      }}
-                      style={{ color: theme.accentHex }}
-                      className="w-full bg-transparent text-center text-3xl font-black outline-none"
-                    />
-                    <input
-                      type="text"
-                      value={m.label}
-                      onChange={(e) => {
-                        const next = [...(activeSlide.metrics || [])]
-                        next[mIdx] = { ...m, label: e.target.value }
-                        updateActiveSlide({ metrics: next })
-                      }}
-                      className="w-full bg-transparent text-center text-sm font-bold outline-none"
-                    />
-                    <input
-                      type="text"
-                      value={m.delta || ""}
-                      placeholder="Benchmark note"
-                      onChange={(e) => {
-                        const next = [...(activeSlide.metrics || [])]
-                        next[mIdx] = { ...m, delta: e.target.value }
-                        updateActiveSlide({ metrics: next })
-                      }}
-                      style={{ color: theme.mutedHex }}
-                      className="w-full bg-transparent text-center text-xs outline-none"
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : activeSlide.layout === "quote" ? (
-              <div
-                style={{ backgroundColor: theme.surfaceHex }}
-                className="flex-1 rounded-2xl p-6 border border-white/15 flex flex-col justify-center gap-3"
+              <span className="h-5 w-px bg-[#E7E2DA] dark:bg-zinc-700 mx-0.5" />
+
+              <select
+                aria-label="Slide layout selector"
+                value={activeSlide.layout}
+                onChange={(e) => handleLayoutChange(e.target.value as SlideLayoutType)}
+                className="rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 font-bold cursor-pointer"
               >
-                <textarea
-                  rows={3}
-                  value={activeSlide.quote || ""}
-                  onChange={(e) => updateActiveSlide({ quote: e.target.value })}
-                  placeholder="Enter featured executive quote or takeaway..."
-                  className="w-full bg-transparent text-center text-xl sm:text-2xl italic font-semibold outline-none resize-none"
-                />
-                <input
-                  type="text"
-                  value={activeSlide.quoteAuthor || ""}
-                  onChange={(e) => updateActiveSlide({ quoteAuthor: e.target.value })}
-                  placeholder="Attribution / Speaker"
-                  style={{ color: theme.accentHex }}
-                  className="w-full bg-transparent text-center text-sm font-extrabold outline-none"
-                />
-              </div>
-            ) : activeSlide.layout === "visual_split" ? (
-              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5 items-center">
-                <div className="space-y-2">
-                  {(activeSlide.bullets || []).map((b, bIdx) => (
-                    <div key={bIdx} className="flex items-center gap-2">
-                      <span style={{ color: theme.accentHex }} className="font-bold">
-                        •
-                      </span>
-                      <input
-                        type="text"
-                        value={b}
-                        onChange={(e) => {
-                          const next = [...(activeSlide.bullets || [])]
-                          next[bIdx] = e.target.value
-                          updateActiveSlide({ bullets: next })
-                        }}
-                        className="flex-1 bg-transparent text-sm sm:text-base outline-none border-b border-white/15 py-1"
-                      />
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateActiveSlide({
-                        bullets: [...(activeSlide.bullets || []), "New visual point"],
-                      })
-                    }
-                    style={{ color: theme.accentHex }}
-                    className="text-xs font-bold hover:underline cursor-pointer"
-                  >
-                    + Add talking point
-                  </button>
-                </div>
-
-                <div
-                  style={{ backgroundColor: theme.surfaceHex }}
-                  className="rounded-xl border border-dashed border-white/25 aspect-video flex flex-col items-center justify-center overflow-hidden p-3 gap-2"
-                >
-                  {activeSlide.imageUrl ? (
-                    <img
-                      src={activeSlide.imageUrl}
-                      alt={activeSlide.title}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => slideImageInputRef.current?.click()}
-                      className="inline-flex items-center gap-2 rounded-xl bg-white/15 hover:bg-white/25 px-4 py-2 text-xs font-bold cursor-pointer"
-                    >
-                      <ImagePlus className="h-4 w-4" />
-                      Upload Slide Visual
-                    </button>
-                  )}
-                  <input
-                    ref={slideImageInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleSlideImageUpload}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col justify-center space-y-2.5">
-                {(activeSlide.bullets || []).map((b, bIdx) => (
-                  <div
-                    key={bIdx}
-                    style={{ backgroundColor: theme.surfaceHex }}
-                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 border border-white/10"
-                  >
-                    <span style={{ color: theme.accentHex }} className="font-black text-base">
-                      •
-                    </span>
-                    <input
-                      type="text"
-                      value={b}
-                      onChange={(e) => {
-                        const next = [...(activeSlide.bullets || [])]
-                        next[bIdx] = e.target.value
-                        updateActiveSlide({ bullets: next })
-                      }}
-                      className="flex-1 bg-transparent text-sm sm:text-base outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateActiveSlide({
-                          bullets: (activeSlide.bullets || []).filter((_, i) => i !== bIdx),
-                        })
-                      }
-                      className="opacity-50 hover:opacity-100 cursor-pointer"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                {LAYOUT_OPTIONS.map((opt) => (
+                  <option key={opt.id} value={opt.id}>Layout: {opt.label}</option>
                 ))}
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateActiveSlide({
-                      bullets: [...(activeSlide.bullets || []), "Add talking point"],
-                    })
-                  }
-                  style={{ color: theme.accentHex }}
-                  className="text-xs font-bold text-left px-1 hover:underline cursor-pointer"
-                >
-                  + Add bullet point
-                </button>
-              </div>
-            )}
+              </select>
 
-            {/* Slide Footer Stamp */}
-            <div className="flex items-center justify-between text-[11px] opacity-75 pt-2 border-t border-white/10">
-              <span>ConnectLn Slides · {theme.name}</span>
-              <span>
-                Slide {safeSlideIndex + 1} of {activeDeck?.slides.length || 1}
-              </span>
-            </div>
-          </div>
-
-          {showNotesDrawer && (
-            <div className="w-full max-w-[920px] mt-4 rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#0B1F3A] dark:text-zinc-200">
-                  Presenter Speaker Notes — Slide {safeSlideIndex + 1}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowNotesDrawer(false)}
-                  className="text-xs text-zinc-400 hover:text-zinc-700 cursor-pointer"
-                >
-                  Hide
+              {(
+                [
+                  { align: "left", Icon: AlignLeft },
+                  { align: "center", Icon: AlignCenter },
+                  { align: "right", Icon: AlignRight },
+                ] as const
+              ).map(({ align, Icon }) => (
+                <button key={align} type="button" onClick={() => updateActiveSlide({ titleAlign: align })} title={`Title align ${align}`} className="p-1.5 rounded-lg hover:bg-white cursor-pointer">
+                  <Icon className="h-3.5 w-3.5" />
                 </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => updateActiveSlide({ hidden: !activeSlide.hidden }, true)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  activeSlide.hidden ? "bg-amber-600 text-white" : "border border-[#E7E2DA] bg-white dark:bg-zinc-900"
+                }`}
+              >
+                {activeSlide.hidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                {activeSlide.hidden ? "Hidden" : "Hide Slide"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowFindBar((v) => !v)}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2 py-1 font-semibold cursor-pointer"
+              >
+                <Search className="h-3.5 w-3.5" />
+                Find
+              </button>
+            </>
+          )}
+
+          {ribbonTab === "insert" && (
+            <>
+              <button type="button" onClick={() => handleInsertExtraElement("textbox")} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold cursor-pointer"><Type className="h-3.5 w-3.5 text-[#C84B28]" />Text Box</button>
+              <button type="button" onClick={() => handleInsertExtraElement("callout")} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold cursor-pointer"><StickyNote className="h-3.5 w-3.5 text-[#C84B28]" />Callout</button>
+              <button type="button" onClick={() => handleInsertExtraElement("badge")} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold cursor-pointer"><Square className="h-3.5 w-3.5 text-[#C84B28]" />Shape Badge</button>
+              <button type="button" onClick={() => handleInsertExtraElement("arrow")} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold cursor-pointer"><ArrowRight className="h-3.5 w-3.5 text-[#C84B28]" />Step Arrow</button>
+
+              <span className="h-5 w-px bg-[#E7E2DA] dark:bg-zinc-700 mx-0.5" />
+
+              <button type="button" onClick={() => handleLayoutChange("table")} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold cursor-pointer"><Table2 className="h-3.5 w-3.5 text-[#C84B28]" />Data Table</button>
+              <button type="button" onClick={() => handleLayoutChange("chart")} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold cursor-pointer"><BarChart3 className="h-3.5 w-3.5 text-[#C84B28]" />Live Chart</button>
+              <button type="button" onClick={() => slideImageInputRef.current?.click()} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold cursor-pointer"><ImagePlus className="h-3.5 w-3.5 text-[#C84B28]" />Picture</button>
+              <input ref={slideImageInputRef} type="file" accept="image/*" onChange={handleSlideImageUpload} className="hidden" />
+
+              <button
+                type="button"
+                onClick={() => updateActiveDeck((d) => ({ ...d, showSlideNumbers: !(d.showSlideNumbers !== false) }))}
+                className="rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2 py-1 font-semibold cursor-pointer"
+              >
+                Slide # {activeDeck?.showSlideNumbers === false ? "OFF" : "ON"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCommentsDrawer((c) => !c)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showCommentsDrawer ? "bg-[#C84B28] text-white" : "border border-[#E7E2DA] bg-white dark:bg-zinc-900"
+                }`}
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                Comments ({activeSlide.comments?.length || 0})
+              </button>
+            </>
+          )}
+
+          {ribbonTab === "design" && (
+            <>
+              <span className="font-bold text-zinc-500">Theme:</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {STUDIO_SLIDE_THEMES.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => updateActiveDeck((d) => ({ ...d, themeId: t.id }))}
+                    className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-bold cursor-pointer ${
+                      theme.id === t.id ? "border-[#C84B28] bg-white shadow-2xs" : "border-[#E7E2DA] bg-white/70"
+                    }`}
+                  >
+                    <span style={{ backgroundColor: t.bgHex, borderColor: t.accentHex }} className="h-3.5 w-3.5 rounded-full border-2" />
+                    <span>{t.name}</span>
+                  </button>
+                ))}
               </div>
-              <textarea
-                rows={2}
-                value={activeSlide.notes || ""}
-                onChange={(e) => updateActiveSlide({ notes: e.target.value })}
-                placeholder="Add talking cues, reminders, or timing notes for Present Mode..."
-                className="w-full rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-[#FAF7F2]/60 dark:bg-zinc-950 px-3 py-2 text-xs outline-none focus:border-[#C84B28]"
-              />
-            </div>
+              <span className="h-5 w-px bg-[#E7E2DA] mx-1" />
+              <label className="inline-flex items-center gap-1 font-bold cursor-pointer">
+                <Palette className="h-3.5 w-3.5 text-[#C84B28]" />
+                Slide Bg:
+                <input
+                  type="color"
+                  value={effectiveSlideBg}
+                  onChange={(e) => updateActiveSlide({ customBgHex: e.target.value })}
+                  className="h-5 w-6 border-0 bg-transparent cursor-pointer"
+                />
+              </label>
+              {activeSlide.customBgHex && (
+                <button type="button" onClick={() => updateActiveSlide({ customBgHex: undefined })} className="underline text-zinc-500 cursor-pointer">Reset Bg</button>
+              )}
+              <select
+                aria-label="Slide aspect ratio"
+                value={activeDeck?.aspectRatio || "16:9"}
+                onChange={(e) => updateActiveDeck((d) => ({ ...d, aspectRatio: e.target.value as "16:9" | "4:3" }))}
+                className="rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2 py-1 font-bold cursor-pointer"
+              >
+                <option value="16:9">16:9 Widescreen</option>
+                <option value="4:3">4:3 Standard</option>
+              </select>
+            </>
+          )}
+
+          {ribbonTab === "transitions" && (
+            <>
+              <span className="font-bold text-zinc-500">Effect:</span>
+              {(["none", "fade", "slide", "zoom", "flip"] as SlideTransitionType[]).map((tr) => (
+                <button
+                  key={tr}
+                  type="button"
+                  onClick={() => updateActiveSlide({ transition: tr }, true)}
+                  className={`rounded-lg px-2.5 py-1 font-bold capitalize cursor-pointer ${
+                    (activeSlide.transition || "none") === tr
+                      ? "bg-[#C84B28] text-white"
+                      : "border border-[#E7E2DA] bg-white dark:bg-zinc-900"
+                  }`}
+                >
+                  {tr}
+                </button>
+              ))}
+              <select
+                aria-label="Transition duration"
+                value={activeSlide.transitionDurationMs || 400}
+                onChange={(e) => updateActiveSlide({ transitionDurationMs: Number(e.target.value) })}
+                className="rounded-lg border border-[#E7E2DA] bg-white px-2 py-1 font-semibold cursor-pointer"
+              >
+                <option value={250}>Fast (0.25s)</option>
+                <option value={450}>Smooth (0.45s)</option>
+                <option value={800}>Dramatic (0.8s)</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => updateActiveSlide({ animateBullets: !activeSlide.animateBullets }, true)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  activeSlide.animateBullets ? "bg-[#0067B8] text-white" : "border border-[#E7E2DA] bg-white"
+                }`}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Step-by-Step Bullets
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  updateActiveDeck((d) => ({
+                    ...d,
+                    slides: d.slides.map((s) => ({
+                      ...s,
+                      transition: activeSlide.transition || "fade",
+                      transitionDurationMs: activeSlide.transitionDurationMs || 450,
+                    })),
+                  }))
+                  notify("Applied transition to all slides")
+                }}
+                className="rounded-lg border border-[#E7E2DA] bg-white px-2.5 py-1 font-bold cursor-pointer"
+              >
+                Apply to All
+              </button>
+              <button type="button" onClick={() => setTransitionPulseKey((k) => k + 1)} className="rounded-lg bg-[#0B1F3A] text-white px-2.5 py-1 font-bold cursor-pointer">Preview</button>
+            </>
+          )}
+
+          {ribbonTab === "slideshow" && (
+            <>
+              <button type="button" onClick={() => { setActiveSlideIndex(0); setPresenterViewMode(false); setIsPresenting(true) }} className="inline-flex items-center gap-1 rounded-lg bg-[#0067B8] text-white px-2.5 py-1 font-bold cursor-pointer"><Play className="h-3.5 w-3.5" />From Start</button>
+              <button type="button" onClick={() => { setPresenterViewMode(false); setIsPresenting(true) }} className="rounded-lg border border-[#0067B8] text-[#0067B8] bg-white px-2.5 py-1 font-bold cursor-pointer">From Current</button>
+              <button type="button" onClick={() => { setPresenterViewMode(true); setIsPresenting(true) }} className="inline-flex items-center gap-1 rounded-lg bg-[#0B1F3A] text-white px-2.5 py-1 font-bold cursor-pointer"><MonitorPlay className="h-3.5 w-3.5" />Presenter View</button>
+              <button
+                type="button"
+                onClick={() => setSorterMode((m) => !m)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  sorterMode ? "bg-[#C84B28] text-white" : "border border-[#E7E2DA] bg-white"
+                }`}
+              >
+                <Grid className="h-3.5 w-3.5" />
+                Slide Sorter Grid
+              </button>
+              <div className="flex items-center gap-1">
+                <Timer className="h-3.5 w-3.5 text-zinc-500" />
+                <span className="font-bold text-zinc-500">Auto-Advance:</span>
+                <select
+                  aria-label="Auto advance timer"
+                  value={autoPlaySec}
+                  onChange={(e) => setAutoPlaySec(Number(e.target.value) as 0 | 3 | 5 | 10)}
+                  className="rounded-lg border border-[#E7E2DA] bg-white px-2 py-1 font-semibold cursor-pointer"
+                >
+                  <option value={0}>Manual Click</option>
+                  <option value={3}>Every 3s</option>
+                  <option value={5}>Every 5s</option>
+                  <option value={10}>Every 10s</option>
+                </select>
+              </div>
+              <button type="button" onClick={() => setShowNotesDrawer((n) => !n)} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white px-2.5 py-1 font-bold cursor-pointer"><StickyNote className="h-3.5 w-3.5 text-[#C84B28]" />Notes</button>
+              <button type="button" onClick={() => setShowPrintModal(true)} className="inline-flex items-center gap-1 rounded-lg border border-[#C84B28] text-[#C84B28] bg-orange-50 px-2.5 py-1 font-bold cursor-pointer"><Printer className="h-3.5 w-3.5" />Print Handouts</button>
+            </>
           )}
         </div>
 
-        {/* Bottom Navigation Bar */}
+        {/* Optional Find & Replace Bar */}
+        {showFindBar && (
+          <div className="flex flex-wrap items-center gap-2 px-4 py-2 bg-orange-50/70 dark:bg-zinc-800 border-b border-[#E7E2DA] text-xs">
+            <input type="text" value={findTerm} onChange={(e) => setFindTerm(e.target.value)} placeholder="Find across all slides..." className="rounded-lg border px-2.5 py-1 bg-white dark:bg-zinc-900" />
+            <input type="text" value={replaceTerm} onChange={(e) => setReplaceTerm(e.target.value)} placeholder="Replace with..." className="rounded-lg border px-2.5 py-1 bg-white dark:bg-zinc-900" />
+            <button type="button" onClick={handleFindReplaceDeck} className="rounded-lg bg-[#C84B28] text-white px-3 py-1 font-bold cursor-pointer">Replace Across Deck</button>
+            <button type="button" onClick={() => setShowFindBar(false)} className="ml-auto p-1 cursor-pointer"><X className="h-4 w-4" /></button>
+          </div>
+        )}
+
+        {/* Stage Area: Slide Sorter Grid OR Editable Canvas + Optional Comments Drawer */}
+        <div className="flex-1 flex min-h-0 overflow-hidden">
+          {sorterMode ? (
+            <div className="flex-1 overflow-y-auto bg-[#EFECE6] dark:bg-zinc-950 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-extrabold text-[#0B1F3A] dark:text-white">
+                  Slide Sorter Grid — Click any slide to edit
+                </h2>
+                <button type="button" onClick={() => setSorterMode(false)} className="rounded-xl bg-[#0B1F3A] text-white px-3 py-1.5 text-xs font-bold cursor-pointer">Back to Slide View</button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                {activeDeck?.slides.map((s, idx) => (
+                  <div
+                    key={s.id}
+                    onClick={() => { setActiveSlideIndex(idx); setSorterMode(false) }}
+                    className={`rounded-xl border p-3 cursor-pointer bg-white dark:bg-zinc-900 space-y-2 ${
+                      idx === safeSlideIndex ? "border-[#C84B28] ring-2 ring-[#C84B28]/25" : "border-[#E7E2DA]"
+                    }`}
+                  >
+                    <div
+                      style={{ backgroundColor: s.customBgHex || theme.bgHex, color: theme.textHex }}
+                      className="aspect-[16/9] rounded-lg p-3 flex flex-col justify-between border border-black/10"
+                    >
+                      <p style={{ color: theme.primaryHex }} className="text-xs font-extrabold line-clamp-2">{s.title}</p>
+                      <p style={{ color: theme.mutedHex }} className="text-[10px] line-clamp-2">{s.subtitle || s.bullets?.[0] || ""}</p>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] font-bold">
+                      <span>Slide {idx + 1}</span>
+                      <span className="text-zinc-400 capitalize">{s.layout.replace("_", " ")}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto bg-[#EFECE6] dark:bg-zinc-950 p-4 sm:p-7 flex flex-col items-center justify-center">
+              <div
+                key={`${activeSlide.id}_${transitionPulseKey}`}
+                style={{ backgroundColor: effectiveSlideBg, color: theme.textHex, ...transitionAnimStyle }}
+                className={`w-full max-w-[920px] min-h-[480px] ${aspectClass} rounded-2xl border border-black/15 shadow-[0_24px_60px_rgba(11,31,58,0.16)] p-6 sm:p-10 flex flex-col justify-between gap-4`}
+              >
+                {/* Title & Subtitle */}
+                <div className={activeSlide.layout === "cover" || activeSlide.layout === "section" ? "text-center pt-4" : ""}>
+                  <input
+                    type="text"
+                    aria-label="Slide title"
+                    value={activeSlide.title}
+                    onChange={(e) => updateActiveSlide({ title: e.target.value })}
+                    style={{
+                      color: theme.primaryHex,
+                      textAlign:
+                        activeSlide.titleAlign ||
+                        (activeSlide.layout === "cover" || activeSlide.layout === "section" ? "center" : "left"),
+                    }}
+                    className={`w-full bg-transparent outline-none border border-transparent hover:border-white/25 focus:border-[#38BDF8] rounded-lg px-2 py-1 font-black tracking-tight ${
+                      activeSlide.layout === "cover" || activeSlide.layout === "section"
+                        ? "text-2xl sm:text-4xl"
+                        : "text-xl sm:text-3xl"
+                    }`}
+                  />
+                  <input
+                    type="text"
+                    aria-label="Slide subtitle"
+                    value={activeSlide.subtitle || ""}
+                    onChange={(e) => updateActiveSlide({ subtitle: e.target.value })}
+                    placeholder="Add slide subtitle or context..."
+                    style={{
+                      color: theme.mutedHex,
+                      textAlign:
+                        activeSlide.titleAlign ||
+                        (activeSlide.layout === "cover" || activeSlide.layout === "section" ? "center" : "left"),
+                    }}
+                    className="w-full bg-transparent outline-none border border-transparent hover:border-white/20 focus:border-[#38BDF8] rounded-lg px-2 py-1 text-sm sm:text-base mt-1"
+                  />
+                </div>
+
+                {/* Editable Layout Bodies */}
+                {activeSlide.layout === "two_column" ? (
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {(
+                      [
+                        { titleKey: "leftTitle" as const, bulletsKey: "leftBullets" as const, titleVal: activeSlide.leftTitle || "", bulletsVal: activeSlide.leftBullets || [] },
+                        { titleKey: "rightTitle" as const, bulletsKey: "rightBullets" as const, titleVal: activeSlide.rightTitle || "", bulletsVal: activeSlide.rightBullets || [] },
+                      ] as const
+                    ).map((col) => (
+                      <div key={col.titleKey} style={{ backgroundColor: theme.surfaceHex }} className="rounded-xl p-4 border border-white/15 space-y-2 flex flex-col">
+                        <input
+                          type="text"
+                          value={col.titleVal}
+                          onChange={(e) => updateActiveSlide({ [col.titleKey]: e.target.value })}
+                          style={{ color: theme.accentHex }}
+                          className="bg-transparent font-extrabold text-base outline-none border-b border-white/15 pb-1"
+                        />
+                        <div className="space-y-1.5 flex-1">
+                          {col.bulletsVal.map((b, bIdx) => (
+                            <div key={bIdx} className="flex items-center gap-2">
+                              <span style={{ color: theme.accentHex }}>•</span>
+                              <input
+                                type="text"
+                                value={b}
+                                onChange={(e) => {
+                                  const next = [...col.bulletsVal]
+                                  next[bIdx] = e.target.value
+                                  updateActiveSlide({ [col.bulletsKey]: next })
+                                }}
+                                className="flex-1 bg-transparent text-sm outline-none border-b border-transparent focus:border-white/30"
+                              />
+                              <button type="button" onClick={() => updateActiveSlide({ [col.bulletsKey]: col.bulletsVal.filter((_, i) => i !== bIdx) })} className="opacity-50 hover:opacity-100 cursor-pointer"><X className="h-3 w-3" /></button>
+                            </div>
+                          ))}
+                        </div>
+                        <button type="button" onClick={() => updateActiveSlide({ [col.bulletsKey]: [...col.bulletsVal, "New column point"] })} style={{ color: theme.accentHex }} className="text-xs font-bold text-left cursor-pointer">+ Add item</button>
+                      </div>
+                    ))}
+                  </div>
+                ) : activeSlide.layout === "metrics" ? (
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                    {(activeSlide.metrics || []).map((m, mIdx) => (
+                      <div key={mIdx} style={{ backgroundColor: theme.surfaceHex }} className="rounded-xl p-4 border border-white/15 space-y-2 text-center">
+                        <input type="text" value={m.value} onChange={(e) => { const n = [...(activeSlide.metrics || [])]; n[mIdx] = { ...m, value: e.target.value }; updateActiveSlide({ metrics: n }) }} style={{ color: theme.accentHex }} className="w-full bg-transparent text-center text-3xl font-black outline-none" />
+                        <input type="text" value={m.label} onChange={(e) => { const n = [...(activeSlide.metrics || [])]; n[mIdx] = { ...m, label: e.target.value }; updateActiveSlide({ metrics: n }) }} className="w-full bg-transparent text-center text-sm font-bold outline-none" />
+                        <input type="text" value={m.delta || ""} placeholder="Benchmark note" onChange={(e) => { const n = [...(activeSlide.metrics || [])]; n[mIdx] = { ...m, delta: e.target.value }; updateActiveSlide({ metrics: n }) }} style={{ color: theme.mutedHex }} className="w-full bg-transparent text-center text-xs outline-none" />
+                      </div>
+                    ))}
+                  </div>
+                ) : activeSlide.layout === "quote" ? (
+                  <div style={{ backgroundColor: theme.surfaceHex }} className="flex-1 rounded-2xl p-6 border border-white/15 flex flex-col justify-center gap-3">
+                    <textarea rows={3} value={activeSlide.quote || ""} onChange={(e) => updateActiveSlide({ quote: e.target.value })} placeholder="Enter featured executive quote..." className="w-full bg-transparent text-center text-xl sm:text-2xl italic font-semibold outline-none resize-none" />
+                    <input type="text" value={activeSlide.quoteAuthor || ""} onChange={(e) => updateActiveSlide({ quoteAuthor: e.target.value })} placeholder="Attribution / Speaker" style={{ color: theme.accentHex }} className="w-full bg-transparent text-center text-sm font-extrabold outline-none" />
+                  </div>
+                ) : activeSlide.layout === "table" ? (
+                  <div className="flex-1 overflow-auto space-y-2">
+                    <table className="w-full border-collapse text-xs sm:text-sm">
+                      <thead>
+                        <tr>
+                          {(activeSlide.tableData?.headers || ["Column 1", "Column 2"]).map((h, cIdx) => (
+                            <th key={cIdx} style={{ backgroundColor: theme.surfaceHex, color: theme.accentHex }} className="border border-white/20 p-2">
+                              <input
+                                type="text"
+                                value={h}
+                                onChange={(e) => {
+                                  const tbl = activeSlide.tableData || { headers: ["Col 1", "Col 2"], rows: [["A", "B"]] }
+                                  const nextH = [...tbl.headers]
+                                  nextH[cIdx] = e.target.value
+                                  updateActiveSlide({ tableData: { ...tbl, headers: nextH } })
+                                }}
+                                className="w-full bg-transparent font-extrabold outline-none"
+                              />
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(activeSlide.tableData?.rows || []).map((row, rIdx) => (
+                          <tr key={rIdx}>
+                            {row.map((cell, cIdx) => (
+                              <td key={cIdx} className="border border-white/15 p-2">
+                                <input
+                                  type="text"
+                                  value={cell}
+                                  onChange={(e) => {
+                                    const tbl = activeSlide.tableData!
+                                    const nextRows = tbl.rows.map((rr, ri) =>
+                                      ri === rIdx ? rr.map((cc, ci) => (ci === cIdx ? e.target.value : cc)) : rr
+                                    )
+                                    updateActiveSlide({ tableData: { ...tbl, rows: nextRows } })
+                                  }}
+                                  className="w-full bg-transparent outline-none"
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const tbl = activeSlide.tableData || { headers: ["Phase", "Owner"], rows: [] }
+                        updateActiveSlide({
+                          tableData: {
+                            ...tbl,
+                            rows: [...tbl.rows, tbl.headers.map(() => "New Entry")],
+                          },
+                        })
+                      }}
+                      style={{ color: theme.accentHex }}
+                      className="text-xs font-bold cursor-pointer"
+                    >
+                      + Add Table Row
+                    </button>
+                  </div>
+                ) : activeSlide.layout === "chart" ? (
+                  <div style={{ backgroundColor: theme.surfaceHex }} className="flex-1 rounded-xl p-4 border border-white/15 flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <input
+                        type="text"
+                        value={activeSlide.chartData?.title || "Slide Chart"}
+                        onChange={(e) =>
+                          updateActiveSlide({
+                            chartData: { ...(activeSlide.chartData || { kind: "bar", title: "", items: [] }), title: e.target.value },
+                          })
+                        }
+                        style={{ color: theme.accentHex }}
+                        className="bg-transparent font-extrabold text-sm outline-none flex-1"
+                      />
+                    </div>
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                      <div className="space-y-1.5">
+                        {(activeSlide.chartData?.items || []).map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-xs">
+                            <input
+                              type="text"
+                              value={item.label}
+                              onChange={(e) => {
+                                const cd = activeSlide.chartData!
+                                updateActiveSlide({
+                                  chartData: {
+                                    ...cd,
+                                    items: cd.items.map((x, i) => (i === idx ? { ...x, label: e.target.value } : x)),
+                                  },
+                                })
+                              }}
+                              className="flex-1 rounded bg-white/10 px-2 py-1 outline-none"
+                            />
+                            <input
+                              type="number"
+                              value={item.value}
+                              onChange={(e) => {
+                                const cd = activeSlide.chartData!
+                                updateActiveSlide({
+                                  chartData: {
+                                    ...cd,
+                                    items: cd.items.map((x, i) => (i === idx ? { ...x, value: Number(e.target.value) || 0 } : x)),
+                                  },
+                                })
+                              }}
+                              className="w-20 rounded bg-white/10 px-2 py-1 font-mono outline-none"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex items-end gap-3 h-36 pt-2">
+                        {(activeSlide.chartData?.items || []).map((item, idx) => {
+                          const maxV = Math.max(1, ...(activeSlide.chartData?.items || []).map((x) => x.value))
+                          return (
+                            <div key={idx} className="flex-1 flex flex-col items-center justify-end h-full gap-1">
+                              <span className="text-[10px] font-mono">{item.value}</span>
+                              <div style={{ height: `${Math.max(10, Math.round((item.value / maxV) * 100))}%`, backgroundColor: theme.accentHex }} className="w-full max-w-[40px] rounded-t" />
+                              <span className="text-[10px] font-bold truncate max-w-full">{item.label}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                ) : activeSlide.layout === "visual_split" ? (
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5 items-center">
+                    <div className="space-y-2">
+                      {(activeSlide.bullets || []).map((b, bIdx) => (
+                        <div key={bIdx} className="flex items-center gap-2">
+                          <span style={{ color: theme.accentHex }} className="font-bold">•</span>
+                          <input type="text" value={b} onChange={(e) => { const next = [...(activeSlide.bullets || [])]; next[bIdx] = e.target.value; updateActiveSlide({ bullets: next }) }} className="flex-1 bg-transparent text-sm sm:text-base outline-none border-b border-white/15 py-1" />
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => updateActiveSlide({ bullets: [...(activeSlide.bullets || []), "New visual point"] })} style={{ color: theme.accentHex }} className="text-xs font-bold cursor-pointer">+ Add talking point</button>
+                    </div>
+                    <div style={{ backgroundColor: theme.surfaceHex }} className="rounded-xl border border-dashed border-white/25 aspect-video flex flex-col items-center justify-center overflow-hidden p-3">
+                      {activeSlide.imageUrl ? (
+                        <img src={activeSlide.imageUrl} alt={activeSlide.title} className="w-full h-full object-cover rounded-lg" />
+                      ) : (
+                        <button type="button" onClick={() => slideImageInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl bg-white/15 hover:bg-white/25 px-4 py-2 text-xs font-bold cursor-pointer"><ImagePlus className="h-4 w-4" />Upload Slide Visual</button>
+                      )}
+                    </div>
+                  </div>
+                ) : activeSlide.layout === "blank" ? (
+                  <div className="flex-1 flex flex-col justify-center gap-2">
+                    {(activeSlide.elements || []).length === 0 && (
+                      <p style={{ color: theme.mutedHex }} className="text-center text-sm">
+                        Open the <strong>Insert</strong> ribbon tab to add Text Boxes, Callouts, Badges, or Tables.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col justify-center space-y-2">
+                    {(activeSlide.bullets || []).map((b, bIdx) => (
+                      <div key={bIdx} style={{ backgroundColor: theme.surfaceHex }} className="flex items-center gap-3 rounded-xl px-4 py-2.5 border border-white/10">
+                        <span style={{ color: theme.accentHex }} className="font-black text-base">•</span>
+                        <input type="text" value={b} onChange={(e) => { const next = [...(activeSlide.bullets || [])]; next[bIdx] = e.target.value; updateActiveSlide({ bullets: next }) }} className="flex-1 bg-transparent text-sm sm:text-base outline-none" />
+                        <button type="button" onClick={() => updateActiveSlide({ bullets: (activeSlide.bullets || []).filter((_, i) => i !== bIdx) })} className="opacity-50 hover:opacity-100 cursor-pointer"><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => updateActiveSlide({ bullets: [...(activeSlide.bullets || []), "Add talking point"] })} style={{ color: theme.accentHex }} className="text-xs font-bold text-left px-1 cursor-pointer">+ Add bullet point</button>
+                  </div>
+                )}
+
+                {/* Inserted Freeform Callouts / Textboxes / Badges */}
+                {activeSlide.elements && activeSlide.elements.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {activeSlide.elements.map((el) => (
+                      <div key={el.id} style={{ backgroundColor: el.bgHex, color: el.textHex }} className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold border border-white/20">
+                        <input
+                          type="text"
+                          value={el.text}
+                          onChange={(e) =>
+                            updateActiveSlide({
+                              elements: activeSlide.elements?.map((x) => (x.id === el.id ? { ...x, text: e.target.value } : x)),
+                            })
+                          }
+                          className="bg-transparent outline-none min-w-[160px]"
+                        />
+                        <button type="button" onClick={() => updateActiveSlide({ elements: activeSlide.elements?.filter((x) => x.id !== el.id) })} className="opacity-60 hover:opacity-100 cursor-pointer"><X className="h-3 w-3" /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Footer Stamp */}
+                <div className="flex items-center justify-between text-[11px] opacity-75 pt-2 border-t border-white/10">
+                  <span>{activeDeck?.footerText || `ConnectLn Slides · ${theme.name}`}</span>
+                  {activeDeck?.showSlideNumbers !== false && (
+                    <span>Slide {safeSlideIndex + 1} of {activeDeck?.slides.length || 1}</span>
+                  )}
+                </div>
+              </div>
+
+              {showNotesDrawer && (
+                <div className="w-full max-w-[920px] mt-4 rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold">Presenter Speaker Notes — Slide {safeSlideIndex + 1}</span>
+                    <button type="button" onClick={() => setShowNotesDrawer(false)} className="text-xs text-zinc-400 cursor-pointer">Hide</button>
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={activeSlide.notes || ""}
+                    onChange={(e) => updateActiveSlide({ notes: e.target.value })}
+                    placeholder="Add talking cues, reminders, or timing notes for Present Mode & Notes Print..."
+                    className="w-full rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-[#FAF7F2]/60 dark:bg-zinc-950 px-3 py-2 text-xs outline-none focus:border-[#C84B28]"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Optional Slide Comments Drawer */}
+          {showCommentsDrawer && (
+            <aside className="w-full sm:w-[270px] shrink-0 border-l border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950 p-3 flex flex-col gap-3">
+              <div className="flex items-center justify-between border-b border-[#E7E2DA] pb-2">
+                <span className="text-xs font-extrabold">Slide {safeSlideIndex + 1} Comments</span>
+                <button type="button" onClick={() => setShowCommentsDrawer(false)} className="p-1 cursor-pointer"><X className="h-4 w-4" /></button>
+              </div>
+              <div className="space-y-1.5">
+                <textarea rows={2} value={commentDraft} onChange={(e) => setCommentDraft(e.target.value)} placeholder="Add feedback on this slide..." className="w-full rounded-xl border bg-white dark:bg-zinc-900 p-2 text-xs" />
+                <button type="button" onClick={handleAddSlideComment} className="w-full rounded-xl bg-[#C84B28] text-white py-1.5 text-xs font-bold cursor-pointer">Post Comment</button>
+              </div>
+              <div className="space-y-2 overflow-y-auto">
+                {(activeSlide.comments || []).map((c) => (
+                  <div key={c.id} className="rounded-xl border bg-white dark:bg-zinc-900 p-2.5 text-xs space-y-1">
+                    <div className="flex justify-between font-bold">
+                      <span>{c.author}</span>
+                      <button type="button" onClick={() => updateActiveSlide({ comments: activeSlide.comments?.filter((x) => x.id !== c.id) })} className="text-rose-500 cursor-pointer"><Trash2 className="h-3.5 w-3.5" /></button>
+                    </div>
+                    <p>{c.text}</p>
+                  </div>
+                ))}
+              </div>
+            </aside>
+          )}
+        </div>
+
+        {/* Bottom Navigation Footer */}
         <div className="flex items-center justify-between px-4 py-2 border-t border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950 text-xs">
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={safeSlideIndex === 0}
-              onClick={() => setActiveSlideIndex((i) => Math.max(0, i - 1))}
-              className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-semibold disabled:opacity-40 cursor-pointer"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-              Prev
-            </button>
-            <span className="font-bold">
-              Slide {safeSlideIndex + 1} / {activeDeck?.slides.length || 1}
-            </span>
-            <button
-              type="button"
-              disabled={safeSlideIndex >= (activeDeck?.slides.length || 1) - 1}
-              onClick={() =>
-                setActiveSlideIndex((i) => Math.min((activeDeck?.slides.length || 1) - 1, i + 1))
-              }
-              className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-semibold disabled:opacity-40 cursor-pointer"
-            >
-              Next
-              <ChevronRight className="h-3.5 w-3.5" />
-            </button>
+            <button type="button" disabled={safeSlideIndex === 0} onClick={() => setActiveSlideIndex((i) => Math.max(0, i - 1))} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2.5 py-1 font-semibold disabled:opacity-40 cursor-pointer"><ChevronLeft className="h-3.5 w-3.5" />Prev</button>
+            <span className="font-bold">Slide {safeSlideIndex + 1} / {activeDeck?.slides.length || 1}</span>
+            <button type="button" disabled={safeSlideIndex >= (activeDeck?.slides.length || 1) - 1} onClick={() => setActiveSlideIndex((i) => Math.min((activeDeck?.slides.length || 1) - 1, i + 1))} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2.5 py-1 font-semibold disabled:opacity-40 cursor-pointer">Next<ChevronRight className="h-3.5 w-3.5" /></button>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsPresenting(true)}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0067B8] hover:underline cursor-pointer"
-          >
-            <Maximize2 className="h-3.5 w-3.5" />
-            Full-Screen Present Mode
-          </button>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => setSorterMode((m) => !m)} className="text-xs font-bold text-zinc-600 hover:text-[#C84B28] cursor-pointer">Slide Sorter</button>
+            <button type="button" onClick={() => { setPresenterViewMode(false); setIsPresenting(true) }} className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0067B8] hover:underline cursor-pointer"><Maximize2 className="h-3.5 w-3.5" />Full-Screen Present Mode</button>
+          </div>
         </div>
       </div>
 
-      {/* Full-Screen Live Present Mode */}
+      {/* Full-Screen Live Present Mode OR Presenter View */}
       {isPresenting && (
         <div
           role="dialog"
           aria-label="ConnectLn Slides Present Mode"
-          className="fixed inset-0 z-[120] bg-zinc-950 flex flex-col items-center justify-between p-4 sm:p-8"
+          className="fixed inset-0 z-[120] bg-zinc-950 flex flex-col items-center justify-between p-4 sm:p-6"
         >
-          <div className="w-full max-w-6xl flex items-center justify-between text-xs text-zinc-300">
+          <div className="w-full max-w-6xl flex items-center justify-between gap-3 text-xs text-zinc-300">
             <span className="font-bold">
-              {activeDeck?.title} · ConnectLn Slides Presenter
+              {activeDeck?.title} · {presenterViewMode ? "Presenter View" : "ConnectLn Slides Presenter"} · ⏱ {formatTimer(presentSeconds)}
             </span>
-            <button
-              type="button"
-              onClick={() => setIsPresenting(false)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 px-3 py-1.5 font-bold text-white cursor-pointer"
-            >
-              <X className="h-4 w-4" />
-              Exit Present (Esc)
-            </button>
-          </div>
-
-          <div
-            style={{ backgroundColor: theme.bgHex, color: theme.textHex }}
-            className="w-full max-w-6xl aspect-[16/9] max-h-[75vh] rounded-2xl p-8 sm:p-14 shadow-2xl border border-white/15 flex flex-col justify-between"
-          >
-            {activeSlide.layout !== "cover" && (
-              <div>
-                <h2
-                  style={{ color: theme.primaryHex }}
-                  className="text-2xl sm:text-4xl font-black tracking-tight"
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPresenterViewMode((v) => !v)}
+                className="inline-flex items-center gap-1 rounded-xl bg-white/10 hover:bg-white/20 px-3 py-1.5 font-bold text-white cursor-pointer"
+              >
+                <MonitorPlay className="h-3.5 w-3.5" />
+                {presenterViewMode ? "Single Screen" : "Presenter View"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPenActive((p) => !p)}
+                className={`inline-flex items-center gap-1 rounded-xl px-3 py-1.5 font-bold cursor-pointer ${
+                  penActive ? "bg-rose-600 text-white" : "bg-white/10 hover:bg-white/20 text-white"
+                }`}
+              >
+                <PenLine className="h-3.5 w-3.5" />
+                {penActive ? "Pen ON" : "Annotation Pen"}
+              </button>
+              {inkStrokes.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setInkStrokes([])}
+                  className="inline-flex items-center gap-1 rounded-xl bg-white/10 hover:bg-white/20 px-2.5 py-1.5 font-bold text-white cursor-pointer"
                 >
-                  {activeSlide.title}
-                </h2>
-                {activeSlide.subtitle && (
-                  <p style={{ color: theme.mutedHex }} className="text-base sm:text-xl mt-1">
-                    {activeSlide.subtitle}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {renderPresentSlideBody(activeSlide)}
-
-            <div className="flex items-center justify-between text-xs opacity-70 pt-3 border-t border-white/10">
-              <span>{activeDeck?.title}</span>
-              <span>
-                {safeSlideIndex + 1} / {activeDeck?.slides.length || 1}
-              </span>
+                  <Eraser className="h-3.5 w-3.5" />
+                  Clear Ink
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPresenting(false)
+                  setPresenterViewMode(false)
+                }}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 px-3 py-1.5 font-bold text-white cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+                Exit Present (Esc)
+              </button>
             </div>
           </div>
 
+          {presenterViewMode ? (
+            <div className="w-full max-w-6xl flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 items-center py-3 min-h-0">
+              <div
+                style={{ backgroundColor: effectiveSlideBg, color: theme.textHex }}
+                className="lg:col-span-8 aspect-[16/9] max-h-[68vh] w-full rounded-2xl p-6 sm:p-10 border border-white/15 flex flex-col justify-between shadow-2xl"
+              >
+                {activeSlide.layout !== "cover" && activeSlide.layout !== "section" && (
+                  <div>
+                    <h2 style={{ color: theme.primaryHex }} className="text-2xl sm:text-3xl font-black">{activeSlide.title}</h2>
+                    {activeSlide.subtitle && <p style={{ color: theme.mutedHex }} className="text-sm sm:text-base mt-1">{activeSlide.subtitle}</p>}
+                  </div>
+                )}
+                {renderSlidePreviewVisual(activeSlide, revealStep)}
+                <div className="flex justify-between text-xs opacity-70 pt-2 border-t border-white/10">
+                  <span>Current Slide</span>
+                  <span>{safeSlideIndex + 1} / {activeDeck?.slides.length || 1}</span>
+                </div>
+              </div>
+
+              <div className="lg:col-span-4 flex flex-col gap-3 h-full max-h-[68vh]">
+                <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-3 space-y-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                    Next Slide Preview
+                  </span>
+                  {activeDeck?.slides[safeSlideIndex + 1] ? (
+                    <div
+                      style={{
+                        backgroundColor: activeDeck.slides[safeSlideIndex + 1].customBgHex || theme.bgHex,
+                        color: theme.textHex,
+                      }}
+                      className="aspect-[16/9] rounded-xl p-4 flex flex-col justify-between border border-white/10"
+                    >
+                      <p style={{ color: theme.primaryHex }} className="text-sm font-extrabold line-clamp-2">
+                        {activeDeck.slides[safeSlideIndex + 1].title}
+                      </p>
+                      <p style={{ color: theme.mutedHex }} className="text-xs line-clamp-2">
+                        {activeDeck.slides[safeSlideIndex + 1].subtitle ||
+                          activeDeck.slides[safeSlideIndex + 1].bullets?.[0] ||
+                          ""}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="aspect-[16/9] rounded-xl border border-dashed border-zinc-700 flex items-center justify-center text-xs text-zinc-500">
+                      End of Presentation
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 rounded-2xl border border-zinc-700 bg-zinc-900 p-4 flex flex-col gap-2 overflow-y-auto">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
+                    Speaker Notes
+                  </span>
+                  <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">
+                    {activeSlide.notes || "No speaker notes recorded for this slide."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div
+              onPointerDown={(e) => {
+                if (!penActive) return
+                const rect = e.currentTarget.getBoundingClientRect()
+                const pt = { x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100 }
+                setDrawingNow(true)
+                setInkStrokes((prev) => [...prev, [pt]])
+              }}
+              onPointerMove={(e) => {
+                if (!penActive || !drawingNow) return
+                const rect = e.currentTarget.getBoundingClientRect()
+                const pt = { x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100 }
+                setInkStrokes((prev) => prev.map((st, idx) => (idx === prev.length - 1 ? [...st, pt] : st)))
+              }}
+              onPointerUp={() => setDrawingNow(false)}
+              style={{ backgroundColor: effectiveSlideBg, color: theme.textHex }}
+              className={`relative w-full max-w-6xl ${aspectClass} max-h-[75vh] rounded-2xl p-8 sm:p-14 shadow-2xl border border-white/15 flex flex-col justify-between ${
+                penActive ? "cursor-crosshair" : ""
+              }`}
+            >
+              {/* Ink Overlay */}
+              {inkStrokes.length > 0 && (
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 w-full h-full z-20">
+                  {inkStrokes.map((st, sIdx) => (
+                    <polyline
+                      key={sIdx}
+                      fill="none"
+                      stroke="#EF4444"
+                      strokeWidth="0.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      points={st.map((p) => `${p.x},${p.y}`).join(" ")}
+                    />
+                  ))}
+                </svg>
+              )}
+
+              {activeSlide.layout !== "cover" && activeSlide.layout !== "section" && (
+                <div>
+                  <h2 style={{ color: theme.primaryHex }} className="text-2xl sm:text-4xl font-black tracking-tight">{activeSlide.title}</h2>
+                  {activeSlide.subtitle && <p style={{ color: theme.mutedHex }} className="text-base sm:text-xl mt-1">{activeSlide.subtitle}</p>}
+                </div>
+              )}
+
+              {renderSlidePreviewVisual(activeSlide, revealStep)}
+
+              <div className="flex items-center justify-between text-xs opacity-70 pt-3 border-t border-white/10">
+                <span>{activeDeck?.title}</span>
+                <span>{safeSlideIndex + 1} / {activeDeck?.slides.length || 1}</span>
+              </div>
+            </div>
+          )}
+
           <div className="w-full max-w-6xl space-y-2">
-            {showPresentNotes && activeSlide.notes && (
+            {!presenterViewMode && showPresentNotes && activeSlide.notes && (
               <div className="rounded-xl bg-zinc-900 border border-zinc-700 px-4 py-2 text-xs text-zinc-200">
                 <strong>Speaker Notes:</strong> {activeSlide.notes}
               </div>
             )}
             <div className="flex items-center justify-between gap-4 text-white">
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled={safeSlideIndex === 0}
-                  onClick={() => setActiveSlideIndex((i) => Math.max(0, i - 1))}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-35 px-4 py-2 text-xs font-bold cursor-pointer"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  disabled={safeSlideIndex >= (activeDeck?.slides.length || 1) - 1}
-                  onClick={() =>
-                    setActiveSlideIndex((i) =>
-                      Math.min((activeDeck?.slides.length || 1) - 1, i + 1)
-                    )
-                  }
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#0067B8] hover:bg-[#00559b] disabled:opacity-35 px-4 py-2 text-xs font-bold cursor-pointer"
-                >
-                  Next
-                  <ArrowRight className="h-4 w-4" />
-                </button>
+                <button type="button" disabled={safeSlideIndex === 0} onClick={() => setActiveSlideIndex((i) => Math.max(0, i - 1))} className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-35 px-4 py-2 text-xs font-bold cursor-pointer"><ArrowLeft className="h-4 w-4" />Previous</button>
+                <button type="button" disabled={safeSlideIndex >= (activeDeck?.slides.length || 1) - 1} onClick={() => setActiveSlideIndex((i) => Math.min((activeDeck?.slides.length || 1) - 1, i + 1))} className="inline-flex items-center gap-1.5 rounded-xl bg-[#0067B8] hover:bg-[#00559b] disabled:opacity-35 px-4 py-2 text-xs font-bold cursor-pointer">Next<ArrowRight className="h-4 w-4" /></button>
               </div>
               <div className="flex-1 max-w-md h-2 rounded-full bg-zinc-800 overflow-hidden">
-                <div
-                  style={{
-                    width: `${((safeSlideIndex + 1) / Math.max(1, activeDeck?.slides.length || 1)) * 100}%`,
-                  }}
-                  className="h-full bg-[#38BDF8] transition-all"
-                />
+                <div style={{ width: `${((safeSlideIndex + 1) / Math.max(1, activeDeck?.slides.length || 1)) * 100}%` }} className="h-full bg-[#38BDF8] transition-all" />
               </div>
-              <button
-                type="button"
-                onClick={() => setShowPresentNotes((v) => !v)}
-                className="rounded-xl bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold cursor-pointer"
-              >
+              <button type="button" onClick={() => setShowPresentNotes((v) => !v)} className="rounded-xl bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold cursor-pointer">
                 {showPresentNotes ? "Hide Notes" : "Show Notes"}
               </button>
             </div>
@@ -1348,7 +1878,7 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
 
       {/* Deck Templates Modal */}
       {showTemplatesModal && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
           <div className="w-full max-w-2xl rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-[#E7E2DA] dark:border-zinc-800 pb-3">
               <div>
@@ -1360,13 +1890,7 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
                   Launch a themed widescreen presentation or start with clean slides.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowTemplatesModal(false)}
-                className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <button type="button" onClick={() => setShowTemplatesModal(false)} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"><X className="h-4 w-4" /></button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
               {DECK_TEMPLATES.map((tpl) => (
@@ -1377,12 +1901,8 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
                   className="rounded-xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2]/60 dark:bg-zinc-950/60 hover:border-[#C84B28] p-4 text-left transition-all cursor-pointer space-y-1.5"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-extrabold text-[#0B1F3A] dark:text-white">
-                      {tpl.name}
-                    </span>
-                    <span className="rounded-full bg-orange-100 dark:bg-orange-900/50 px-2 py-0.5 text-[10px] font-bold text-[#C84B28] dark:text-orange-300">
-                      {tpl.category}
-                    </span>
+                    <span className="text-sm font-extrabold text-[#0B1F3A] dark:text-white">{tpl.name}</span>
+                    <span className="rounded-full bg-orange-100 dark:bg-orange-900/50 px-2 py-0.5 text-[10px] font-bold text-[#C84B28] dark:text-orange-300">{tpl.category}</span>
                   </div>
                   <p className="text-xs text-zinc-600 dark:text-zinc-400">{tpl.description}</p>
                 </button>
@@ -1390,6 +1910,20 @@ export function ConnectLnSlidesEditor({ user, onShareToFeed }: ConnectLnSlidesEd
             </div>
           </div>
         </div>
+      )}
+
+      {/* Live Print Preview & Handouts Studio Modal */}
+      {activeDeck && (
+        <ConnectLnStudioPrintModal
+          mode="slides"
+          isOpen={showPrintModal}
+          onClose={() => setShowPrintModal(false)}
+          title={activeDeck.title}
+          slides={activeDeck.slides}
+          currentSlideIndex={safeSlideIndex}
+          theme={theme}
+          onDownloadOpenXml={() => handleExport("pptx")}
+        />
       )}
     </div>
   )

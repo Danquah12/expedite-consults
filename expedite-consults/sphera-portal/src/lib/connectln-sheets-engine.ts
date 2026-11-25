@@ -1,9 +1,23 @@
-export type CellFormat = 'general' | 'currency' | 'percent' | 'number' | 'integer'
+export type CellFormat =
+  | 'general'
+  | 'currency'
+  | 'accounting'
+  | 'percent'
+  | 'number'
+  | 'integer'
+  | 'date'
+  | 'scientific'
 export type CellAlign = 'left' | 'center' | 'right'
 
 export interface SheetCellStyle {
   bold?: boolean
   italic?: boolean
+  underline?: boolean
+  strikethrough?: boolean
+  wrapText?: boolean
+  fontSize?: number
+  decimals?: number
+  border?: 'none' | 'all' | 'bottom' | 'topBottom' | 'box'
   format?: CellFormat
   align?: CellAlign
   bg?: string
@@ -291,7 +305,124 @@ function compareValues(a: EvaluatedValue, b: EvaluatedValue): number {
 
 type ArgEntry =
   | { kind: 'scalar'; val: EvaluatedValue }
-  | { kind: 'range'; keys: string[] }
+  | {
+      kind: 'range'
+      startCol: number
+      startRow: number
+      endCol: number
+      endRow: number
+      keys: string[]
+    }
+
+function makeRangeArg(startRef: string, endRef: string): ArgEntry {
+  const s = parseCellKey(startRef)
+  const e = parseCellKey(endRef)
+  if (!s || !e) {
+    return { kind: 'range', startCol: 0, startRow: 0, endCol: 0, endRow: 0, keys: [] }
+  }
+  return {
+    kind: 'range',
+    startCol: Math.min(s.col, e.col),
+    startRow: Math.min(s.row, e.row),
+    endCol: Math.max(s.col, e.col),
+    endRow: Math.max(s.row, e.row),
+    keys: expandCellRange(startRef, endRef),
+  }
+}
+
+function parseFlexDate(rawVal: EvaluatedValue): Date {
+  if (rawVal.error) throw new FormulaEvalError(rawVal.error)
+  if (typeof rawVal.numeric === 'number' && Number.isFinite(rawVal.numeric)) {
+    return new Date(rawVal.numeric > 100000000000 ? rawVal.numeric : rawVal.numeric * 86400000)
+  }
+  const s = String(rawVal.value ?? '').trim()
+  const isoMatch = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s)
+  if (isoMatch) {
+    return new Date(
+      Number(isoMatch[1]),
+      Number(isoMatch[2]) - 1,
+      Number(isoMatch[3])
+    )
+  }
+  const usMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/.exec(s)
+  if (usMatch) {
+    const yr = Number(usMatch[3].length === 2 ? `20${usMatch[3]}` : usMatch[3])
+    return new Date(yr, Number(usMatch[1]) - 1, Number(usMatch[2]))
+  }
+  const parsed = new Date(s)
+  if (Number.isNaN(parsed.getTime())) throw new FormulaEvalError('#VALUE!')
+  return parsed
+}
+
+function toCriteriaMatcher(criteriaVal: EvaluatedValue): (ev: EvaluatedValue) => boolean {
+  if (criteriaVal.error) throw new FormulaEvalError(criteriaVal.error)
+  const rawStr = String(criteriaVal.value ?? '').trim()
+  const opMatch = /^(>=|<=|<>|!=|>|<|=)(.*)$/.exec(rawStr)
+  if (opMatch) {
+    const op = opMatch[1]
+    const rhsRaw = opMatch[2].trim()
+    const rhsNum = Number(rhsRaw.replace(/^\$/, '').replace(/,/g, ''))
+    const rhsIsNum = rhsRaw !== '' && Number.isFinite(rhsNum)
+    return (ev: EvaluatedValue) => {
+      const lhsNum =
+        typeof ev.numeric === 'number'
+          ? ev.numeric
+          : typeof ev.value === 'number'
+          ? ev.value
+          : null
+      if (rhsIsNum && lhsNum !== null) {
+        if (op === '>=') return lhsNum >= rhsNum
+        if (op === '<=') return lhsNum <= rhsNum
+        if (op === '<>' || op === '!=') return lhsNum !== rhsNum
+        if (op === '>') return lhsNum > rhsNum
+        if (op === '<') return lhsNum < rhsNum
+        return lhsNum === rhsNum
+      }
+      const lStr = String(ev.value ?? '').trim().toLowerCase()
+      const rStr = rhsRaw.toLowerCase()
+      if (op === '<>' || op === '!=') return lStr !== rStr
+      if (op === '=') return lStr === rStr
+      return false
+    }
+  }
+
+  const targetNum =
+    typeof criteriaVal.numeric === 'number'
+      ? criteriaVal.numeric
+      : typeof criteriaVal.value === 'number'
+      ? criteriaVal.value
+      : null
+  return (ev: EvaluatedValue) => {
+    if (targetNum !== null && typeof ev.numeric === 'number') {
+      return ev.numeric === targetNum
+    }
+    return (
+      String(ev.value ?? '').trim().toLowerCase() === rawStr.toLowerCase()
+    )
+  }
+}
+
+function getScalarArg(arg: ArgEntry | undefined): EvaluatedValue {
+  if (!arg || arg.kind !== 'scalar') throw new FormulaEvalError('#VALUE!')
+  return arg.val
+}
+
+function extractFlatValues(
+  arg: ArgEntry,
+  cells: Record<string, SheetCell>,
+  visiting: Set<string>,
+  cache: Map<string, EvaluatedValue>
+): EvaluatedValue[] {
+  if (arg.kind === 'scalar') {
+    if (arg.val.error) throw new FormulaEvalError(arg.val.error)
+    return [arg.val]
+  }
+  return arg.keys.map((k) => {
+    const ev = evaluateCellInternal(k, cells, visiting, cache)
+    if (ev.error) throw new FormulaEvalError(ev.error)
+    return ev
+  })
+}
 
 function collectNumericValues(
   args: ArgEntry[],
@@ -463,6 +594,349 @@ function invokeFunction(
       if (args.length !== 1 || args[0].kind !== 'scalar') throw new FormulaEvalError('#VALUE!')
       return { value: String(args[0].val.value ?? '').toLowerCase() }
     }
+    case 'PROPER': {
+      const s = String(getScalarArg(args[0]).value ?? '')
+      return {
+        value: s.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()),
+      }
+    }
+    case 'TRIM': {
+      const s = String(getScalarArg(args[0]).value ?? '')
+      return { value: s.trim().replace(/\s+/g, ' ') }
+    }
+    case 'LEFT': {
+      const s = String(getScalarArg(args[0]).value ?? '')
+      const count = args[1] ? Math.max(0, Math.trunc(toNumber(getScalarArg(args[1])))) : 1
+      return { value: s.slice(0, count) }
+    }
+    case 'RIGHT': {
+      const s = String(getScalarArg(args[0]).value ?? '')
+      const count = args[1] ? Math.max(0, Math.trunc(toNumber(getScalarArg(args[1])))) : 1
+      return { value: count === 0 ? '' : s.slice(-count) }
+    }
+    case 'MID': {
+      const s = String(getScalarArg(args[0]).value ?? '')
+      const start1 = Math.max(1, Math.trunc(toNumber(getScalarArg(args[1]))))
+      const len = Math.max(0, Math.trunc(toNumber(getScalarArg(args[2]))))
+      return { value: s.slice(start1 - 1, start1 - 1 + len) }
+    }
+    case 'SUBSTITUTE': {
+      const s = String(getScalarArg(args[0]).value ?? '')
+      const oldText = String(getScalarArg(args[1]).value ?? '')
+      const newText = String(getScalarArg(args[2]).value ?? '')
+      if (!oldText) return { value: s }
+      return { value: s.split(oldText).join(newText) }
+    }
+    case 'FIND': {
+      const needle = String(getScalarArg(args[0]).value ?? '')
+      const haystack = String(getScalarArg(args[1]).value ?? '')
+      const start1 = args[2] ? Math.max(1, Math.trunc(toNumber(getScalarArg(args[2])))) : 1
+      const idx = haystack.indexOf(needle, start1 - 1)
+      if (idx === -1) throw new FormulaEvalError('#VALUE!')
+      return { value: idx + 1, numeric: idx + 1 }
+    }
+    case 'CONCATENATE': {
+      const vals = collectAllValues(args, cells, visiting, cache)
+      return { value: vals.map((v) => String(v.value ?? '')).join('') }
+    }
+    case 'TEXTJOIN': {
+      const delim = String(getScalarArg(args[0]).value ?? '')
+      const ignoreEmpty = toBoolean(getScalarArg(args[1]))
+      const vals = collectAllValues(args.slice(2), cells, visiting, cache)
+        .map((v) => String(v.value ?? ''))
+        .filter((s) => (!ignoreEmpty ? true : s.trim() !== ''))
+      return { value: vals.join(delim) }
+    }
+    case 'AND': {
+      const vals = collectAllValues(args, cells, visiting, cache)
+      if (vals.length === 0) throw new FormulaEvalError('#VALUE!')
+      return { value: vals.every((v) => toBoolean(v)) }
+    }
+    case 'OR': {
+      const vals = collectAllValues(args, cells, visiting, cache)
+      if (vals.length === 0) throw new FormulaEvalError('#VALUE!')
+      return { value: vals.some((v) => toBoolean(v)) }
+    }
+    case 'NOT': {
+      return { value: !toBoolean(getScalarArg(args[0])) }
+    }
+    case 'IFS': {
+      for (let i = 0; i + 1 < args.length; i += 2) {
+        if (toBoolean(getScalarArg(args[i]))) {
+          return getScalarArg(args[i + 1])
+        }
+      }
+      throw new FormulaEvalError('#N/A')
+    }
+    case 'ROUNDUP': {
+      const n = toNumber(getScalarArg(args[0]))
+      const digits = args[1] ? Math.trunc(toNumber(getScalarArg(args[1]))) : 0
+      const f = Math.pow(10, Math.min(10, Math.max(-10, digits)))
+      const res = n >= 0 ? Math.ceil(n * f) / f : Math.floor(n * f) / f
+      return { value: res, numeric: res }
+    }
+    case 'ROUNDDOWN': {
+      const n = toNumber(getScalarArg(args[0]))
+      const digits = args[1] ? Math.trunc(toNumber(getScalarArg(args[1]))) : 0
+      const f = Math.pow(10, Math.min(10, Math.max(-10, digits)))
+      const res = Math.trunc(n * f) / f
+      return { value: res, numeric: res }
+    }
+    case 'CEILING': {
+      const n = toNumber(getScalarArg(args[0]))
+      const sig = args[1] ? toNumber(getScalarArg(args[1])) : 1
+      if (sig === 0) return { value: 0, numeric: 0 }
+      const res = Math.ceil(n / sig) * sig
+      return { value: res, numeric: res }
+    }
+    case 'FLOOR': {
+      const n = toNumber(getScalarArg(args[0]))
+      const sig = args[1] ? toNumber(getScalarArg(args[1])) : 1
+      if (sig === 0) throw new FormulaEvalError('#DIV/0!')
+      const res = Math.floor(n / sig) * sig
+      return { value: res, numeric: res }
+    }
+    case 'SIGN': {
+      const res = Math.sign(toNumber(getScalarArg(args[0])))
+      return { value: res, numeric: res }
+    }
+    case 'PI': {
+      return { value: Math.PI, numeric: Math.PI }
+    }
+    case 'RAND': {
+      const r = Math.random()
+      return { value: r, numeric: r }
+    }
+    case 'COUNTBLANK': {
+      const vals = collectAllValues(args, cells, visiting, cache)
+      const blanks = vals.filter((v) => String(v.value ?? '').trim() === '').length
+      return { value: blanks, numeric: blanks }
+    }
+    case 'STDEV': {
+      const nums = collectNumericValues(args, cells, visiting, cache)
+      if (nums.length < 2) throw new FormulaEvalError('#DIV/0!')
+      const mean = nums.reduce((a, b) => a + b, 0) / nums.length
+      const variance = nums.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (nums.length - 1)
+      const sd = Math.sqrt(variance)
+      return { value: sd, numeric: sd }
+    }
+    case 'VAR': {
+      const nums = collectNumericValues(args, cells, visiting, cache)
+      if (nums.length < 2) throw new FormulaEvalError('#DIV/0!')
+      const mean = nums.reduce((a, b) => a + b, 0) / nums.length
+      const variance = nums.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (nums.length - 1)
+      return { value: variance, numeric: variance }
+    }
+    case 'LARGE': {
+      if (args.length !== 2) throw new FormulaEvalError('#VALUE!')
+      const nums = collectNumericValues([args[0]], cells, visiting, cache).sort((a, b) => b - a)
+      const k = Math.trunc(toNumber(getScalarArg(args[1])))
+      if (k < 1 || k > nums.length) throw new FormulaEvalError('#NUM!')
+      return { value: nums[k - 1], numeric: nums[k - 1] }
+    }
+    case 'SMALL': {
+      if (args.length !== 2) throw new FormulaEvalError('#VALUE!')
+      const nums = collectNumericValues([args[0]], cells, visiting, cache).sort((a, b) => a - b)
+      const k = Math.trunc(toNumber(getScalarArg(args[1])))
+      if (k < 1 || k > nums.length) throw new FormulaEvalError('#NUM!')
+      return { value: nums[k - 1], numeric: nums[k - 1] }
+    }
+    case 'SUMIF':
+    case 'AVERAGEIF':
+    case 'COUNTIF': {
+      if (args.length < 2) throw new FormulaEvalError('#VALUE!')
+      const condVals = extractFlatValues(args[0], cells, visiting, cache)
+      const matcher = toCriteriaMatcher(getScalarArg(args[1]))
+      if (name === 'COUNTIF') {
+        const hits = condVals.filter(matcher).length
+        return { value: hits, numeric: hits }
+      }
+      const targetVals =
+        args[2] ? extractFlatValues(args[2], cells, visiting, cache) : condVals
+      let total = 0
+      let matchedNums = 0
+      condVals.forEach((ev, idx) => {
+        if (matcher(ev)) {
+          const val = targetVals[idx]
+          if (val && typeof val.numeric === 'number') {
+            total += val.numeric
+            matchedNums++
+          }
+        }
+      })
+      if (name === 'AVERAGEIF') {
+        if (matchedNums === 0) throw new FormulaEvalError('#DIV/0!')
+        const avg = total / matchedNums
+        return { value: avg, numeric: avg }
+      }
+      return { value: total, numeric: total }
+    }
+    case 'VLOOKUP': {
+      if (args.length < 3 || args[1].kind !== 'range') throw new FormulaEvalError('#VALUE!')
+      const lookupVal = getScalarArg(args[0])
+      const tbl = args[1]
+      const colIdx = Math.trunc(toNumber(getScalarArg(args[2])))
+      const approx = args[3] ? toBoolean(getScalarArg(args[3])) : true
+      const width = tbl.endCol - tbl.startCol + 1
+      if (colIdx < 1 || colIdx > width) throw new FormulaEvalError('#REF!')
+
+      let bestRow: number | null = null
+      for (let r = tbl.startRow; r <= tbl.endRow; r++) {
+        const key = makeCellKey(tbl.startCol, r)
+        const cellVal = evaluateCellInternal(key, cells, visiting, cache)
+        if (cellVal.error) continue
+        const cmp = compareValues(cellVal, lookupVal)
+        if (cmp === 0) {
+          bestRow = r
+          break
+        }
+        if (approx && cmp <= 0) {
+          bestRow = r
+        }
+      }
+      if (bestRow === null) throw new FormulaEvalError('#N/A')
+      const outKey = makeCellKey(tbl.startCol + colIdx - 1, bestRow)
+      return evaluateCellInternal(outKey, cells, visiting, cache)
+    }
+    case 'HLOOKUP': {
+      if (args.length < 3 || args[1].kind !== 'range') throw new FormulaEvalError('#VALUE!')
+      const lookupVal = getScalarArg(args[0])
+      const tbl = args[1]
+      const rowIdx = Math.trunc(toNumber(getScalarArg(args[2])))
+      const approx = args[3] ? toBoolean(getScalarArg(args[3])) : true
+      const height = tbl.endRow - tbl.startRow + 1
+      if (rowIdx < 1 || rowIdx > height) throw new FormulaEvalError('#REF!')
+
+      let bestCol: number | null = null
+      for (let c = tbl.startCol; c <= tbl.endCol; c++) {
+        const key = makeCellKey(c, tbl.startRow)
+        const cellVal = evaluateCellInternal(key, cells, visiting, cache)
+        if (cellVal.error) continue
+        const cmp = compareValues(cellVal, lookupVal)
+        if (cmp === 0) {
+          bestCol = c
+          break
+        }
+        if (approx && cmp <= 0) {
+          bestCol = c
+        }
+      }
+      if (bestCol === null) throw new FormulaEvalError('#N/A')
+      const outKey = makeCellKey(bestCol, tbl.startRow + rowIdx - 1)
+      return evaluateCellInternal(outKey, cells, visiting, cache)
+    }
+    case 'INDEX': {
+      if (args.length < 2 || args[0].kind !== 'range') throw new FormulaEvalError('#VALUE!')
+      const rng = args[0]
+      const rowNum = Math.trunc(toNumber(getScalarArg(args[1])))
+      const colNum = args[2] ? Math.trunc(toNumber(getScalarArg(args[2]))) : 1
+      const targetRow = rng.startRow + rowNum - 1
+      const targetCol = rng.startCol + colNum - 1
+      if (
+        targetRow < rng.startRow ||
+        targetRow > rng.endRow ||
+        targetCol < rng.startCol ||
+        targetCol > rng.endCol
+      ) {
+        throw new FormulaEvalError('#REF!')
+      }
+      return evaluateCellInternal(makeCellKey(targetCol, targetRow), cells, visiting, cache)
+    }
+    case 'MATCH': {
+      if (args.length < 2) throw new FormulaEvalError('#VALUE!')
+      const lookupVal = getScalarArg(args[0])
+      const vals = extractFlatValues(args[1], cells, visiting, cache)
+      const matchType = args[2] ? Math.trunc(toNumber(getScalarArg(args[2]))) : 1
+      if (matchType === 0) {
+        const idx = vals.findIndex((v) => compareValues(v, lookupVal) === 0)
+        if (idx === -1) throw new FormulaEvalError('#N/A')
+        return { value: idx + 1, numeric: idx + 1 }
+      }
+      let bestIdx = -1
+      vals.forEach((v, idx) => {
+        const cmp = compareValues(v, lookupVal)
+        if (matchType > 0 && cmp <= 0) bestIdx = idx
+        if (matchType < 0 && cmp >= 0 && bestIdx === -1) bestIdx = idx
+      })
+      if (bestIdx === -1) throw new FormulaEvalError('#N/A')
+      return { value: bestIdx + 1, numeric: bestIdx + 1 }
+    }
+    case 'PMT': {
+      const rate = toNumber(getScalarArg(args[0]))
+      const nper = toNumber(getScalarArg(args[1]))
+      const pv = toNumber(getScalarArg(args[2]))
+      if (nper === 0) throw new FormulaEvalError('#NUM!')
+      const pmt =
+        rate === 0 ? -(pv / nper) : -(pv * rate) / (1 - Math.pow(1 + rate, -nper))
+      return { value: pmt, numeric: pmt }
+    }
+    case 'FV': {
+      const rate = toNumber(getScalarArg(args[0]))
+      const nper = toNumber(getScalarArg(args[1]))
+      const pmt = toNumber(getScalarArg(args[2]))
+      const pv = args[3] ? toNumber(getScalarArg(args[3])) : 0
+      const fv =
+        rate === 0
+          ? -(pv + pmt * nper)
+          : -(pv * Math.pow(1 + rate, nper) + (pmt * (Math.pow(1 + rate, nper) - 1)) / rate)
+      return { value: fv, numeric: fv }
+    }
+    case 'PV': {
+      const rate = toNumber(getScalarArg(args[0]))
+      const nper = toNumber(getScalarArg(args[1]))
+      const pmt = toNumber(getScalarArg(args[2]))
+      const pv =
+        rate === 0 ? -(pmt * nper) : -(pmt * (1 - Math.pow(1 + rate, -nper))) / rate
+      return { value: pv, numeric: pv }
+    }
+    case 'NPV': {
+      const rate = toNumber(getScalarArg(args[0]))
+      const cashflows = collectNumericValues(args.slice(1), cells, visiting, cache)
+      const npv = cashflows.reduce(
+        (acc, cf, idx) => acc + cf / Math.pow(1 + rate, idx + 1),
+        0
+      )
+      return { value: npv, numeric: npv }
+    }
+    case 'TODAY': {
+      return { value: new Date().toISOString().slice(0, 10) }
+    }
+    case 'NOW': {
+      return { value: new Date().toISOString().slice(0, 16).replace('T', ' ') }
+    }
+    case 'YEAR': {
+      const yr = parseFlexDate(getScalarArg(args[0])).getFullYear()
+      return { value: yr, numeric: yr }
+    }
+    case 'MONTH': {
+      const mo = parseFlexDate(getScalarArg(args[0])).getMonth() + 1
+      return { value: mo, numeric: mo }
+    }
+    case 'DAY': {
+      const d = parseFlexDate(getScalarArg(args[0])).getDate()
+      return { value: d, numeric: d }
+    }
+    case 'DATEDIF': {
+      const start = parseFlexDate(getScalarArg(args[0]))
+      const end = parseFlexDate(getScalarArg(args[1]))
+      const unit = String(getScalarArg(args[2]).value ?? 'D').toUpperCase()
+      const diffMs = end.getTime() - start.getTime()
+      if (unit === 'D') {
+        const days = Math.round(diffMs / 86400000)
+        return { value: days, numeric: days }
+      }
+      if (unit === 'M') {
+        const months =
+          (end.getFullYear() - start.getFullYear()) * 12 +
+          (end.getMonth() - start.getMonth())
+        return { value: months, numeric: months }
+      }
+      if (unit === 'Y') {
+        const years = end.getFullYear() - start.getFullYear()
+        return { value: years, numeric: years }
+      }
+      throw new FormulaEvalError('#VALUE!')
+    }
     default:
       throw new FormulaEvalError('#NAME?', `Unknown function ${name}`)
   }
@@ -625,6 +1099,9 @@ class FormulaParser {
         if (fnName === 'IF') {
           return this.parseIfCall()
         }
+        if (fnName === 'IFERROR') {
+          return this.parseIfErrorCall()
+        }
         const args: ArgEntry[] = []
         if (!(this.peek().type === 'paren' && this.peek().value === ')')) {
           while (true) {
@@ -632,7 +1109,7 @@ class FormulaParser {
               const startCell = this.consume().value
               this.consume() // :
               const endCell = this.consume().value
-              args.push({ kind: 'range', keys: expandCellRange(startCell, endCell) })
+              args.push(makeRangeArg(startCell, endCell))
             } else {
               args.push({ kind: 'scalar', val: this.parseComparison() })
             }
@@ -708,6 +1185,38 @@ class FormulaParser {
     this.consume()
     return result
   }
+
+  private parseIfErrorCall(): EvaluatedValue {
+    const startPos = this.pos
+    let primary: EvaluatedValue | null = null
+    let failed = false
+    try {
+      primary = this.parseComparison()
+      if (primary.error) failed = true
+    } catch {
+      failed = true
+      this.pos = startPos
+      this.skipBalancedArg()
+    }
+
+    if (this.peek().type !== 'comma') {
+      throw new FormulaEvalError('#VALUE!')
+    }
+    this.consume()
+
+    let fallback: EvaluatedValue = primary || { value: '' }
+    if (failed) {
+      fallback = this.parseComparison()
+    } else {
+      this.skipBalancedArg()
+    }
+
+    if (this.peek().type !== 'paren' || this.peek().value !== ')') {
+      throw new FormulaEvalError('#ERROR!')
+    }
+    this.consume()
+    return fallback
+  }
 }
 
 function evaluateCellInternal(
@@ -779,48 +1288,130 @@ export function evaluateSheet(cells: Record<string, SheetCell>): Record<string, 
   return results
 }
 
-export function formatEvaluatedValue(ev: EvaluatedValue | undefined, format: CellFormat = 'general'): string {
+export function formatEvaluatedValue(
+  ev: EvaluatedValue | undefined,
+  format: CellFormat = 'general',
+  decimals?: number
+): string {
   if (!ev) return ''
   if (ev.error) return ev.error
   if (ev.value === '') return ''
   if (typeof ev.value === 'boolean') return ev.value ? 'TRUE' : 'FALSE'
+
+  if (format === 'date') {
+    try {
+      const d = parseFlexDate(ev)
+      return d.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
+    } catch {
+      return String(ev.value)
+    }
+  }
 
   const num = typeof ev.numeric === 'number' ? ev.numeric : typeof ev.value === 'number' ? ev.value : null
   if (num === null || !Number.isFinite(num)) {
     return String(ev.value)
   }
 
+  const d =
+    typeof decimals === 'number' ? Math.max(0, Math.min(4, Math.trunc(decimals))) : undefined
+
   switch (format) {
     case 'currency': {
+      const digits = d ?? 2
       const sign = num < 0 ? '-' : ''
       const absStr = Math.abs(num).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
       })
       return `${sign}$${absStr}`
     }
+    case 'accounting': {
+      const digits = d ?? 2
+      const absStr = Math.abs(num).toLocaleString('en-US', {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      })
+      return num < 0 ? `$(${absStr})` : `$ ${absStr}`
+    }
     case 'percent': {
+      const digits = d ?? 1
       const pct = (num * 100).toLocaleString('en-US', {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
       })
       return `${pct}%`
     }
-    case 'number':
+    case 'number': {
+      const digits = d ?? 2
       return num.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
       })
+    }
     case 'integer':
       return Math.round(num).toLocaleString('en-US', {
         maximumFractionDigits: 0,
       })
+    case 'scientific':
+      return num.toExponential(d ?? 2).toUpperCase()
     case 'general':
     default: {
+      if (d !== undefined) {
+        return num.toLocaleString('en-US', {
+          minimumFractionDigits: d,
+          maximumFractionDigits: d,
+        })
+      }
       const rounded = Math.round(num * 1e9) / 1e9
       return String(rounded)
     }
   }
+}
+
+export function shiftFormulaRefs(formula: string, colDelta: number, rowDelta: number): string {
+  if (!formula.trimStart().startsWith('=')) return formula
+  return formula.replace(
+    /(\$?)([A-Za-z]{1,3})(\$?)(\d{1,5})(?!\()/g,
+    (full, colLock: string, colStr: string, rowLock: string, rowStr: string) => {
+      const parsedCol = colLabelToIndex(colStr)
+      const parsedRow = Number.parseInt(rowStr, 10)
+      if (parsedCol < 0 || !Number.isFinite(parsedRow) || parsedRow < 1) return full
+      const nextCol = colLock === '$' ? parsedCol : Math.max(0, parsedCol + colDelta)
+      const nextRow = rowLock === '$' ? parsedRow : Math.max(1, parsedRow + rowDelta)
+      return `${colLock}${colIndexToLabel(nextCol)}${rowLock}${nextRow}`
+    }
+  )
+}
+
+export function matchesConditionalRule(
+  ev: EvaluatedValue | undefined,
+  op: 'gt' | 'lt' | 'eq' | 'contains',
+  target: string
+): boolean {
+  if (!ev || ev.error || ev.value === '') return false
+  if (op === 'contains') {
+    return String(ev.value).toLowerCase().includes(target.trim().toLowerCase())
+  }
+  const evNum =
+    typeof ev.numeric === 'number'
+      ? ev.numeric
+      : typeof ev.value === 'number'
+      ? ev.value
+      : null
+  const targetNum = Number(target.replace(/^\$/, '').replace(/,/g, ''))
+  if (evNum !== null && target.trim() !== '' && Number.isFinite(targetNum)) {
+    if (op === 'gt') return evNum > targetNum
+    if (op === 'lt') return evNum < targetNum
+    return evNum === targetNum
+  }
+  if (op === 'eq') {
+    return String(ev.value).trim().toLowerCase() === target.trim().toLowerCase()
+  }
+  return false
 }
 
 export function parseCsvToGrid(csvText: string): string[][] {

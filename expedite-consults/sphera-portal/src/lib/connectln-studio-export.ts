@@ -1,8 +1,23 @@
 import { colIndexToLabel, parseCellKey } from './connectln-sheets-engine'
 
+export interface DocExportPageSetup {
+  paperSize?: 'letter' | 'a4' | 'legal'
+  orientation?: 'portrait' | 'landscape'
+  margins?: 'normal' | 'narrow' | 'moderate' | 'wide'
+  columns?: 1 | 2 | 3
+  lineSpacing?: string
+  headerText?: string
+  footerText?: string
+  showPageNumbers?: boolean
+  watermark?: string
+  pageBg?: string
+  pageBorder?: 'none' | 'thin' | 'double' | 'accent'
+}
+
 export interface DocExportBlock {
-  type: 'h1' | 'h2' | 'h3' | 'p' | 'li' | 'quote' | 'hr'
+  type: 'h1' | 'h2' | 'h3' | 'p' | 'li' | 'quote' | 'hr' | 'pagebreak' | 'table'
   text: string
+  rows?: string[][]
 }
 
 export interface SheetExportCell {
@@ -37,6 +52,11 @@ export interface SlideExportItem {
   quote?: string
   quoteAuthor?: string
   notes?: string
+  customBgHex?: string
+  hidden?: boolean
+  tableData?: { headers: string[]; rows: string[][] }
+  chartData?: { kind: string; title: string; items: Array<{ label: string; value: number }> }
+  elements?: Array<{ id: string; kind: string; text: string; bgHex?: string; textHex?: string }>
 }
 
 export interface SlideThemePalette {
@@ -221,11 +241,26 @@ function stripTagsToText(fragment: string): string {
     .trim()
 }
 
+function extractTableRowsFromHtml(tableHtml: string): string[][] {
+  const rows: string[][] = []
+  const trMatches = tableHtml.match(/<tr\b[^>]*>[\s\S]*?<\/tr>/gi) || []
+  for (const tr of trMatches) {
+    const cells: string[] = []
+    const cellRegex = /<(th|td)\b[^>]*>([\s\S]*?)<\/\1>/gi
+    let cm: RegExpExecArray | null
+    while ((cm = cellRegex.exec(tr)) !== null) {
+      cells.push(stripTagsToText(cm[2] || ''))
+    }
+    if (cells.length > 0) rows.push(cells)
+  }
+  return rows
+}
+
 export function extractDocBlocksFromHtml(html: string): DocExportBlock[] {
   const safe = sanitizeSafeHtml(html)
   const blocks: DocExportBlock[] = []
   const tokenRegex =
-    /<(h1|h2|h3|blockquote|li|p|tr)\b[^>]*>([\s\S]*?)<\/\1>|<hr\b[^>]*\/?>/gi
+    /<div\b[^>]*data-page-break="true"[^>]*>[\s\S]*?<\/div>|<table\b[^>]*>[\s\S]*?<\/table>|<(h1|h2|h3|blockquote|li|p)\b[^>]*>([\s\S]*?)<\/\1>|<hr\b[^>]*\/?>/gi
   let lastIndex = 0
   let match: RegExpExecArray | null
 
@@ -238,6 +273,22 @@ export function extractDocBlocksFromHtml(html: string): DocExportBlock[] {
     }
     lastIndex = tokenRegex.lastIndex
 
+    const full = match[0]
+    if (/data-page-break="true"/i.test(full)) {
+      blocks.push({ type: 'pagebreak', text: '' })
+      continue
+    }
+    if (/^<table\b/i.test(full)) {
+      const rows = extractTableRowsFromHtml(full)
+      if (rows.length > 0) {
+        blocks.push({
+          type: 'table',
+          text: rows.map((r) => r.join(' | ')).join('\n'),
+          rows,
+        })
+      }
+      continue
+    }
     if (!match[1]) {
       blocks.push({ type: 'hr', text: '' })
       continue
@@ -245,8 +296,7 @@ export function extractDocBlocksFromHtml(html: string): DocExportBlock[] {
 
     const tag = match[1].toLowerCase()
     const inner = match[2] || ''
-    // Skip container tags whose children will match cleanly if it holds inner block tags
-    if (tag === 'p' && /<(h1|h2|h3|li|blockquote)\b/i.test(inner)) {
+    if (tag === 'p' && /<(h1|h2|h3|li|blockquote|table)\b/i.test(inner)) {
       const nested = extractDocBlocksFromHtml(inner)
       blocks.push(...nested)
       continue
@@ -366,14 +416,57 @@ export function buildStandaloneHtmlDocument(title: string, bodyHtml: string): st
 </html>`
 }
 
-export function buildDocxBytes(title: string, blocksOrHtml: DocExportBlock[] | string): Uint8Array {
+export function buildDocxBytes(
+  title: string,
+  blocksOrHtml: DocExportBlock[] | string,
+  pageSetup?: DocExportPageSetup
+): Uint8Array {
   const blocks =
     typeof blocksOrHtml === 'string' ? extractDocBlocksFromHtml(blocksOrHtml) : blocksOrHtml
   const safeTitle = escapeXml(title || 'ConnectLn Document')
   const nowIso = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z')
 
+  const baseDims =
+    pageSetup?.paperSize === 'a4'
+      ? { w: 11906, h: 16838 }
+      : pageSetup?.paperSize === 'legal'
+      ? { w: 12240, h: 20160 }
+      : { w: 12240, h: 15840 }
+  const isLandscape = pageSetup?.orientation === 'landscape'
+  const pgW = isLandscape ? baseDims.h : baseDims.w
+  const pgH = isLandscape ? baseDims.w : baseDims.h
+  const orientAttr = isLandscape ? ' w:orient="landscape"' : ''
+  const marTwips =
+    pageSetup?.margins === 'narrow'
+      ? 720
+      : pageSetup?.margins === 'moderate'
+      ? 1080
+      : pageSetup?.margins === 'wide'
+      ? 2160
+      : 1440
+
   const bodyXml = blocks
     .map((block) => {
+      if (block.type === 'pagebreak') {
+        return `<w:p><w:r><w:br w:type="page"/></w:r></w:p>`
+      }
+      if (block.type === 'table' && block.rows && block.rows.length > 0) {
+        const rowsXml = block.rows
+          .map((row, rIdx) => {
+            const cellsXml = row
+              .map((cellText) => {
+                const shade = rIdx === 0 ? '<w:shd w:val="clear" w:color="auto" w:fill="F1F5F9"/>' : ''
+                const runBold = rIdx === 0 ? '<w:rPr><w:b/></w:rPr>' : ''
+                return `<w:tc><w:tcPr>${shade}</w:tcPr><w:p><w:r>${runBold}<w:t xml:space="preserve">${escapeXml(
+                  cellText
+                )}</w:t></w:r></w:p></w:tc>`
+              })
+              .join('')
+            return `<w:tr>${cellsXml}</w:tr>`
+          })
+          .join('')
+        return `<w:tbl><w:tblPr><w:tblW w:w="9360" w:type="dxa"/><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="CBD5E1"/><w:left w:val="single" w:sz="4" w:space="0" w:color="CBD5E1"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="CBD5E1"/><w:right w:val="single" w:sz="4" w:space="0" w:color="CBD5E1"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="CBD5E1"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="CBD5E1"/></w:tblBorders></w:tblPr>${rowsXml}</w:tbl><w:p/>`
+      }
       if (block.type === 'hr') {
         return `<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="4" w:color="D1D5DB"/></w:pBdr></w:pPr></w:p>`
       }
@@ -448,8 +541,8 @@ export function buildDocxBytes(title: string, blocksOrHtml: DocExportBlock[] | s
   <w:body>
     ${bodyXml || '<w:p><w:r><w:t></w:t></w:r></w:p>'}
     <w:sectPr>
-      <w:pgSz w:w="12240" w:h="15840"/>
-      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/>
+      <w:pgSz w:w="${pgW}" w:h="${pgH}"${orientAttr}/>
+      <w:pgMar w:top="${marTwips}" w:right="${marTwips}" w:bottom="${marTwips}" w:left="${marTwips}"/>
     </w:sectPr>
   </w:body>
 </w:document>`
@@ -719,14 +812,18 @@ function buildPptTextShape(
 export function buildPptxBytes(
   deckTitle: string,
   slides: SlideExportItem[],
-  theme: SlideThemePalette
+  theme: SlideThemePalette,
+  aspectRatio: '16:9' | '4:3' = '16:9'
 ): Uint8Array {
+  const visibleSlides = slides.filter((s) => !s.hidden)
   const safeSlides =
-    slides.length > 0
-      ? slides
+    visibleSlides.length > 0
+      ? visibleSlides
       : [{ title: deckTitle || 'ConnectLn Slides', subtitle: 'Built with ConnectLn 360 Studio', layout: 'cover' }]
   const safeTitle = escapeXml(deckTitle || 'ConnectLn Presentation')
   const nowIso = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z')
+  const sldCx = aspectRatio === '4:3' ? 9144000 : 12192000
+  const sldCy = 6858000
 
   const bgHex = normalizeHex6(theme.bgHex, 'FFFFFF')
   const primaryHex = normalizeHex6(theme.primaryHex, '0067B8')
@@ -751,16 +848,17 @@ export function buildPptxBytes(
       `<Override PartName="/ppt/slides/slide${slideNum}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`
     )
 
+    const slideBgHex = slide.customBgHex ? normalizeHex6(slide.customBgHex, bgHex) : bgHex
     const shapes: string[] = []
     // Title shape
     shapes.push(
-      buildPptTextShape(2, 'Title', 762000, 520000, 10668000, 1100000, [
+      buildPptTextShape(2, 'Title', 762000, 520000, Math.min(10668000, sldCx - 1524000), 1100000, [
         {
           text: slide.title || `Slide ${slideNum}`,
-          sizePt: slide.layout === 'cover' ? 36 : 28,
+          sizePt: slide.layout === 'cover' || slide.layout === 'section' ? 36 : 28,
           bold: true,
-          colorHex: slide.layout === 'cover' ? textHex : primaryHex,
-          align: slide.layout === 'cover' ? 'ctr' : 'l',
+          colorHex: slide.layout === 'cover' || slide.layout === 'section' ? textHex : primaryHex,
+          align: slide.layout === 'cover' || slide.layout === 'section' ? 'ctr' : 'l',
         },
         ...(slide.subtitle
           ? [
@@ -768,7 +866,7 @@ export function buildPptxBytes(
                 text: slide.subtitle,
                 sizePt: 16,
                 colorHex: mutedHex,
-                align: (slide.layout === 'cover' ? 'ctr' : 'l') as 'l' | 'ctr',
+                align: (slide.layout === 'cover' || slide.layout === 'section' ? 'ctr' : 'l') as 'l' | 'ctr',
               },
             ]
           : []),
@@ -809,6 +907,18 @@ export function buildPptxBytes(
             : []),
         ])
       )
+    } else if (slide.layout === 'table' && slide.tableData) {
+      const tableLines = [
+        { text: slide.tableData.headers.join('  |  '), sizePt: 16, bold: true, colorHex: accentHex },
+        ...slide.tableData.rows.map((r) => ({ text: r.join('  |  '), sizePt: 14, colorHex: textHex })),
+      ]
+      shapes.push(buildPptTextShape(3, 'TableBody', 762000, 1950000, 10668000, 4200000, tableLines))
+    } else if (slide.layout === 'chart' && slide.chartData) {
+      const chartLines = [
+        { text: `${slide.chartData.title} (${slide.chartData.kind.toUpperCase()} Chart)`, sizePt: 18, bold: true, colorHex: accentHex },
+        ...slide.chartData.items.map((item) => ({ text: `• ${item.label}: ${item.value}`, sizePt: 16, colorHex: textHex })),
+      ]
+      shapes.push(buildPptTextShape(3, 'ChartBody', 762000, 1950000, 10668000, 4200000, chartLines))
     } else {
       const bullets = (slide.bullets || []).map((b) => ({
         text: `• ${b}`,
@@ -820,10 +930,20 @@ export function buildPptxBytes(
       }
     }
 
+    if (slide.elements && slide.elements.length > 0) {
+      slide.elements.forEach((el, eIdx) => {
+        shapes.push(
+          buildPptTextShape(10 + eIdx, `Element${eIdx + 1}`, 762000, 5600000 + eIdx * 360000, 8000000, 340000, [
+            { text: el.text, sizePt: 13, bold: true, colorHex: accentHex },
+          ])
+        )
+      })
+    }
+
     const slideXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
   <p:cSld>
-    <p:bg><p:bgPr><a:solidFill><a:srgbClr val="${bgHex}"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>
+    <p:bg><p:bgPr><a:solidFill><a:srgbClr val="${slideBgHex}"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>
     <p:spTree>
       <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
       <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
@@ -876,7 +996,7 @@ export function buildPptxBytes(
   <p:sldIdLst>
     ${sldIdEntries.join('\n    ')}
   </p:sldIdLst>
-  <p:sldSz cx="12192000" cy="6858000"/>
+  <p:sldSz cx="${sldCx}" cy="${sldCy}"/>
   <p:notesSz cx="6858000" cy="9144000"/>
 </p:presentation>`
 
@@ -1092,4 +1212,509 @@ export function downloadStudioFile(
   link.click()
   document.body.removeChild(link)
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+export function printHtmlViaHiddenIframe(html: string): boolean {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return false
+  try {
+    const iframe = document.createElement('iframe')
+    iframe.style.position = 'fixed'
+    iframe.style.right = '0'
+    iframe.style.bottom = '0'
+    iframe.style.width = '0'
+    iframe.style.height = '0'
+    iframe.style.border = '0'
+    iframe.style.opacity = '0'
+    iframe.setAttribute('aria-hidden', 'true')
+    document.body.appendChild(iframe)
+
+    const win = iframe.contentWindow
+    const doc = iframe.contentDocument || win?.document
+    if (!doc || !win) {
+      document.body.removeChild(iframe)
+      return false
+    }
+    doc.open()
+    doc.write(html)
+    doc.close()
+
+    const cleanup = () => {
+      setTimeout(() => {
+        if (iframe.parentNode) iframe.parentNode.removeChild(iframe)
+      }, 1000)
+    }
+
+    setTimeout(() => {
+      try {
+        win.focus()
+        win.print()
+      } finally {
+        cleanup()
+      }
+    }, 250)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export interface PrintableDocumentOptions {
+  title: string
+  bodyHtml: string
+  pageSetup?: DocExportPageSetup
+  grayscale?: boolean
+  includeHeaderFooter?: boolean
+  includeWatermark?: boolean
+  includeBackground?: boolean
+}
+
+export function buildPrintableDocumentHtml(opts: PrintableDocumentOptions): string {
+  const setup = opts.pageSetup || {}
+  const paperLabel =
+    setup.paperSize === 'a4' ? 'A4' : setup.paperSize === 'legal' ? 'legal' : 'letter'
+  const orientation = setup.orientation === 'landscape' ? 'landscape' : 'portrait'
+  const marginCss =
+    setup.margins === 'narrow'
+      ? '0.5in'
+      : setup.margins === 'moderate'
+      ? '0.75in'
+      : setup.margins === 'wide'
+      ? '1.5in'
+      : '1in'
+  const cols = setup.columns === 2 || setup.columns === 3 ? setup.columns : 1
+  const lineSpacing = setup.lineSpacing || '1.5'
+  const safeTitle = escapeHtml(opts.title || 'ConnectLn Document')
+  const safeBody = sanitizeSafeHtml(opts.bodyHtml || '<p></p>')
+  const includeBg = opts.includeBackground !== false
+  const bg = includeBg && setup.pageBg ? escapeHtml(setup.pageBg) : '#FFFFFF'
+  const borderCss =
+    includeBg && setup.pageBorder === 'thin'
+      ? 'border: 1px solid #94A3B8; padding: 24px;'
+      : includeBg && setup.pageBorder === 'double'
+      ? 'border: 4px double #0B1F3A; padding: 24px;'
+      : includeBg && setup.pageBorder === 'accent'
+      ? 'border-top: 6px solid #0B5CAD; padding-top: 20px;'
+      : ''
+  const watermarkText =
+    opts.includeWatermark !== false && setup.watermark ? escapeHtml(setup.watermark) : ''
+  const showHF = opts.includeHeaderFooter !== false
+  const headerText = showHF ? escapeHtml(setup.headerText || opts.title || '') : ''
+  const footerText = showHF
+    ? escapeHtml(setup.footerText || 'ConnectLn Docs · ConnectLn 360 Studio')
+    : ''
+  const filterCss = opts.grayscale ? 'filter: grayscale(100%);' : ''
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>${safeTitle} — Print Preview</title>
+  <style>
+    @page {
+      size: ${paperLabel} ${orientation};
+      margin: ${marginCss};
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0b1f3a;
+      ${filterCss}
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .sheet {
+      position: relative;
+      max-width: ${orientation === 'landscape' ? '1040px' : '816px'};
+      min-height: 920px;
+      margin: 0 auto;
+      background: ${bg};
+      padding: 40px 48px;
+      box-shadow: 0 12px 36px rgba(15, 23, 42, 0.14);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .watermark {
+      position: fixed;
+      top: 46%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-32deg);
+      font-size: 68px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      color: rgba(100, 116, 139, 0.14);
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 0;
+    }
+    .running-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+    }
+    .doc-body {
+      position: relative;
+      z-index: 1;
+      line-height: ${lineSpacing};
+      ${cols > 1 ? `column-count: ${cols}; column-gap: 28px;` : ''}
+      ${borderCss}
+    }
+    .doc-body h1 { font-size: 24px; margin: 0 0 10px 0; color: #0b1f3a; }
+    .doc-body h2 { font-size: 18px; color: #0b5cad; margin: 18px 0 8px 0; }
+    .doc-body h3 { font-size: 15px; color: #0b1f3a; margin: 14px 0 6px 0; }
+    .doc-body p { margin: 0 0 10px 0; }
+    .doc-body table { width: 100%; border-collapse: collapse; margin: 14px 0; break-inside: avoid; }
+    .doc-body th, .doc-body td { border: 1px solid #cbd5e1; padding: 7px 10px; text-align: left; font-size: 12.5px; }
+    .doc-body th { background: #f1f5f9; font-weight: 700; }
+    .doc-body blockquote { border-left: 4px solid #0b5cad; padding: 8px 14px; background: #f0f6ff; margin: 12px 0; }
+    .cln-page-break {
+      page-break-after: always !important;
+      break-after: page !important;
+      border: none !important;
+      height: 0 !important;
+      margin: 0 !important;
+    }
+    .cln-page-break span { display: none !important; }
+    .running-footer {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #64748b;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
+      margin-top: 28px;
+    }
+    @media print {
+      body { background: #ffffff !important; padding: 0 !important; }
+      .sheet { box-shadow: none !important; margin: 0 !important; max-width: none !important; padding: 0 !important; min-height: auto !important; border-radius: 0 !important; }
+    }
+  </style>
+</head>
+<body>
+  ${watermarkText ? `<div class="watermark">${watermarkText}</div>` : ''}
+  <div class="sheet">
+    ${headerText ? `<div class="running-header"><span>${headerText}</span><span>ConnectLn Docs</span></div>` : ''}
+    <div class="doc-body">${safeBody}</div>
+    ${
+      showHF
+        ? `<div class="running-footer"><span>${footerText}</span><span>${
+            setup.showPageNumbers !== false ? new Date().toLocaleDateString() : ''
+          }</span></div>`
+        : ''
+    }
+  </div>
+</body>
+</html>`
+}
+
+export interface PrintableSheetTabInput {
+  name: string
+  headers: string[]
+  rows: Array<{
+    rowNumber: number
+    cells: Array<{ display: string; align?: string; bold?: boolean; bg?: string; color?: string }>
+  }>
+  chartsSvgHtml?: string
+}
+
+export interface PrintableSheetOptions {
+  workbookTitle: string
+  tabs: PrintableSheetTabInput[]
+  paperSize?: 'letter' | 'a4' | 'legal'
+  orientation?: 'portrait' | 'landscape'
+  margins?: 'normal' | 'narrow' | 'wide'
+  showGridlines?: boolean
+  showRowColHeaders?: boolean
+  fitAllColumns?: boolean
+  repeatHeaderRow?: boolean
+  grayscale?: boolean
+}
+
+export function buildPrintableSheetHtml(opts: PrintableSheetOptions): string {
+  const paperLabel =
+    opts.paperSize === 'a4' ? 'A4' : opts.paperSize === 'legal' ? 'legal' : 'letter'
+  const orientation = opts.orientation === 'portrait' ? 'portrait' : 'landscape'
+  const marginCss =
+    opts.margins === 'narrow' ? '0.35in' : opts.margins === 'wide' ? '0.85in' : '0.5in'
+  const gridColor = opts.showGridlines !== false ? '#cbd5e1' : 'transparent'
+  const filterCss = opts.grayscale ? 'filter: grayscale(100%);' : ''
+  const fontScale = opts.fitAllColumns ? '10.5px' : '12px'
+
+  const sectionsHtml = opts.tabs
+    .map((tab, tIdx) => {
+      const thHtml = opts.showRowColHeaders
+        ? `<tr><th class="rc-head">#</th>${tab.headers
+            .map((h) => `<th class="rc-head">${escapeHtml(h)}</th>`)
+            .join('')}</tr>`
+        : ''
+
+      const firstDataRow = opts.repeatHeaderRow && tab.rows[0] ? tab.rows[0] : null
+      const bodyStartIdx = firstDataRow ? 1 : 0
+      const repeatHeadHtml = firstDataRow
+        ? `<tr>${opts.showRowColHeaders ? `<th class="rc-head">${firstDataRow.rowNumber}</th>` : ''}${firstDataRow.cells
+            .map(
+              (c) =>
+                `<th style="text-align:${escapeHtml(c.align || 'left')};background:${escapeHtml(
+                  c.bg || '#f1f5f9'
+                )};color:${escapeHtml(c.color || '#0b1f3a')};">${escapeHtml(c.display)}</th>`
+            )
+            .join('')}</tr>`
+        : ''
+
+      const rowsHtml = tab.rows
+        .slice(bodyStartIdx)
+        .map(
+          (r) =>
+            `<tr>${
+              opts.showRowColHeaders ? `<td class="rc-head">${r.rowNumber}</td>` : ''
+            }${r.cells
+              .map(
+                (c) =>
+                  `<td style="text-align:${escapeHtml(c.align || 'left')};font-weight:${
+                    c.bold ? '700' : '400'
+                  };${c.bg ? `background:${escapeHtml(c.bg)};` : ''}${
+                    c.color ? `color:${escapeHtml(c.color)};` : ''
+                  }">${escapeHtml(c.display)}</td>`
+              )
+              .join('')}</tr>`
+        )
+        .join('')
+
+      return `<section class="sheet-section ${tIdx > 0 ? 'page-break-before' : ''}">
+        <div class="sheet-meta">
+          <strong>${escapeHtml(opts.workbookTitle)}</strong>
+          <span>Sheet: ${escapeHtml(tab.name)}</span>
+        </div>
+        <table>
+          ${thHtml || repeatHeadHtml ? `<thead>${thHtml}${repeatHeadHtml}</thead>` : ''}
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        ${tab.chartsSvgHtml || ''}
+      </section>`
+    })
+    .join('')
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(opts.workbookTitle)} — Print Preview</title>
+  <style>
+    @page { size: ${paperLabel} ${orientation}; margin: ${marginCss}; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0b1f3a;
+      ${filterCss}
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .sheet-section {
+      background: #ffffff;
+      padding: 20px 24px;
+      margin: 0 auto 20px auto;
+      max-width: ${orientation === 'landscape' ? '1060px' : '820px'};
+      border-radius: 6px;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.12);
+    }
+    .page-break-before { page-break-before: always; break-before: page; }
+    .sheet-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #107C41;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: ${fontScale}; ${
+    opts.fitAllColumns ? 'table-layout: fixed;' : ''
+  } }
+    th, td {
+      border: 1px solid ${gridColor};
+      padding: 5px 7px;
+      word-wrap: break-word;
+    }
+    .rc-head {
+      background: #f8fafc !important;
+      color: #64748b !important;
+      font-weight: 700;
+      text-align: center !important;
+      width: 34px;
+    }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .sheet-section { box-shadow: none; margin: 0; padding: 0; max-width: none; }
+    }
+  </style>
+</head>
+<body>${sectionsHtml}</body>
+</html>`
+}
+
+export type SlidesPrintLayout = 'full' | 'handouts_2' | 'handouts_4' | 'notes' | 'outline'
+export type SlidesPrintColorMode = 'color' | 'grayscale' | 'pure_bw'
+
+export interface PrintableSlidesOptions {
+  deckTitle: string
+  slides: SlideExportItem[]
+  theme: SlideThemePalette
+  layout?: SlidesPrintLayout
+  colorMode?: SlidesPrintColorMode
+  frameSlides?: boolean
+  showSlideNumbers?: boolean
+}
+
+export function buildPrintableSlidesHtml(opts: PrintableSlidesOptions): string {
+  const layout = opts.layout || 'full'
+  const colorMode = opts.colorMode || 'color'
+  const showNumbers = opts.showSlideNumbers !== false
+  const frameCss = opts.frameSlides !== false ? 'border: 1.5px solid #94a3b8;' : ''
+  const isLandscape = layout === 'full'
+  const filterCss = colorMode === 'grayscale' ? 'filter: grayscale(100%);' : ''
+  const inkSaver = colorMode === 'pure_bw'
+
+  const renderSlideCard = (s: SlideExportItem, idx: number) => {
+    const bg = inkSaver ? '#FFFFFF' : s.customBgHex || opts.theme.bgHex
+    const text = inkSaver ? '#0F172A' : opts.theme.textHex
+    const primary = inkSaver ? '#0F172A' : opts.theme.primaryHex
+    const muted = inkSaver ? '#475569' : opts.theme.mutedHex
+    const accent = inkSaver ? '#0F172A' : opts.theme.accentHex
+
+    let body = ''
+    if (s.layout === 'two_column') {
+      body = `<div class="cols">
+        <div><h4 style="color:${accent};margin:0 0 6px 0;">${escapeHtml(s.leftTitle || 'Left Track')}</h4><ul>${(s.leftBullets || [])
+          .map((b) => `<li>${escapeHtml(b)}</li>`)
+          .join('')}</ul></div>
+        <div><h4 style="color:${accent};margin:0 0 6px 0;">${escapeHtml(s.rightTitle || 'Right Track')}</h4><ul>${(s.rightBullets || [])
+          .map((b) => `<li>${escapeHtml(b)}</li>`)
+          .join('')}</ul></div>
+      </div>`
+    } else if (s.layout === 'metrics') {
+      body = `<div class="metrics">${(s.metrics || [])
+        .map(
+          (m) =>
+            `<div class="mcard"><div class="mval" style="color:${accent};">${escapeHtml(
+              m.value
+            )}</div><div>${escapeHtml(m.label)}</div></div>`
+        )
+        .join('')}</div>`
+    } else if (s.layout === 'quote') {
+      body = `<blockquote style="font-style:italic;font-size:1.15em;margin:12px 0;">“${escapeHtml(
+        s.quote || s.subtitle || ''
+      )}”</blockquote>${s.quoteAuthor ? `<p><strong>— ${escapeHtml(s.quoteAuthor)}</strong></p>` : ''}`
+    } else if (s.layout === 'table' && s.tableData) {
+      body = `<table class="stbl"><thead><tr>${s.tableData.headers
+        .map((h) => `<th>${escapeHtml(h)}</th>`)
+        .join('')}</tr></thead><tbody>${s.tableData.rows
+        .map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`)
+        .join('')}</tbody></table>`
+    } else {
+      body = `<ul>${(s.bullets || []).map((b) => `<li>${escapeHtml(b)}</li>`).join('')}</ul>`
+    }
+
+    return `<div class="slide-box" style="background:${escapeHtml(bg)};color:${escapeHtml(text)};${frameCss}">
+      <h2 style="color:${escapeHtml(primary)};margin:0 0 4px 0;">${escapeHtml(s.title)}</h2>
+      ${s.subtitle ? `<p style="color:${escapeHtml(muted)};margin:0 0 10px 0;">${escapeHtml(s.subtitle)}</p>` : ''}
+      <div class="slide-body">${body}</div>
+      ${
+        showNumbers
+          ? `<div class="slide-foot"><span>${escapeHtml(opts.deckTitle)}</span><span>${idx + 1} / ${
+              opts.slides.length
+            }</span></div>`
+          : ''
+      }
+    </div>`
+  }
+
+  let contentHtml = ''
+  if (layout === 'outline') {
+    contentHtml = `<div class="outline-wrap"><h1>${escapeHtml(opts.deckTitle)} — Presentation Outline</h1>${opts.slides
+      .map(
+        (s, i) => `<div class="outline-item"><h3>Slide ${i + 1}: ${escapeHtml(s.title)}</h3>
+          ${s.subtitle ? `<p>${escapeHtml(s.subtitle)}</p>` : ''}
+          <ul>${(s.bullets || s.leftBullets || []).map((b) => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+          ${s.notes ? `<p class="notes">Notes: ${escapeHtml(s.notes)}</p>` : ''}
+        </div>`
+      )
+      .join('')}</div>`
+  } else if (layout === 'notes') {
+    contentHtml = opts.slides
+      .map(
+        (s, i) => `<div class="notes-page">${renderSlideCard(s, i)}<div class="notes-card"><h4>Speaker Notes (Slide ${
+          i + 1
+        })</h4><p>${escapeHtml(s.notes || 'No presenter notes added for this slide.')}</p></div></div>`
+      )
+      .join('')
+  } else if (layout === 'handouts_2') {
+    contentHtml = `<div class="grid-2">${opts.slides.map((s, i) => renderSlideCard(s, i)).join('')}</div>`
+  } else if (layout === 'handouts_4') {
+    contentHtml = `<div class="grid-4">${opts.slides.map((s, i) => renderSlideCard(s, i)).join('')}</div>`
+  } else {
+    contentHtml = opts.slides
+      .map((s, i) => `<div class="full-page">${renderSlideCard(s, i)}</div>`)
+      .join('')
+  }
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(opts.deckTitle)} — Print Slides</title>
+  <style>
+    @page { size: letter ${isLandscape ? 'landscape' : 'portrait'}; margin: 0.45in; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      ${filterCss}
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .full-page { page-break-after: always; break-after: page; margin: 0 auto 20px auto; max-width: 960px; }
+    .full-page:last-child { page-break-after: auto; }
+    .slide-box {
+      aspect-ratio: 16 / 9;
+      border-radius: 10px;
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      font-size: ${layout === 'handouts_4' ? '10.5px' : layout === 'handouts_2' ? '12.5px' : '15px'};
+    }
+    .slide-body { flex: 1; overflow: hidden; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .mcard { border: 1px solid rgba(148,163,184,0.3); border-radius: 8px; padding: 10px; text-align: center; }
+    .mval { font-size: 1.5em; font-weight: 800; }
+    .stbl { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+    .stbl th, .stbl td { border: 1px solid rgba(148,163,184,0.35); padding: 4px 8px; }
+    .slide-foot { display: flex; justify-content: space-between; font-size: 0.72em; opacity: 0.7; padding-top: 8px; border-top: 1px solid rgba(148,163,184,0.25); }
+    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 18px; max-width: 780px; margin: 0 auto; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 820px; margin: 0 auto; }
+    .notes-page { max-width: 760px; margin: 0 auto 22px auto; page-break-after: always; break-after: page; }
+    .notes-card { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 18px; margin-top: 10px; font-size: 12.5px; color: #0f172a; }
+    .notes-card h4 { margin: 0 0 6px 0; font-size: 12px; text-transform: uppercase; color: #64748b; }
+    .outline-wrap { background: #ffffff; padding: 28px 34px; border-radius: 8px; max-width: 780px; margin: 0 auto; color: #0f172a; }
+    .outline-item { border-bottom: 1px solid #e2e8f0; padding: 10px 0; }
+    .outline-item .notes { color: #64748b; font-style: italic; font-size: 12px; }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+    }
+  </style>
+</head>
+<body>${contentHtml}</body>
+</html>`
 }

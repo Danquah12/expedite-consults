@@ -1,6 +1,55 @@
 import type { SheetCell } from './connectln-sheets-engine'
 import type { SlideExportMetric, SlideThemePalette } from './connectln-studio-export'
 
+export type DocPaperSize = 'letter' | 'a4' | 'legal'
+export type DocOrientation = 'portrait' | 'landscape'
+export type DocMarginsPreset = 'normal' | 'narrow' | 'moderate' | 'wide'
+export type DocPageBorder = 'none' | 'thin' | 'double' | 'accent'
+
+export interface DocPageSetup {
+  paperSize: DocPaperSize
+  orientation: DocOrientation
+  margins: DocMarginsPreset
+  columns: 1 | 2 | 3
+  lineSpacing: '1.0' | '1.15' | '1.5' | '2.0'
+  headerText: string
+  footerText: string
+  showPageNumbers: boolean
+  watermark: string
+  pageBg: string
+  pageBorder: DocPageBorder
+}
+
+export const DEFAULT_DOC_PAGE_SETUP: DocPageSetup = {
+  paperSize: 'letter',
+  orientation: 'portrait',
+  margins: 'normal',
+  columns: 1,
+  lineSpacing: '1.5',
+  headerText: '',
+  footerText: '',
+  showPageNumbers: true,
+  watermark: '',
+  pageBg: '#FFFFFF',
+  pageBorder: 'none',
+}
+
+export interface DocCommentItem {
+  id: string
+  author: string
+  quote?: string
+  text: string
+  createdAt: string
+  resolved?: boolean
+}
+
+export interface DocSnapshotItem {
+  id: string
+  label: string
+  createdAt: string
+  contentHtml: string
+}
+
 export interface StudioDocRecord {
   id: string
   title: string
@@ -10,6 +59,36 @@ export interface StudioDocRecord {
   createdAt: string
   authorName: string
   starred?: boolean
+  pageSetup?: DocPageSetup
+  comments?: DocCommentItem[]
+  snapshots?: DocSnapshotItem[]
+}
+
+export interface SheetChartConfig {
+  id: string
+  kind: 'bar' | 'line' | 'pie' | 'area'
+  title: string
+  labelCol: number
+  valueCol: number
+  startRow: number
+  endRow: number
+}
+
+export interface SheetConditionalRule {
+  id: string
+  col: number
+  op: 'gt' | 'lt' | 'eq' | 'contains'
+  target: string
+  bg: string
+  color: string
+}
+
+export interface SheetValidationRule {
+  col: number
+  kind: 'list' | 'number_range'
+  options?: string[]
+  min?: number
+  max?: number
 }
 
 export interface StudioSheetTab {
@@ -18,6 +97,13 @@ export interface StudioSheetTab {
   rowCount: number
   colCount: number
   cells: Record<string, SheetCell>
+  charts?: SheetChartConfig[]
+  conditionalRules?: SheetConditionalRule[]
+  validations?: SheetValidationRule[]
+  freezeRow1?: boolean
+  freezeColA?: boolean
+  colWidths?: Record<number, number>
+  comments?: Record<string, string>
 }
 
 export interface StudioWorkbookRecord {
@@ -39,6 +125,38 @@ export type SlideLayoutType =
   | 'metrics'
   | 'quote'
   | 'visual_split'
+  | 'section'
+  | 'table'
+  | 'chart'
+  | 'blank'
+
+export type SlideTransitionType = 'none' | 'fade' | 'slide' | 'zoom' | 'flip'
+
+export interface SlideExtraElement {
+  id: string
+  kind: 'textbox' | 'callout' | 'badge' | 'shape_rect' | 'arrow'
+  text: string
+  bgHex: string
+  textHex: string
+}
+
+export interface SlideChartData {
+  kind: 'bar' | 'line' | 'pie'
+  title: string
+  items: Array<{ label: string; value: number }>
+}
+
+export interface SlideTableData {
+  headers: string[]
+  rows: string[][]
+}
+
+export interface SlideCommentItem {
+  id: string
+  author: string
+  text: string
+  createdAt: string
+}
 
 export interface StudioSlideItem {
   id: string
@@ -55,6 +173,16 @@ export interface StudioSlideItem {
   quoteAuthor?: string
   imageUrl?: string
   notes?: string
+  transition?: SlideTransitionType
+  transitionDurationMs?: number
+  animateBullets?: boolean
+  customBgHex?: string
+  hidden?: boolean
+  titleAlign?: 'left' | 'center' | 'right'
+  tableData?: SlideTableData
+  chartData?: SlideChartData
+  elements?: SlideExtraElement[]
+  comments?: SlideCommentItem[]
 }
 
 export interface StudioDeckRecord {
@@ -67,6 +195,10 @@ export interface StudioDeckRecord {
   createdAt: string
   authorName: string
   starred?: boolean
+  aspectRatio?: '16:9' | '4:3'
+  footerText?: string
+  showSlideNumbers?: boolean
+  showDateFooter?: boolean
 }
 
 export interface DocTemplateItem {
@@ -144,6 +276,36 @@ export const STUDIO_SLIDE_THEMES: SlideThemePalette[] = [
     accentHex: '#F59E0B',
     textHex: '#F3F4F6',
     mutedHex: '#9CA3AF',
+  },
+  {
+    id: 'terracotta-sunset',
+    name: 'Terracotta Sunset',
+    bgHex: '#FFF7F3',
+    surfaceHex: '#FFFFFF',
+    primaryHex: '#9A3412',
+    accentHex: '#C84B28',
+    textHex: '#1C1917',
+    mutedHex: '#57534E',
+  },
+  {
+    id: 'arctic-minimal',
+    name: 'Arctic Minimal',
+    bgHex: '#F8FAFC',
+    surfaceHex: '#FFFFFF',
+    primaryHex: '#0F172A',
+    accentHex: '#0284C7',
+    textHex: '#0F172A',
+    mutedHex: '#64748B',
+  },
+  {
+    id: 'royal-slate',
+    name: 'Royal Slate',
+    bgHex: '#1E1B4B',
+    surfaceHex: '#312E81',
+    primaryHex: '#FFFFFF',
+    accentHex: '#A5B4FC',
+    textHex: '#EEF2FF',
+    mutedHex: '#C7D2FE',
   },
 ]
 
