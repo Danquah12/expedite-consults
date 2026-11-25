@@ -19,7 +19,6 @@
     "@effect/platform": "^0.97.1",
     "@effect/schema": "^0.75.5",
     "@hookform/resolvers": "^5.9.1",
-    "@huggingface/transformers": "^4.3.2",
     "@mediapipe/selfie_segmentation": "^0.1.1675465747",
     "@mux/mux-node": "^15.1.0",
     "@mux/mux-player-react": "^3.13.2",
