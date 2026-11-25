@@ -8,6 +8,7 @@ import { translateLinesLive, translateTextLive } from "@/lib/live-page-translato
 import { getVerbatimSpokenSegmentsForVideo } from "@/lib/video-verbatim-transcripts"
 import { getLanguageVoiceProfile } from "@/lib/noctis-voice-profiles"
 import {
+  cancelPendingNativeMmsSpeech,
   prefetchNativeMmsSpeech,
   synthesizeNativeMmsSpeech,
 } from "@/lib/noctis-native-mms-client"
@@ -1517,6 +1518,7 @@ export function NoctisVideoInterpreterPopup({
       (forceStopShared || (window as any).__activeNoctisInterpreterId === instanceIdRef.current)
 
     if (isCurrentActiveOwner) {
+      cancelPendingNativeMmsSpeech()
       const win = window as any
       win.__noctisAudioPlaySeq = (win.__noctisAudioPlaySeq || 0) + 1
       const sharedAudio = getSharedNoctisAudio()
@@ -1644,7 +1646,7 @@ export function NoctisVideoInterpreterPopup({
       return
     }
 
-    const playAudioUrlOnSharedElement = (audioUrl: string) => {
+    const playAudioUrlOnSharedElement = (audioUrl: string, onPlaybackStarted?: () => void) => {
       const audio = getSharedNoctisAudio()
       if (!audio) return
       if (!isSpeakingRef.current || win.__activeNoctisInterpreterId !== instanceIdRef.current || win.__noctisAudioPlaySeq !== mySeq) {
@@ -1677,6 +1679,7 @@ export function NoctisVideoInterpreterPopup({
             onMuteOriginalVideoRef.current(true)
           }
           setPageVideoElementsDucking(true)
+          onPlaybackStarted?.()
         }
       }
 
@@ -1760,12 +1763,11 @@ export function NoctisVideoInterpreterPopup({
           }
 
           setVoiceStatusNote(profile.nativeSpeakerLabel)
-          playAudioUrlOnSharedElement(blobUrl)
-
-          // Pre-synthesize the NEXT sentence in target language for gapless playback
-          if (nextSentenceText && scriptAlreadyTranslated) {
-            prefetchNativeMmsSpeech(nextSentenceText, targetLang)
-          }
+          playAudioUrlOnSharedElement(blobUrl, () => {
+            if (nextSentenceText && scriptAlreadyTranslated) {
+              prefetchNativeMmsSpeech(nextSentenceText, targetLang)
+            }
+          })
         } catch {
           if (
             isSpeakingRef.current &&
