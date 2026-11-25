@@ -1,12 +1,16 @@
 "use client"
 
 import React, { useEffect, useMemo, useRef, useState } from "react"
+import Link from "next/link"
 import {
+  AlertTriangle,
   AlignCenter,
   AlignLeft,
   AlignRight,
+  AreaChart,
   ArrowDownAZ,
   ArrowUpZA,
+  BarChart2,
   BarChart3,
   Bold,
   Calculator,
@@ -21,13 +25,17 @@ import {
   FilePlus2,
   Filter,
   FunctionSquare,
+  GitBranch,
   Grid,
+  HelpCircle,
   Italic,
   LayoutGrid,
   LayoutTemplate,
   LineChart,
   Lock,
   MessageSquare,
+  Paintbrush,
+  Palette,
   PanelLeftClose,
   PanelLeftOpen,
   Percent,
@@ -42,14 +50,19 @@ import {
   Search,
   Share2,
   ShieldAlert,
+  ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   Star,
   Strikethrough,
   Table2,
   Trash2,
+  TrendingUp,
   Underline,
   Undo2,
+  Unlock,
   Upload,
+  Wand2,
   WrapText,
   X,
 } from "lucide-react"
@@ -69,6 +82,24 @@ import {
   type SheetCell,
   type SheetCellStyle,
 } from "@/lib/connectln-sheets-engine"
+import {
+  applyFlashFillColumn,
+  applyTableThemeToCells,
+  buildPivotSummarySheet,
+  buildSubtotalRowCells,
+  buildWhatIfProjectionCells,
+  computeWorkbookStats,
+  detectBestCategoryCol,
+  extractCategorySlicerValues,
+  extractRowSparklines,
+  runSheetAccessibilityAudit,
+  scanSheetErrors,
+  SHEET_TABLE_THEMES,
+  SHEETS_COMMAND_CATALOG,
+  traceFormulaDependents,
+  traceFormulaPrecedents,
+  type SheetTableTheme,
+} from "@/lib/connectln-sheets-pro-tools"
 import { buildXlsxBytes, downloadStudioFile } from "@/lib/connectln-studio-export"
 import {
   loadStudioWorkbooks,
@@ -81,6 +112,7 @@ import {
   type StudioWorkbookRecord,
 } from "@/lib/connectln-studio-storage"
 import type { StudioSharePayload } from "./ConnectLnDocsEditor"
+import { ConnectLnSheetsNoctisPanel } from "./ConnectLnSheetsNoctisPanel"
 import { ConnectLnStudioHubDrawer } from "./ConnectLnStudioHubDrawer"
 import { ConnectLnStudioPrintModal } from "./ConnectLnStudioPrintModal"
 
@@ -90,7 +122,14 @@ interface ConnectLnSheetsEditorProps {
   onSendToInvoice?: (payload: { workbookTitle: string; sheet: StudioSheetTab }) => void
 }
 
-type SheetsRibbonTab = "home" | "insert" | "formulas" | "data" | "view"
+type SheetsRibbonTab =
+  | "home"
+  | "insert"
+  | "sheet_layout"
+  | "formulas"
+  | "data"
+  | "review"
+  | "view"
 
 const FILL_SWATCHES = [
   { label: "Clear", bg: undefined, color: undefined },
@@ -226,6 +265,32 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
   const [statusNotice, setStatusNotice] = useState<string | null>(null)
   const [savedLabel, setSavedLabel] = useState("Saved locally")
 
+  // Command Deck, Noctis Data Studio & Pro Features
+  const [commandQuery, setCommandQuery] = useState("")
+  const [commandMenuOpen, setCommandMenuOpen] = useState(false)
+  const [showNoctisPanel, setShowNoctisPanel] = useState(false)
+  const [noctisInitialPrompt, setNoctisInitialPrompt] = useState("")
+  const [showHelpModal, setShowHelpModal] = useState(false)
+  const [showTableThemesMenu, setShowTableThemesMenu] = useState(false)
+  const [paintedCellStyle, setPaintedCellStyle] = useState<SheetCellStyle | null>(null)
+  const [showSparklines, setShowSparklines] = useState(false)
+  const [sparklineStyle, setSparklineStyle] = useState<"line" | "column" | "winloss">("line")
+  const [showCategorySlicer, setShowCategorySlicer] = useState(false)
+  const [slicerCol, setSlicerCol] = useState<number>(1)
+  const [slicerSelectedValue, setSlicerSelectedValue] = useState<string>("")
+  const [showHeadings, setShowHeadings] = useState(true)
+  const [rowDensity, setRowDensity] = useState<"comfortable" | "compact">("comfortable")
+  const [pageBreakPreview, setPageBreakPreview] = useState(false)
+  const [tracedPrecedents, setTracedPrecedents] = useState<string[]>([])
+  const [tracedDependents, setTracedDependents] = useState<string[]>([])
+  const [watchedCells, setWatchedCells] = useState<string[]>([])
+  const [showWhatIfDrawer, setShowWhatIfDrawer] = useState(false)
+  const [whatIfGrowthPct, setWhatIfGrowthPct] = useState(15)
+  const [sheetProtected, setSheetProtected] = useState(false)
+  const [showAllNotesStrip, setShowAllNotesStrip] = useState(false)
+  const [showStatsModal, setShowStatsModal] = useState(false)
+  const [showA11yModal, setShowA11yModal] = useState(false)
+
   const csvInputRef = useRef<HTMLInputElement>(null)
   const inlineInputRef = useRef<HTMLInputElement>(null)
 
@@ -316,6 +381,10 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
   }
 
   const pushHistoryAndApplySheet = (updater: (sheet: StudioSheetTab) => StudioSheetTab) => {
+    if (sheetProtected) {
+      notify("Sheet is protected — click Unlock Sheet on Review tab to edit")
+      return
+    }
     setUndoStack((prev) => [...prev.slice(-24), { ...activeSheet.cells }])
     setRedoStack([])
     updateActiveWorkbook((wb) => ({
@@ -1030,6 +1099,231 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
       .join("")
   }, [activeSheet, evaluatedMap])
 
+  const sparklineItems = useMemo(
+    () => (showSparklines ? extractRowSparklines(activeSheet, evaluatedMap) : []),
+    [showSparklines, activeSheet, evaluatedMap]
+  )
+
+  const slicerValues = useMemo(() => {
+    if (!showCategorySlicer) return []
+    const targetCol = detectBestCategoryCol(activeSheet, evaluatedMap, slicerCol)
+    return extractCategorySlicerValues(activeSheet, evaluatedMap, targetCol)
+  }, [showCategorySlicer, activeSheet, evaluatedMap, slicerCol])
+
+  const effectiveSlicerCol = useMemo(
+    () => detectBestCategoryCol(activeSheet, evaluatedMap, slicerCol),
+    [activeSheet, evaluatedMap, slicerCol]
+  )
+
+  const workbookStats = useMemo(
+    () => computeWorkbookStats(activeWorkbook, activeSheet, evaluatedMap),
+    [activeWorkbook, activeSheet, evaluatedMap]
+  )
+
+  const a11yReport = useMemo(
+    () => runSheetAccessibilityAudit(activeSheet, evaluatedMap),
+    [activeSheet, evaluatedMap]
+  )
+
+  const sheetsCommandResults = useMemo(() => {
+    const q = commandQuery.trim().toLowerCase()
+    if (!q) return SHEETS_COMMAND_CATALOG.slice(0, 6)
+    return SHEETS_COMMAND_CATALOG.filter(
+      (c) =>
+        c.label.toLowerCase().includes(q) ||
+        c.category.toLowerCase().includes(q) ||
+        c.keywords.toLowerCase().includes(q)
+    ).slice(0, 6)
+  }, [commandQuery])
+
+  const handleToggleFormatPainter = () => {
+    if (paintedCellStyle) {
+      setPaintedCellStyle(null)
+      notify("Format Painter cleared")
+      return
+    }
+    const styleCopy = selectedCellData?.style ? { ...selectedCellData.style } : { bold: true }
+    setPaintedCellStyle(styleCopy)
+    notify(`Format Painter armed from ${selectedKey} — click any target cell`)
+  }
+
+  const handleApplyTableTheme = (theme: SheetTableTheme) => {
+    setShowTableThemesMenu(false)
+    pushHistoryAndApplySheet((sheet) => ({
+      ...sheet,
+      cells: applyTableThemeToCells(sheet, theme),
+    }))
+    notify(`Applied "${theme.name}" table theme`)
+  }
+
+  const handleGeneratePivotSummary = () => {
+    if (!activeWorkbook) return
+    const pivotTab = buildPivotSummarySheet(activeSheet, evaluatedMap, selectedCell.col)
+    updateActiveWorkbook((wb) => ({
+      ...wb,
+      sheets: [...wb.sheets.filter((s) => s.name !== "Pivot Summary"), pivotTab],
+      activeSheetId: pivotTab.id,
+    }))
+    setSelectedCell({ col: 0, row: 0 })
+    notify("Generated Pivot Summary tab")
+  }
+
+  const handleTracePrecedents = () => {
+    const hits = traceFormulaPrecedents(activeSheet, selectedKey)
+    setTracedDependents([])
+    setTracedPrecedents(hits)
+    notify(
+      hits.length > 0
+        ? `Tracing ${hits.length} precedent cell(s) for ${selectedKey}`
+        : `No formula precedents found in ${selectedKey}`
+    )
+  }
+
+  const handleTraceDependents = () => {
+    const hits = traceFormulaDependents(activeSheet, selectedKey)
+    setTracedPrecedents([])
+    setTracedDependents(hits)
+    notify(
+      hits.length > 0
+        ? `Tracing ${hits.length} dependent formula(s) referencing ${selectedKey}`
+        : `No formulas depend on ${selectedKey}`
+    )
+  }
+
+  const handleRunErrorCheck = () => {
+    const errs = scanSheetErrors(activeSheet, evaluatedMap)
+    if (errs.length === 0) {
+      notify("Error Check passed: 0 formula errors on active sheet")
+    } else {
+      notify(`${errs.length} formula error(s): ${errs.map((e) => `${e.key} (${e.error})`).join(", ")}`)
+    }
+  }
+
+  const handleToggleWatchCell = () => {
+    setWatchedCells((prev) =>
+      prev.includes(selectedKey) ? prev.filter((k) => k !== selectedKey) : [...prev, selectedKey].slice(-6)
+    )
+  }
+
+  const handleRunWhatIfForecast = () => {
+    let srcCol = selectedCell.col
+    if (typeof evaluatedMap[makeCellKey(srcCol, 1)]?.numeric !== "number") {
+      for (let c = 0; c < activeSheet.colCount; c++) {
+        if (typeof evaluatedMap[makeCellKey(c, 1)]?.numeric === "number") {
+          srcCol = c
+          break
+        }
+      }
+    }
+    const { nextCells, targetColLabel } = buildWhatIfProjectionCells(
+      activeSheet,
+      evaluatedMap,
+      srcCol,
+      whatIfGrowthPct
+    )
+    pushHistoryAndApplySheet((sheet) => ({ ...sheet, cells: nextCells }))
+    setShowWhatIfDrawer(false)
+    notify(`Inserted ${whatIfGrowthPct >= 0 ? "+" : ""}${whatIfGrowthPct}% What-If Forecast in Col ${targetColLabel}`)
+  }
+
+  const handleRunFlashFill = () => {
+    const { nextCells, updatedCount } = applyFlashFillColumn(activeSheet, selectedCell.col)
+    if (updatedCount === 0) {
+      notify(`Column ${colIndexToLabel(selectedCell.col)} text is already normalized`)
+      return
+    }
+    pushHistoryAndApplySheet((sheet) => ({ ...sheet, cells: nextCells }))
+    notify(`Flash Fill normalized ${updatedCount} cell(s) in Col ${colIndexToLabel(selectedCell.col)}`)
+  }
+
+  const handleInsertSubtotalRow = () => {
+    const { nextCells, rowNum } = buildSubtotalRowCells(activeSheet, evaluatedMap)
+    pushHistoryAndApplySheet((sheet) => ({ ...sheet, cells: nextCells }))
+    notify(`Inserted live =SUM(...) Subtotal row at Row ${rowNum}`)
+  }
+
+  const openSheetsNoctis = (prompt = "") => {
+    setNoctisInitialPrompt(prompt)
+    setShowNoctisPanel(true)
+    setCommandMenuOpen(false)
+  }
+
+  const executeSheetsCommand = (cmdId: string) => {
+    setCommandMenuOpen(false)
+    setCommandQuery("")
+    switch (cmdId) {
+      case "open_noctis":
+        openSheetsNoctis()
+        break
+      case "open_hub":
+        setShowHubDrawer(true)
+        break
+      case "insert_pivot":
+        handleGeneratePivotSummary()
+        break
+      case "toggle_sparklines":
+        setShowSparklines((v) => !v)
+        break
+      case "toggle_slicer":
+        setSlicerCol(detectBestCategoryCol(activeSheet, evaluatedMap, selectedCell.col))
+        setShowCategorySlicer((v) => !v)
+        break
+      case "insert_bar_chart":
+        handleAddChart("bar")
+        break
+      case "apply_emerald_theme":
+        handleApplyTableTheme(SHEET_TABLE_THEMES[0])
+        break
+      case "open_layout_tab":
+        setRibbonTab("sheet_layout")
+        break
+      case "trace_precedents":
+        setRibbonTab("formulas")
+        handleTracePrecedents()
+        break
+      case "trace_dependents":
+        setRibbonTab("formulas")
+        handleTraceDependents()
+        break
+      case "watch_cell":
+        setRibbonTab("formulas")
+        handleToggleWatchCell()
+        break
+      case "error_check":
+        handleRunErrorCheck()
+        break
+      case "open_what_if":
+        setRibbonTab("data")
+        setShowWhatIfDrawer(true)
+        break
+      case "insert_subtotal":
+        handleInsertSubtotalRow()
+        break
+      case "run_flash_fill":
+        handleRunFlashFill()
+        break
+      case "open_stats":
+        setShowStatsModal(true)
+        break
+      case "run_a11y":
+        setShowA11yModal(true)
+        break
+      case "toggle_protect":
+        setSheetProtected((p) => !p)
+        break
+      case "open_print":
+        setShowPrintModal(true)
+        break
+      case "create_invoice":
+        if (onSendToInvoice && activeWorkbook) {
+          onSendToInvoice({ workbookTitle: activeWorkbook.title, sheet: activeSheet })
+        }
+        break
+      default:
+        break
+    }
+  }
+
   return (
     <div className="flex flex-col lg:flex-row rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm min-h-[780px]">
       {/* Workbooks Library Sidebar */}
@@ -1196,11 +1490,73 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
               aria-label="Workbook title"
               value={activeWorkbook?.title || ""}
               onChange={(e) => updateActiveWorkbook((wb) => ({ ...wb, title: e.target.value }))}
-              className="min-w-[150px] flex-1 max-w-md rounded-lg border border-transparent hover:border-[#E7E2DA] focus:border-[#107C41] bg-transparent px-2 py-1 text-sm sm:text-base font-extrabold text-[#0B1F3A] dark:text-white outline-none"
+              className="min-w-[130px] flex-1 max-w-xs rounded-lg border border-transparent hover:border-[#E7E2DA] focus:border-[#107C41] bg-transparent px-2 py-1 text-sm sm:text-base font-extrabold text-[#0B1F3A] dark:text-white outline-none"
             />
-            <span className="hidden sm:inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+            <span className="hidden xl:inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
               {savedLabel}
             </span>
+          </div>
+
+          {/* Centered Command Palette Search */}
+          <div className="relative w-full sm:w-56 md:w-64 order-last lg:order-none">
+            <Sparkles className="h-3.5 w-3.5 text-[#107C41] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              aria-label="Ask Noctis or find a formula or tool"
+              value={commandQuery}
+              onFocus={() => setCommandMenuOpen(true)}
+              onChange={(e) => {
+                setCommandQuery(e.target.value)
+                setCommandMenuOpen(true)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setCommandMenuOpen(false)
+                if (e.key === "Enter" && commandQuery.trim()) {
+                  openSheetsNoctis(commandQuery.trim())
+                }
+              }}
+              placeholder="Ask Noctis or find a formula or tool..."
+              className="w-full rounded-full border border-[#E7E2DA] dark:border-zinc-700 bg-[#FAF7F2] dark:bg-zinc-950 pl-8 pr-7 py-1.5 text-xs font-medium text-[#0B1F3A] dark:text-zinc-100 outline-none focus:border-[#107C41] focus:bg-white"
+            />
+            {commandMenuOpen && (
+              <button
+                type="button"
+                aria-label="Close sheets command search"
+                onClick={() => setCommandMenuOpen(false)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 cursor-pointer"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+            {commandMenuOpen && (
+              <div className="absolute left-0 right-0 top-9 z-40 rounded-2xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1.5 shadow-2xl space-y-1">
+                {commandQuery.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => openSheetsNoctis(commandQuery.trim())}
+                    className="w-full flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#0B1F3A] to-[#107C41] text-white px-2.5 py-2 text-left text-xs font-bold cursor-pointer"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-300" />
+                    <span className="truncate">Ask Noctis: {commandQuery.trim()}</span>
+                  </button>
+                )}
+                {sheetsCommandResults.map((cmd) => (
+                  <button
+                    key={cmd.id}
+                    type="button"
+                    onClick={() => executeSheetsCommand(cmd.id)}
+                    className="w-full flex items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-left text-xs hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer"
+                  >
+                    <span className="font-bold text-[#0B1F3A] dark:text-zinc-100 truncate">
+                      {cmd.label}
+                    </span>
+                    <span className="text-[10px] font-semibold text-[#107C41] shrink-0">
+                      {cmd.category}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -1281,15 +1637,17 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
           </div>
         </div>
 
-        {/* 5-Tab Ribbon */}
-        <div className="flex items-center justify-between gap-2 px-3 pt-1.5 border-b border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950">
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+        {/* ConnectLn Floating Pill Command Deck */}
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950">
+          <div className="inline-flex flex-wrap items-center gap-1 rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-[#EFECE6]/90 dark:bg-zinc-900 p-1 overflow-x-auto no-scrollbar">
             {(
               [
                 { id: "home", label: "Home" },
                 { id: "insert", label: "Insert" },
+                { id: "sheet_layout", label: "Sheet Layout" },
                 { id: "formulas", label: "Formulas" },
                 { id: "data", label: "Data" },
+                { id: "review", label: "Review" },
                 { id: "view", label: "View" },
               ] as const
             ).map((tab) => (
@@ -1297,19 +1655,44 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
                 key={tab.id}
                 type="button"
                 onClick={() => setRibbonTab(tab.id)}
-                className={`px-3 py-1.5 text-xs font-extrabold rounded-t-lg border-b-2 transition-colors cursor-pointer ${
+                className={`px-3 py-1.5 text-xs font-extrabold rounded-xl transition-all cursor-pointer whitespace-nowrap ${
                   ribbonTab === tab.id
-                    ? "border-[#107C41] bg-white dark:bg-zinc-900 text-[#107C41] dark:text-emerald-400"
-                    : "border-transparent text-zinc-600 dark:text-zinc-400 hover:text-[#0B1F3A]"
+                    ? "bg-[#0B1F3A] text-white shadow-2xs"
+                    : "text-[#0B1F3A]/80 dark:text-zinc-300 hover:bg-white/80 dark:hover:bg-zinc-800"
                 }`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          <span className="hidden md:inline text-[10.5px] font-mono text-zinc-500 pr-1">
-            45+ Functions · Shift+Click Multi-Select · Ctrl+D Fill Down
-          </span>
+
+          <div className="flex items-center gap-2">
+            <span className="hidden xl:inline text-[10.5px] font-mono text-zinc-500">
+              45+ Functions · Shift+Click Multi-Select · Ctrl+D Fill Down
+            </span>
+            <button
+              type="button"
+              aria-label="Open Noctis Data Studio"
+              onClick={() => setShowNoctisPanel((v) => !v)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-extrabold shadow-xs transition-all cursor-pointer ${
+                showNoctisPanel
+                  ? "bg-[#107C41] text-white ring-2 ring-[#107C41]/30"
+                  : "bg-gradient-to-r from-[#0B1F3A] to-[#107C41] text-white hover:opacity-95"
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-emerald-300" />
+              Noctis
+            </button>
+            <button
+              type="button"
+              aria-label="Open ConnectLn Sheets Help"
+              onClick={() => setShowHelpModal(true)}
+              className="inline-flex items-center gap-1 rounded-full border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#107C41] px-2.5 py-1.5 text-xs font-bold text-[#0B1F3A] dark:text-zinc-200 cursor-pointer"
+            >
+              <HelpCircle className="h-3.5 w-3.5 text-[#107C41]" />
+              <span className="hidden sm:inline">Help</span>
+            </button>
+          </div>
         </div>
 
         {/* Ribbon Tool Strip */}
@@ -1407,16 +1790,110 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
                 ))}
               </div>
               <button type="button" onClick={() => setCellRaw(selectedKey, "")} title="Clear Cell" className="p-1.5 rounded-lg hover:bg-white text-rose-600 cursor-pointer"><Eraser className="h-3.5 w-3.5" /></button>
+
+              <span className="h-5 w-px bg-[#E7E2DA] dark:bg-zinc-700 mx-0.5" />
+
+              <button
+                type="button"
+                onClick={handleToggleFormatPainter}
+                title="Copy formatting from active cell"
+                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 font-bold cursor-pointer ${
+                  paintedCellStyle
+                    ? "bg-[#107C41] text-white"
+                    : "border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                }`}
+              >
+                <Paintbrush className="h-3.5 w-3.5" />
+                <span className="hidden xl:inline">Painter</span>
+              </button>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowTableThemesMenu((v) => !v)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#107C41] px-2.5 py-1 font-bold cursor-pointer"
+                >
+                  <Palette className="h-3.5 w-3.5 text-[#107C41]" />
+                  Style as Table
+                </button>
+                {showTableThemesMenu && (
+                  <div className="absolute right-0 top-9 z-30 w-60 rounded-2xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-2 shadow-2xl space-y-1">
+                    <p className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-zinc-500">
+                      ConnectLn Table Styles
+                    </p>
+                    {SHEET_TABLE_THEMES.map((th) => (
+                      <button
+                        key={th.id}
+                        type="button"
+                        onClick={() => handleApplyTableTheme(th)}
+                        className="w-full flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-xs font-bold hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 cursor-pointer"
+                      >
+                        <span className="inline-flex items-center -space-x-1 shrink-0">
+                          <span style={{ backgroundColor: th.headerBg }} className="h-3.5 w-3.5 rounded-full border border-white" />
+                          <span style={{ backgroundColor: th.stripeBg }} className="h-3.5 w-3.5 rounded-full border border-zinc-300" />
+                        </span>
+                        <span className="truncate">{th.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleInsertQuickFormula("SUM")}
+                className="rounded-lg bg-[#107C41] text-white px-2.5 py-1 font-bold cursor-pointer"
+              >
+                Σ AutoSum
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openSheetsNoctis()}
+                className="inline-flex items-center gap-1 rounded-lg bg-[#0B1F3A] text-white px-2.5 py-1 font-extrabold hover:bg-[#132D52] cursor-pointer"
+              >
+                <Sparkles className="h-3 w-3 text-emerald-300" />
+                Ask Noctis
+              </button>
             </>
           )}
 
           {ribbonTab === "insert" && (
             <>
+              <button type="button" onClick={handleGeneratePivotSummary} className="inline-flex items-center gap-1 rounded-lg bg-[#0B1F3A] hover:bg-[#132D52] text-white px-2.5 py-1 font-extrabold cursor-pointer"><Table2 className="h-3.5 w-3.5 text-emerald-300" />Pivot Summary</button>
               <button type="button" onClick={() => handleAddChart("bar")} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold hover:border-[#107C41] cursor-pointer"><BarChart3 className="h-3.5 w-3.5 text-[#107C41]" />Bar Chart</button>
               <button type="button" onClick={() => handleAddChart("line")} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold hover:border-[#107C41] cursor-pointer"><LineChart className="h-3.5 w-3.5 text-[#107C41]" />Line Chart</button>
               <button type="button" onClick={() => handleAddChart("pie")} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold hover:border-[#107C41] cursor-pointer"><PieChart className="h-3.5 w-3.5 text-[#107C41]" />Pie Chart</button>
+              <button type="button" onClick={() => handleAddChart("area")} className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold hover:border-[#107C41] cursor-pointer"><AreaChart className="h-3.5 w-3.5 text-[#107C41]" />Area Chart</button>
 
-              <span className="h-5 w-px bg-[#E7E2DA] dark:bg-zinc-700 mx-1" />
+              <span className="h-5 w-px bg-[#E7E2DA] dark:bg-zinc-700 mx-0.5" />
+
+              <button
+                type="button"
+                onClick={() => setShowSparklines((v) => !v)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showSparklines ? "bg-[#107C41] text-white" : "border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                }`}
+              >
+                <TrendingUp className="h-3.5 w-3.5" />
+                Sparklines
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSlicerCol(detectBestCategoryCol(activeSheet, evaluatedMap, selectedCell.col))
+                  setShowCategorySlicer((v) => !v)
+                  setSlicerSelectedValue("")
+                }}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showCategorySlicer ? "bg-[#107C41] text-white" : "border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                }`}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                Category Slicer
+              </button>
+
+              <span className="h-5 w-px bg-[#E7E2DA] dark:bg-zinc-700 mx-0.5" />
 
               <button type="button" onClick={() => handleStructuralEdit("insert_row")} className="inline-flex items-center gap-1 rounded-lg bg-white dark:bg-zinc-900 border border-[#E7E2DA] dark:border-zinc-700 px-2 py-1 font-semibold hover:border-[#107C41] cursor-pointer"><Rows className="h-3.5 w-3.5" />+ Row Above</button>
               <button type="button" onClick={() => handleStructuralEdit("delete_row")} className="rounded-lg bg-white dark:bg-zinc-900 border border-[#E7E2DA] dark:border-zinc-700 px-2 py-1 font-semibold text-rose-600 cursor-pointer">- Delete Row</button>
@@ -1433,6 +1910,71 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
               >
                 <MessageSquare className="h-3.5 w-3.5 text-amber-600" />
                 Cell Note ({selectedKey})
+              </button>
+            </>
+          )}
+
+          {ribbonTab === "sheet_layout" && (
+            <>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {SHEET_TABLE_THEMES.map((th) => (
+                  <button
+                    key={th.id}
+                    type="button"
+                    onClick={() => handleApplyTableTheme(th)}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#107C41] px-2.5 py-1 text-[11px] font-bold cursor-pointer"
+                  >
+                    <span style={{ backgroundColor: th.headerBg }} className="h-3 w-3 rounded-full" />
+                    {th.name}
+                  </button>
+                ))}
+              </div>
+
+              <span className="h-5 w-px bg-[#E7E2DA] dark:bg-zinc-700 mx-0.5" />
+
+              <button
+                type="button"
+                onClick={() => setShowGridlines((g) => !g)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showGridlines ? "bg-[#107C41] text-white" : "border border-[#E7E2DA] bg-white dark:bg-zinc-900"
+                }`}
+              >
+                <Grid className="h-3.5 w-3.5" />
+                Gridlines
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowHeadings((h) => !h)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showHeadings ? "bg-[#107C41] text-white" : "border border-[#E7E2DA] bg-white dark:bg-zinc-900"
+                }`}
+              >
+                Row &amp; Col Headings
+              </button>
+
+              <div className="inline-flex items-center rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 p-0.5 gap-0.5">
+                {(["comfortable", "compact"] as const).map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setRowDensity(d)}
+                    className={`rounded-md px-2 py-1 text-[11px] font-bold capitalize cursor-pointer ${
+                      rowDensity === d ? "bg-[#0B1F3A] text-white" : "text-zinc-600"
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowPrintModal(true)}
+                className="inline-flex items-center gap-1 rounded-lg bg-[#0B1F3A] text-white px-2.5 py-1 font-bold cursor-pointer"
+              >
+                <Printer className="h-3.5 w-3.5 text-emerald-300" />
+                Open Print Studio
               </button>
             </>
           )}
@@ -1477,6 +2019,52 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
                 >
                   <RefreshCw className="h-3.5 w-3.5 text-[#107C41]" />
                   Recalculate
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTracePrecedents}
+                  className="inline-flex items-center gap-1 rounded-lg border border-sky-300 bg-sky-50/70 text-[#0B5CAD] px-2 py-1 font-bold cursor-pointer"
+                >
+                  <GitBranch className="h-3.5 w-3.5" />
+                  Trace Precedents
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTraceDependents}
+                  className="inline-flex items-center gap-1 rounded-lg border border-amber-300 bg-amber-50/70 text-amber-800 px-2 py-1 font-bold cursor-pointer"
+                >
+                  Trace Dependents
+                </button>
+                {(tracedPrecedents.length > 0 || tracedDependents.length > 0) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTracedPrecedents([])
+                      setTracedDependents([])
+                    }}
+                    className="rounded-lg border border-[#E7E2DA] bg-white px-2 py-1 font-semibold text-zinc-500 cursor-pointer"
+                  >
+                    Clear Trace
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleRunErrorCheck}
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 px-2 py-1 font-bold cursor-pointer"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                  Error Check
+                </button>
+                <button
+                  type="button"
+                  onClick={handleToggleWatchCell}
+                  className={`rounded-lg px-2 py-1 font-bold cursor-pointer ${
+                    watchedCells.includes(selectedKey)
+                      ? "bg-[#0B1F3A] text-white"
+                      : "border border-[#E7E2DA] bg-white dark:bg-zinc-900"
+                  }`}
+                >
+                  {watchedCells.includes(selectedKey) ? `Watching ${selectedKey}` : `Watch Cell (${selectedKey})`}
                 </button>
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
@@ -1537,6 +2125,82 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
                 <ShieldAlert className="h-3.5 w-3.5" />
                 Data Validation
               </button>
+              <button
+                type="button"
+                onClick={handleRunFlashFill}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 hover:border-[#107C41] px-2.5 py-1 font-bold cursor-pointer"
+              >
+                <Wand2 className="h-3.5 w-3.5 text-[#107C41]" />
+                Flash Fill
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowWhatIfDrawer((v) => !v)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showWhatIfDrawer ? "bg-[#0B1F3A] text-white" : "border border-[#E7E2DA] bg-white dark:bg-zinc-900"
+                }`}
+              >
+                <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+                What-If Forecast
+              </button>
+              <button
+                type="button"
+                onClick={handleInsertSubtotalRow}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] bg-white dark:bg-zinc-900 hover:border-[#107C41] px-2.5 py-1 font-bold cursor-pointer"
+              >
+                Subtotal Row
+              </button>
+            </>
+          )}
+
+          {ribbonTab === "review" && (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowStatsModal(true)}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold hover:border-[#107C41] cursor-pointer"
+              >
+                <BarChart2 className="h-3.5 w-3.5 text-[#107C41]" />
+                Workbook Statistics
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowA11yModal(true)}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold hover:border-[#107C41] cursor-pointer"
+              >
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                Accessibility Check
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCommentDraft(activeSheet.comments?.[selectedKey] || "")
+                  setShowCommentPopover((v) => !v)
+                }}
+                className="inline-flex items-center gap-1 rounded-lg border border-[#E7E2DA] dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 font-bold cursor-pointer"
+              >
+                <MessageSquare className="h-3.5 w-3.5 text-amber-600" />
+                Edit Cell Note ({selectedKey})
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAllNotesStrip((v) => !v)}
+                className={`rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showAllNotesStrip ? "bg-[#0B1F3A] text-white" : "border border-[#E7E2DA] bg-white dark:bg-zinc-900"
+                }`}
+              >
+                All Notes ({Object.keys(activeSheet.comments || {}).length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setSheetProtected((p) => !p)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  sheetProtected ? "bg-amber-600 text-white" : "border border-[#E7E2DA] bg-white dark:bg-zinc-900"
+                }`}
+              >
+                {sheetProtected ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5 text-zinc-500" />}
+                {sheetProtected ? "Sheet Protected" : "Protect Sheet"}
+              </button>
             </>
           )}
 
@@ -1572,6 +2236,24 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
               >
                 <Grid className="h-3.5 w-3.5" />
                 Gridlines
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowHeadings((h) => !h)}
+                className={`rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  showHeadings ? "bg-[#107C41] text-white" : "border border-[#E7E2DA] bg-white dark:bg-zinc-900"
+                }`}
+              >
+                Headings (A–Z)
+              </button>
+              <button
+                type="button"
+                onClick={() => setPageBreakPreview((v) => !v)}
+                className={`rounded-lg px-2.5 py-1 font-bold cursor-pointer ${
+                  pageBreakPreview ? "bg-[#0B1F3A] text-white" : "border border-[#E7E2DA] bg-white dark:bg-zinc-900"
+                }`}
+              >
+                Page Break Preview
               </button>
               <button
                 type="button"
@@ -1655,6 +2337,121 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
           </div>
         )}
 
+        {showWhatIfDrawer && (
+          <div className="flex flex-wrap items-center gap-3 px-3 py-2 bg-emerald-50/80 dark:bg-zinc-900 border-b border-[#E7E2DA] text-xs">
+            <span className="font-extrabold text-[#0B1F3A] dark:text-white flex items-center gap-1.5">
+              <TrendingUp className="h-3.5 w-3.5 text-[#107C41]" />
+              What-If Growth Forecast:
+            </span>
+            <input
+              type="range"
+              aria-label="What-If growth percentage"
+              min={-25}
+              max={50}
+              step={5}
+              value={whatIfGrowthPct}
+              onChange={(e) => setWhatIfGrowthPct(Number(e.target.value))}
+              className="accent-[#107C41] cursor-pointer"
+            />
+            <span className="font-mono font-extrabold text-[#107C41] min-w-[46px]">
+              {whatIfGrowthPct >= 0 ? `+${whatIfGrowthPct}%` : `${whatIfGrowthPct}%`}
+            </span>
+            <button
+              type="button"
+              onClick={handleRunWhatIfForecast}
+              className="rounded-lg bg-[#107C41] text-white px-3 py-1 font-bold cursor-pointer"
+            >
+              Insert Forecast Column
+            </button>
+            <button type="button" onClick={() => setShowWhatIfDrawer(false)} className="ml-auto text-zinc-500 cursor-pointer">Close</button>
+          </div>
+        )}
+
+        {showCategorySlicer && (
+          <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 bg-[#FAF7F2] dark:bg-zinc-900 border-b border-[#E7E2DA] text-xs">
+            <span className="font-extrabold text-[#0B1F3A] dark:text-white flex items-center gap-1 mr-1">
+              <SlidersHorizontal className="h-3.5 w-3.5 text-[#107C41]" />
+              Slicer ({colIndexToLabel(effectiveSlicerCol)}):
+            </span>
+            <button
+              type="button"
+              onClick={() => setSlicerSelectedValue("")}
+              className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold cursor-pointer ${
+                slicerSelectedValue === ""
+                  ? "bg-[#0B1F3A] text-white"
+                  : "border border-[#E7E2DA] bg-white dark:bg-zinc-800"
+              }`}
+            >
+              All
+            </button>
+            {slicerValues.map((val) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => setSlicerSelectedValue((cur) => (cur === val ? "" : val))}
+                className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold cursor-pointer ${
+                  slicerSelectedValue === val
+                    ? "bg-[#107C41] text-white"
+                    : "border border-[#E7E2DA] bg-white dark:bg-zinc-800 hover:border-[#107C41]"
+                }`}
+              >
+                {val}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {watchedCells.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 bg-[#0B1F3A] text-white text-[11px]">
+            <span className="font-extrabold text-emerald-300 uppercase tracking-wider">Watch Window:</span>
+            {watchedCells.map((wk) => {
+              const ev = evaluatedMap[wk]
+              const raw = activeSheet.cells[wk]?.raw || ""
+              return (
+                <span key={wk} className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2 py-0.5 font-mono">
+                  <strong className="text-emerald-300">{wk}</strong>
+                  <span>= {String(ev?.value ?? "0")}</span>
+                  {raw.startsWith("=") && <span className="opacity-70">({raw})</span>}
+                  <button
+                    type="button"
+                    onClick={() => setWatchedCells((p) => p.filter((x) => x !== wk))}
+                    className="text-zinc-300 hover:text-white cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )
+            })}
+          </div>
+        )}
+
+        {showAllNotesStrip && Object.keys(activeSheet.comments || {}).length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 text-xs">
+            <span className="font-bold text-amber-900">Cell Notes:</span>
+            {Object.entries(activeSheet.comments || {}).map(([k, txt]) => (
+              <span key={k} className="rounded-lg bg-white border border-amber-200 px-2 py-0.5 text-[11px]">
+                <strong>{k}:</strong> {txt}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {sheetProtected && (
+          <div className="flex items-center justify-between gap-2 px-4 py-1.5 bg-amber-50 dark:bg-amber-950/50 border-b border-amber-200 text-xs text-amber-900">
+            <span className="font-bold flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5" />
+              Sheet Protected — Read-only grid lock is active.
+            </span>
+            <button
+              type="button"
+              onClick={() => setSheetProtected(false)}
+              className="rounded-lg bg-amber-600 text-white px-2.5 py-0.5 text-[11px] font-bold cursor-pointer"
+            >
+              Unlock Sheet
+            </button>
+          </div>
+        )}
+
         {/* Formula Bar */}
         {showFormulaBar && (
           <div className="flex items-center gap-2 px-3 py-2 border-b border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900">
@@ -1680,197 +2477,321 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
           </div>
         )}
 
-        {/* Interactive Grid */}
-        <div
-          className="flex-1 overflow-auto bg-[#F8FAFC] dark:bg-zinc-950 select-none"
-          tabIndex={0}
-          style={{ zoom: `${zoomPct}%` }}
-          onKeyDown={(e) => {
-            if (editingCellKey || document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "SELECT") return
-            if (e.key === "ArrowDown") {
-              e.preventDefault()
-              const next = { col: selectedCell.col, row: Math.min(activeSheet.rowCount - 1, selectedCell.row + 1) }
-              if (e.shiftKey) setSelectionEnd(next)
-              else { setSelectedCell(next); setSelectionEnd(null) }
-            } else if (e.key === "ArrowUp") {
-              e.preventDefault()
-              const next = { col: selectedCell.col, row: Math.max(0, selectedCell.row - 1) }
-              if (e.shiftKey) setSelectionEnd(next)
-              else { setSelectedCell(next); setSelectionEnd(null) }
-            } else if (e.key === "ArrowRight" || e.key === "Tab") {
-              e.preventDefault()
-              const next = { col: Math.min(activeSheet.colCount - 1, selectedCell.col + 1), row: selectedCell.row }
-              if (e.shiftKey) setSelectionEnd(next)
-              else { setSelectedCell(next); setSelectionEnd(null) }
-            } else if (e.key === "ArrowLeft") {
-              e.preventDefault()
-              const next = { col: Math.max(0, selectedCell.col - 1), row: selectedCell.row }
-              if (e.shiftKey) setSelectionEnd(next)
-              else { setSelectedCell(next); setSelectionEnd(null) }
-            } else if (e.key === "Enter" || e.key === "F2") {
-              e.preventDefault()
-              beginEdit(selectedCell.col, selectedCell.row)
-            } else if (e.key === "Delete" || e.key === "Backspace") {
-              e.preventDefault()
-              setCellRaw(selectedKey, "")
-            } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-              e.preventDefault()
-              beginEdit(selectedCell.col, selectedCell.row, e.key)
-            }
-          }}
-        >
-          <table className="border-collapse table-fixed min-w-full text-xs">
-            <thead className="sticky top-0 z-20 bg-[#FAF7F2] dark:bg-zinc-900">
-              <tr>
-                <th className="w-11 sticky left-0 z-30 border border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-900 py-1.5 text-[10px] font-bold text-zinc-500">
-                  #
-                </th>
-                {Array.from({ length: activeSheet.colCount }).map((_, cIdx) => {
-                  const colLetter = colIndexToLabel(cIdx)
-                  const isActiveCol = cIdx >= normRange.minCol && cIdx <= normRange.maxCol
-                  return (
-                    <th
-                      key={colLetter}
-                      className={`w-32 border border-[#E7E2DA] dark:border-zinc-800 py-1.5 text-[11px] font-bold ${
-                        isActiveCol
-                          ? "bg-emerald-100/80 dark:bg-emerald-950/60 text-[#107C41] dark:text-emerald-300"
-                          : "text-zinc-600 dark:text-zinc-400"
-                      }`}
-                    >
-                      {colLetter}
+        {/* Interactive Grid + Optional Noctis Data Studio */}
+        <div className="flex-1 flex min-h-0 overflow-hidden">
+          <div
+            className="flex-1 overflow-auto bg-[#F8FAFC] dark:bg-zinc-950 select-none"
+            tabIndex={0}
+            style={{ zoom: `${zoomPct}%` }}
+            onKeyDown={(e) => {
+              if (editingCellKey || document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "SELECT") return
+              if (e.key === "ArrowDown") {
+                e.preventDefault()
+                const next = { col: selectedCell.col, row: Math.min(activeSheet.rowCount - 1, selectedCell.row + 1) }
+                if (e.shiftKey) setSelectionEnd(next)
+                else { setSelectedCell(next); setSelectionEnd(null) }
+              } else if (e.key === "ArrowUp") {
+                e.preventDefault()
+                const next = { col: selectedCell.col, row: Math.max(0, selectedCell.row - 1) }
+                if (e.shiftKey) setSelectionEnd(next)
+                else { setSelectedCell(next); setSelectionEnd(null) }
+              } else if (e.key === "ArrowRight" || e.key === "Tab") {
+                e.preventDefault()
+                const next = { col: Math.min(activeSheet.colCount - 1, selectedCell.col + 1), row: selectedCell.row }
+                if (e.shiftKey) setSelectionEnd(next)
+                else { setSelectedCell(next); setSelectionEnd(null) }
+              } else if (e.key === "ArrowLeft") {
+                e.preventDefault()
+                const next = { col: Math.max(0, selectedCell.col - 1), row: selectedCell.row }
+                if (e.shiftKey) setSelectionEnd(next)
+                else { setSelectedCell(next); setSelectionEnd(null) }
+              } else if (e.key === "Enter" || e.key === "F2") {
+                e.preventDefault()
+                if (!sheetProtected) beginEdit(selectedCell.col, selectedCell.row)
+              } else if (e.key === "Delete" || e.key === "Backspace") {
+                e.preventDefault()
+                setCellRaw(selectedKey, "")
+              } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault()
+                if (!sheetProtected) beginEdit(selectedCell.col, selectedCell.row, e.key)
+              }
+            }}
+          >
+            <table className="border-collapse table-fixed min-w-full text-xs">
+              {showHeadings && (
+                <thead className="sticky top-0 z-20 bg-[#FAF7F2] dark:bg-zinc-900">
+                  <tr>
+                    <th className="w-11 sticky left-0 z-30 border border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-900 py-1.5 text-[10px] font-bold text-zinc-500">
+                      #
                     </th>
-                  )
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: activeSheet.rowCount }).map((_, rIdx) => {
-                if (autoFilterEnabled && colFilterQuery.trim() && rIdx > 0) {
-                  const ev = evaluatedMap[makeCellKey(colFilterCol, rIdx)]
-                  const text = String(ev?.value ?? "").toLowerCase()
-                  if (!text.includes(colFilterQuery.trim().toLowerCase())) return null
-                }
-                const isActiveRow = rIdx >= normRange.minRow && rIdx <= normRange.maxRow
-                const isFrozenRow = Boolean(activeSheet.freezeRow1 && rIdx === 0)
-                return (
-                  <tr key={rIdx} className={isFrozenRow ? "sticky top-[28px] z-10 shadow-xs" : ""}>
-                    <td
-                      className={`sticky left-0 z-10 border border-[#E7E2DA] dark:border-zinc-800 text-center text-[11px] font-bold ${
-                        isActiveRow
-                          ? "bg-emerald-100/80 dark:bg-emerald-950/60 text-[#107C41] dark:text-emerald-300"
-                          : "bg-[#FAF7F2] dark:bg-zinc-900 text-zinc-500"
-                      }`}
-                    >
-                      {rIdx + 1}
-                    </td>
-                    {Array.from({ length: activeSheet.colCount }).map((__, cIdx) => {
-                      const key = makeCellKey(cIdx, rIdx)
-                      const cell = activeSheet.cells[key]
-                      const ev = evaluatedMap[key]
-                      const isPrimarySel = selectedCell.col === cIdx && selectedCell.row === rIdx
-                      const isInRange =
-                        cIdx >= normRange.minCol &&
-                        cIdx <= normRange.maxCol &&
-                        rIdx >= normRange.minRow &&
-                        rIdx <= normRange.maxRow
-                      const isEditing = editingCellKey === key
-                      const style = cell?.style
-                      const displayVal = showFormulas
-                        ? cell?.raw || ""
-                        : formatEvaluatedValue(ev, style?.format || "general", style?.decimals)
-                      const defaultAlign =
-                        style?.align || (typeof ev?.numeric === "number" && !showFormulas ? "right" : "left")
-                      const condHit = (activeSheet.conditionalRules || []).find(
-                        (rule) => rule.col === cIdx && matchesConditionalRule(ev, rule.op, rule.target)
-                      )
-                      const note = activeSheet.comments?.[key]
-                      const valOptions = rIdx > 0 ? validationMap.get(cIdx) : undefined
-                      const isFrozenCol = Boolean(activeSheet.freezeColA && cIdx === 0)
-
+                    {Array.from({ length: activeSheet.colCount }).map((_, cIdx) => {
+                      const colLetter = colIndexToLabel(cIdx)
+                      const isActiveCol = cIdx >= normRange.minCol && cIdx <= normRange.maxCol
                       return (
-                        <td
-                          key={key}
-                          data-cell-key={key}
-                          title={note ? `Note: ${note}` : undefined}
-                          onClick={(e) => {
-                            if (editingCellKey && editingCellKey !== key) commitInlineEdit()
-                            if (e.shiftKey) setSelectionEnd({ col: cIdx, row: rIdx })
-                            else { setSelectedCell({ col: cIdx, row: rIdx }); setSelectionEnd(null) }
-                          }}
-                          onDoubleClick={() => beginEdit(cIdx, rIdx)}
-                          style={{
-                            backgroundColor: condHit?.bg || style?.bg || (isInRange && !isPrimarySel ? "#ECFDF5" : undefined),
-                            color: ev?.error ? "#DC2626" : condHit?.color || style?.color,
-                            textAlign: defaultAlign,
-                            borderBottom:
-                              style?.border === "bottom" || style?.border === "topBottom"
-                                ? "2px solid #0B1F3A"
-                                : undefined,
-                            borderTop: style?.border === "topBottom" ? "2px solid #0B1F3A" : undefined,
-                          }}
-                          className={`relative h-8 px-2 cursor-cell ${
-                            style?.wrapText ? "whitespace-normal break-words" : "truncate"
-                          } ${isFrozenCol ? "sticky left-[44px] z-10" : ""} ${
-                            isPrimarySel
-                              ? "border-2 border-[#107C41] ring-1 ring-[#107C41]/30 z-10 bg-white dark:bg-zinc-900"
-                              : showGridlines
-                              ? style?.border === "all" || style?.border === "box"
-                                ? "border border-zinc-600"
-                                : "border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-950"
-                              : "border border-transparent bg-white dark:bg-zinc-950"
-                          } ${style?.bold ? "font-bold" : "font-normal"} ${
-                            style?.italic ? "italic" : ""
-                          } ${style?.underline ? "underline" : ""} ${
-                            style?.strikethrough ? "line-through" : ""
+                        <th
+                          key={colLetter}
+                          className={`w-32 border border-[#E7E2DA] dark:border-zinc-800 py-1.5 text-[11px] font-bold ${
+                            isActiveCol
+                              ? "bg-emerald-100/80 dark:bg-emerald-950/60 text-[#107C41] dark:text-emerald-300"
+                              : "text-zinc-600 dark:text-zinc-400"
                           }`}
                         >
-                          {note && (
-                            <span className="absolute right-0 top-0 h-0 w-0 border-t-[6px] border-t-amber-500 border-l-[6px] border-l-transparent" />
-                          )}
-                          {isEditing ? (
-                            valOptions && !draftCellValue.startsWith("=") ? (
-                              <select
-                                value={draftCellValue}
-                                onChange={(e) => {
-                                  setCellRaw(key, e.target.value)
-                                  setEditingCellKey(null)
-                                }}
-                                onBlur={() => setEditingCellKey(null)}
-                                className="w-full h-full bg-white dark:bg-zinc-900 text-xs outline-none"
-                              >
-                                <option value="">Select...</option>
-                                {valOptions.map((opt) => (
-                                  <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                              </select>
-                            ) : (
-                              <input
-                                ref={inlineInputRef}
-                                type="text"
-                                value={draftCellValue}
-                                onChange={(e) => setDraftCellValue(e.target.value)}
-                                onBlur={() => commitInlineEdit()}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") { e.preventDefault(); commitInlineEdit("down") }
-                                  else if (e.key === "Tab") { e.preventDefault(); commitInlineEdit("right") }
-                                  else if (e.key === "Escape") { e.preventDefault(); setEditingCellKey(null) }
-                                }}
-                                className="w-full h-full bg-white dark:bg-zinc-900 text-[#0B1F3A] dark:text-white outline-none font-mono text-xs"
-                              />
-                            )
-                          ) : (
-                            <span className="block truncate">{displayVal}</span>
-                          )}
-                        </td>
+                          {colLetter}
+                        </th>
                       )
                     })}
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                </thead>
+              )}
+              <tbody>
+                {Array.from({ length: activeSheet.rowCount }).map((_, rIdx) => {
+                  if (autoFilterEnabled && colFilterQuery.trim() && rIdx > 0) {
+                    const ev = evaluatedMap[makeCellKey(colFilterCol, rIdx)]
+                    const text = String(ev?.value ?? "").toLowerCase()
+                    if (!text.includes(colFilterQuery.trim().toLowerCase())) return null
+                  }
+                  if (showCategorySlicer && slicerSelectedValue && rIdx > 0) {
+                    const evS = evaluatedMap[makeCellKey(effectiveSlicerCol, rIdx)]
+                    if (String(evS?.value ?? "").trim() !== slicerSelectedValue) return null
+                  }
+                  const isActiveRow = rIdx >= normRange.minRow && rIdx <= normRange.maxRow
+                  const isFrozenRow = Boolean(activeSheet.freezeRow1 && rIdx === 0)
+                  return (
+                    <tr
+                      key={rIdx}
+                      className={`${isFrozenRow ? "sticky top-[28px] z-10 shadow-xs " : ""}${
+                        pageBreakPreview && rIdx > 0 && rIdx % 8 === 0
+                          ? "border-b-2 border-dashed border-[#0B5CAD]/50"
+                          : ""
+                      }`}
+                    >
+                      {showHeadings && (
+                        <td
+                          className={`sticky left-0 z-10 border border-[#E7E2DA] dark:border-zinc-800 text-center text-[11px] font-bold ${
+                            isActiveRow
+                              ? "bg-emerald-100/80 dark:bg-emerald-950/60 text-[#107C41] dark:text-emerald-300"
+                              : "bg-[#FAF7F2] dark:bg-zinc-900 text-zinc-500"
+                          }`}
+                        >
+                          {rIdx + 1}
+                        </td>
+                      )}
+                      {Array.from({ length: activeSheet.colCount }).map((__, cIdx) => {
+                        const key = makeCellKey(cIdx, rIdx)
+                        const cell = activeSheet.cells[key]
+                        const ev = evaluatedMap[key]
+                        const isPrimarySel = selectedCell.col === cIdx && selectedCell.row === rIdx
+                        const isInRange =
+                          cIdx >= normRange.minCol &&
+                          cIdx <= normRange.maxCol &&
+                          rIdx >= normRange.minRow &&
+                          rIdx <= normRange.maxRow
+                        const isEditing = editingCellKey === key
+                        const isPrecedentHit = tracedPrecedents.includes(key)
+                        const isDependentHit = tracedDependents.includes(key)
+                        const style = cell?.style
+                        const displayVal = showFormulas
+                          ? cell?.raw || ""
+                          : formatEvaluatedValue(ev, style?.format || "general", style?.decimals)
+                        const defaultAlign =
+                          style?.align || (typeof ev?.numeric === "number" && !showFormulas ? "right" : "left")
+                        const condHit = (activeSheet.conditionalRules || []).find(
+                          (rule) => rule.col === cIdx && matchesConditionalRule(ev, rule.op, rule.target)
+                        )
+                        const note = activeSheet.comments?.[key]
+                        const valOptions = rIdx > 0 ? validationMap.get(cIdx) : undefined
+                        const isFrozenCol = Boolean(activeSheet.freezeColA && cIdx === 0)
 
-          {/* Live Embedded Sheet Charts Dock */}
+                        return (
+                          <td
+                            key={key}
+                            data-cell-key={key}
+                            title={note ? `Note: ${note}` : undefined}
+                            onClick={(e) => {
+                              if (editingCellKey && editingCellKey !== key) commitInlineEdit()
+                              if (paintedCellStyle) {
+                                pushHistoryAndApplySheet((sheet) => {
+                                  const next = { ...sheet.cells }
+                                  const existing = next[key] || { raw: "" }
+                                  next[key] = {
+                                    raw: existing.raw,
+                                    style: { ...paintedCellStyle },
+                                  }
+                                  return { ...sheet, cells: next }
+                                })
+                                setPaintedCellStyle(null)
+                                notify(`Painted style onto ${key}`)
+                              }
+                              if (e.shiftKey) setSelectionEnd({ col: cIdx, row: rIdx })
+                              else { setSelectedCell({ col: cIdx, row: rIdx }); setSelectionEnd(null) }
+                            }}
+                            onDoubleClick={() => { if (!sheetProtected) beginEdit(cIdx, rIdx) }}
+                            style={{
+                              backgroundColor: condHit?.bg || style?.bg || (isInRange && !isPrimarySel ? "#ECFDF5" : undefined),
+                              color: ev?.error ? "#DC2626" : condHit?.color || style?.color,
+                              textAlign: defaultAlign,
+                              borderBottom:
+                                style?.border === "bottom" || style?.border === "topBottom"
+                                  ? "2px solid #0B1F3A"
+                                  : undefined,
+                              borderTop: style?.border === "topBottom" ? "2px solid #0B1F3A" : undefined,
+                            }}
+                            className={`relative ${rowDensity === "compact" ? "h-6 text-[11px]" : "h-8"} px-2 cursor-cell ${
+                              style?.wrapText ? "whitespace-normal break-words" : "truncate"
+                            } ${isFrozenCol ? "sticky left-[44px] z-10" : ""} ${
+                              pageBreakPreview && cIdx > 0 && cIdx % 5 === 0
+                                ? "border-r-2 border-r-[#0B5CAD]/45"
+                                : ""
+                            } ${
+                              isPrimarySel
+                                ? "border-2 border-[#107C41] ring-1 ring-[#107C41]/30 z-10 bg-white dark:bg-zinc-900"
+                                : isPrecedentHit
+                                ? "ring-2 ring-[#0B5CAD] bg-sky-50/70 z-10"
+                                : isDependentHit
+                                ? "ring-2 ring-amber-500 bg-amber-50/70 z-10"
+                                : showGridlines
+                                ? style?.border === "all" || style?.border === "box"
+                                  ? "border border-zinc-600"
+                                  : "border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-950"
+                                : "border border-transparent bg-white dark:bg-zinc-950"
+                            } ${style?.bold ? "font-bold" : "font-normal"} ${
+                              style?.italic ? "italic" : ""
+                            } ${style?.underline ? "underline" : ""} ${
+                              style?.strikethrough ? "line-through" : ""
+                            }`}
+                          >
+                            {note && (
+                              <span className="absolute right-0 top-0 h-0 w-0 border-t-[6px] border-t-amber-500 border-l-[6px] border-l-transparent" />
+                            )}
+                            {isEditing ? (
+                              valOptions && !draftCellValue.startsWith("=") ? (
+                                <select
+                                  value={draftCellValue}
+                                  onChange={(e) => {
+                                    setCellRaw(key, e.target.value)
+                                    setEditingCellKey(null)
+                                  }}
+                                  onBlur={() => setEditingCellKey(null)}
+                                  className="w-full h-full bg-white dark:bg-zinc-900 text-xs outline-none"
+                                >
+                                  <option value="">Select...</option>
+                                  {valOptions.map((opt) => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input
+                                  ref={inlineInputRef}
+                                  type="text"
+                                  value={draftCellValue}
+                                  onChange={(e) => setDraftCellValue(e.target.value)}
+                                  onBlur={() => commitInlineEdit()}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") { e.preventDefault(); commitInlineEdit("down") }
+                                    else if (e.key === "Tab") { e.preventDefault(); commitInlineEdit("right") }
+                                    else if (e.key === "Escape") { e.preventDefault(); setEditingCellKey(null) }
+                                  }}
+                                  className="w-full h-full bg-white dark:bg-zinc-900 text-[#0B1F3A] dark:text-white outline-none font-mono text-xs"
+                                />
+                              )
+                            ) : (
+                              <span className="block truncate">{displayVal}</span>
+                            )}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+
+            {/* Inline SVG Row Sparklines Dock */}
+            {showSparklines && (
+              <div className="p-4 border-t border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-extrabold text-[#0B1F3A] dark:text-white flex items-center gap-1.5">
+                    <TrendingUp className="h-3.5 w-3.5 text-[#107C41]" />
+                    Inline Row Sparklines
+                  </span>
+                  <div className="inline-flex rounded-lg border border-[#E7E2DA] p-0.5 gap-0.5 text-[11px] font-bold">
+                    {(["line", "column", "winloss"] as const).map((sp) => (
+                      <button
+                        key={sp}
+                        type="button"
+                        onClick={() => setSparklineStyle(sp)}
+                        className={`rounded-md px-2 py-0.5 capitalize cursor-pointer ${
+                          sparklineStyle === sp ? "bg-[#107C41] text-white" : "text-zinc-600"
+                        }`}
+                      >
+                        {sp === "winloss" ? "Win/Loss" : sp}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {sparklineItems.length === 0 ? (
+                  <p className="text-xs text-zinc-500">Add 2+ numeric columns across rows to plot inline sparklines.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                    {sparklineItems.map((sp) => {
+                      const span = Math.max(1, sp.max - sp.min)
+                      const pts = sp.values
+                        .map((v, i) => {
+                          const x = sp.values.length > 1 ? (i / (sp.values.length - 1)) * 110 + 5 : 60
+                          const y = 30 - ((v - sp.min) / span) * 24
+                          return `${x.toFixed(1)},${y.toFixed(1)}`
+                        })
+                        .join(" ")
+                      return (
+                        <div key={sp.label} className="rounded-xl border border-[#E7E2DA] bg-[#FAF7F2] dark:bg-zinc-950 px-3 py-2 flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-[#0B1F3A] dark:text-white truncate">{sp.label}</p>
+                            <p className="text-[10.5px] font-mono text-[#107C41]">
+                              {sp.deltaPct >= 0 ? `+${sp.deltaPct}%` : `${sp.deltaPct}%`} range
+                            </p>
+                          </div>
+                          <svg width="120" height="36" viewBox="0 0 120 36" className="shrink-0">
+                            {sparklineStyle === "line" ? (
+                              <polyline
+                                fill="none"
+                                stroke="#107C41"
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                points={pts}
+                              />
+                            ) : (
+                              sp.values.map((v, i) => {
+                                const bw = Math.max(6, Math.floor(96 / sp.values.length))
+                                const x = 8 + i * (bw + 4)
+                                const h =
+                                  sparklineStyle === "winloss"
+                                    ? 14
+                                    : Math.max(4, Math.round(((v - sp.min) / span) * 26))
+                                const y = 32 - h
+                                return (
+                                  <rect
+                                    key={i}
+                                    x={x}
+                                    y={y}
+                                    width={bw}
+                                    height={h}
+                                    rx="2"
+                                    fill={sparklineStyle === "winloss" && v <= 0 ? "#DC2626" : "#107C41"}
+                                  />
+                                )
+                              })
+                            )}
+                          </svg>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Live Embedded Sheet Charts Dock */}
           {activeSheet.charts && activeSheet.charts.length > 0 && (
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-900">
               {activeSheet.charts.map((chart) => {
@@ -1960,6 +2881,21 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
                 )
               })}
             </div>
+          )}
+          </div>
+
+          {showNoctisPanel && activeWorkbook && (
+            <ConnectLnSheetsNoctisPanel
+              workbookTitle={activeWorkbook.title}
+              sheet={activeSheet}
+              evaluatedMap={evaluatedMap}
+              selectedKey={selectedKey}
+              user={user}
+              initialPrompt={noctisInitialPrompt}
+              onClose={() => setShowNoctisPanel(false)}
+              onInsertFormula={(formula) => setCellRaw(selectedKey, formula)}
+              onNotify={notify}
+            />
           )}
         </div>
 
@@ -2169,6 +3105,134 @@ export function ConnectLnSheetsEditor({ user, onShareToFeed, onSendToInvoice }: 
           onTriggerPrint={() => setShowPrintModal(true)}
           onTriggerExportPrimary={() => handleExport("xlsx")}
         />
+      )}
+
+      {/* Workbook Statistics Modal */}
+      {showStatsModal && (
+        <div
+          role="dialog"
+          aria-label="ConnectLn Workbook Statistics"
+          className="fixed inset-0 z-[105] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
+        >
+          <div className="w-full max-w-sm rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-2xl space-y-3">
+            <div className="flex items-center justify-between border-b border-[#E7E2DA] dark:border-zinc-800 pb-2">
+              <h3 className="text-sm font-extrabold text-[#0B1F3A] dark:text-white">
+                Workbook Statistics
+              </h3>
+              <button type="button" aria-label="Close Workbook Statistics" onClick={() => setShowStatsModal(false)} className="p-1 rounded cursor-pointer"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-1.5 text-xs">
+              {[
+                ["Worksheet Tabs", workbookStats.sheetCount],
+                ["Populated Cells", workbookStats.populatedCells],
+                ["Live Formula Cells", workbookStats.formulaCells],
+                ["Numeric Cells", workbookStats.numericCells],
+                ["Text Label Cells", workbookStats.textCells],
+                ["Cell Audit Notes", workbookStats.commentCount],
+                ["Embedded Charts", workbookStats.chartCount],
+              ].map(([k, v]) => (
+                <div key={String(k)} className="flex justify-between py-1 border-b border-zinc-100 dark:border-zinc-800">
+                  <span className="text-zinc-500">{k}</span>
+                  <strong className="text-[#0B1F3A] dark:text-white">{v}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sheets Accessibility Audit Modal */}
+      {showA11yModal && (
+        <div
+          role="dialog"
+          aria-label="ConnectLn Sheets Accessibility Audit"
+          className="fixed inset-0 z-[105] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E7E2DA] dark:border-zinc-800 pb-3">
+              <div>
+                <h3 className="text-sm font-extrabold text-[#0B1F3A] dark:text-white flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  Sheet Accessibility Audit
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  Readiness score: <strong className="text-[#107C41]">{a11yReport.score}%</strong>
+                </p>
+              </div>
+              <button type="button" aria-label="Close Sheets Accessibility Audit" onClick={() => setShowA11yModal(false)} className="p-1 rounded-lg hover:bg-zinc-100 cursor-pointer"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-2">
+              {a11yReport.checks.map((chk) => (
+                <div
+                  key={chk.title}
+                  className={`rounded-xl border p-3 text-xs space-y-1 ${
+                    chk.status === "pass"
+                      ? "border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20"
+                      : "border-amber-200 bg-amber-50/60 dark:bg-amber-950/20"
+                  }`}
+                >
+                  <p className="font-extrabold text-[#0B1F3A] dark:text-white">
+                    {chk.status === "pass" ? "PASS · " : "CHECK · "}
+                    {chk.title}
+                  </p>
+                  <p className="text-zinc-600 dark:text-zinc-300">{chk.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sheets Help & Quick Guide Modal */}
+      {showHelpModal && (
+        <div
+          role="dialog"
+          aria-label="ConnectLn Sheets Help and Shortcuts"
+          className="fixed inset-0 z-[105] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E7E2DA] dark:border-zinc-800 pb-3">
+              <h3 className="text-sm font-extrabold text-[#0B1F3A] dark:text-white flex items-center gap-1.5">
+                <HelpCircle className="h-4 w-4 text-[#107C41]" />
+                ConnectLn Sheets Quick Guide &amp; Help
+              </h3>
+              <button type="button" aria-label="Close Sheets Help" onClick={() => setShowHelpModal(false)} className="p-1 rounded-lg hover:bg-zinc-100 cursor-pointer"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-2 text-xs">
+              {[
+                ["Noctis Pill", "Explain formulas, suggest functions, and get KPI briefs"],
+                ["Ctrl / Cmd + D", "Fill Down formula or value into selected rows"],
+                ["Insert → Pivot Summary", "Generate an interactive summary rollup tab"],
+                ["Formulas → Trace Precedents", "Highlight formula inputs and dependent cells"],
+                ["Data → What-If Forecast", "Insert growth-adjusted projection columns"],
+                ["Ctrl / Cmd + P", "Print gridlines, multi-sheet PDF, and charts"],
+              ].map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between gap-2 rounded-xl bg-[#FAF7F2] dark:bg-zinc-950 px-3 py-2">
+                  <kbd className="font-mono font-bold text-[#107C41]">{k}</kbd>
+                  <span className="text-zinc-600 dark:text-zinc-300 text-right">{v}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#E7E2DA] dark:border-zinc-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowHelpModal(false)
+                  setShowHubDrawer(true)
+                }}
+                className="rounded-xl bg-[#0B1F3A] text-white px-3 py-1.5 text-xs font-bold cursor-pointer"
+              >
+                Open Studio Hub &amp; Tours
+              </button>
+              <Link
+                href="/connectin-portal#download-app"
+                className="text-xs font-extrabold text-[#107C41] hover:underline"
+              >
+                Get ConnectLn Mobile App →
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
