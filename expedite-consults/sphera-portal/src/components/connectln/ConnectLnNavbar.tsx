@@ -568,11 +568,11 @@ export function ConnectLnNavbar({
         </div>
       )}
 
-      {/* Top Header: Office 365 App Launcher, Brand Logo, Spacious Search Pill & Clean Right Actions */}
+      {/* Top Header: ConnectLn 360 App Launcher, Brand Logo, Spacious Search Pill & Clean Right Actions */}
       <div className="mx-auto flex min-h-[56px] h-[56px] lg:h-[52px] max-w-[1600px] items-center justify-between px-2.5 sm:px-4 gap-2">
         {/* Left Side: 9-Dot App Launcher (Desktop), Mobile Menu Drawer Button, Brand Logo & Search Input */}
         <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1 lg:flex-initial lg:shrink-0">
-          {/* Far-Left Office 365 9-Dot App Launcher (lg+) */}
+          {/* Far-Left ConnectLn 360 9-Dot App Launcher (lg+) */}
           <div ref={appLauncherRef} className="hidden lg:block relative shrink-0">
             <button
               type="button"
@@ -586,8 +586,8 @@ export function ConnectLnNavbar({
                   ? "bg-[#0067B8] text-white shadow-xs"
                   : "text-[#0B1F3A] hover:bg-[#FAF7F2] dark:text-zinc-200 dark:hover:bg-zinc-800"
               }`}
-              title="ConnectLn 365 App Launcher"
-              aria-label="Open ConnectLn 365 App Launcher"
+              title="ConnectLn 360 App Launcher"
+              aria-label="Open ConnectLn 360 App Launcher"
             >
               <Grid3X3 strokeWidth={1.9} className="h-5 w-5" />
             </button>
@@ -596,7 +596,7 @@ export function ConnectLnNavbar({
               <div className="absolute left-0 top-11 z-[60] w-[356px] rounded-2xl border border-[#E7E2DA] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-[0_24px_60px_rgba(11,31,58,0.16)] animate-in fade-in zoom-in-95 space-y-3">
                 <div className="flex items-center justify-between border-b border-[#EFECE6] dark:border-zinc-800 pb-2.5">
                   <span className="text-xs font-extrabold tracking-tight text-[#0B1F3A] dark:text-zinc-100">
-                    ConnectLn 365 Apps
+                    ConnectLn 360 Apps
                   </span>
                   <button
                     type="button"
@@ -667,7 +667,7 @@ export function ConnectLnNavbar({
                 >
                   <span className="flex items-center gap-2">
                     <Download className="h-3.5 w-3.5 text-[#0067B8]" />
-                    <span>ConnectLn 365 Portal &amp; Mobile App</span>
+                    <span>ConnectLn 360 Portal &amp; Mobile App</span>
                   </span>
                   <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
                 </Link>
@@ -693,7 +693,7 @@ export function ConnectLnNavbar({
           <button
             onClick={() => onSelectTab('home')}
             className="flex items-center gap-1.5 focus:outline-none group shrink-0 cursor-pointer"
-            title="ConnectLn 365 Home"
+            title="ConnectLn 360 Home"
           >
             <ConnectInLogo size="sm" showSubtitle={false} compactOnMobile className="shrink-0" />
           </button>
@@ -720,7 +720,7 @@ export function ConnectLnNavbar({
             </span>
           </button>
 
-          {/* Spacious Office 365 Desktop Search Bar */}
+          {/* Spacious ConnectLn 360 Desktop Search Bar */}
           <div className="hidden lg:block relative w-[270px] xl:w-[370px] 2xl:w-[440px] ml-2 transition-all duration-200">
             <div
               className={`flex h-[36px] items-center gap-2 rounded-full bg-[#FAF7F2] px-3.5 transition-all dark:bg-zinc-900 border ${
@@ -1088,16 +1088,16 @@ export function ConnectLnNavbar({
           )}
         </div>
 
-        {/* Right Office 365 Utility Bar (Primary sections live cleanly in the Left Rail & 9-Dot App Launcher on lg+) */}
+        {/* Right ConnectLn 360 Utility Bar (Primary sections live cleanly in the Left Rail & 9-Dot App Launcher on lg+) */}
         <div className="flex items-center gap-1 xl:gap-1.5 ml-auto shrink-0">
           <nav className="hidden lg:flex items-center h-[52px] gap-1.5 shrink-0">
             <Link
               href="/connectin-portal#download-app"
               className="hidden xl:inline-flex items-center gap-1.5 rounded-full border border-[#E7E2DA] dark:border-zinc-700 bg-[#FAF7F2] dark:bg-zinc-900 hover:border-[#0067B8] px-3 py-1.5 text-xs font-bold text-[#0B1F3A] dark:text-zinc-200 transition-colors shrink-0"
-              title="Open ConnectLn 365 Portal & Mobile Downloads"
+              title="Open ConnectLn 360 Portal & Mobile Downloads"
             >
               <Download className="h-3.5 w-3.5 text-[#0067B8]" />
-              <span>365 Portal</span>
+              <span>360 Portal</span>
             </Link>
 
             <button
@@ -1314,7 +1314,7 @@ export function ConnectLnNavbar({
                         <span>Help</span>
                       </button>
 
-                      {/* ConnectLn 365 Portal & Mobile Downloads */}
+                      {/* ConnectLn 360 Portal & Mobile Downloads */}
                       <Link
                         href="/connectin-portal#download-app"
                         onClick={() => setIsMeOpen(false)}
@@ -1322,7 +1322,7 @@ export function ConnectLnNavbar({
                       >
                         <div className="flex items-center gap-3">
                           <Download className="h-5 w-5 shrink-0" />
-                          <span>365 Portal &amp; Mobile App</span>
+                          <span>360 Portal &amp; Mobile App</span>
                         </div>
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-[#0067B8] dark:text-sky-300">
                           APK/iOS
@@ -2655,7 +2655,7 @@ export function ConnectLnNavbar({
                   onClick={() => setIsMobileDrawerOpen(false)}
                   className="w-full flex items-center justify-between p-2 rounded-xl bg-sky-50/80 dark:bg-sky-950/30 hover:bg-sky-100/80 text-xs font-bold text-[#0067B8] dark:text-sky-300 border border-sky-200/70 dark:border-sky-800/60"
                 >
-                  <span className="flex items-center gap-1.5">📲 365 Portal &amp; Mobile App (APK / iOS)</span>
+                  <span className="flex items-center gap-1.5">📲 360 Portal &amp; Mobile App (APK / iOS)</span>
                   <span>→</span>
                 </Link>
                 {isAdminUser && (

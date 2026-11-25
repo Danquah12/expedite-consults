@@ -38,7 +38,7 @@ const PORTAL_QR_PATH =
 const NAV_LINKS = [
   { href: "#overview", label: "Overview" },
   { href: "#noctis-ai", label: "Noctis AI" },
-  { href: "#tour", label: "Take the tour" },
+  { href: "#tour", label: "Preview" },
   { href: "#plans", label: "Plans" },
   { href: "#download-app", label: "Download" },
   { href: "#mobile-app", label: "Mobile App" },
@@ -46,7 +46,7 @@ const NAV_LINKS = [
   { href: "#faq", label: "FAQ" },
 ]
 
-const HERO_TABS = ["Key benefits", "Unified Comms", "Noctis AI"] as const
+const HERO_TABS = ["Core Capabilities", "Unified Comms", "Noctis AI"] as const
 type HeroTab = (typeof HERO_TABS)[number]
 
 const OVERVIEW_FEATURES: Array<{
@@ -60,10 +60,10 @@ const OVERVIEW_FEATURES: Array<{
 }> = [
   {
     id: "together",
-    tab: "Key benefits",
-    title: "Together in one place",
-    body: "See everything you need to run your workday in a single Office-style portal. Manage messages, voice & video meetings, jobs, courses, and client proposals from one clean home.",
-    previewTitle: "ConnectLn 365 · Inbox & Workspace",
+    tab: "Core Capabilities",
+    title: "Everything your workday needs, unified",
+    body: "See everything you need to run your workday inside a single connected portal. Manage messages, voice & video meetings, jobs, courses, and client proposals from one clean home.",
+    previewTitle: "ConnectLn 360 · Inbox & Workspace",
     previewBadge: "Live Sync",
     previewRows: [
       { sender: "Project Dispatch", subject: "Electrical inspection schedule confirmed", time: "9:14 AM", tag: "Mail" },
@@ -86,7 +86,7 @@ const OVERVIEW_FEATURES: Array<{
   },
   {
     id: "profession",
-    tab: "Key benefits",
+    tab: "Core Capabilities",
     title: "Tailored to your profession on login",
     body: "Whether you are a registered nurse, master electrician, software architect, or contractor, ConnectLn adapts your training reels, jobs board, and peer communities automatically.",
     previewTitle: "Profession-Matched Workspace",
@@ -102,7 +102,7 @@ const OVERVIEW_FEATURES: Array<{
     tab: "Noctis AI",
     title: "Noctis AI inbox triage & smart drafts",
     body: "Ask Noctis AI to summarize long message threads, draft client estimates, prioritize urgent replies, or recommend high-fit jobs and upskilling modules.",
-    previewTitle: "Ask Noctis AI · Executive Copilot",
+    previewTitle: "Ask Noctis AI · Executive Assistant",
     previewBadge: "Ready",
     previewRows: [
       { sender: "Thread Summary", subject: "3 action items extracted from vendor chat", time: "Just now", tag: "AI" },
@@ -199,36 +199,36 @@ const PROMPT_CARDS: Record<
 const TOUR_TABS = [
   {
     id: "comms",
-    title: "Message & Call like a pro",
+    title: "Communicate without friction",
     heading: "Unified inbox, 1-click group video & mobile calling",
     caption:
       "Switch smoothly between formatted threads, scheduled team meetings, and live WebRTC group calls without leaving your workspace.",
     composeTo: "ops-team@expedite-consults.com",
     composeSubject: "Q4 Dispatch & Site Kickoff",
     composePreview: "Hi team — shared the updated inspection checklist in our room and scheduled our 10:00 AM group call.",
-    copilotSuggestion: "Help me finalize the agenda and invite everyone to the room",
+    aiSuggestion: "Help me finalize the agenda and invite everyone to the room",
   },
   {
     id: "noctis",
-    title: "Work with Noctis AI",
+    title: "Collaborate with Noctis AI",
     heading: "Side-by-side AI drafting, summaries & profession intelligence",
     caption:
       "Noctis AI sits neatly alongside your inbox and calendar so you can draft replies, search credentials, or summarize threads in seconds.",
     composeTo: "hiring-lead@conectln.com",
     composeSubject: "Shortlist Review: Senior Field Engineers",
     composePreview: "Three verified candidates completed peer vouches and match 95%+ of the site safety requirements.",
-    copilotSuggestion: "Compare top 3 applicants and draft interview invites",
+    aiSuggestion: "Compare top 3 applicants and draft interview invites",
   },
   {
     id: "apps",
-    title: "Use ConnectLn 365 Apps",
+    title: "Switch Across ConnectLn 360 Apps",
     heading: "One launcher for Jobs, Academy, Marketplace & Business Hub",
     caption:
       "Jump between any ConnectLn module via the 9-dot App Launcher or slim desktop rail without losing your place.",
     composeTo: "procurement@conectln.com",
     composeSubject: "RFP Package Submitted · Escrow Milestone #2",
     composePreview: "Deliverables uploaded to the Business Workspace along with signed verification certificates.",
-    copilotSuggestion: "Generate milestone summary and notify the buyer",
+    aiSuggestion: "Generate milestone summary and notify the buyer",
   },
 ]
 
@@ -262,7 +262,7 @@ const PLAN_TIERS = {
       strikePrice: "$99.99",
       highlight: true,
       badge: "Recommended",
-      description: "Full Noctis AI Copilot, CareerSuite interview coach, HD call recording & recaps, and priority jobs matching.",
+      description: "Full Noctis AI Assistant, CareerSuite interview coach, HD call recording & recaps, and priority jobs matching.",
       cta: "Start Pro Trial",
     },
     {
@@ -305,7 +305,7 @@ const PLAN_TIERS = {
       strikePrice: "$299.00",
       highlight: true,
       badge: "Best Value",
-      description: "Everything in Standard plus Noctis AI Executive Copilot, FIDO2 passkey enforcement, and multi-org IAM.",
+      description: "Everything in Standard plus Noctis AI Executive Advisor, FIDO2 passkey enforcement, and multi-org IAM.",
       cta: "Upgrade Team",
     },
     {
@@ -389,7 +389,7 @@ const TIPS_ITEMS = [
   },
   {
     cat: "Tech & Cyber",
-    tag: "Office 365 Workflow",
+    tag: "ConnectLn 360 Workflow",
     title: "Switch between Mail, Calls, Calendar, Jobs & RFPs from the 9-dot App Launcher",
     desc: "Zero tab overload — pin your everyday workspace tools on the slim desktop rail while keeping Full Menu one tap away.",
     accent: "from-amber-500 to-orange-600",
@@ -410,8 +410,8 @@ const FAQ_ITEMS = [
     a: "When you select your profession during registration or sign in, ConnectLn automatically routes relevant trade, clinical, or engineering videos, jobs, and peer enclaves to your workspace.",
   },
   {
-    q: "Do I keep my existing messages, contacts, and profile after the Office 365 redesign?",
-    a: "Yes. The ConnectLn 365 portal and shell run on the same live MongoDB/Firebase backend, so every contact, call history, saved post, and profile stays right where you left it.",
+    q: "Do I keep my existing messages, contacts, and profile in the new ConnectLn 360 workspace?",
+    a: "Yes. The ConnectLn 360 portal and workspace run on the same live MongoDB/Firebase backend, so every contact, call history, saved post, and profile stays right where you left it.",
   },
   {
     q: "Can I use ConnectLn for free without a paid subscription?",
@@ -423,8 +423,8 @@ const FAQ_ITEMS = [
   },
 ]
 
-export function ConnectLn365PortalLanding() {
-  const [activeHeroTab, setActiveHeroTab] = useState<HeroTab>("Key benefits")
+export function ConnectLn360PortalLanding() {
+  const [activeHeroTab, setActiveHeroTab] = useState<HeroTab>("Core Capabilities")
   const [activeAccordionId, setActiveAccordionId] = useState<string>("together")
   const [promptCat, setPromptCat] = useState<keyof typeof PROMPT_CARDS>("Messages & Calls")
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null)
@@ -468,7 +468,7 @@ export function ConnectLn365PortalLanding() {
       className="min-h-screen bg-[#FAF7F2] text-[#0B1F3A] font-sans selection:bg-[#0067B8] selection:text-white"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      {/* ─── 1. FLOATING PILL STICKY M365 PORTAL HEADER ─── */}
+      {/* ─── 1. FLOATING PILL STICKY CONNECTLN 360 PORTAL HEADER ─── */}
       <header
         className="sticky top-0 z-50 w-full px-3 sm:px-6 pt-3 pb-2"
         style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 12px)" }}
@@ -477,7 +477,7 @@ export function ConnectLn365PortalLanding() {
           <Link href="/connectin-portal" className="shrink-0 flex items-center gap-2">
             <ConnectInLogo size="sm" showSubtitle={false} />
             <span className="hidden sm:inline-flex items-center rounded-full bg-[#FAF7F2] border border-[#E7E2DA] px-2 py-0.5 text-[11px] font-bold text-[#0067B8]">
-              365 Portal
+              360 Portal
             </span>
           </Link>
 
@@ -516,10 +516,10 @@ export function ConnectLn365PortalLanding() {
       {/* ─── 2. OVERVIEW HERO + INTERACTIVE ACCORDION + PREVIEW FRAME ─── */}
       <section id="overview" className="mx-auto max-w-6xl px-4 sm:px-8 pt-10 sm:pt-14 pb-16">
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4B5563]">
-          OVERVIEW · CONNECTLN 365 WORKSPACE
+          OVERVIEW · CONNECTLN 360 WORKSPACE
         </p>
         <h1 className="mt-2 max-w-3xl text-3xl sm:text-5xl font-semibold tracking-tight text-[#0B1F3A] leading-[1.12]">
-          Your ConnectLn workspace can change everything
+          One unified command center for your entire profession
         </h1>
 
         <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -607,7 +607,7 @@ export function ConnectLn365PortalLanding() {
                   </span>
                 </div>
                 <div className="grid grid-cols-12 min-h-[230px]">
-                  {/* Mini Office Rail */}
+                  {/* Mini Workspace Rail */}
                   <div className="col-span-2 bg-[#FAF7F2] border-r border-[#E7E2DA] py-3 flex flex-col items-center gap-3 text-[#4B5563]">
                     <Mail className="h-4 w-4 text-[#0067B8]" />
                     <PhoneCall className="h-4 w-4" />
@@ -667,10 +667,10 @@ export function ConnectLn365PortalLanding() {
       {/* ─── 3. NOCTIS AI PROMPT CARDS CAROUSEL ─── */}
       <section id="noctis-ai" className="mx-auto max-w-6xl px-4 sm:px-8 py-14 border-t border-[#E7E2DA]">
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4B5563]">
-          WAYS TO USE NOCTIS AI
+          NOCTIS AI WORKFLOWS
         </p>
         <h2 className="mt-2 text-2xl sm:text-4xl font-semibold tracking-tight text-[#0B1F3A]">
-          Stay on top of messages, calls &amp; career moves with Noctis AI
+          Accelerate client replies, calls &amp; career moves with Noctis AI
         </h2>
         <p className="mt-2 text-sm text-[#4B5563]">
           Copy any prompt below and run it inside ConnectLn Ask Noctis after signing in.
@@ -716,7 +716,7 @@ export function ConnectLn365PortalLanding() {
                   <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 text-[#0067B8]">
                     <Icon className="h-5 w-5" />
                   </div>
-                  <p className="mt-4 text-[11px] font-semibold text-[#6B7280]">Prompt idea:</p>
+                  <p className="mt-4 text-[11px] font-semibold text-[#6B7280]">Sample workflow:</p>
                   <h3 className="mt-0.5 text-base font-bold text-[#0B1F3A]">{card.title}</h3>
                   <p className="mt-2 text-xs leading-relaxed text-[#4B5563]">
                     &ldquo;{card.prompt}&rdquo;
@@ -738,8 +738,12 @@ export function ConnectLn365PortalLanding() {
         <div className="mt-5 flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setActiveTourIdx((prev) => (prev - 1 + TOUR_TABS.length) % TOUR_TABS.length)}
-            aria-label="Previous prompt set"
+            onClick={() => {
+              const cats = Object.keys(PROMPT_CARDS) as Array<keyof typeof PROMPT_CARDS>
+              const prevIdx = (cats.indexOf(promptCat) - 1 + cats.length) % cats.length
+              setPromptCat(cats[prevIdx])
+            }}
+            aria-label="Previous prompt category"
             className="h-9 w-9 rounded-full border border-[#D4CEC3] bg-white hover:bg-[#F3EFE8] flex items-center justify-center text-[#0B1F3A] cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -759,17 +763,17 @@ export function ConnectLn365PortalLanding() {
         </div>
       </section>
 
-      {/* ─── 4. TAKE THE TOUR — SEE CONNECTLN IN ACTION ─── */}
+      {/* ─── 4. INTERACTIVE PREVIEW — EXPLORE CONNECTLN 360 IN ACTION ─── */}
       <section
         id="tour"
         className="relative overflow-hidden py-16 border-t border-[#E7E2DA] bg-gradient-to-b from-[#FAF7F2] via-[#F7EFEA] to-[#FAF7F2]"
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-8 text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4B5563]">
-            TAKE THE TOUR
+            INTERACTIVE PREVIEW
           </p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-tight text-[#0B1F3A]">
-            See ConnectLn 365 in Action
+            Explore ConnectLn 360 in Action
           </h2>
           <p className="mt-2 max-w-xl mx-auto text-sm text-[#4B5563]">
             One clean command center for email-grade threads, HD group calls, job leads, and your industry network — on desktop, iOS, and Android.
@@ -810,7 +814,7 @@ export function ConnectLn365PortalLanding() {
                   <span className="h-1 w-1 rounded-full bg-rose-500" />
                   <span className="h-1 w-1 rounded-full bg-[#0B1F3A]" />
                 </div>
-                <span className="text-xs font-bold text-[#0B1F3A]">ConnectLn 365</span>
+                <span className="text-xs font-bold text-[#0B1F3A]">ConnectLn 360</span>
               </div>
               <span className="text-[11px] font-medium text-[#6B7280] hidden sm:inline">
                 Home · Mail · Calls · Jobs · Business
@@ -842,14 +846,14 @@ export function ConnectLn365PortalLanding() {
                 </div>
               </div>
 
-              {/* Right Noctis Copilot Pane */}
+              {/* Right Noctis AI Pane */}
               <div className="md:col-span-4 p-4 sm:p-5 bg-[#FAF7F2]/60 space-y-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-[#0067B8]" />
-                  <span className="text-xs font-bold text-[#0B1F3A]">What can I help with?</span>
+                  <span className="text-xs font-bold text-[#0B1F3A]">Noctis AI Assistant</span>
                 </div>
                 <div className="rounded-xl border border-[#E7E2DA] bg-white p-3 text-xs text-[#0B1F3A] font-medium shadow-2xs">
-                  {currentTour.copilotSuggestion}
+                  {currentTour.aiSuggestion}
                 </div>
                 <Link
                   href="/connectin-login"
@@ -985,7 +989,7 @@ export function ConnectLn365PortalLanding() {
               </div>
               <h3 className="mt-4 text-lg font-bold text-[#0B1F3A]">Android (Direct APK)</h3>
               <p className="mt-1.5 text-xs leading-relaxed text-[#4B5563]">
-                Download the native Android package (`connectln.apk`) with safe-area layouts, incoming call ring alerts, and zero shared session leaks.
+                Download the native Android package (connectln.apk) with safe-area layouts, incoming call ring alerts, and zero shared session leaks.
               </p>
             </div>
             <a
@@ -1027,7 +1031,7 @@ export function ConnectLn365PortalLanding() {
               </div>
               <h3 className="mt-4 text-lg font-bold text-[#0B1F3A]">Web Portal</h3>
               <p className="mt-1.5 text-xs leading-relaxed text-[#4B5563]">
-                Sign straight in from any modern browser to access the full Office-style ConnectLn 365 suite without installing anything.
+                Sign straight in from any modern browser to access the full ConnectLn 360 suite without installing anything.
               </p>
             </div>
             <Link
@@ -1085,7 +1089,7 @@ export function ConnectLn365PortalLanding() {
       <section id="mobile-app" className="w-full bg-[#1E355E] py-16 px-4 sm:px-8 text-center text-white">
         <div className="mx-auto max-w-3xl">
           <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">
-            Get the ConnectLn mobile app
+            Take ConnectLn everywhere on mobile
           </h2>
           <p className="mt-2.5 text-sm text-sky-100">
             Scan the QR code below on your iPhone or Android camera to open the portal &amp; mobile downloads right on your phone.
@@ -1097,7 +1101,7 @@ export function ConnectLn365PortalLanding() {
               width={180}
               height={180}
               role="img"
-              aria-label="QR Code for ConnectLn 365 Portal"
+              aria-label="QR Code for ConnectLn 360 Portal"
               className="block"
             >
               <path d={PORTAL_QR_PATH} fill="#0B1F3A" fillRule="nonzero" />
@@ -1124,12 +1128,12 @@ export function ConnectLn365PortalLanding() {
         </div>
       </section>
 
-      {/* ─── 8. CONNECTLN 365 SUITE APPS ─── */}
+      {/* ─── 8. CONNECTLN 360 SUITE APPS ─── */}
       <section id="suite" className="mx-auto max-w-6xl px-4 sm:px-8 py-16">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4B5563]">
-              CONNECTLN 365 SUITE
+              CONNECTLN 360 SUITE
             </p>
             <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-tight text-[#0B1F3A]">
               Explore every connected ConnectLn workspace app
@@ -1186,7 +1190,7 @@ export function ConnectLn365PortalLanding() {
             NEWS &amp; TIPS
           </p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-tight text-[#0B1F3A]">
-            Get the latest from ConnectLn 365
+            Latest updates &amp; guides from ConnectLn 360
           </h2>
 
           <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -1311,7 +1315,7 @@ export function ConnectLn365PortalLanding() {
         <div className="mx-auto max-w-6xl flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <ConnectInLogo size="xs" showSubtitle={false} />
-            <span className="font-semibold text-[#0B1F3A]">ConnectLn 365 Portal</span>
+            <span className="font-semibold text-[#0B1F3A]">ConnectLn 360 Portal</span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link href="/connectin-login" className="hover:underline">Sign in</Link>

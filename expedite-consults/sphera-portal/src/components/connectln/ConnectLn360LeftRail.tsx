@@ -18,7 +18,7 @@ import {
   ShieldCheck,
 } from "lucide-react"
 
-interface ConnectLn365LeftRailProps {
+interface ConnectLn360LeftRailProps {
   activeTab: string
   onSelectTab: (tabId: string) => void
   unreadMessagesCount?: number
@@ -44,16 +44,16 @@ const RAIL_ITEMS: Array<{
   { id: "workbusiness", label: "Business", icon: Building2, accentClass: "text-[#0B1F3A] dark:text-zinc-200" },
 ]
 
-export function ConnectLn365LeftRail({
+export function ConnectLn360LeftRail({
   activeTab,
   onSelectTab,
   unreadMessagesCount = 0,
   onOpenAIAssistant,
   isAdminUser = false,
-}: ConnectLn365LeftRailProps) {
+}: ConnectLn360LeftRailProps) {
   return (
     <aside
-      aria-label="ConnectLn 365 App Rail"
+      aria-label="ConnectLn 360 App Rail"
       className="hidden lg:flex fixed left-0 top-[52px] bottom-0 z-40 w-[68px] flex-col justify-between border-r border-[#E7E2DA] dark:border-zinc-800 bg-[#FAF7F2]/95 dark:bg-zinc-950/95 backdrop-blur-md py-2 select-none"
     >
       <nav className="flex flex-col items-center gap-0.5 overflow-y-auto no-scrollbar px-1">
@@ -125,7 +125,7 @@ export function ConnectLn365LeftRail({
 
         <Link
           href="/connectin-portal#download-app"
-          title="ConnectLn 365 Portal & Mobile App Downloads"
+          title="ConnectLn 360 Portal & Mobile App Downloads"
           className="flex w-full flex-col items-center justify-center rounded-xl py-2 px-1 text-zinc-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900 hover:text-[#0B1F3A] dark:hover:text-white transition-colors"
         >
           <Download strokeWidth={1.85} className="h-[18px] w-[18px]" />

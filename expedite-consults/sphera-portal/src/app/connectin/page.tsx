@@ -5,7 +5,7 @@ import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { ConnectLnNavbar } from "@/components/connectln/ConnectLnNavbar"
-import { ConnectLn365LeftRail } from "@/components/connectln/ConnectLn365LeftRail"
+import { ConnectLn360LeftRail } from "@/components/connectln/ConnectLn360LeftRail"
 import { MeetingReminders } from "@/components/connectln/MeetingReminders"
 import { ConnectLnIncomingCallBanner } from "@/components/connectln/ConnectLnIncomingCallBanner"
 import { ConnectLnPhoneVerificationGate } from "@/components/connectln/ConnectLnPhoneVerificationGate"
@@ -2951,8 +2951,8 @@ export default function ConnectLnPage() {
         }}
       />
 
-      {/* Slim Office 365 Desktop Left App Rail */}
-      <ConnectLn365LeftRail
+      {/* Slim ConnectLn 360 Desktop Left App Rail */}
+      <ConnectLn360LeftRail
         activeTab={activeTab}
         onSelectTab={(tab) => {
           if (tab === 'profile') setInspectedMember(null)

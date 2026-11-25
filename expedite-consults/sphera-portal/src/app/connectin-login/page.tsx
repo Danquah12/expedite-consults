@@ -966,14 +966,14 @@ export default function ConnectInLoginPage() {
       className="relative min-h-screen overflow-hidden bg-[#FAF7F2] dark:bg-zinc-950 text-[#0B1F3A] dark:text-zinc-100 flex flex-col justify-between font-sans transition-colors duration-300 selection:bg-[#0067B8] selection:text-white"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      {/* Subtle M365-Style Pastel Fluid Waves Backdrop */}
+      {/* Subtle ConnectLn 360 Pastel Fluid Waves Backdrop */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden dark:opacity-20">
         <div className="absolute -top-32 -left-24 h-[460px] w-[460px] rounded-full bg-gradient-to-br from-sky-200/70 via-blue-100/50 to-transparent blur-3xl" />
         <div className="absolute top-1/4 -right-28 h-[520px] w-[520px] rounded-full bg-gradient-to-bl from-indigo-200/55 via-sky-100/45 to-transparent blur-3xl" />
         <div className="absolute -bottom-32 left-1/3 h-[420px] w-[520px] rounded-full bg-gradient-to-tr from-amber-100/70 via-rose-100/40 to-transparent blur-3xl" />
       </div>
 
-      {/* ─── 1. FLOATING PILL M365 CONNECTLN HEADER ─── */}
+      {/* ─── 1. FLOATING PILL CONNECTLN 360 HEADER ─── */}
       <header
         className="relative z-20 w-full px-3 sm:px-6 pb-2"
         style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 12px)" }}
@@ -985,7 +985,7 @@ export default function ConnectInLoginPage() {
             </Link>
             <nav className="hidden md:flex items-center gap-4 text-xs font-semibold text-[#4B5563] dark:text-zinc-300">
               <Link href="/connectin-portal" className="hover:text-[#0B1F3A] dark:hover:text-white transition-colors">
-                ConnectLn 365 Portal
+                ConnectLn 360 Portal
               </Link>
               <Link href="/connectin-portal#download-app" className="hover:text-[#0B1F3A] dark:hover:text-white transition-colors">
                 Download App
@@ -1040,7 +1040,7 @@ export default function ConnectInLoginPage() {
         </div>
       </header>
 
-      {/* ─── 2. MAIN CENTER CONTENT CARD (M365 Focused Card) ─── */}
+      {/* ─── 2. MAIN CENTER CONTENT CARD (ConnectLn 360 Focused Card) ─── */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center p-3 sm:p-6 my-2 sm:my-4 w-full">
         <div className="w-full max-w-[440px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-[24px] border border-[#E7E2DA] dark:border-zinc-800 p-6 sm:p-8 shadow-[0_24px_60px_rgba(11,31,58,0.08)] space-y-5 sm:space-y-6">
 
@@ -1932,10 +1932,10 @@ export default function ConnectInLoginPage() {
         </div>
       </main>
 
-      {/* ─── 4. CONNECTLN 365 CLEAN FOOTER ─── */}
+      {/* ─── 4. CONNECTLN 360 CLEAN FOOTER ─── */}
       <footer className="relative z-10 w-full py-5 px-6 text-center text-[11px] text-zinc-500 dark:text-zinc-400 space-y-1.5">
         <div className="flex items-center justify-center gap-4 flex-wrap">
-          <Link href="/connectin-portal" className="font-semibold text-[#0067B8] dark:text-sky-400 hover:underline">ConnectLn 365 Portal</Link>
+          <Link href="/connectin-portal" className="font-semibold text-[#0067B8] dark:text-sky-400 hover:underline">ConnectLn 360 Portal</Link>
           <Link href="/connectin-portal#download-app" className="hover:underline">Download App (Android &amp; iOS)</Link>
           <Link href="/about-us" className="hover:underline">{t("footer_about", "About")}</Link>
           <Link href="/assessment" className="hover:underline">{t("footer_security", "Security Framework")}</Link>
