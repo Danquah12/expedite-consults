@@ -281,6 +281,15 @@ const INITIAL_CONVERSATIONS: ConversationThread[] = [
   },
 ]
 
+function createCallRoomId(convId: string): string {
+  const slug =
+    convId
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toLowerCase()
+      .slice(0, 12) || "room"
+  return `call-${slug}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
+}
+
 export function VibeUnifiedCommunicationsView({
   currentUser,
   onOpenVibeCampus,
@@ -349,6 +358,9 @@ export function VibeUnifiedCommunicationsView({
   const [callMode, setCallMode] = useState<"audio" | "video" | "screenshare">(
     effectiveHandoff?.mode || "video"
   )
+  const [inlineCallRoomId, setInlineCallRoomId] = useState<string | null>(null)
+  const [inlineCallNonce, setInlineCallNonce] = useState<number>(0)
+  const [studioSessionNonce, setStudioSessionNonce] = useState<number>(0)
 
   const [aiConsentMode, setAiConsentMode] = useState<"on_device" | "explicit_share">("on_device")
   const [aiOutputTitle, setAiOutputTitle] = useState<string>("Noctis Meeting Assistant")
@@ -393,6 +405,22 @@ export function VibeUnifiedCommunicationsView({
       return matchesCat && matchesQuery
     })
   }, [conversations, chatCategory, searchQuery])
+
+  useEffect(() => {
+    if (
+      filteredConversations.length > 0 &&
+      !filteredConversations.some((c) => c.id === selectedConvId)
+    ) {
+      setSelectedConvId(filteredConversations[0].id)
+    }
+  }, [filteredConversations, selectedConvId])
+
+  const handleStartInlineRoomCall = (mode: "audio" | "video" | "screenshare") => {
+    setCallMode(mode)
+    setInlineCallRoomId(createCallRoomId(selectedConversation.id))
+    setInlineCallNonce((n) => n + 1)
+    setCallState("CONNECTED")
+  }
 
   const handleSendMessage = () => {
     if (!messageInput.trim()) return
@@ -593,7 +621,7 @@ export function VibeUnifiedCommunicationsView({
          ===================================================================== */}
       {activeMainTab === "video_call_studio" && (
         <VibeVideoCallStudio
-          key={effectiveHandoff?.callId || joinedCallRoomId || "default-studio-room"}
+          key={effectiveHandoff?.callId || joinedCallRoomId || `studio-standby-${studioSessionNonce}`}
           conversationId={effectiveHandoff?.conversationId || joinedCallRoomId || selectedConversation.id}
           conversationName={effectiveHandoff?.conversationName || selectedConversation.name}
           initialMode={effectiveHandoff?.mode || callMode}
@@ -628,6 +656,7 @@ export function VibeUnifiedCommunicationsView({
               onReturnToMessaging({ keepCallActive: false })
             } else {
               setJoinedCallRoomId(null)
+              setStudioSessionNonce((n) => n + 1)
               try {
                 sessionStorage.removeItem("connectln_studio_handoff_v1")
               } catch {}
@@ -707,10 +736,13 @@ export function VibeUnifiedCommunicationsView({
           {/* Inline Call Studio when triggered directly from a room header */}
           {callState !== "IDLE" && (
             <VibeVideoCallStudio
+              key={inlineCallRoomId || "inline-call"}
               conversationId={selectedConversation.id}
               conversationName={selectedConversation.name}
               initialMode={callMode}
               autoStartCall={true}
+              callTriggerNonce={inlineCallNonce}
+              initialCallRoomId={inlineCallRoomId}
               currentUserName={currentUser?.name || "You"}
               currentUserAvatar={currentUser?.avatar}
               currentUserEmail={currentUser?.email}
@@ -729,7 +761,10 @@ export function VibeUnifiedCommunicationsView({
                   ...prev,
                 ])
               }}
-              onCloseStudio={() => setCallState("IDLE")}
+              onCloseStudio={() => {
+                setInlineCallRoomId(null)
+                setCallState("IDLE")
+              }}
             />
           )}
 
@@ -823,36 +858,30 @@ export function VibeUnifiedCommunicationsView({
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
-                    onClick={() => {
-                      setCallMode("audio")
-                      setCallState("CONNECTED")
-                    }}
-                    className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-100 text-zinc-700 dark:text-zinc-200 cursor-pointer"
+                    onClick={() => handleStartInlineRoomCall("audio")}
+                    className="px-2.5 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 text-zinc-700 dark:text-zinc-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
                     title="Start Audio Call"
                   >
-                    <Phone className="h-4 w-4 text-emerald-600" />
+                    <Phone className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>Audio</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      setCallMode("video")
-                      setCallState("CONNECTED")
-                    }}
-                    className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-100 text-zinc-700 dark:text-zinc-200 cursor-pointer"
+                    onClick={() => handleStartInlineRoomCall("video")}
+                    className="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1 cursor-pointer shadow-xs"
                     title="Start Video Call"
                   >
-                    <Video className="h-4 w-4 text-emerald-600" />
+                    <Video className="h-3.5 w-3.5" />
+                    <span>Video</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      setCallMode("screenshare")
-                      setCallState("CONNECTED")
-                    }}
-                    className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-100 text-zinc-700 dark:text-zinc-200 cursor-pointer"
+                    onClick={() => handleStartInlineRoomCall("screenshare")}
+                    className="px-2.5 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 text-zinc-700 dark:text-zinc-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
                     title="Share Screen"
                   >
-                    <MonitorUp className="h-4 w-4 text-teal-600" />
+                    <MonitorUp className="h-3.5 w-3.5 text-teal-600" />
+                    <span>Share</span>
                   </button>
                 </div>
               </div>

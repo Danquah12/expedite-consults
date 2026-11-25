@@ -817,6 +817,15 @@ const VIRTUAL_BACKGROUND_OPTIONS: VirtualBackgroundOption[] = [
   },
 ]
 
+function generateFreshCallRoomId(conversationId?: string): string {
+  const slug =
+    (conversationId || "room")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toLowerCase()
+      .slice(0, 12) || "room"
+  return `call-${slug}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
+}
+
 export function VibeVideoCallStudio({
   conversationId,
   conversationName,
@@ -907,7 +916,9 @@ export function VibeVideoCallStudio({
       setCallMediaSilenceActive(false, "vibe-video-call-studio")
     }
   }, [isCallInactive])
-  const [callId, setCallId] = useState<string>(initialCallRoomId || urlJoinedRoomId || "call-9b0bbf68-live")
+  const [callId, setCallId] = useState<string>(
+    () => initialCallRoomId || urlJoinedRoomId || generateFreshCallRoomId(conversationId)
+  )
   useEffect(() => {
     if (initialCallRoomId && initialCallRoomId !== callId) {
       setCallId(initialCallRoomId)
@@ -940,6 +951,8 @@ export function VibeVideoCallStudio({
 
   // Media hardware & stream state
   const [callMode, setCallMode] = useState<"audio" | "video" | "screenshare">(initialMode)
+  const callModeRef = useRef(callMode)
+  callModeRef.current = callMode
   const [isMicMuted, setIsMicMuted] = useState<boolean>(false)
   const [isCameraOn, setIsCameraOn] = useState<boolean>(shouldAutoStartCall && initialMode !== "audio")
   const [isHardwareCameraActive, setIsHardwareCameraActive] = useState<boolean>(false)
@@ -1657,7 +1670,13 @@ export function VibeVideoCallStudio({
   const voicePlayerRef = useRef<GaplessRemoteVoicePlayer | null>(null)
   const isCallEndedRef = useRef<boolean>(!shouldAutoStartCall)
   useEffect(() => {
-    isCallEndedRef.current = callState === "ENDED" || callState === "READY"
+    if (callState === "ENDED") {
+      isCallEndedRef.current = true
+    } else if (callState === "READY") {
+      isCallEndedRef.current = !hasActivatedCallRef.current
+    } else {
+      isCallEndedRef.current = false
+    }
   }, [callState])
 
   const teardownStudioMediaCall = useCallback((mc: any) => {
@@ -3797,13 +3816,14 @@ export function VibeVideoCallStudio({
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
         body: JSON.stringify({
-          action: "heartbeat",
+          action: shouldReopen ? (isInvitedGuestLink ? "join" : "create") : "heartbeat",
+          skip_push: shouldReopen && !isInvitedGuestLink ? true : undefined,
           reopen: shouldReopen,
           call_id: callId,
           user_id: localParticipantId,
           peer_id: myPeerId || undefined,
           conversation_id: conversationId,
-          call_type: initialMode,
+          call_type: st.isScreenSharing ? "screenshare" : callModeRef.current,
           target_recipient_name: !isInvitedGuestLink ? conversationName : undefined,
           display_name: st.localDisplayName,
           avatar: studioCallerAvatarRef.current || undefined,
@@ -4140,6 +4160,10 @@ export function VibeVideoCallStudio({
   }
 
   const handleToggleScreenShare = async () => {
+    if (callState === "READY" || callState === "ENDED") {
+      await handleStartCallFromStandby("screenshare")
+      return
+    }
     if (isScreenSharing || localSharedStageItem?.active) {
       handleStopSharingStage()
       return
@@ -4244,6 +4268,10 @@ export function VibeVideoCallStudio({
   }
 
   const handleToggleMute = () => {
+    if (callState === "READY" || callState === "ENDED") {
+      void handleStartCallFromStandby("audio")
+      return
+    }
     const nextMuted = !isMicMuted
     setIsMicMuted(nextMuted)
     if (localStreamRef.current) {
@@ -4258,8 +4286,14 @@ export function VibeVideoCallStudio({
   }
 
   const handleToggleVideo = async () => {
-    // If hardware camera wasn't started yet, start it now!
-    if (!isHardwareCameraActive) {
+    if (callState === "READY" || callState === "ENDED") {
+      await handleStartCallFromStandby("video")
+      return
+    }
+    const hasLiveVideoTrack = Boolean(
+      localStreamRef.current?.getVideoTracks().some((t) => t.readyState === "live")
+    )
+    if (!isHardwareCameraActive || !hasLiveVideoTrack) {
       await startHardwareCameraAndMic(selectedVideoDeviceId || undefined, selectedAudioDeviceId || undefined, false)
       return
     }
@@ -4477,6 +4511,26 @@ export function VibeVideoCallStudio({
       const personalJoinUrl = `${shareableMeetingUrl}&invitedName=${encodeURIComponent(target.name)}`
       const personalText = `Hi ${target.name}! ${localDisplayName} is ringing you to join a live video meeting ("${conversationName}") on ConnectLn. Click to join live now: ${personalJoinUrl}`
 
+      // 0. Ring live in ConnectLn's `/api/v1/calls` incoming call signal bus
+      fetch("/api/v1/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "upsert_invitee",
+          call_id: callId,
+          conversation_id: conversationId,
+          call_type: callModeRef.current,
+          user_id: localParticipantId,
+          display_name: localDisplayName,
+          initiator_name: localDisplayName,
+          initiator_avatar: studioCallerAvatarRef.current || undefined,
+          initiator_email: currentUserEmail || undefined,
+          target_recipient_name: target.name,
+          target_recipient_email: target.email || undefined,
+          target_recipient_phone: target.phone || undefined,
+        }),
+      }).catch(() => {})
+
       // 1. Send in-app ConnectLn message notification so online members see the call link immediately
       fetch("/api/connectin/messages", {
         method: "POST",
@@ -4522,11 +4576,14 @@ export function VibeVideoCallStudio({
 
       return { personalJoinUrl, personalText }
     },
-    [shareableMeetingUrl, localDisplayName, conversationName]
+    [shareableMeetingUrl, localDisplayName, conversationName, callId, conversationId, localParticipantId, currentUserEmail]
   )
 
   // Ring a ConnectLn friend directly into the live video grid
   const handleRingFriendToJoin = (friend: InvitableFriend) => {
+    if (callState === "READY" || callState === "ENDED") {
+      void handleStartCallFromStandby("video")
+    }
     setInvitableFriends((prev) => {
       const exists = prev.some((f) => f.id === friend.id)
       if (exists) {
@@ -4761,6 +4818,11 @@ export function VibeVideoCallStudio({
   }
 
   const handleStartCallFromStandby = async (mode: "video" | "audio" | "screenshare") => {
+    const nextRoomId =
+      initialCallRoomId || urlJoinedRoomId || generateFreshCallRoomId(conversationId)
+    if (nextRoomId !== callId) {
+      setCallId(nextRoomId)
+    }
     hasActivatedCallRef.current = true
     isCallEndedRef.current = false
     isFirstStudioHeartbeatRef.current = true
@@ -4788,6 +4850,9 @@ export function VibeVideoCallStudio({
   }
 
   const handleRestartCall = async () => {
+    if (!isInvitedGuestLink) {
+      setCallId(generateFreshCallRoomId(conversationId))
+    }
     hasActivatedCallRef.current = true
     isCallEndedRef.current = false
     isFirstStudioHeartbeatRef.current = true
