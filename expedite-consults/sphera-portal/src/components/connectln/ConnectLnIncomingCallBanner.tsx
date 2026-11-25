@@ -54,6 +54,34 @@ import {
   pickRealCallAvatar,
   resolveAndCompressLocalCallerAvatar,
 } from "@/lib/connectin-avatar-signal"
+import { getCommPrivacySettings, isContactBlocked } from "@/lib/connectln-comm-pro"
+
+function shouldSilenceIncomingCall(call: IncomingCallSummary): { silence: boolean; reason?: string } {
+  const cName = call.initiator_name || call.participants?.[0]?.display_name || ""
+  const cPhone = call.initiator_phone || ""
+  if (isContactBlocked(cName) || (cPhone && isContactBlocked(cPhone))) {
+    return { silence: true, reason: "blocked" }
+  }
+  const privacy = getCommPrivacySettings()
+  if (privacy.silenceUnknownCallers) {
+    const hasAvatar = Boolean(pickRealCallAvatar(call.initiator_avatar))
+    let inLocalHistory = false
+    if (typeof window !== "undefined") {
+      try {
+        const mbRaw = (window.localStorage.getItem("connectin_direct_mailbox_v1") || "").toLowerCase()
+        const nameLower = cName.trim().toLowerCase()
+        const phoneDigits = cPhone.replace(/[^\d]/g, "")
+        if ((nameLower.length >= 3 && mbRaw.includes(nameLower)) || (phoneDigits.length >= 7 && mbRaw.includes(phoneDigits))) {
+          inLocalHistory = true
+        }
+      } catch {}
+    }
+    if (!hasAvatar && !inLocalHistory) {
+      return { silence: true, reason: "unknown_silenced" }
+    }
+  }
+  return { silence: false }
+}
 
 interface IncomingCallSummary {
   id: string
@@ -541,6 +569,10 @@ export function ConnectLnIncomingCallBanner({
             initiator_phone: p.callerPhone,
             initiator_avatar: p.callerAvatar || undefined,
           }
+          if (shouldSilenceIncomingCall(callObj).silence) {
+            markConnectLnCallHandled(p.callId)
+            return
+          }
           realtimeRingRef.current = { call: callObj, untilMs: Date.now() + 45000 }
           consecutiveEmptyPollsRef.current = 0
           activeIncomingCallIdRef.current = callObj.id
@@ -790,7 +822,10 @@ export function ConnectLnIncomingCallBanner({
         let active =
           list.find(
             (c) =>
-              c?.id && !declinedIdsRef.current.has(c.id) && !isConnectLnCallHandled(c.id)
+              c?.id &&
+              !declinedIdsRef.current.has(c.id) &&
+              !isConnectLnCallHandled(c.id) &&
+              !shouldSilenceIncomingCall(c).silence
           ) || null
         // A pushed/real-time pre-ring covers the startup window (<8s) before server poll sees the call.
         // Clear when ended, declined, handled, or startup window expires.
@@ -894,6 +929,10 @@ export function ConnectLnIncomingCallBanner({
               initiator_name: d.callerName || "ConnectLn Caller",
               initiator_phone: d.callerPhone || "",
               initiator_avatar: d.callerAvatar || undefined,
+            }
+            if (shouldSilenceIncomingCall(call).silence) {
+              markConnectLnCallHandled(call.id)
+              return
             }
             realtimeRingRef.current = { call, untilMs: Date.now() + 45000 }
             consecutiveEmptyPollsRef.current = 0

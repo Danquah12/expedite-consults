@@ -65,6 +65,24 @@ import {
     PRESENCE_META,
     normalizePresenceKey,
 } from '@/lib/connectln-presence';
+import {
+    COMM_PRO_CHANGED_EVENT,
+    CommPrivacySettings,
+    encodeQuoteReply,
+    enqueueOfflineMessage,
+    getCommPrivacySettings,
+    getOfflineQueue,
+    isMessageExpiredForThread,
+    polishDraftWithNoctis,
+    removeOfflineMessage,
+    updateCommPrivacySettings,
+} from '@/lib/connectln-comm-pro';
+import {
+    ConnectLnRichBubbleContent,
+    ConnectLnRichComposerModal,
+    ConnectLnThreadControlsDrawer,
+    RichComposerMode,
+} from './ConnectLnCommProDrawers';
 
 type ChannelFilterType = 'All' | 'People' | 'Companies' | 'Products' | 'Communities';
 type ConnectLnMailboxFolder =
@@ -75,6 +93,7 @@ type ConnectLnMailboxFolder =
     | 'important'
     | 'sent'
     | 'drafts'
+    | 'saved_messages'
     | 'purchases'
     | 'social'
     | 'updates'
@@ -768,6 +787,29 @@ export function MessagingView({
     const [scheduleSendDateTime, setScheduleSendDateTime] = useState('');
     const [queuedScheduledCount, setQueuedScheduledCount] = useState(0);
     const lastTypingPingMsRef = useRef<number>(0);
+
+    // Comm Pro: Privacy, PIN Lock, Pinned Messages, Saved Messages, Quote Reply, Rich Media, Offline Queue
+    const [commPrivacy, setCommPrivacy] = useState<CommPrivacySettings>(() => getCommPrivacySettings());
+    const [showThreadControlsDrawer, setShowThreadControlsDrawer] = useState(false);
+    const [unlockedThreadIds, setUnlockedThreadIds] = useState<string[]>([]);
+    const [pinUnlockInput, setPinUnlockInput] = useState('');
+    const [replyingToMsg, setReplyingToMsg] = useState<B2BMessageItem | null>(null);
+    const [richComposerMode, setRichComposerMode] = useState<RichComposerMode>(null);
+    const [deleteMenuMsgId, setDeleteMenuMsgId] = useState<string | null>(null);
+    const [offlineQueueCount, setOfflineQueueCount] = useState<number>(() => getOfflineQueue().length);
+
+    useEffect(() => {
+        const syncPrivacy = () => {
+            setCommPrivacy(getCommPrivacySettings());
+            setOfflineQueueCount(getOfflineQueue().length);
+        };
+        window.addEventListener(COMM_PRO_CHANGED_EVENT, syncPrivacy);
+        window.addEventListener('storage', syncPrivacy);
+        return () => {
+            window.removeEventListener(COMM_PRO_CHANGED_EVENT, syncPrivacy);
+            window.removeEventListener('storage', syncPrivacy);
+        };
+    }, []);
 
     useEffect(() => {
         if (showNewMessageModal || showScheduler || workspaceMode === 'calendar') {
@@ -1545,6 +1587,51 @@ export function MessagingView({
         }
     }, [currentUser?.professionEnclave]);
 
+    const withSavedMessagesThread = (list: B2BConversationThread[]): B2BConversationThread[] => {
+        const cleanList = list.filter((t) => t.id !== 'thread_saved_messages_self');
+        let savedMsgs: B2BMessageItem[] = [];
+        if (typeof window !== 'undefined') {
+            try {
+                const raw = window.localStorage.getItem('connectln_saved_messages_v1');
+                const parsed = raw ? JSON.parse(raw) : [];
+                if (Array.isArray(parsed)) savedMsgs = parsed;
+            } catch {}
+        }
+        if (savedMsgs.length === 0) {
+            savedMsgs = [
+                {
+                    id: 'saved_seed_1',
+                    sender: {
+                        id: 'me',
+                        name: currentUser?.name || 'You',
+                        avatar: currentUser?.avatar || '/brand/kwesi-avatar.png',
+                        role: 'Personal Cloud Vault',
+                    },
+                    text: '🔖 Personal Saved Messages: drop notes, files, links, or voice memos here for instant access across devices.',
+                    timestamp: 'Today',
+                    createdAtIso: new Date().toISOString(),
+                },
+            ];
+        }
+        const lastSaved = savedMsgs[savedMsgs.length - 1];
+        const savedThread: B2BConversationThread = {
+            id: 'thread_saved_messages_self',
+            channelType: 'People',
+            subType: 'DM',
+            title: 'Saved Messages (You)',
+            subtitle: 'Personal Cloud Notes, Files & Voice Clips',
+            avatar: currentUser?.avatar || '/brand/kwesi-avatar.png',
+            badgeIcon: '🔖',
+            isVerified: true,
+            onlineStatus: 'online',
+            unreadCount: 0,
+            lastMessage: lastSaved?.text || 'Personal Saved Messages',
+            lastMessageTime: lastSaved?.timestamp || 'Just now',
+            messages: savedMsgs,
+        };
+        return [...cleanList, savedThread];
+    };
+
     const handleSelectEnclave = (enclaveId: string, buttonEl?: HTMLElement | null) => {
         setSelectedEnclave(enclaveId);
         setActiveChannel('All');
@@ -1559,7 +1646,7 @@ export function MessagingView({
         const vEmail = currentUser?.email || '';
         const enclaveThreads = getEnclaveB2BThreads(enclaveId);
         const localBilateral = getLocalBilateralThreadsForViewer(vName, vEmail, enclaveId);
-        const immediate = mergeBilateralAndServerThreads(localBilateral, enclaveThreads);
+        const immediate = withSavedMessagesThread(mergeBilateralAndServerThreads(localBilateral, enclaveThreads));
         setThreads(immediate);
         // When selecting a specific profession enclave, select its primary profession thread so the conversation pane updates immediately
         const targetThread =
@@ -1580,7 +1667,7 @@ export function MessagingView({
         // Immediately populate with local bilateral DMs + enclave threads for zero-latency switch
         const enclaveThreads = getEnclaveB2BThreads(selectedEnclave);
         const localBilateral = getLocalBilateralThreadsForViewer(vName, vEmail, selectedEnclave);
-        const immediate = mergeBilateralAndServerThreads(localBilateral, enclaveThreads);
+        const immediate = withSavedMessagesThread(mergeBilateralAndServerThreads(localBilateral, enclaveThreads));
         setThreads(immediate);
 
         // Check if Recruiting Hub ("Reach Out") handed off a specific recruiting conversation to open
@@ -1630,7 +1717,7 @@ export function MessagingView({
                 if (!res.ok) return false;
                 const data = await res.json();
                 if (!cancelled && Array.isArray(data.threads) && data.threads.length > 0) {
-                    const merged = mergeBilateralAndServerThreads(freshLocal, data.threads);
+                    const merged = withSavedMessagesThread(mergeBilateralAndServerThreads(freshLocal, data.threads));
                     setThreads(merged);
                     setSelectedThreadId((prev) =>
                         merged.some((t: B2BConversationThread) => t.id === prev)
@@ -1726,10 +1813,13 @@ export function MessagingView({
     };
 
     const matchesMailboxFolder = (t: B2BConversationThread, folder: ConnectLnMailboxFolder): boolean => {
+        if (folder === 'saved_messages') return t.id === 'thread_saved_messages_self';
+        if (t.id === 'thread_saved_messages_self') return folder === 'all_mail';
         if (folder === 'snoozed') return snoozedIds.includes(t.id);
         if (folder === 'all_mail') return true;
-        // Hide snoozed threads from regular Inbox unless all threads in the current enclave were snoozed
+        // Hide snoozed & archived threads from regular Inbox
         if (folder === 'inbox') {
+            if (archivedThreadIds.includes(t.id)) return false;
             const allSnoozedInView =
                 threads.length > 0 && threads.every((x) => snoozedIds.includes(x.id));
             return allSnoozedInView ? true : !snoozedIds.includes(t.id);
@@ -1844,7 +1934,13 @@ export function MessagingView({
         }
         // Default ('unread_and_pending'): any thread with unread badge > 0 OR incoming bilateral peer/recruiter/vendor email not yet marked read/done in Noctis
         const lastMsg = t.messages?.[t.messages.length - 1];
-        const isIncomingLastMsg = !lastMsg || !lastMsg.isMe;
+        const isIncomingLastMsg =
+            !lastMsg ||
+            !(
+                lastMsg.sender?.id === 'me' ||
+                lastMsg.sender?.name === 'You' ||
+                doesDmParticipantMatch(lastMsg.sender?.name || '', currentUser?.name || '')
+            );
         return (
             (t.unreadCount || 0) > 0 ||
             t.id.startsWith('dm_pair__') ||
@@ -3119,7 +3215,15 @@ export function MessagingView({
         const nowIso = new Date().toISOString();
         const nowStr = formatMessageSentDateTime(nowIso);
 
-        const finalText = trimmed || `Attached ${pendingAttachment}`;
+        const rawFinalText = trimmed || `Attached ${pendingAttachment}`;
+        const finalText = replyingToMsg
+            ? encodeQuoteReply(
+                  replyingToMsg.sender?.name || 'Member',
+                  replyingToMsg.text || '',
+                  rawFinalText
+              )
+            : rawFinalText;
+        if (replyingToMsg) setReplyingToMsg(null);
 
         const optimisticMsg: B2BMessageItem = {
             id: `local-${Date.now()}`,
@@ -3139,6 +3243,32 @@ export function MessagingView({
 
         const targetThreadId = activeThread.id;
         const targetEntityName = activeThread.title;
+
+        // Self-messaging / Saved Messages stays cleanly in personal local cloud vault
+        if (targetThreadId === 'thread_saved_messages_self') {
+            setThreads((prev) =>
+                prev.map((t) => {
+                    if (t.id !== targetThreadId) return t;
+                    const nextMsgs = [...t.messages, optimisticMsg];
+                    try {
+                        window.localStorage.setItem('connectln_saved_messages_v1', JSON.stringify(nextMsgs));
+                    } catch {}
+                    return {
+                        ...t,
+                        unreadCount: 0,
+                        lastMessage: finalText,
+                        lastMessageTime: nowStr,
+                        messages: nextMsgs,
+                    };
+                })
+            );
+            setMessageInput('');
+            setPendingAttachment(null);
+            setShowAttachmentMenu(false);
+            setShowEmojiBar(false);
+            triggerToast('🔖 Saved to your Personal Vault.');
+            return;
+        }
 
         const resolvedFollowUpEmail =
             activeThread.recipientEmail ||
@@ -3218,6 +3348,30 @@ export function MessagingView({
             details: `${finalText.slice(0, 140)}${sentAttachment ? ` (📎 ${sentAttachment})` : ''}`,
         });
 
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            enqueueOfflineMessage({
+                clientMsgId: optimisticMsg.id,
+                threadId: targetThreadId,
+                enclave: selectedEnclave === 'all' ? activeEnclave : selectedEnclave,
+                text: finalText,
+                senderName,
+                senderEmail,
+                senderAvatar,
+                senderRole,
+                recipientName: activeThread.title,
+                recipientEmail: resolvedFollowUpEmail,
+                recipientSubtitle: activeThread.subtitle,
+                recipientAvatar: activeThread.avatar,
+                channelType: activeThread.channelType,
+                queuedAtIso: nowIso,
+            });
+            setOfflineQueueCount(getOfflineQueue().length);
+            setIsSending(false);
+            setTypingEntity(null);
+            triggerToast('🕒 Offline — message queued and will deliver automatically when online.');
+            return;
+        }
+
         try {
             const res = await fetch('/api/connectin/messages', {
                 method: 'POST',
@@ -3281,7 +3435,25 @@ export function MessagingView({
                 }, 80);
             }, 900);
         } catch {
+            enqueueOfflineMessage({
+                clientMsgId: optimisticMsg.id,
+                threadId: targetThreadId,
+                enclave: selectedEnclave === 'all' ? activeEnclave : selectedEnclave,
+                text: finalText,
+                senderName,
+                senderEmail,
+                senderAvatar,
+                senderRole,
+                recipientName: activeThread.title,
+                recipientEmail: resolvedFollowUpEmail,
+                recipientSubtitle: activeThread.subtitle,
+                recipientAvatar: activeThread.avatar,
+                channelType: activeThread.channelType,
+                queuedAtIso: nowIso,
+            });
+            setOfflineQueueCount(getOfflineQueue().length);
             setTypingEntity(null);
+            triggerToast('🕒 Connection interrupted — message queued for auto-delivery.');
         } finally {
             setIsSending(false);
             setTimeout(() => {
@@ -3321,7 +3493,54 @@ export function MessagingView({
         setEditingMsgDraft('');
         setMentionQuery(null);
         setRemoteTypingUsers([]);
+        setReplyingToMsg(null);
+        setDeleteMenuMsgId(null);
+        setPinUnlockInput('');
     }, [activeThread?.id]);
+
+    // Auto-flush queued offline messages when connectivity restores
+    useEffect(() => {
+        const flushOfflineMessages = async () => {
+            if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+            const queued = getOfflineQueue();
+            if (queued.length === 0) return;
+            let flushed = 0;
+            for (const qm of queued) {
+                try {
+                    const res = await fetch('/api/connectin/messages', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'send_message',
+                            enclave: qm.enclave,
+                            threadId: qm.threadId,
+                            text: qm.text,
+                            senderName: qm.senderName,
+                            senderEmail: qm.senderEmail,
+                            senderAvatar: qm.senderAvatar,
+                            senderRole: qm.senderRole,
+                            recipientName: qm.recipientName,
+                            recipientEmail: qm.recipientEmail,
+                            recipientSubtitle: qm.recipientSubtitle,
+                            recipientAvatar: qm.recipientAvatar,
+                            channelType: qm.channelType,
+                        }),
+                    });
+                    if (res.ok) {
+                        removeOfflineMessage(qm.clientMsgId);
+                        flushed++;
+                    }
+                } catch {}
+            }
+            if (flushed > 0) {
+                setOfflineQueueCount(getOfflineQueue().length);
+                triggerToast(`✓ Delivered ${flushed} queued offline message${flushed === 1 ? '' : 's'}.`);
+            }
+        };
+        void flushOfflineMessages();
+        window.addEventListener('online', flushOfflineMessages);
+        return () => window.removeEventListener('online', flushOfflineMessages);
+    }, []);
 
     // Poll partner presence & live typing indicators for active thread
     useEffect(() => {
@@ -4325,6 +4544,15 @@ export function MessagingView({
                                         </svg>
                                     ),
                                 },
+                                {
+                                    id: 'saved_messages' as ConnectLnMailboxFolder,
+                                    label: 'Saved',
+                                    icon: (
+                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                                        </svg>
+                                    ),
+                                },
                             ]
                         ).map((item) => {
                             const isActive = activeMailboxFolder === item.id && !activeCustomLabel;
@@ -5004,6 +5232,17 @@ export function MessagingView({
                                             <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                 🔒 E2EE
                                             </span>
+                                            {commPrivacy.disappearingByThread[activeThread.id] &&
+                                                commPrivacy.disappearingByThread[activeThread.id] !== 'off' && (
+                                                    <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                                                        ⏱ {commPrivacy.disappearingByThread[activeThread.id]}
+                                                    </span>
+                                                )}
+                                            {Boolean(commPrivacy.lockedThreadPins[activeThread.id]) && (
+                                                <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                                                    🔐 PIN Lock
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="text-xs text-slate-500 font-medium truncate flex items-center gap-1.5">
                                             {(() => {
@@ -5096,6 +5335,15 @@ export function MessagingView({
                                         <span>📅</span>
                                         <span className="hidden xl:inline">Schedule</span>
                                     </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowThreadControlsDrawer(true)}
+                                        aria-label="Thread controls, Noctis AI, and Privacy"
+                                        title="Thread Controls, Security, Noctis AI & Linked Devices"
+                                        className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-sm font-black flex items-center justify-center cursor-pointer"
+                                    >
+                                        ⋯
+                                    </button>
                                 </div>
                             </div>
 
@@ -5173,11 +5421,85 @@ export function MessagingView({
                                 userName={currentUser?.name || 'You'}
                                 triggerToast={triggerToast}
                             />
+                        ) : Boolean(commPrivacy.lockedThreadPins[activeThread.id]) &&
+                          !unlockedThreadIds.includes(activeThread.id) ? (
+                            <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-50/70 text-center space-y-3">
+                                <div className="h-12 w-12 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-2xl">
+                                    🔐
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-black text-slate-900">
+                                        Conversation Locked
+                                    </h4>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Enter your 4-digit Chat Lock PIN to view messages with {activeThread.title}.
+                                    </p>
+                                </div>
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        if (pinUnlockInput === commPrivacy.lockedThreadPins[activeThread.id]) {
+                                            setUnlockedThreadIds((prev) => [...prev, activeThread.id]);
+                                            setPinUnlockInput('');
+                                        } else {
+                                            triggerToast('❌ Incorrect PIN.');
+                                        }
+                                    }}
+                                    className="flex items-center gap-2"
+                                >
+                                    <input
+                                        type="password"
+                                        maxLength={4}
+                                        value={pinUnlockInput}
+                                        onChange={(e) => setPinUnlockInput(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                        placeholder="4-digit PIN"
+                                        className="w-32 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-center font-bold tracking-widest"
+                                    />
+                                    <button
+                                        type="submit"
+                                        className="rounded-xl bg-[#0A66C2] px-4 py-2 text-xs font-extrabold cursor-pointer"
+                                        style={{ color: '#FFFFFF' }}
+                                    >
+                                        Unlock
+                                    </button>
+                                </form>
+                            </div>
                         ) : (
                         <>
+                        {/* Slim Pinned Message Strip (shown only when a message is pinned in this thread) */}
+                        {commPrivacy.pinnedMsgByThread[activeThread.id] && (
+                            <div className="px-4 py-1.5 bg-amber-50/90 border-b border-amber-200 flex items-center justify-between gap-2 text-xs">
+                                <p className="truncate text-amber-950 font-semibold">
+                                    <span className="font-extrabold">📌 Pinned ({commPrivacy.pinnedMsgByThread[activeThread.id].sender}):</span>{' '}
+                                    {commPrivacy.pinnedMsgByThread[activeThread.id].text}
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        updateCommPrivacySettings((prev) => {
+                                            const nextPins = { ...prev.pinnedMsgByThread };
+                                            delete nextPins[activeThread.id];
+                                            return { ...prev, pinnedMsgByThread: nextPins };
+                                        });
+                                        triggerToast('📌 Message unpinned.');
+                                    }}
+                                    className="text-amber-800 hover:text-amber-950 font-black cursor-pointer shrink-0"
+                                    title="Unpin message"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        )}
+
                         {/* Chat History Stream */}
                         <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-2.5 bg-slate-50/40">
-                            {activeThread.messages.map((msg, idx) => {
+                            {(() => {
+                                const visibleMessages = (activeThread.messages || []).filter(
+                                    (m) =>
+                                        !commPrivacy.deletedForMeIds.includes(m.id) &&
+                                        !isMessageExpiredForThread(activeThread.id, m.createdAtIso)
+                                );
+                                return visibleMessages.map((msg, idx) => {
                                 const isMe =
                                     msg.sender.id === 'me' ||
                                     msg.sender.name === 'You' ||
@@ -5185,7 +5507,7 @@ export function MessagingView({
                                         msg.sender.name,
                                         currentUser?.name || ''
                                     );
-                                const prevMsg = idx > 0 ? activeThread.messages[idx - 1] : null;
+                                const prevMsg = idx > 0 ? visibleMessages[idx - 1] : null;
                                 const prevIsMe = prevMsg
                                     ? prevMsg.sender.id === 'me' ||
                                       prevMsg.sender.name === 'You' ||
@@ -5250,7 +5572,7 @@ export function MessagingView({
                                                 />
                                             )}
                                             <div
-                                                className={`max-w-[76%] flex flex-col ${
+                                                className={`max-w-[76%] min-w-0 flex flex-col ${
                                                     isMe ? 'items-end' : 'items-start'
                                                 }`}
                                             >
@@ -5282,10 +5604,10 @@ export function MessagingView({
                                                 )}
 
                                             {/* Clean, Presentable Message Bubble */}
-                                            <div className="relative">
+                                            <div className="relative min-w-0 max-w-full">
                                                 <ReactionBadges msg={msg} />
                                                 <div
-                                                    className={`overflow-hidden rounded-2xl text-sm leading-relaxed shadow-2xs whitespace-pre-line ${
+                                                    className={`min-w-0 max-w-full overflow-hidden rounded-2xl text-sm leading-relaxed shadow-2xs whitespace-pre-line break-words [overflow-wrap:anywhere] ${
                                                         isMe
                                                             ? 'p-3.5 bg-[#0A66C2] text-white rounded-tr-none font-normal'
                                                             : msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response')
@@ -5363,41 +5685,88 @@ export function MessagingView({
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <p className={isMe && !(msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response')) ? 'text-white' : 'text-slate-800'}>
-                                                            {renderMessageWithMentions(msg.text, isMe)}
-                                                            {msg.editedAtIso && (
-                                                                <span className={`ml-1.5 text-[10px] ${isMe ? 'text-white/75' : 'text-slate-400'}`}>
-                                                                    (edited)
-                                                                </span>
-                                                            )}
-                                                        </p>
+                                                        <ConnectLnRichBubbleContent
+                                                            msg={msg}
+                                                            isMe={isMe}
+                                                            viewerName={currentUser?.name || 'You'}
+                                                            privacy={commPrivacy}
+                                                            renderPlainText={renderMessageWithMentions}
+                                                            onStartDirectChatOrCall={(name) => {
+                                                                const matched = threads.find(
+                                                                    (t) => t.title.toLowerCase() === name.toLowerCase()
+                                                                );
+                                                                if (matched) {
+                                                                    setSelectedThreadId(matched.id);
+                                                                    setMobileShowChat(true);
+                                                                } else {
+                                                                    setShowNewMessageModal(true);
+                                                                    setNewRecipientName(name);
+                                                                }
+                                                            }}
+                                                        />
                                                     )}
 
-                                                    {isMe && !msg.isDeleted && editingMsgId !== msg.id && (
-                                                        <div className="mt-1 flex items-center justify-end gap-2 text-[10px] text-white/80">
+                                                    {!msg.isDeleted && editingMsgId !== msg.id && (
+                                                        <div className={`mt-1 flex items-center justify-end gap-2 text-[10px] relative ${isMe ? 'text-white/80' : 'text-slate-400'}`}>
+                                                            {isMe && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setEditingMsgId(msg.id);
+                                                                        setEditingMsgDraft(msg.text);
+                                                                    }}
+                                                                    className="opacity-0 group-hover:opacity-100 hover:underline cursor-pointer transition-opacity"
+                                                                    title="Edit message"
+                                                                >
+                                                                    ✏️ Edit
+                                                                </button>
+                                                            )}
                                                             <button
                                                                 type="button"
-                                                                onClick={() => {
-                                                                    setEditingMsgId(msg.id);
-                                                                    setEditingMsgDraft(msg.text);
-                                                                }}
+                                                                onClick={() =>
+                                                                    setDeleteMenuMsgId((prev) => (prev === msg.id ? null : msg.id))
+                                                                }
                                                                 className="opacity-0 group-hover:opacity-100 hover:underline cursor-pointer transition-opacity"
-                                                                title="Edit message"
-                                                            >
-                                                                ✏️ Edit
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => void handleDeleteSentMessage(msg)}
-                                                                className="opacity-0 group-hover:opacity-100 hover:underline cursor-pointer transition-opacity"
-                                                                title="Delete / unsend message"
+                                                                title="Delete options"
                                                             >
                                                                 🗑️ Delete
                                                             </button>
-                                                            {Array.isArray(msg.readBy) && msg.readBy.length > 0 ? (
-                                                                <span className="font-semibold text-emerald-200">✓✓ Seen</span>
-                                                            ) : (
-                                                                <span className="text-white/70">✓ Sent</span>
+                                                            {deleteMenuMsgId === msg.id && (
+                                                                <div className="absolute right-0 bottom-5 z-20 rounded-xl bg-white border border-slate-200 shadow-xl p-1 flex flex-col gap-0.5 text-[11px] font-bold text-slate-800 min-w-[140px]">
+                                                                    {isMe && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setDeleteMenuMsgId(null);
+                                                                                void handleDeleteSentMessage(msg);
+                                                                            }}
+                                                                            className="px-2.5 py-1.5 rounded-lg hover:bg-rose-50 text-rose-700 text-left cursor-pointer"
+                                                                        >
+                                                                            Delete for everyone
+                                                                        </button>
+                                                                    )}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setDeleteMenuMsgId(null);
+                                                                            updateCommPrivacySettings((prev) => ({
+                                                                                ...prev,
+                                                                                deletedForMeIds: Array.from(new Set([...prev.deletedForMeIds, msg.id])),
+                                                                            }));
+                                                                            triggerToast('🗑️ Removed for you.');
+                                                                        }}
+                                                                        className="px-2.5 py-1.5 rounded-lg hover:bg-slate-100 text-slate-700 text-left cursor-pointer"
+                                                                    >
+                                                                        Delete for me
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                            {isMe && commPrivacy.readReceiptsEnabled && (
+                                                                Array.isArray(msg.readBy) && msg.readBy.length > 0 ? (
+                                                                    <span className="font-semibold text-emerald-200">✓✓ Seen</span>
+                                                                ) : (
+                                                                    <span className="text-white/70">✓ Sent</span>
+                                                                )
                                                             )}
                                                         </div>
                                                     )}
@@ -5441,12 +5810,36 @@ export function MessagingView({
                                                 onComment={(text) => handleCommentOnMessage(msg, text)}
                                                 onForward={(target) => handleForwardMessage(msg, isMe ? currentUser?.name || 'You' : msg.sender.name, target)}
                                                 onPostToFeed={() => handlePostMessageToFeed(msg, isMe)}
+                                                onReply={() => {
+                                                    setReplyingToMsg(msg);
+                                                    setTimeout(() => composerInputRef.current?.focus(), 30);
+                                                }}
+                                                isPinned={commPrivacy.pinnedMsgByThread[activeThread.id]?.id === msg.id}
+                                                onPin={() => {
+                                                    const alreadyPinned = commPrivacy.pinnedMsgByThread[activeThread.id]?.id === msg.id;
+                                                    updateCommPrivacySettings((prev) => {
+                                                        const nextPins = { ...prev.pinnedMsgByThread };
+                                                        if (alreadyPinned) {
+                                                            delete nextPins[activeThread.id];
+                                                        } else {
+                                                            nextPins[activeThread.id] = {
+                                                                id: msg.id,
+                                                                text: msg.text.slice(0, 140),
+                                                                sender: isMe ? currentUser?.name || 'You' : msg.sender.name,
+                                                                timestamp: msg.timestamp,
+                                                            };
+                                                        }
+                                                        return { ...prev, pinnedMsgByThread: nextPins };
+                                                    });
+                                                    triggerToast(alreadyPinned ? '📌 Message unpinned.' : '📌 Message pinned to conversation.');
+                                                }}
                                             />
                                         </div>
                                         </div>
                                     </React.Fragment>
                                 );
-                            })}
+                            });
+                            })()}
 
                             {/* Live Draft Message Card inside Conversation Stream (when viewing Drafts or when thread has a saved draft) */}
                             {(() => {
@@ -5573,25 +5966,66 @@ export function MessagingView({
                             </div>
                         )}
 
-                        {/* Attachment Picker Popover */}
+                        {/* Attachment Picker Popover (Plus Rich Tools & Noctis Draft Polish) */}
                         {showAttachmentMenu && (
-                            <div className="px-4 py-2.5 bg-white border-t border-slate-200 flex flex-wrap items-center gap-2">
-                                <span className="text-[11px] font-black text-slate-600">
-                                    Select Document to Attach:
-                                </span>
-                                {PRESET_ATTACHMENTS.map((att) => (
-                                    <button
-                                        key={att.name}
-                                        type="button"
-                                        onClick={() => {
-                                            setPendingAttachment(att.name);
-                                            setShowAttachmentMenu(false);
-                                        }}
-                                        className="text-xs font-bold bg-slate-100 hover:bg-blue-50 hover:text-[#0A66C2] text-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 transition-all"
-                                    >
-                                        {att.label}
-                                    </button>
-                                ))}
+                            <div className="px-4 py-2.5 bg-white border-t border-slate-200 space-y-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-[11px] font-black text-slate-600">
+                                        Select Document to Attach:
+                                    </span>
+                                    {PRESET_ATTACHMENTS.map((att) => (
+                                        <button
+                                            key={att.name}
+                                            type="button"
+                                            onClick={() => {
+                                                setPendingAttachment(att.name);
+                                                setShowAttachmentMenu(false);
+                                            }}
+                                            className="text-xs font-bold bg-slate-100 hover:bg-blue-50 hover:text-[#0A66C2] text-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 transition-all cursor-pointer"
+                                        >
+                                            {att.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
+                                    <span className="text-[11px] font-black text-slate-500 mr-1">
+                                        More:
+                                    </span>
+                                    {(
+                                        [
+                                            { mode: 'video' as const, label: '🎬 Video Note' },
+                                            { mode: 'viewonce' as const, label: '👁️ View-Once' },
+                                            { mode: 'poll' as const, label: '📊 Poll' },
+                                            { mode: 'location' as const, label: '📍 Location' },
+                                            { mode: 'contact' as const, label: '👤 Contact' },
+                                        ]
+                                    ).map((tool) => (
+                                        <button
+                                            key={tool.mode}
+                                            type="button"
+                                            onClick={() => {
+                                                setShowAttachmentMenu(false);
+                                                setRichComposerMode(tool.mode);
+                                            }}
+                                            className="text-[11px] font-bold bg-slate-50 hover:bg-blue-50 hover:text-[#0A66C2] text-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 cursor-pointer"
+                                        >
+                                            {tool.label}
+                                        </button>
+                                    ))}
+                                    {messageInput.trim() && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setMessageInput((prev) => polishDraftWithNoctis(prev, 'executive'));
+                                                setShowAttachmentMenu(false);
+                                                triggerToast('✨ Draft polished by Noctis.');
+                                            }}
+                                            className="text-[11px] font-extrabold bg-blue-50 hover:bg-blue-100 text-[#0A66C2] px-2.5 py-1 rounded-lg border border-blue-200 cursor-pointer"
+                                        >
+                                            ✨ Polish Draft
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -5758,6 +6192,34 @@ export function MessagingView({
                             </div>
                         )}
 
+                        {/* Quoted Reply Preview Bar above Composer */}
+                        {replyingToMsg && (
+                            <div className="px-4 py-1.5 bg-blue-50/90 border-t border-blue-200 flex items-center justify-between gap-2 text-xs">
+                                <div className="min-w-0 border-l-4 border-[#0A66C2] pl-2.5">
+                                    <p className="font-extrabold text-[#0A66C2] text-[10.5px] truncate">
+                                        ↩ Replying to {replyingToMsg.sender?.name || 'Member'}
+                                    </p>
+                                    <p className="text-[11px] text-slate-600 truncate">
+                                        {replyingToMsg.text}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setReplyingToMsg(null)}
+                                    className="text-slate-500 hover:text-slate-900 font-black cursor-pointer shrink-0"
+                                    title="Cancel reply"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        )}
+
+                        {offlineQueueCount > 0 && (
+                            <div className="px-4 py-1 bg-amber-50 border-t border-amber-200 text-[11px] font-bold text-amber-900">
+                                🕒 {offlineQueueCount} message{offlineQueueCount === 1 ? '' : 's'} queued offline — will auto-deliver on reconnect
+                            </div>
+                        )}
+
                         {/* Message Input Composer */}
                         <form
                             onSubmit={(e) => {
@@ -5815,15 +6277,9 @@ export function MessagingView({
 
                             <button
                                 type="button"
-                                onClick={() => {
-                                    const memoNote = messageInput.trim()
-                                        ? `🎙️ VOICE-CLIP (0:15): "${messageInput.trim()}"`
-                                        : `🎙️ VOICE-CLIP (0:15): Hey ${activeThread.title.split(' ')[0]}, sending a quick 15-second ConnectLn voice note — let's connect when you're free!`;
-                                    setMessageInput('');
-                                    void sendChatText(memoNote);
-                                }}
+                                onClick={() => setRichComposerMode('voice')}
                                 className="p-2.5 rounded-xl border bg-slate-100 border-slate-200 text-slate-600 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 transition-all cursor-pointer"
-                                title="VOICE-CLIP — Send 15-Second Voice Memo Note"
+                                title="Record Live Voice Message (with auto-transcript)"
                             >
                                 🎙️
                             </button>
@@ -7097,6 +7553,47 @@ export function MessagingView({
                     </div>
                 </div>
             )}
+
+            {activeThread && (
+                <ConnectLnThreadControlsDrawer
+                    open={showThreadControlsDrawer}
+                    onClose={() => setShowThreadControlsDrawer(false)}
+                    threadId={activeThread.id}
+                    threadTitle={activeThread.title}
+                    threadSubtitle={activeThread.subtitle}
+                    recipientEmail={activeThread.recipientEmail}
+                    messages={activeThread.messages || []}
+                    privacy={commPrivacy}
+                    isArchived={archivedThreadIds.includes(activeThread.id)}
+                    onToggleArchive={() => toggleArchiveThread(activeThread.id)}
+                    onUnlockThread={() =>
+                        setUnlockedThreadIds((prev) =>
+                            prev.includes(activeThread.id) ? prev : [...prev, activeThread.id]
+                        )
+                    }
+                    onAddActionItemsAsTask={(items) => {
+                        navigator.clipboard?.writeText(items.join('\n')).catch(() => {});
+                    }}
+                    onToast={triggerToast}
+                />
+            )}
+
+            <ConnectLnRichComposerModal
+                mode={richComposerMode}
+                onClose={() => setRichComposerMode(null)}
+                contacts={threads
+                    .filter((t) => t.id !== 'thread_saved_messages_self')
+                    .map((t) => ({
+                        id: t.id,
+                        name: t.title,
+                        avatar: t.avatar,
+                        subtitle: t.subtitle,
+                        email: t.recipientEmail,
+                    }))}
+                onSendMarker={(marker) => {
+                    void sendChatText(marker);
+                }}
+            />
         </div>
     );
 }

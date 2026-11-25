@@ -37,6 +37,7 @@ import {
   Voicemail,
 } from "lucide-react"
 import { enterInCallPresence, exitInCallPresence } from "@/lib/connectln-presence"
+import { deriveE2eeSafetyCode } from "@/lib/connectln-comm-pro"
 import {
   CommTeamsStateClient,
   EMPTY_TEAMS_STATE,
@@ -884,8 +885,13 @@ function teardownPeerMediaConnection(mc: any): void {
   } catch {}
 }
 
-function RemoteStreamAudioPlayer({ stream, muted }: { stream: MediaStream; muted?: boolean }) {
+function RemoteStreamAudioPlayer({ stream, muted, sinkId }: { stream: MediaStream; muted?: boolean; sinkId?: string }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  useEffect(() => {
+    const el = audioRef.current as any
+    if (!el || !sinkId || typeof el.setSinkId !== "function") return
+    el.setSinkId(sinkId).catch(() => {})
+  }, [sinkId])
   useEffect(() => {
     const el = audioRef.current
     if (!el || !stream) return
@@ -1286,6 +1292,9 @@ export function ConnectLnWhatsAppCallModal({
   const [isRecordingMeeting, setIsRecordingMeeting] = useState<boolean>(false)
   const [isOnHold, setIsOnHold] = useState<boolean>(false)
   const [layoutMode, setLayoutMode] = useState<"gallery" | "spotlight">("gallery")
+  const [isLowBandwidth, setIsLowBandwidth] = useState<boolean>(false)
+  const [audioOutputs, setAudioOutputs] = useState<Array<{ deviceId: string; label: string }>>([])
+  const [selectedAudioOutputId, setSelectedAudioOutputId] = useState<string>("")
   const [pinnedPeerUserId, setPinnedPeerUserId] = useState<string | null>(null)
   const [activeBreakoutInfo, setActiveBreakoutInfo] = useState<{
     mainCallId: string
@@ -1445,6 +1454,77 @@ export function ConnectLnWhatsAppCallModal({
   useEffect(() => {
     onCloseRef.current = onClose
   }, [onClose])
+
+  useEffect(() => {
+    if (!open || typeof navigator === "undefined" || !navigator.mediaDevices?.enumerateDevices) return
+    const loadAudioOutputs = () => {
+      navigator.mediaDevices
+        .enumerateDevices()
+        .then((devs) => {
+          const outs = devs
+            .filter((d) => d.kind === "audiooutput" && d.deviceId)
+            .map((d, i) => ({
+              deviceId: d.deviceId,
+              label: d.label || `Speaker / Headset ${i + 1}`,
+            }))
+          setAudioOutputs(outs)
+        })
+        .catch(() => {})
+    }
+    loadAudioOutputs()
+    const onOnline = () => {
+      setPushBannerNote("✓ Network restored — re-syncing call media...")
+      activeMediaCallsRef.current.forEach((mc) => {
+        try {
+          mc?.peerConnection?.restartIce?.()
+        } catch {}
+      })
+    }
+    window.addEventListener("online", onOnline)
+    return () => {
+      window.removeEventListener("online", onOnline)
+    }
+  }, [open])
+
+  const handleToggleLowBandwidth = () => {
+    const next = !isLowBandwidth
+    setIsLowBandwidth(next)
+    const vTrack = localStreamRef.current?.getVideoTracks?.()[0]
+    if (vTrack && typeof vTrack.applyConstraints === "function") {
+      vTrack
+        .applyConstraints(
+          next
+            ? { width: { ideal: 320, max: 320 }, height: { ideal: 240, max: 240 }, frameRate: { ideal: 15, max: 15 } }
+            : { width: { ideal: 640, max: 960 }, frameRate: { ideal: 24, max: 30 } }
+        )
+        .catch(() => {})
+    }
+    setPushBannerNote(next ? "📶 Low-Bandwidth Mode enabled (240p · 15fps)." : "📶 Standard HD video restored.")
+  }
+
+  const handleToggleVideoPiP = async () => {
+    try {
+      const doc = document as any
+      if (doc.pictureInPictureElement) {
+        await doc.exitPictureInPicture()
+        return
+      }
+      const videos = Array.from(document.querySelectorAll("video")).filter(
+        (v) => v.readyState >= 1 && !v.disablePictureInPicture
+      )
+      const target = videos.find((v) => !v.muted) || videos[0]
+      if (target && typeof (target as any).requestPictureInPicture === "function") {
+        await (target as any).requestPictureInPicture()
+        return
+      }
+      const opened = await openAlwaysOnTopCallStandbyPiP(false).catch(() => false)
+      setPushBannerNote(
+        opened ? "🪟 Picture-in-Picture standby opened." : "ℹ️ Picture-in-Picture requires active video stream."
+      )
+    } catch {
+      setPushBannerNote("ℹ️ Picture-in-Picture is unavailable until video plays.")
+    }
+  }
 
   useEffect(() => {
     if (!customBgDataUrl || typeof window === "undefined") {
@@ -4719,6 +4799,7 @@ export function ConnectLnWhatsAppCallModal({
         <RemoteStreamAudioPlayer
           key={pid}
           stream={st}
+          sinkId={selectedAudioOutputId || undefined}
           muted={isOnHold || (teamsState.on_hold_user_ids || []).length > 0}
         />
       ))}
@@ -6602,6 +6683,16 @@ export function ConnectLnWhatsAppCallModal({
           closeAllCallDrawers()
           setShowRecapDrawer(true)
         }}
+        isLowBandwidth={isLowBandwidth}
+        onToggleLowBandwidth={handleToggleLowBandwidth}
+        onTogglePiP={() => void handleToggleVideoPiP()}
+        audioOutputs={audioOutputs}
+        selectedAudioOutputId={selectedAudioOutputId}
+        onSelectAudioOutput={(id) => {
+          setSelectedAudioOutputId(id)
+          setPushBannerNote("🔊 Switched call audio output device.")
+        }}
+        e2eeSafetyCode={deriveE2eeSafetyCode(callId || "connectln-call")}
       />
 
       {/* BOTTOM WHATSAPP FLOATING CALL CONTROLS PILL */}

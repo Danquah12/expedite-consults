@@ -374,6 +374,13 @@ export function TeamsMoreMenuPopover({
   onToggleHold,
   onOpenTransfer,
   onOpenRecap,
+  isLowBandwidth,
+  onToggleLowBandwidth,
+  onTogglePiP,
+  audioOutputs,
+  selectedAudioOutputId,
+  onSelectAudioOutput,
+  e2eeSafetyCode,
 }: {
   open: boolean
   onClose: () => void
@@ -396,6 +403,13 @@ export function TeamsMoreMenuPopover({
   onToggleHold: () => void
   onOpenTransfer: () => void
   onOpenRecap: () => void
+  isLowBandwidth?: boolean
+  onToggleLowBandwidth?: () => void
+  onTogglePiP?: () => void
+  audioOutputs?: Array<{ deviceId: string; label: string }>
+  selectedAudioOutputId?: string
+  onSelectAudioOutput?: (deviceId: string) => void
+  e2eeSafetyCode?: string
 }) {
   if (!open) return null
 
@@ -464,6 +478,26 @@ export function TeamsMoreMenuPopover({
       active: false,
       onClick: onOpenRecap,
     },
+    ...(onToggleLowBandwidth
+      ? [
+          {
+            label: isLowBandwidth ? "Low Bandwidth: On" : "Low-Bandwidth Mode",
+            icon: Radio,
+            active: Boolean(isLowBandwidth),
+            onClick: onToggleLowBandwidth,
+          },
+        ]
+      : []),
+    ...(onTogglePiP
+      ? [
+          {
+            label: "Picture-in-Picture",
+            icon: Maximize2,
+            active: false,
+            onClick: onTogglePiP,
+          },
+        ]
+      : []),
   ]
 
   return (
@@ -503,6 +537,29 @@ export function TeamsMoreMenuPopover({
           )
         })}
       </div>
+      {audioOutputs && audioOutputs.length > 0 && onSelectAudioOutput && (
+        <div className="mt-2.5 pt-2.5 border-t border-white/10 flex items-center justify-between gap-2">
+          <span className="text-[11px] font-bold text-slate-300 shrink-0">🔊 Output:</span>
+          <select
+            aria-label="Select call audio output"
+            value={selectedAudioOutputId || ""}
+            onChange={(e) => onSelectAudioOutput(e.target.value)}
+            className="flex-1 min-w-0 rounded-lg bg-[#1F2C34] border border-white/15 px-2 py-1 text-[11px] text-white font-semibold"
+          >
+            {audioOutputs.map((d, idx) => (
+              <option key={d.deviceId || idx} value={d.deviceId}>
+                {d.label || `Audio Output ${idx + 1}`}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {e2eeSafetyCode && (
+        <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between gap-2 text-[10px] text-emerald-300 font-mono">
+          <span>🔒 E2EE Call Key:</span>
+          <span className="truncate">{e2eeSafetyCode}</span>
+        </div>
+      )}
     </div>
   )
 }

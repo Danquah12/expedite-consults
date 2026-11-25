@@ -218,6 +218,9 @@ export function MessageActionBar({
     onComment,
     onForward,
     onPostToFeed,
+    onReply,
+    onPin,
+    isPinned,
 }: {
     msg: B2BMessageItem;
     isMe: boolean;
@@ -236,6 +239,9 @@ export function MessageActionBar({
     onComment: (text: string) => void;
     onForward: (target: ShareTarget) => Promise<void> | void;
     onPostToFeed: () => void;
+    onReply?: () => void;
+    onPin?: () => void;
+    isPinned?: boolean;
 }) {
     const [showComments, setShowComments] = useState(false);
     const [draft, setDraft] = useState('');
@@ -442,6 +448,21 @@ export function MessageActionBar({
                 <button type="button" className={btn} onClick={() => setShowComments((v) => !v)} title="Comment">
                     💬 {comments.length > 0 ? comments.length : 'Comment'}
                 </button>
+                {onReply && (
+                    <button type="button" className={btn} onClick={onReply} title="Quote & Reply to this message">
+                        ↩ Reply
+                    </button>
+                )}
+                {onPin && (
+                    <button
+                        type="button"
+                        className={`${btn} ${isPinned ? '!border-amber-400 !bg-amber-50 !text-amber-800' : ''}`}
+                        onClick={onPin}
+                        title={isPinned ? 'Unpin message' : 'Pin message to top of conversation'}
+                    >
+                        📌 {isPinned ? 'Pinned' : 'Pin'}
+                    </button>
+                )}
                 <button type="button" className={btn} onClick={() => setShowShare((v) => !v)} title="Share">
                     ↪ Share
                 </button>
