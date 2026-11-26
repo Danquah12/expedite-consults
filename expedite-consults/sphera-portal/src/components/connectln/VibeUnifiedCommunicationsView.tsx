@@ -23,6 +23,8 @@ import {
   ListTodo,
 } from "lucide-react"
 import { VibeVideoCallStudio } from "./VibeVideoCallStudio"
+import { filterAndRankMembers, scoreMemberSearchMatch } from "@/lib/connectin-search-match"
+import { loadMembers, ShareTarget } from "./MessageActionBar"
 
 export interface StudioCallHandoffPayload {
   callId: string
@@ -391,6 +393,57 @@ export function VibeUnifiedCommunicationsView({
     },
   ])
 
+  const [registeredMembers, setRegisteredMembers] = useState<ShareTarget[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    const compactKey = (v?: string) => String(v || "").toLowerCase().replace(/[^a-z0-9]/g, "")
+    const myNameKey = compactKey(currentUser?.name)
+    const myEmailKey = String(currentUser?.email || "").trim().toLowerCase()
+
+    Promise.allSettled([
+      fetch("/api/connectin/users", { cache: "no-store" }).then((r) => r.json()),
+      loadMembers(true),
+    ]).then((results) => {
+      if (cancelled) return
+      const usersData = results[0].status === "fulfilled" ? results[0].value : null
+      const shareTargets: ShareTarget[] = results[1].status === "fulfilled" ? results[1].value : []
+      const combined: ShareTarget[] = []
+      const seen = new Set<string>()
+
+      const pushItem = (item: ShareTarget) => {
+        const cleanName = String(item.name || "").trim()
+        const nk = compactKey(cleanName)
+        const ek = String(item.email || "").trim().toLowerCase()
+        if (!nk) return
+        if ((myNameKey && nk === myNameKey) || (myEmailKey && ek && ek === myEmailKey)) return
+        if (seen.has(nk) || (ek && seen.has(`e:${ek}`))) return
+        seen.add(nk)
+        if (ek) seen.add(`e:${ek}`)
+        combined.push({ ...item, name: cleanName })
+      }
+
+      if (Array.isArray(usersData?.users)) {
+        for (const u of usersData.users) {
+          pushItem({
+            id: `vibe_usr_${String(u.email || u.phone || u.name).toLowerCase()}`,
+            name: String(u.name || ""),
+            email: u.email ? String(u.email).trim().toLowerCase() : undefined,
+            phone: u.phone ? String(u.phone).trim() : undefined,
+            avatar: u.avatar && !String(u.avatar).startsWith("data:") ? u.avatar : undefined,
+            subtitle: u.headline || "Verified ConnectLn Member",
+          })
+        }
+      }
+      for (const m of shareTargets) pushItem(m)
+      setRegisteredMembers(combined)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentUser?.name, currentUser?.email])
+
   const selectedConversation = useMemo(() => {
     return conversations.find((c) => c.id === selectedConvId) || conversations[0]
   }, [conversations, selectedConvId])
@@ -400,11 +453,24 @@ export function VibeUnifiedCommunicationsView({
       const matchesCat = chatCategory === "all" || c.category === chatCategory
       const matchesQuery =
         !searchQuery.trim() ||
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.messages.some((m) => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
+        scoreMemberSearchMatch(
+          [c.name, c.subtitle, ...c.messages.map((m) => m.text)],
+          searchQuery
+        ) > 0
       return matchesCat && matchesQuery
     })
   }, [conversations, chatCategory, searchQuery])
+
+  const matchedRegisteredMembers = useMemo(() => {
+    const q = searchQuery.trim()
+    if (!q) return registeredMembers.slice(0, 10)
+    return filterAndRankMembers(registeredMembers, q, (m) => [
+      m.name,
+      m.email,
+      m.phone,
+      m.subtitle,
+    ]).slice(0, 8)
+  }, [registeredMembers, searchQuery])
 
   useEffect(() => {
     if (
@@ -420,6 +486,40 @@ export function VibeUnifiedCommunicationsView({
     setInlineCallRoomId(createCallRoomId(selectedConversation.id))
     setInlineCallNonce((n) => n + 1)
     setCallState("CONNECTED")
+  }
+
+  const handleSelectOrCallMember = (member: ShareTarget, directCallMode?: "audio" | "video") => {
+    const compactKey = (v?: string) => String(v || "").toLowerCase().replace(/[^a-z0-9]/g, "")
+    const mKey = compactKey(member.name)
+    const existing = conversations.find((c) => compactKey(c.name) === mKey)
+
+    const targetId = existing ? existing.id : `dm-member-${mKey || Date.now()}`
+    if (!existing) {
+      const newConv: ConversationThread = {
+        id: targetId,
+        name: member.name,
+        category: "work",
+        subtitle: member.subtitle || member.email || "Verified ConnectLn Member",
+        unread: 0,
+        online: true,
+        safetyCode: "88412 09341 77210 44198 60125 33910",
+        retentionPolicy: "Direct Member",
+        membersCount: 2,
+        messages: [],
+      }
+      setConversations((prev) => [newConv, ...prev])
+    }
+
+    setChatCategory("all")
+    setSelectedConvId(targetId)
+    setSearchQuery("")
+
+    if (directCallMode) {
+      setCallMode(directCallMode)
+      setInlineCallRoomId(createCallRoomId(targetId))
+      setInlineCallNonce((n) => n + 1)
+      setCallState("CONNECTED")
+    }
   }
 
   const handleSendMessage = () => {
@@ -787,13 +887,87 @@ export function VibeUnifiedCommunicationsView({
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search calls & conversations..."
-                    className="w-full rounded-xl bg-zinc-100 dark:bg-zinc-800 pl-8 pr-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none"
+                    placeholder="Search name, calls, or conversations..."
+                    className="w-full rounded-xl bg-zinc-100 dark:bg-zinc-800 pl-8 pr-7 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-zinc-400 hover:text-zinc-700 font-bold cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               </div>
 
               <div className="divide-y divide-zinc-100 dark:divide-zinc-800/70 max-h-[560px] overflow-y-auto">
+                {searchQuery.trim().length > 0 && matchedRegisteredMembers.length > 0 && (
+                  <div className="bg-emerald-50/50 dark:bg-emerald-950/20">
+                    <div className="px-3.5 py-1.5 flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/50 border-b border-emerald-100 dark:border-emerald-900">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                        Registered People — Tap to Call ({matchedRegisteredMembers.length})
+                      </span>
+                      <span className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400">
+                        Direct Call
+                      </span>
+                    </div>
+                    {matchedRegisteredMembers.map((member) => {
+                      const avatarSrc =
+                        member.avatar ||
+                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.name)}&backgroundColor=059669`
+                      return (
+                        <div
+                          key={member.id}
+                          onClick={() => handleSelectOrCallMember(member)}
+                          className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-colors flex items-center justify-between gap-2"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <img
+                              src={avatarSrc}
+                              alt={member.name}
+                              className="h-9 w-9 rounded-full object-cover shrink-0 border border-emerald-200 dark:border-emerald-800"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
+                                {member.name}
+                              </p>
+                              <p className="text-[10.5px] text-zinc-500 dark:text-zinc-400 truncate">
+                                {member.subtitle || member.email || "Verified ConnectLn Member"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleSelectOrCallMember(member, "audio")
+                              }}
+                              title={`Voice Call ${member.name}`}
+                              className="h-7 w-7 rounded-lg bg-white dark:bg-zinc-800 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 dark:border-emerald-800 flex items-center justify-center cursor-pointer transition-colors"
+                            >
+                              <Phone className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleSelectOrCallMember(member, "video")
+                              }}
+                              title={`Video Call ${member.name}`}
+                              className="h-7 w-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center cursor-pointer transition-colors"
+                            >
+                              <Video className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
                 {filteredConversations.map((conv) => {
                   const isSelected = conv.id === selectedConversation.id
                   return (
@@ -833,6 +1007,68 @@ export function VibeUnifiedCommunicationsView({
                     </button>
                   )
                 })}
+
+                {!searchQuery.trim() && matchedRegisteredMembers.length > 0 && (
+                  <div className="bg-zinc-50/60 dark:bg-zinc-950/30">
+                    <div className="px-3.5 py-1.5 bg-zinc-100/80 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+                        ConnectLn People ({registeredMembers.length})
+                      </span>
+                    </div>
+                    {matchedRegisteredMembers.map((member) => {
+                      const avatarSrc =
+                        member.avatar ||
+                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.name)}&backgroundColor=059669`
+                      return (
+                        <div
+                          key={`browse_${member.id}`}
+                          onClick={() => handleSelectOrCallMember(member)}
+                          className="w-full text-left px-3.5 py-2 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 cursor-pointer transition-colors flex items-center justify-between gap-2"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <img
+                              src={avatarSrc}
+                              alt={member.name}
+                              className="h-8 w-8 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-zinc-700"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                                {member.name}
+                              </p>
+                              <p className="text-[10.5px] text-zinc-500 dark:text-zinc-400 truncate">
+                                {member.subtitle || member.email || "Verified ConnectLn Member"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleSelectOrCallMember(member, "audio")
+                              }}
+                              title={`Voice Call ${member.name}`}
+                              className="h-7 w-7 rounded-lg bg-white dark:bg-zinc-800 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-zinc-200 dark:border-zinc-700 flex items-center justify-center cursor-pointer transition-colors"
+                            >
+                              <Phone className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleSelectOrCallMember(member, "video")
+                              }}
+                              title={`Video Call ${member.name}`}
+                              className="h-7 w-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center cursor-pointer transition-colors"
+                            >
+                              <Video className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
