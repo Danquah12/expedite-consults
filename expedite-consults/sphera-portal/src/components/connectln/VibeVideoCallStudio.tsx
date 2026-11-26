@@ -373,36 +373,90 @@ function StudioCallDurationBadge({
   )
 }
 
+function findStudioSendableVideoSender(pc: RTCPeerConnection | undefined): RTCRtpSender | undefined {
+  if (!pc) return undefined
+  try {
+    if (typeof pc.getTransceivers === "function") {
+      const tr = pc.getTransceivers().find((t) => {
+        const kind = t.sender?.track?.kind || t.receiver?.track?.kind
+        const dir = t.currentDirection || t.direction
+        return kind === "video" && (dir === "sendrecv" || dir === "sendonly")
+      })
+      if (tr?.sender) return tr.sender
+    }
+    if (typeof pc.getSenders === "function") {
+      return pc.getSenders().find((s) => s.track && s.track.kind === "video")
+    }
+  } catch {}
+  return undefined
+}
+
+function isStudioPcSendingLiveVideo(pc: RTCPeerConnection | undefined): boolean {
+  if (!pc) return false
+  try {
+    const ice = pc.iceConnectionState
+    if (ice !== "connected" && ice !== "completed") return false
+    const sender = findStudioSendableVideoSender(pc)
+    return Boolean(
+      sender?.track &&
+        sender.track.kind === "video" &&
+        sender.track.readyState === "live" &&
+        sender.track.enabled
+    )
+  } catch {
+    return false
+  }
+}
+
 function RemotePeerVideoElement({ stream, isVideoOn = true }: { stream: MediaStream; isVideoOn?: boolean }) {
   const ref = useRef<HTMLVideoElement | null>(null)
-  const [hasLiveVideoFrames, setHasLiveVideoFrames] = useState(false)
+  const [hasLiveVideoFrames, setHasLiveVideoFrames] = useState(
+    () => stream?.getVideoTracks?.().some((t) => t.readyState === "live") ?? false
+  )
 
   useEffect(() => {
     const el = ref.current
     if (!el || !stream) return
+    const hasLiveTrack = () => stream.getVideoTracks().some((t) => t.readyState === "live")
+    setHasLiveVideoFrames(hasLiveTrack())
     if (el.srcObject !== stream) {
       el.srcObject = stream
     }
     el.muted = true
 
     const checkFrames = () => {
-      if (el.videoWidth > 0 && el.readyState >= 2 && !el.paused) {
+      if ((el.videoWidth > 0 && el.readyState >= 2 && !el.paused) || hasLiveTrack()) {
         setHasLiveVideoFrames(true)
       }
     }
-
+    const handleAddTrack = () => {
+      if (el.srcObject !== stream) el.srcObject = stream
+      el.play().then(checkFrames).catch(() => {})
+      checkFrames()
+    }
+    const videoTracks = stream.getVideoTracks()
+    videoTracks.forEach((vt) => {
+      vt.addEventListener("unmute", checkFrames)
+    })
+    stream.addEventListener("addtrack", handleAddTrack)
     el.addEventListener("loadeddata", checkFrames)
     el.addEventListener("playing", checkFrames)
     el.addEventListener("timeupdate", checkFrames)
+    el.addEventListener("resize", checkFrames)
 
     el.play()
       .then(checkFrames)
       .catch(() => {})
 
     return () => {
+      videoTracks.forEach((vt) => {
+        vt.removeEventListener("unmute", checkFrames)
+      })
+      stream.removeEventListener("addtrack", handleAddTrack)
       el.removeEventListener("loadeddata", checkFrames)
       el.removeEventListener("playing", checkFrames)
       el.removeEventListener("timeupdate", checkFrames)
+      el.removeEventListener("resize", checkFrames)
     }
   }, [stream])
 
@@ -1703,13 +1757,8 @@ export function VibeVideoCallStudio({
       const pc: RTCPeerConnection | undefined = mc.peerConnection
       if (pc) {
         if (typeof pc.getSenders === "function") {
+          // Never call sender.track.stop() here: local hardware tracks are shared across upgraded PeerConnections
           pc.getSenders().forEach((sender) => {
-            try {
-              if (sender.track) {
-                sender.track.enabled = false
-                sender.track.stop()
-              }
-            } catch {}
             try {
               pc.removeTrack(sender)
             } catch {}
@@ -2126,10 +2175,15 @@ export function VibeVideoCallStudio({
 
       activeMediaCallsRef.current.forEach((mediaCall, peerId) => {
         const pc: RTCPeerConnection | undefined = mediaCall?.peerConnection
-        if (!pc || typeof pc.getSenders !== "function") return
-        const videoSender = pc.getSenders().find((s) => s.track && s.track.kind === "video")
+        if (!pc || typeof pc.getSenders !== "function") {
+          dialRemotePeerNowRef.current?.(peerId, true)
+          return
+        }
+        const videoSender = findStudioSendableVideoSender(pc)
         if (videoSender && typeof videoSender.replaceTrack === "function") {
-          videoSender.replaceTrack(targetVideoTrack!).catch(() => {})
+          videoSender.replaceTrack(targetVideoTrack!).catch(() => {
+            dialRemotePeerNowRef.current?.(peerId, true)
+          })
           try {
             const params = videoSender.getParameters()
             if (params.encodings && params.encodings.length > 0) {
@@ -2139,8 +2193,8 @@ export function VibeVideoCallStudio({
             }
           } catch {}
         } else {
-          // Audio-only peer connection upgraded to screen/video: redial with video track!
-          dialRemotePeerNowRef.current?.(peerId)
+          // Audio-only or recvonly peer connection upgraded to screen/video: redial with sendable video track!
+          dialRemotePeerNowRef.current?.(peerId, true)
         }
       })
     } catch {
@@ -2642,9 +2696,19 @@ export function VibeVideoCallStudio({
   const lastStageCaptureAtMsRef = useRef<number>(0)
   const lastStageScreenFrameRef = useRef<string | null>(null)
 
-  // Capture a compact 208x138 JPEG fallback frame ONLY before WebRTC video connects (zero main-thread lag during calls!)
+  const hasVerifiedOutgoingStudioVideo = useCallback((): boolean => {
+    if (activeMediaCallsRef.current.size === 0) return false
+    for (const mc of activeMediaCallsRef.current.values()) {
+      if (!isStudioPcSendingLiveVideo(mc?.peerConnection)) {
+        return false
+      }
+    }
+    return true
+  }, [])
+
+  // Capture a compact 208x138 JPEG fallback frame whenever local camera is ON and an outgoing WebRTC video sender isn't live yet
   const captureCompactLiveFrame = useCallback((): string | null => {
-    if (liveStreamPeersCountRef.current > 0) {
+    if (hasVerifiedOutgoingStudioVideo()) {
       return null
     }
     const now = Date.now()
@@ -3210,17 +3274,35 @@ export function VibeVideoCallStudio({
     const aTrack = localStreamState.getAudioTracks()[0]
     activeMediaCallsRef.current.forEach((mediaCall, peerId) => {
       const pc: RTCPeerConnection | undefined = mediaCall?.peerConnection
-      if (!pc || typeof pc.getSenders !== "function") return
+      if (!pc || typeof pc.getSenders !== "function") {
+        if (vTrack || aTrack) dialRemotePeerNowRef.current?.(peerId, true)
+        return
+      }
       const senders = pc.getSenders()
-      const vSender = vTrack ? senders.find((s) => s.track && s.track.kind === "video") : undefined
+      const vSender = vTrack ? findStudioSendableVideoSender(pc) : undefined
       const aSender = aTrack ? senders.find((s) => s.track && s.track.kind === "audio") : undefined
-      if (vTrack && vSender && typeof vSender.replaceTrack === "function") {
-        vSender.replaceTrack(vTrack).catch(() => {})
+      let needsRedial = false
+      if (vTrack) {
+        if (vSender && typeof vSender.replaceTrack === "function") {
+          vSender.replaceTrack(vTrack).catch(() => {
+            dialRemotePeerNowRef.current?.(peerId, true)
+          })
+        } else {
+          needsRedial = true
+        }
       }
-      if (aTrack && aSender && typeof aSender.replaceTrack === "function") {
-        aSender.replaceTrack(aTrack).catch(() => {})
+      if (aTrack) {
+        if (aSender && typeof aSender.replaceTrack === "function") {
+          if (aSender.track !== aTrack) {
+            aSender.replaceTrack(aTrack).catch(() => {
+              dialRemotePeerNowRef.current?.(peerId, true)
+            })
+          }
+        } else {
+          needsRedial = true
+        }
       }
-      if ((vTrack && !vSender) || (aTrack && !aSender)) {
+      if (needsRedial) {
         dialRemotePeerNowRef.current?.(peerId, true)
       }
     })
@@ -3314,11 +3396,28 @@ export function VibeVideoCallStudio({
     const bindMediaCall = (mediaCall: any) => {
       if (!mediaCall || !mediaCall.peer) return
       knownRemotePeerIdsRef.current.add(mediaCall.peer)
-      activeMediaCalls.set(mediaCall.peer, mediaCall)
+      if (!liveStreamPeers.has(mediaCall.peer) || !activeMediaCalls.has(mediaCall.peer)) {
+        activeMediaCalls.set(mediaCall.peer, mediaCall)
+      }
       tuneCallSenderBitrate(mediaCall)
+
+      let boundRemoteStream: MediaStream | null = null
+      const handleRemoteAddTrack = () => {
+        if (isCancelled || !boundRemoteStream) return
+        const hasVidNow = boundRemoteStream
+          .getVideoTracks()
+          .some((t) => t.readyState === "live" && t.enabled)
+        if (hasVidNow) {
+          liveStreamPeers.add(mediaCall.peer)
+          liveStreamPeersCountRef.current = liveStreamPeers.size
+        }
+        const cloned = new MediaStream(boundRemoteStream.getTracks())
+        setRemoteStreams((prev) => ({ ...prev, [mediaCall.peer]: cloned }))
+      }
+
       mediaCall.on("stream", (remoteStream: MediaStream) => {
         if (isCancelled) return
-        activeMediaCalls.set(mediaCall.peer, mediaCall)
+        const prevMc = activeMediaCalls.get(mediaCall.peer)
         const hasLiveRemoteVideo = remoteStream
           .getVideoTracks()
           .some((t) => t.readyState === "live" && t.enabled)
@@ -3326,13 +3425,35 @@ export function VibeVideoCallStudio({
           liveStreamPeers.add(mediaCall.peer)
           liveStreamPeersCountRef.current = liveStreamPeers.size
         }
+        if (prevMc && prevMc !== mediaCall) {
+          const prevHasVid = isStudioPcSendingLiveVideo(prevMc?.peerConnection)
+          const curHasVid =
+            isStudioPcSendingLiveVideo(mediaCall?.peerConnection) ||
+            Boolean(findStudioSendableVideoSender(mediaCall?.peerConnection)?.track)
+          if (curHasVid || hasLiveRemoteVideo || !prevHasVid) {
+            activeMediaCalls.set(mediaCall.peer, mediaCall)
+            window.setTimeout(() => {
+              if (activeMediaCalls.get(mediaCall.peer) === mediaCall) {
+                teardownStudioMediaCall(prevMc)
+              }
+            }, 300)
+          }
+        } else {
+          activeMediaCalls.set(mediaCall.peer, mediaCall)
+        }
+        if (boundRemoteStream && boundRemoteStream !== remoteStream) {
+          boundRemoteStream.removeEventListener("addtrack", handleRemoteAddTrack)
+        }
+        boundRemoteStream = remoteStream
+        remoteStream.addEventListener("addtrack", handleRemoteAddTrack)
+
         tuneCallSenderBitrate(mediaCall)
         setRemoteStreams((prev) => {
           const prevStream = prev[mediaCall.peer]
           const prevHasVideo = Boolean(
             prevStream && prevStream.getVideoTracks().some((t) => t.readyState === "live")
           )
-          if (prevHasVideo && !hasLiveRemoteVideo) {
+          if (prevHasVideo && !hasLiveRemoteVideo && prevMc && prevMc !== mediaCall) {
             return prev
           }
           return { ...prev, [mediaCall.peer]: remoteStream }
@@ -3357,6 +3478,10 @@ export function VibeVideoCallStudio({
         }
       })
       mediaCall.on("close", () => {
+        if (boundRemoteStream) {
+          boundRemoteStream.removeEventListener("addtrack", handleRemoteAddTrack)
+          boundRemoteStream = null
+        }
         if (activeMediaCalls.get(mediaCall.peer) !== mediaCall) return
         liveStreamPeers.delete(mediaCall.peer)
         liveStreamPeersCountRef.current = liveStreamPeers.size
@@ -3377,6 +3502,10 @@ export function VibeVideoCallStudio({
         })
       })
       mediaCall.on("error", () => {
+        if (boundRemoteStream) {
+          boundRemoteStream.removeEventListener("addtrack", handleRemoteAddTrack)
+          boundRemoteStream = null
+        }
         if (activeMediaCalls.get(mediaCall.peer) !== mediaCall) return
         liveStreamPeers.delete(mediaCall.peer)
         liveStreamPeersCountRef.current = liveStreamPeers.size
@@ -3393,6 +3522,11 @@ export function VibeVideoCallStudio({
         activeDataConns.set(conn.peer, conn)
         const st = peerSyncStateRef.current
         const hasWebRtcMedia = liveStreamPeers.size > 0
+        const hasOutgoingWebRtcVideo =
+          activeMediaCalls.size > 0 &&
+          Array.from(activeMediaCalls.values()).every((mc) =>
+            isStudioPcSendingLiveVideo(mc?.peerConnection)
+          )
         try {
           conn.send({
             type: "VIBE_PEER_SYNC",
@@ -3407,7 +3541,7 @@ export function VibeVideoCallStudio({
             isScreenSharing: st.isScreenSharing,
             virtualBgId: st.selectedVirtualBgId,
             virtualBgBadge: st.selectedVirtualBgId !== "none" ? st.activeVirtualBgOption.badgeText : undefined,
-            liveFrame: hasWebRtcMedia ? null : st.captureCompactLiveFrame(),
+            liveFrame: hasOutgoingWebRtcVideo ? null : st.captureCompactLiveFrame(),
             liveAudioChunk: !hasWebRtcMedia && !st.isMicMuted ? latestLocalAudioChunkRef.current : undefined,
             recentAudioChunks: !hasWebRtcMedia && !st.isMicMuted ? recentLocalAudioChunksRef.current : undefined,
             sharedStage: st.captureActiveSharedStagePayload(),
@@ -3562,19 +3696,23 @@ export function VibeVideoCallStudio({
       const existingPc: RTCPeerConnection | undefined = existingCall?.peerConnection
       const senders =
         existingPc && typeof existingPc.getSenders === "function" ? existingPc.getSenders() : []
-      const hasOutgoingVideoSender = senders.some((s) => s.track && s.track.kind === "video")
+      const hasOutgoingVideoSender = Boolean(findStudioSendableVideoSender(existingPc))
+      const isSendingLiveVideo = isStudioPcSendingLiveVideo(existingPc)
       const hasOutgoingAudioSender = senders.some((s) => s.track && s.track.kind === "audio")
+      const outHasLiveVideo = Boolean(
+        outStream?.getVideoTracks().some((t) => t.readyState === "live" && t.enabled)
+      )
 
       const needsMediaCall =
         !liveStreamPeers.has(targetSlot) ||
-        (outStream && outStream.getVideoTracks().length > 0 && !hasOutgoingVideoSender) ||
+        (outHasLiveVideo && (!hasOutgoingVideoSender || !isSendingLiveVideo)) ||
         (outStream && outStream.getAudioTracks().length > 0 && !hasOutgoingAudioSender)
 
       if (
         outStream &&
         (outStream.getVideoTracks().length > 0 || outStream.getAudioTracks().length > 0) &&
         needsMediaCall &&
-        (force || nowMs - lastTry > 4500)
+        (force || nowMs - lastTry > 4000)
       ) {
         lastCallAttemptMs.set(targetSlot, nowMs)
         try {
@@ -3656,6 +3794,11 @@ export function VibeVideoCallStudio({
             if (activeDataConns.size > 0) {
               const st = peerSyncStateRef.current
               const hasWebRtcMedia = liveStreamPeers.size > 0
+              const hasOutgoingWebRtcVideo =
+                activeMediaCalls.size > 0 &&
+                Array.from(activeMediaCalls.values()).every((mc) =>
+                  isStudioPcSendingLiveVideo(mc?.peerConnection)
+                )
               const syncPayload = {
                 type: "VIBE_PEER_SYNC",
                 participantId: localParticipantId,
@@ -3669,7 +3812,7 @@ export function VibeVideoCallStudio({
                 isScreenSharing: st.isScreenSharing,
                 virtualBgId: st.selectedVirtualBgId,
                 virtualBgBadge: st.selectedVirtualBgId !== "none" ? st.activeVirtualBgOption.badgeText : undefined,
-                liveFrame: hasWebRtcMedia ? null : st.captureCompactLiveFrame(),
+                liveFrame: hasOutgoingWebRtcVideo ? null : st.captureCompactLiveFrame(),
                 liveAudioChunk: !hasWebRtcMedia && !st.isMicMuted ? latestLocalAudioChunkRef.current : undefined,
                 recentAudioChunks: !hasWebRtcMedia && !st.isMicMuted ? recentLocalAudioChunksRef.current : undefined,
                 sharedStage: st.captureActiveSharedStagePayload(),
@@ -4320,6 +4463,15 @@ export function VibeVideoCallStudio({
     if (localStreamRef.current) {
       localStreamRef.current.getVideoTracks().forEach((t) => {
         t.enabled = nextVideo
+      })
+    }
+    if (nextVideo) {
+      syncWebRtcOutgoingVideoTrack(selectedVirtualBgId !== "none")
+      knownRemotePeerIdsRef.current.forEach((peerId) => {
+        const mc = activeMediaCallsRef.current.get(peerId)
+        if (!mc || !isStudioPcSendingLiveVideo(mc?.peerConnection)) {
+          dialRemotePeerNowRef.current?.(peerId, true)
+        }
       })
     }
     setParticipants((prev) =>
