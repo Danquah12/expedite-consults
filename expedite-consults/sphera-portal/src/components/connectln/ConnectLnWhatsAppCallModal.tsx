@@ -52,6 +52,12 @@ import {
   TeamsWhiteboardOverlay,
 } from "./ConnectLnTeamsCallPanels"
 import {
+  useNoctisCallNotetaker,
+  NoctisNotetakerTile,
+  NoctisLiveNotesDrawer,
+  AskNoctisInCallBar,
+} from "./ConnectLnNoctisNotetaker"
+import {
   normalizeClientPhone,
   looksLikeClientPhone,
   prettyClientPhone,
@@ -3780,7 +3786,26 @@ export function ConnectLnWhatsAppCallModal({
   if (totalRemoteCount > maxRemoteCountSeenRef.current) {
     maxRemoteCountSeenRef.current = totalRemoteCount
   }
-  const isGroupGridMode = totalRemoteCount >= 2
+  const modalRoomTitle =
+    totalRemoteCount >= 2
+      ? "ConnectLn Group Call"
+      : remoteWebRtcPeers[0]?.name || cellLegs[0]?.name || recipientName || "ConnectLn Call"
+  const notetaker = useNoctisCallNotetaker({
+    callId,
+    roomTitle: modalRoomTitle,
+    userKey: callerEmail || localPeerUid,
+    userName: callerName,
+    participants: [
+      callerName,
+      ...(remoteWebRtcPeers.length > 0
+        ? remoteWebRtcPeers.map((p) => p.name)
+        : [recipientName || "Participant"]),
+    ],
+    isCallActive: open && callStatus !== "ended",
+    externalCaptionItems: teamsState.captions,
+    skipOwnSpeechRecognition: isCaptionsOn,
+  })
+  const isGroupGridMode = totalRemoteCount >= 2 || notetaker.notetakerActive
   const localPreviewStream =
     selectedBgId !== "none" && virtualBgStreamState ? virtualBgStreamState : localStreamState
 
@@ -3866,6 +3891,10 @@ export function ConnectLnWhatsAppCallModal({
   }, [isWaitingForAnswer])
 
   const handleHangup = (forceEndForAll = false) => {
+    if (notetaker.notetakerActive || notetaker.transcriptEntries.length > 0) {
+      void notetaker.saveRecapToCloud()
+    }
+    notetaker.setNotetakerActive(false)
     isWaitingForAnswerRef.current = false
     stopOutgoingCallerRingbackTone()
     markConnectLnCallHandled(callId)
@@ -5114,12 +5143,19 @@ export function ConnectLnWhatsAppCallModal({
         </button>
       )}
 
-      {/* STAGE A: MULTI-PERSON WHATSAPP GROUP CALL SPLIT GRID (2+ Remote Participants) */}
-      {isGroupGridMode ? (
+      {/* STAGE A: MULTI-PERSON WHATSAPP GROUP CALL SPLIT GRID (2+ Remote Participants or Noctis Notetaker) */}
+      {isGroupGridMode ? (() => {
+        const modalTileCount =
+          1 +
+          Math.max(totalRemoteCount, notetaker.notetakerActive ? 1 : 0) +
+          (notetaker.notetakerActive ? 1 : 0)
+        return (
         <div className="flex-1 pt-16 pb-24 px-3 sm:px-5 overflow-y-auto">
           <div
             className={`h-full min-h-[70vh] grid gap-3 ${
-              totalRemoteCount + 1 <= 4
+              modalTileCount === 3
+                ? "grid-cols-1 md:grid-cols-3"
+                : modalTileCount <= 4
                 ? "grid-cols-1 sm:grid-cols-2"
                 : "grid-cols-2 lg:grid-cols-3"
             }`}
@@ -5188,6 +5224,43 @@ export function ConnectLnWhatsAppCallModal({
                 <span className="text-[11px]">{isMicMuted ? "🔇" : "🎙️"}</span>
               </div>
             </div>
+
+            {/* Noctis AI Notetaker Tile (Center slot in 3-tile view) */}
+            {notetaker.notetakerActive && (
+              <NoctisNotetakerTile
+                elapsedSec={notetaker.elapsedSec}
+                entryCount={notetaker.transcriptEntries.length}
+                speechListening={notetaker.speechListening}
+                minHeight="200px"
+                onOpenNotes={() => notetaker.setShowNotesDrawer(true)}
+                onStop={() => notetaker.setNotetakerActive(false)}
+              />
+            )}
+
+            {/* Equal Peer Tile when in 1:1 mode with Noctis Notetaker active & peer connecting/reconnecting */}
+            {notetaker.notetakerActive &&
+              remoteWebRtcPeers.length === 0 &&
+              cellLegs.length === 0 && (
+                <div className="relative rounded-2xl overflow-hidden border border-white/15 bg-[#1B1D21] min-h-[200px] flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-2.5 p-4 text-center">
+                    <img
+                      src={primaryAvatarSrc}
+                      alt={primaryName}
+                      className="w-18 h-18 rounded-full object-cover border-2 border-emerald-400/70 shadow-lg"
+                    />
+                    <p className="text-sm font-bold text-white">{primaryName}</p>
+                    <span className="text-[11px] text-zinc-400">
+                      {callStatus === "connected" ? "Connected · E2EE" : "Connecting..."}
+                    </span>
+                  </div>
+                  <div className="absolute bottom-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between bg-black/65 px-2.5 py-1 rounded-lg">
+                    <span className="text-xs font-bold truncate">{primaryName}</span>
+                    <span className="text-[11px] text-emerald-300">
+                      {callStatus === "connected" ? "Live" : "Ringing"}
+                    </span>
+                  </div>
+                </div>
+              )}
 
             {/* WebRTC Video/Voice Participant Tiles */}
             {remoteWebRtcPeers.map((rp, idx) => {
@@ -5494,7 +5567,8 @@ export function ConnectLnWhatsAppCallModal({
             })}
           </div>
         </div>
-      ) : (() => {
+        )
+      })() : (() => {
         const remoteBgTheme =
           CALL_BACKGROUND_THEMES.find((b) => b.id === primaryPeer?.virtualBgId) ||
           CALL_BACKGROUND_THEMES[0]
@@ -6914,6 +6988,24 @@ export function ConnectLnWhatsAppCallModal({
 
           <button
             type="button"
+            data-testid="modal-toggle-noctis-notetaker"
+            onClick={notetaker.toggleNotetaker}
+            className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+              notetaker.notetakerActive
+                ? "bg-emerald-500 text-slate-950"
+                : "bg-white/10 hover:bg-white/20 text-emerald-300"
+            }`}
+            title={
+              notetaker.notetakerActive
+                ? "Noctis AI Notetaker Active (Click to pause or view notes)"
+                : "Start Noctis AI Notetaker (Record & Take Meeting Notes)"
+            }
+          >
+            <Sparkles className="h-4 w-4" />
+          </button>
+
+          <button
+            type="button"
             onClick={() => {
               const next = !showMoreMenu
               closeAllCallDrawers()
@@ -6949,6 +7041,31 @@ export function ConnectLnWhatsAppCallModal({
           </button>
         </div>
       </div>
+
+      {/* PRIVATE ASK NOCTIS BOTTOM-LEFT BAR (Visible only to you) */}
+      <div className="fixed bottom-5 left-4 z-35 hidden lg:block">
+        <AskNoctisInCallBar
+          onAsk={notetaker.askNoctis}
+          hasTranscriptEntries={notetaker.transcriptEntries.length > 0}
+        />
+      </div>
+
+      <NoctisLiveNotesDrawer
+        open={notetaker.showNotesDrawer}
+        onClose={() => notetaker.setShowNotesDrawer(false)}
+        roomTitle={modalRoomTitle}
+        elapsedSec={notetaker.elapsedSec}
+        recap={notetaker.recap}
+        transcriptEntries={notetaker.transcriptEntries}
+        isSavingCloud={notetaker.isSavingCloud}
+        cloudSavedAt={notetaker.cloudSavedAt}
+        workspaceSyncedAt={notetaker.workspaceSyncedAt}
+        onAddNoteLine={(text) => notetaker.addManualNoteLine(text)}
+        onSaveCloud={() => void notetaker.saveRecapToCloud()}
+        onSyncWorkspace={() => void notetaker.syncRecapToWorkspaceNotes()}
+        onDownloadMarkdown={notetaker.downloadTranscriptMarkdown}
+        buildMarkdownText={notetaker.buildMarkdownText}
+      />
     </div>
   )
 }

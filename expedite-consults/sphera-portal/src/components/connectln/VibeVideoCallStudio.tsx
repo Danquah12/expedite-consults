@@ -53,6 +53,12 @@ import {
   pickRealCallAvatar,
   resolveAndCompressLocalCallerAvatar,
 } from "@/lib/connectin-avatar-signal"
+import {
+  useNoctisCallNotetaker,
+  NoctisNotetakerTile,
+  NoctisLiveNotesDrawer,
+  AskNoctisInCallBar,
+} from "./ConnectLnNoctisNotetaker"
 
 export interface CallParticipantTile {
   id: string
@@ -1584,6 +1590,18 @@ export function VibeVideoCallStudio({
       }
     }
   }, [liveCaptions, captionLanguage, localDisplayName])
+
+  const notetaker = useNoctisCallNotetaker({
+    callId,
+    roomTitle: conversationName,
+    userKey: currentUserEmail || localParticipantId,
+    userName: localDisplayName,
+    participants: participants.map((p) => p.name),
+    isCallActive: callState !== "ENDED" && callState !== "READY",
+    externalTranscriptLine: liveSpokenTranscript,
+    skipOwnSpeechRecognition: liveCaptions,
+    threadIdForWorkspaceSync: conversationId,
+  })
 
   // Refs for real hardware media
   const studioRootRef = useRef<HTMLDivElement | null>(null)
@@ -4773,6 +4791,10 @@ export function VibeVideoCallStudio({
   }
 
   const handleEndCall = () => {
+    if (notetaker.notetakerActive || notetaker.transcriptEntries.length > 0) {
+      void notetaker.saveRecapToCloud()
+    }
+    notetaker.setNotetakerActive(false)
     isCallEndedRef.current = true
     stopOutgoingCallerRingbackTone()
     activeDataConnsRef.current.forEach((conn) => {
@@ -5908,6 +5930,40 @@ export function VibeVideoCallStudio({
                   All participant streams have been closed cleanly and camera/microphone hardware handles have been released.
                 </p>
               </div>
+              {(notetaker.transcriptEntries.length > 0 || notetaker.cloudSavedAt) && (
+                <div className="w-full max-w-xl rounded-xl bg-black/50 border border-white/10 p-3.5 text-left space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                      <FileText className="h-3.5 w-3.5" />
+                      <span>Noctis Meeting Notes</span>
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={notetaker.downloadTranscriptMarkdown}
+                        className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] font-bold text-zinc-200 cursor-pointer"
+                      >
+                        Download .md
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void notetaker.syncRecapToWorkspaceNotes()}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-[11px] font-bold text-emerald-200 cursor-pointer"
+                      >
+                        {notetaker.workspaceSyncedAt ? "Synced to Notes ✓" : "Save to Mail & Chat Notes"}
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-zinc-200 leading-relaxed">{notetaker.recap.summary}</p>
+                  {notetaker.recap.actionItems.length > 0 && (
+                    <ul className="text-[11px] text-amber-200 list-disc pl-4 space-y-0.5">
+                      {notetaker.recap.actionItems.slice(0, 4).map((a, idx) => (
+                        <li key={idx}>{a}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={handleRestartCall}
@@ -5933,20 +5989,66 @@ export function VibeVideoCallStudio({
             </div>
           )}
 
-          {/* PARTICIPANT VIDEO GRID (CLEAN, UNCLUTTERED, REAL MULTI-PARTY PARTICIPANTS) */}
+          {/* MINIMALIST CALL STAGE STATUS STRIP (Time | Room Code + Participant Count) */}
           {callState !== "ENDED" && callState !== "READY" && (
+            <div className="flex items-center justify-between gap-2 px-1">
+              <div className="flex items-center gap-2 text-xs text-zinc-300">
+                <span className="font-semibold text-white">
+                  {new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                </span>
+                <span className="text-zinc-600">|</span>
+                <span className="font-mono text-[11px] text-zinc-300">
+                  {callId.slice(0, 16)}
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-zinc-400">
+                  <Lock className="h-2.5 w-2.5 text-emerald-400" />
+                  <span>E2EE</span>
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {notetaker.notetakerActive && (
+                  <button
+                    type="button"
+                    onClick={() => notetaker.setShowNotesDrawer(true)}
+                    className="px-2.5 py-1 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/35 text-[11px] font-semibold text-emerald-200 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Noctis Notetaker</span>
+                  </button>
+                )}
+                <span className="px-2.5 py-1 rounded-full bg-white/10 border border-white/10 text-[11px] font-semibold text-zinc-200 flex items-center gap-1.5">
+                  <Users className="h-3 w-3 text-zinc-300" />
+                  <span>{participants.length + (notetaker.notetakerActive ? 1 : 0)}</span>
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* PARTICIPANT VIDEO GRID (CLEAN, UNCLUTTERED, REAL MULTI-PARTY PARTICIPANTS) */}
+          {callState !== "ENDED" && callState !== "READY" && (() => {
+            const totalStageTiles = participants.length + (notetaker.notetakerActive ? 1 : 0)
+            const tileMinHeight =
+              totalStageTiles === 1
+                ? "420px"
+                : totalStageTiles > 6
+                ? "220px"
+                : "280px"
+            const notetakerInsertIndex = participants.length >= 2 ? 1 : participants.length
+            return (
           <div
             className={`grid gap-4 ${
-              participants.length === 1
+              totalStageTiles === 1
                 ? "grid-cols-1 max-w-4xl mx-auto"
-                : participants.length === 2
+                : totalStageTiles === 2
                 ? "grid-cols-1 md:grid-cols-2"
-                : participants.length <= 6
+                : totalStageTiles === 3
+                ? "grid-cols-1 md:grid-cols-3"
+                : totalStageTiles <= 6
                 ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
                 : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
             }`}
           >
-            {participants.map((part) => {
+            {participants.map((part, partIdx) => {
               const isLocalTile = Boolean(part.isLocal)
               const showLiveVideoInTile = isLocalTile && isHardwareCameraActive && isCameraOn
               let remoteStream: MediaStream | undefined =
@@ -5967,18 +6069,14 @@ export function VibeVideoCallStudio({
               const showRemoteFriendLiveVideo = !isLocalTile && part.isVideoOn
 
               return (
+                <React.Fragment key={part.id}>
                 <div
-                  key={part.id}
                   style={{
                     backgroundColor: "#0F241D",
                     minHeight:
-                      participants.length === 1
-                        ? "420px"
-                        : isLocalTile && layoutMode === "speaker"
+                      isLocalTile && layoutMode === "speaker" && totalStageTiles > 1
                         ? "380px"
-                        : participants.length > 6
-                        ? "220px"
-                        : "280px",
+                        : tileMinHeight,
                   }}
                   className={`rounded-2xl border-2 overflow-hidden relative flex flex-col justify-between transition-all ${
                     isLocalTile && layoutMode === "speaker" && participants.length > 1
@@ -6091,8 +6189,8 @@ export function VibeVideoCallStudio({
                             : part.avatar
                           return (
                             <div
-                              className={`relative h-16 w-16 overflow-hidden rounded-3xl bg-gradient-to-br ${part.avatarGradient} flex items-center justify-center text-lg font-extrabold text-white shadow-lg ring-2 ${
-                                part.isSpeaking && !part.isMuted ? "ring-emerald-400" : "ring-white/20"
+                              className={`relative h-20 w-20 overflow-hidden rounded-full bg-gradient-to-br ${part.avatarGradient} flex items-center justify-center text-lg font-extrabold text-white shadow-lg ring-4 ${
+                                part.isSpeaking && !part.isMuted ? "ring-emerald-400/70" : "ring-white/15"
                               }`}
                             >
                               {tileAvatarSrc ? (
@@ -6165,10 +6263,22 @@ export function VibeVideoCallStudio({
                     </div>
                   </div>
                 </div>
+                {notetaker.notetakerActive && partIdx + 1 === notetakerInsertIndex && (
+                  <NoctisNotetakerTile
+                    elapsedSec={notetaker.elapsedSec}
+                    entryCount={notetaker.transcriptEntries.length}
+                    speechListening={notetaker.speechListening}
+                    minHeight={tileMinHeight}
+                    onOpenNotes={() => notetaker.setShowNotesDrawer(true)}
+                    onStop={() => notetaker.setNotetakerActive(false)}
+                  />
+                )}
+                </React.Fragment>
               )
             })}
           </div>
-          )}
+            )
+          })()}
 
           {/* 1. SHARE FILE, IMAGE, PDF & PRESENTATION DRAWER (DIRECTLY ABOVE CONTROL DOCK) */}
           {showShareFileDrawer && (
@@ -6590,6 +6700,28 @@ export function VibeVideoCallStudio({
             </div>
           )}
 
+          {/* PRIVATE ASK NOCTIS BOTTOM-LEFT BAR (Visible only to you) */}
+          {callState !== "ENDED" && callState !== "READY" && (
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <AskNoctisInCallBar
+                onAsk={notetaker.askNoctis}
+                hasTranscriptEntries={notetaker.transcriptEntries.length > 0}
+              />
+              {notetaker.notetakerActive && (
+                <button
+                  type="button"
+                  onClick={() => notetaker.setShowNotesDrawer(true)}
+                  className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-[11px] font-semibold text-zinc-200 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <FileText className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>
+                    Noctis Notes ({notetaker.transcriptEntries.length})
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
+
           {/* ORGANIZED 4-ZONE MEETING CONTROL DOCK */}
           <div className="rounded-2xl bg-slate-900/95 border border-emerald-500/25 p-3 shadow-2xl">
             {/* Hidden file input for sharing files/images/slides to the live meeting stage */}
@@ -6746,6 +6878,25 @@ export function VibeVideoCallStudio({
                 >
                   <Captions className="h-4 w-4" />
                   <span>CC</span>
+                </button>
+
+                <button
+                  type="button"
+                  data-testid="toggle-noctis-notetaker"
+                  onClick={notetaker.toggleNotetaker}
+                  className={`px-2.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                    notetaker.notetakerActive
+                      ? "bg-emerald-500 text-slate-950 shadow-md"
+                      : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10"
+                  }`}
+                  title="Add native Noctis AI Notetaker tile to record & take meeting notes"
+                >
+                  <Sparkles
+                    className={`h-4 w-4 ${
+                      notetaker.notetakerActive ? "text-slate-950" : "text-emerald-400"
+                    }`}
+                  />
+                  <span>{notetaker.notetakerActive ? "Notetaker On" : "Noctis Notetaker"}</span>
                 </button>
 
                 <button
@@ -6977,6 +7128,23 @@ export function VibeVideoCallStudio({
         </div>
         )}
       </div>
+
+      <NoctisLiveNotesDrawer
+        open={notetaker.showNotesDrawer}
+        onClose={() => notetaker.setShowNotesDrawer(false)}
+        roomTitle={conversationName}
+        elapsedSec={notetaker.elapsedSec}
+        recap={notetaker.recap}
+        transcriptEntries={notetaker.transcriptEntries}
+        isSavingCloud={notetaker.isSavingCloud}
+        cloudSavedAt={notetaker.cloudSavedAt}
+        workspaceSyncedAt={notetaker.workspaceSyncedAt}
+        onAddNoteLine={(text) => notetaker.addManualNoteLine(text)}
+        onSaveCloud={() => void notetaker.saveRecapToCloud()}
+        onSyncWorkspace={() => void notetaker.syncRecapToWorkspaceNotes()}
+        onDownloadMarkdown={notetaker.downloadTranscriptMarkdown}
+        buildMarkdownText={notetaker.buildMarkdownText}
+      />
     </div>
   )
 }
