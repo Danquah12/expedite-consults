@@ -1,3 +1,5 @@
+import { pushStudioModuleCloud } from './connectln-studio-cloud'
+
 export type FormFieldType =
   | 'short_text'
   | 'long_text'
@@ -449,9 +451,11 @@ export function saveForms(
 ): void {
   if (typeof window === 'undefined') return
   const key = `connectln_power_forms_v1:${normalizeUserStorageKey(user)}`
+  const sliced = forms.slice(0, 40)
   try {
-    localStorage.setItem(key, JSON.stringify(forms.slice(0, 40)))
+    localStorage.setItem(key, JSON.stringify(sliced))
   } catch {
     // ignore
   }
+  pushStudioModuleCloud(user, 'forms', sliced)
 }

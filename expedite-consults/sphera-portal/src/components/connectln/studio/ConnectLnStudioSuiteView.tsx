@@ -1,9 +1,10 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { ArrowLeft, CheckCircle2, ClipboardList, FileSignature, FileText, Kanban, Layers, Presentation, Receipt, Table2 } from "lucide-react"
 import type { UserProfile } from "@/lib/connectln-data"
 import type { StudioDocRecord, StudioSheetTab } from "@/lib/connectln-studio-storage"
+import { hydrateStudioModulesFromCloud } from "@/lib/connectln-studio-cloud"
 import { ConnectLnDocsEditor, type StudioSharePayload } from "./ConnectLnDocsEditor"
 import { ConnectLnSheetsEditor } from "./ConnectLnSheetsEditor"
 import { ConnectLnSlidesEditor } from "./ConnectLnSlidesEditor"
@@ -104,6 +105,7 @@ export function ConnectLnStudioSuiteView({
   onShareToFeed,
 }: ConnectLnStudioSuiteViewProps) {
   const [sharedBanner, setSharedBanner] = useState<string | null>(null)
+  const [cloudSyncRev, setCloudSyncRev] = useState(0)
   const [pendingSignDoc, setPendingSignDoc] = useState<StudioDocRecord | null>(null)
   const [pendingInvoiceSheet, setPendingInvoiceSheet] = useState<{
     workbookTitle: string
@@ -113,6 +115,18 @@ export function ConnectLnStudioSuiteView({
     boardTitle: string
     tasks: Array<{ title: string; description: string; assignee?: string; tags?: string[] }>
   } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    hydrateStudioModulesFromCloud(user).then((didUpdate) => {
+      if (!cancelled && didUpdate) {
+        setCloudSyncRev((prev) => prev + 1)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [user?.email, user?.id, user?.name])
   const currentAppMeta = STUDIO_APPS.find((a) => a.id === activeApp) || STUDIO_APPS[0]
   const CurrentIcon = currentAppMeta.icon
 
@@ -249,6 +263,7 @@ export function ConnectLnStudioSuiteView({
 
       {activeApp === "docs" && (
         <ConnectLnDocsEditor
+          key={`docs-${cloudSyncRev}`}
           user={user}
           onShareToFeed={onShareToFeed ? handleShare : undefined}
           onSendToSign={(doc) => {
@@ -259,6 +274,7 @@ export function ConnectLnStudioSuiteView({
       )}
       {activeApp === "sheets" && (
         <ConnectLnSheetsEditor
+          key={`sheets-${cloudSyncRev}`}
           user={user}
           onShareToFeed={onShareToFeed ? handleShare : undefined}
           onSendToInvoice={(payload) => {
@@ -268,10 +284,11 @@ export function ConnectLnStudioSuiteView({
         />
       )}
       {activeApp === "slides" && (
-        <ConnectLnSlidesEditor user={user} onShareToFeed={onShareToFeed ? handleShare : undefined} />
+        <ConnectLnSlidesEditor key={`slides-${cloudSyncRev}`} user={user} onShareToFeed={onShareToFeed ? handleShare : undefined} />
       )}
       {activeApp === "sign" && (
         <ConnectLnSignApp
+          key={`sign-${cloudSyncRev}`}
           user={user}
           pendingImportDoc={pendingSignDoc}
           onClearPendingImport={() => setPendingSignDoc(null)}
@@ -280,6 +297,7 @@ export function ConnectLnStudioSuiteView({
       )}
       {activeApp === "invoice" && (
         <ConnectLnInvoiceApp
+          key={`invoice-${cloudSyncRev}`}
           user={user}
           pendingImportSheet={pendingInvoiceSheet}
           onClearPendingImport={() => setPendingInvoiceSheet(null)}
@@ -301,6 +319,7 @@ export function ConnectLnStudioSuiteView({
       )}
       {activeApp === "boards" && (
         <ConnectLnBoardsApp
+          key={`boards-${cloudSyncRev}`}
           user={user}
           pendingTasksFromForm={pendingBoardTasks}
           onClearPendingTasks={() => setPendingBoardTasks(null)}
@@ -313,6 +332,7 @@ export function ConnectLnStudioSuiteView({
       )}
       {activeApp === "forms" && (
         <ConnectLnFormsApp
+          key={`forms-${cloudSyncRev}`}
           user={user}
           onSendResponsesToBoards={(payload) => {
             setPendingBoardTasks(payload)

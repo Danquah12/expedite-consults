@@ -1,5 +1,6 @@
 import type { SheetCell } from './connectln-sheets-engine'
 import type { SlideExportMetric, SlideThemePalette } from './connectln-studio-export'
+import { pushStudioModuleCloud } from './connectln-studio-cloud'
 
 export type DocPaperSize = 'letter' | 'a4' | 'legal'
 export type DocOrientation = 'portrait' | 'landscape'
@@ -872,6 +873,7 @@ export function saveStudioDocs(
   } catch {
     // ignore quota exceeded
   }
+  pushStudioModuleCloud(user, 'docs', docs)
 }
 
 export function loadStudioWorkbooks(
@@ -941,6 +943,7 @@ export function saveStudioWorkbooks(
   } catch {
     // ignore
   }
+  pushStudioModuleCloud(user, 'workbooks', workbooks)
 }
 
 export function loadStudioDecks(
@@ -1006,4 +1009,5 @@ export function saveStudioDecks(
   } catch {
     // ignore
   }
+  pushStudioModuleCloud(user, 'decks', decks)
 }

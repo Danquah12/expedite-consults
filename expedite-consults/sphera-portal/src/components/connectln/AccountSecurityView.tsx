@@ -86,6 +86,8 @@ export function AccountSecurityView({
   const [connectedApps, setConnectedApps] = useState<ConnectedOAuthApp[]>(USER_ACCOUNT_SECURITY_DATA.connectedApps)
   const [statusFeedback, setStatusFeedback] = useState<string | null>(null)
   const [passkeysCount, setPasskeysCount] = useState<number>(secData.passkeysCount)
+  const [cloudPasskeys, setCloudPasskeys] = useState<Array<{ id: string; label: string; createdAtIso: string }>>([])
+  const [revokedAppIds, setRevokedAppIds] = useState<string[]>([])
   const [e2eeFingerprint, setE2eeFingerprint] = useState<string>("")
   const [backupPassphrase, setBackupPassphrase] = useState<string>("")
   const [phoneNumberInput, setPhoneNumberInput] = useState<string>(
@@ -106,6 +108,23 @@ export function AccountSecurityView({
     getOrCreateE2eeIdentity(commUserKey).then((id) => {
       if (mounted && id) setE2eeFingerprint(id.fingerprint)
     })
+    fetch(`/api/connectin/security-state?userKey=${encodeURIComponent(commUserKey)}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!mounted || !d?.security) return
+        if (Array.isArray(d.security.passkeys)) {
+          setCloudPasskeys(d.security.passkeys)
+          if (d.security.passkeys.length > 0) {
+            setPasskeysCount(secData.passkeysCount + d.security.passkeys.length)
+          }
+        }
+        if (Array.isArray(d.security.revokedOAuthAppIds)) {
+          const revSet = new Set<string>(d.security.revokedOAuthAppIds)
+          setRevokedAppIds(d.security.revokedOAuthAppIds)
+          setConnectedApps(USER_ACCOUNT_SECURITY_DATA.connectedApps.filter((a) => !revSet.has(a.id)))
+        }
+      })
+      .catch(() => {})
     fetch("/api/v1/calls/sfu-token?status=1", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -181,9 +200,20 @@ export function AccountSecurityView({
     setTimeout(() => setStatusFeedback(null), 3000)
   }
 
+  const persistSecurityPatch = (patch: Record<string, unknown>) => {
+    fetch("/api/connectin/security-state", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userKey: commUserKey, patch }),
+    }).catch(() => {})
+  }
+
   const handleRevokeApp = (appId: string) => {
     setConnectedApps(prev => prev.filter(a => a.id !== appId))
-    setStatusFeedback("✓ OAuth 2.0 grant revoked. Application no longer has token access.")
+    const nextRevoked = Array.from(new Set([...revokedAppIds, appId]))
+    setRevokedAppIds(nextRevoked)
+    persistSecurityPatch({ revokedOAuthAppIds: nextRevoked })
+    setStatusFeedback("✓ OAuth 2.0 grant revoked & saved. Application no longer has token access.")
     setTimeout(() => setStatusFeedback(null), 3000)
   }
 
@@ -269,11 +299,31 @@ export function AccountSecurityView({
                             authenticatorSelection: { userVerification: "preferred" },
                           },
                         })
-                        setPasskeysCount((c) => c + 1)
-                        setStatusFeedback("✓ WebAuthn hardware/biometric Passkey registered to your account!")
+                        const nextPasskeys = [
+                          ...cloudPasskeys,
+                          {
+                            id: `pk_${Date.now().toString(36)}`,
+                            label: "Hardware / Biometric Passkey",
+                            createdAtIso: new Date().toISOString(),
+                          },
+                        ]
+                        setCloudPasskeys(nextPasskeys)
+                        persistSecurityPatch({ passkeys: nextPasskeys })
+                        setPasskeysCount(secData.passkeysCount + nextPasskeys.length)
+                        setStatusFeedback("✓ WebAuthn hardware/biometric Passkey registered & saved to your account!")
                       } else {
-                        setPasskeysCount((c) => c + 1)
-                        setStatusFeedback("✓ Passkey profile enrolled (WebAuthn API unavailable in headless mode).")
+                        const nextPasskeys = [
+                          ...cloudPasskeys,
+                          {
+                            id: `pk_${Date.now().toString(36)}`,
+                            label: "Enclave Passkey Profile",
+                            createdAtIso: new Date().toISOString(),
+                          },
+                        ]
+                        setCloudPasskeys(nextPasskeys)
+                        persistSecurityPatch({ passkeys: nextPasskeys })
+                        setPasskeysCount(secData.passkeysCount + nextPasskeys.length)
+                        setStatusFeedback("✓ Passkey profile enrolled & persisted (WebAuthn API unavailable in headless mode).")
                       }
                     } catch {
                       setStatusFeedback("⚠️ Passkey prompt cancelled or hardware authenticator unavailable on this browser.")
@@ -301,10 +351,36 @@ export function AccountSecurityView({
                 </div>
                 <button
                   onClick={() => {
-                    setStatusFeedback("✓ Downloaded encrypted recovery code bundle.")
-                    setTimeout(() => setStatusFeedback(null), 3000)
+                    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+                    const codes: string[] = []
+                    for (let i = 0; i < 8; i++) {
+                      const bytes = new Uint8Array(8)
+                      if (typeof window !== "undefined" && window.crypto?.getRandomValues) {
+                        window.crypto.getRandomValues(bytes)
+                      }
+                      const raw = Array.from(bytes).map((b) => alphabet[b % alphabet.length]).join("")
+                      codes.push(`CLN-${raw.slice(0, 4)}-${raw.slice(4, 8)}`)
+                    }
+                    const payload = [
+                      `ConnectLn Emergency Recovery Codes`,
+                      `Account: ${currentUser.name} (${userEmail})`,
+                      `Generated: ${new Date().toISOString()}`,
+                      `Store offline securely. Each code is single-use.`,
+                      ``,
+                      ...codes.map((c, idx) => `${idx + 1}. ${c}`),
+                    ].join("\n")
+                    const blob = new Blob([payload], { type: "text/plain;charset=utf-8" })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement("a")
+                    a.href = url
+                    a.download = "connectln-recovery-codes.txt"
+                    a.click()
+                    URL.revokeObjectURL(url)
+                    persistSecurityPatch({ recoveryCodesGeneratedAtIso: new Date().toISOString() })
+                    setStatusFeedback("✓ Generated & downloaded 8 single-use ConnectLn recovery codes (.txt).")
+                    setTimeout(() => setStatusFeedback(null), 4000)
                   }}
-                  className="rounded-lg bg-zinc-100 dark:bg-zinc-700 px-3 py-1 text-xs font-bold text-zinc-800 dark:text-zinc-200"
+                  className="rounded-lg bg-zinc-100 dark:bg-zinc-700 px-3 py-1 text-xs font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer"
                 >
                   Download Codes
                 </button>

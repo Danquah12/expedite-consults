@@ -65,6 +65,7 @@ const GatedGuildsView = dynamic(() => import("@/components/connectln/GatedGuilds
 const BountiesHackathonsView = dynamic(() => import("@/components/connectln/BountiesHackathonsView").then((m) => m.BountiesHackathonsView), { ssr: false, loading: tabLoadingFallback("Bounties") })
 const InboundBountiesModal = dynamic(() => import("@/components/connectln/InboundBountiesModal").then((m) => m.InboundBountiesModal), { ssr: false })
 const AccountSecurityView = dynamic(() => import("@/components/connectln/AccountSecurityView").then((m) => m.AccountSecurityView), { ssr: false, loading: tabLoadingFallback("Account & Security") })
+const ConnectLnPlansBillingView = dynamic(() => import("@/components/connectln/ConnectLnPlansBillingView").then((m) => m.ConnectLnPlansBillingView), { ssr: false, loading: tabLoadingFallback("Plans & Billing") })
 const AdminIAMConsoleView = dynamic(() => import("@/components/connectln/AdminIAMConsoleView").then((m) => m.AdminIAMConsoleView), { ssr: false, loading: tabLoadingFallback("Admin & Media Console") })
 const ConnectInAuthModal = dynamic(() => import("@/components/connectln/ConnectInAuthModal").then((m) => m.ConnectInAuthModal), { ssr: false })
 const ConnectInAnalyticsModal = dynamic(() => import("@/components/connectln/ConnectInAnalyticsModal").then((m) => m.ConnectInAnalyticsModal), { ssr: false })
@@ -242,12 +243,19 @@ export default function ConnectLnPage() {
     | 'invoice'
     | 'boards'
     | 'forms'
+    | 'plans'
   >('home')
   const [workBusinessSection, setWorkBusinessSection] = useState<WorkBusinessItemId>('find_work')
 
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false)
+  const [aiInitialQuery, setAiInitialQuery] = useState<string>("")
+  const [plansInitialParams, setPlansInitialParams] = useState<{
+    planId?: string
+    cycle?: "yearly" | "monthly"
+    seats?: number
+  }>({})
   const [isUniversalSearchOpen, setIsUniversalSearchOpen] = useState(false)
   const [isIDModalOpen, setIsIDModalOpen] = useState(false)
   const [isInboundBountiesModalOpen, setIsInboundBountiesModalOpen] = useState(false)
@@ -990,6 +998,26 @@ export default function ConnectLnPage() {
           ? "pulserooms"
           : videoParam || plateParam || postIdParam || tabParam === "home"
           ? "home"
+          : tabParam === "workbusiness" || tabParam === "business" || tabParam === "rfps"
+          ? "workbusiness"
+          : tabParam === "accountsecurity" || tabParam === "security" || tabParam === "passkeys"
+          ? "accountsecurity"
+          : tabParam === "trustcenter" || tabParam === "trust"
+          ? "trustcenter"
+          : tabParam === "plans" || tabParam === "pricing" || tabParam === "subscription"
+          ? "plans"
+          : tabParam === "procurement"
+          ? "procurement"
+          : tabParam === "sellercenter"
+          ? "sellercenter"
+          : tabParam === "wallet"
+          ? "wallet"
+          : tabParam === "events"
+          ? "events"
+          : tabParam === "profile"
+          ? "profile"
+          : tabParam === "notifications"
+          ? "notifications"
           : tabParam === "media"
           ? "media"
           : tabParam === "learning"
@@ -1051,6 +1079,30 @@ export default function ConnectLnPage() {
         if (tabParam === "calendar" && isMounted) {
           setMessagingInitialMode("calendar")
         }
+      }
+
+      const askNoctisParam = (urlParams.get("askNoctis") || "").trim()
+      if (askNoctisParam && isMounted) {
+        setAiInitialQuery(askNoctisParam)
+        setIsAIAssistantOpen(true)
+      }
+
+      const planParam = (urlParams.get("plan") || "").trim().toLowerCase()
+      const cycleParam =
+        urlParams.get("cycle") === "monthly"
+          ? "monthly"
+          : urlParams.get("cycle") === "yearly"
+          ? "yearly"
+          : undefined
+      const seatsRaw = Number(urlParams.get("seats"))
+      const seatsParam =
+        Number.isFinite(seatsRaw) && seatsRaw >= 1 ? Math.min(500, Math.round(seatsRaw)) : undefined
+      if ((planParam || cycleParam || seatsParam) && isMounted) {
+        setPlansInitialParams({
+          planId: planParam || undefined,
+          cycle: cycleParam,
+          seats: seatsParam,
+        })
       }
 
       const isSignedOut = localStorage.getItem("connectin_is_signed_out") === "true"
@@ -4172,6 +4224,17 @@ export default function ConnectLnPage() {
           />
         )}
 
+        {/* VIEW: CONNECTLN 360 PLANS & BILLING */}
+        {activeTab === 'plans' && (
+          <ConnectLnPlansBillingView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            initialPlanId={plansInitialParams.planId}
+            initialCycle={plansInitialParams.cycle}
+            initialSeats={plansInitialParams.seats}
+          />
+        )}
+
         {/* VIEW: ADMINISTRATIVE IAM & MODERATION CONSOLE */}
         {activeTab === 'adminiam' && isSuperAdminUser(userData) && (
           <AdminIAMConsoleView
@@ -4448,9 +4511,13 @@ export default function ConnectLnPage() {
       {isAIAssistantOpen && (
         <ConnectInAIAssistant
           isOpen={isAIAssistantOpen}
-          onClose={() => setIsAIAssistantOpen(false)}
+          onClose={() => {
+            setIsAIAssistantOpen(false)
+            setAiInitialQuery("")
+          }}
           currentUser={userData}
           onNavigateTab={(tab) => setActiveTab(tab as any)}
+          initialQuery={aiInitialQuery}
         />
       )}
 

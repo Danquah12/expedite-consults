@@ -83,7 +83,7 @@ interface ChatMessage {
   id: string
   sender: 'user' | 'assistant'
   text: string
-  source?: 'live' | 'demo'
+  source?: 'live' | 'demo' | 'private'
   suggestedCards?: {
     title: string
     category: string
@@ -340,6 +340,15 @@ export function ConnectInAIAssistant({
   const { language, setLanguage, t } = useLanguage()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [mode, setMode] = useState<'vibe' | 'chat' | 'career'>('chat')
+  const [aiPrivacyMode, setAiPrivacyMode] = useState<'private' | 'live'>(() => {
+    if (typeof window === 'undefined') return 'private'
+    try {
+      const saved = localStorage.getItem('connectln_noctis_ai_mode_v1')
+      return saved === 'live' ? 'live' : 'private'
+    } catch {
+      return 'private'
+    }
+  })
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [iframeKey, setIframeKey] = useState(0)
   const [isIframeLoading, setIsIframeLoading] = useState(false)
@@ -369,6 +378,7 @@ export function ConnectInAIAssistant({
 
   useEffect(() => {
     if (initialQuery) {
+      setMode('chat')
       setQuery(initialQuery)
     }
   }, [initialQuery])
@@ -1265,6 +1275,46 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
               }
             ]
           }
+        } else if (lower.includes('draft') || lower.includes('update') || lower.includes('summarize') && lower.includes('call')) {
+          reply = {
+            id: `ai_${Date.now()}`,
+            sender: 'assistant',
+            text: `✍️ **Private Draft & Action Recap (Prepared Locally):**\n\n• **Summary:** Site milestones & safety checklist completed ahead of schedule.\n• **Confirmed Next Step:** Friday dispatch window locked with crew leads & vendor attachments verified.\n• **Recommended Follow-Up:** Share signed checklist in Mail & Chat or schedule a quick confirmation huddle.`,
+            suggestedCards: [
+              { title: "Send Update in Mail & Chat", category: "Unified Inbox", actionText: "Open Mail & Chat", targetTab: "messaging", matchPercent: "Ready" },
+              { title: "Create Client Proposal Doc", category: "ConnectLn Studio", actionText: "Open Docs", targetTab: "docs", matchPercent: "Private Draft" }
+            ]
+          }
+        } else if (lower.includes('unread') || lower.includes('triage') || lower.includes('prioritiz') || lower.includes('past thread') || lower.includes('contractor')) {
+          reply = {
+            id: `ai_${Date.now()}`,
+            sender: 'assistant',
+            text: `📬 **Private Inbox & Thread Triage Brief:**\n\n• **Needs Reply Today:** Client dispatch threads & pending vendor quotes sorted at the top of Direct Inbox.\n• **Call Invitations:** Active voice/video room requests flagged in Calls & Calendar reminders.\n• **Low-Priority Threads:** Community digest notices can stay archived without muting critical alerts.`,
+            suggestedCards: [
+              { title: "Open Direct Inbox & Triage", category: "Mail & Chat", actionText: "Open Inbox", targetTab: "messaging", matchPercent: "Private Scan" },
+              { title: "Check Group Calls & Recordings", category: "Vibe Studio", actionText: "Open Calls", targetTab: "vibecomms", matchPercent: "Synced" }
+            ]
+          }
+        } else if (lower.includes('rfp') || lower.includes('bid') || lower.includes('pipeline') || lower.includes('escrow') || lower.includes('invoice') || lower.includes('weekly brief')) {
+          reply = {
+            id: `ai_${Date.now()}`,
+            sender: 'assistant',
+            text: `🏛️ **Business & RFP Executive Workspace Summary:**\n\n• **RFPs & Bids:** Open Procurement Desk to pull verified Business Hub credentials & past vouches into your proposal.\n• **Escrow & Billing:** Check Invoice & Ledger for unpaid balances, net cash flow, and pending Seller Center inquiries.`,
+            suggestedCards: [
+              { title: "Open Business & Procurement Desk", category: "Business Hub", actionText: "Open Business", targetTab: "workbusiness", matchPercent: "RFP Ready" },
+              { title: "Open Invoice & Ledger App", category: "Power Apps", actionText: "Open Invoice", targetTab: "invoice", matchPercent: "Cash Flow" }
+            ]
+          }
+        } else if (lower.includes('interview') || lower.includes('training digest') || lower.includes('playlist')) {
+          reply = {
+            id: `ai_${Date.now()}`,
+            sender: 'assistant',
+            text: `🎓 **Career & Training Preparation Plan:**\n\n• **Role-Matched Videos:** 15-minute ConnectLn Learning playlist aligned to your active profession enclave.\n• **Mock Walkthrough:** Practice STAR technical answers inside CareerSuite and test your WebRTC camera/audio before your live call.`,
+            suggestedCards: [
+              { title: "Open Noctis Learning Academy", category: "Training Videos", actionText: "Watch Courses", targetTab: "learning", matchPercent: "Matched" },
+              { title: "Launch CareerSuite Interview Coach", category: "Career Growth", actionText: "Open CareerSuite", targetTab: "careersuite", matchPercent: "Private" }
+            ]
+          }
         } else if (lower.includes('job') || lower.includes('180k') || lower.includes('career')) {
           reply = {
             id: `ai_${Date.now()}`,
@@ -1313,9 +1363,15 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
         }
       }
 
-      reply.source = 'demo'
+      reply.source = aiPrivacyMode === 'private' ? 'private' : 'demo'
       setMessages(prev => [...prev, reply])
       setIsTyping(false)
+    }
+
+    // Private-by-Default Noctis AI: keep processing local until user switches explicitly to Live AI
+    if (aiPrivacyMode === 'private') {
+      setTimeout(runLocal, 250)
+      return
     }
 
     // Localized (non-English canned) answers stay local
@@ -1434,6 +1490,31 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
 
           {/* Action Toolbar */}
           <div className="flex items-center gap-1.5 shrink-0 pr-6">
+            {/* Private-by-Default vs Explicit Live AI Switcher */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = aiPrivacyMode === 'private' ? 'live' : 'private'
+                setAiPrivacyMode(next)
+                try {
+                  localStorage.setItem('connectln_noctis_ai_mode_v1', next)
+                } catch {}
+              }}
+              title={
+                aiPrivacyMode === 'private'
+                  ? "Private Mode ON (local only, zero external AI calls). Click to enable Live AI."
+                  : "Live AI ON (queries external Noctis models). Click to switch back to Private Mode."
+              }
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-colors cursor-pointer whitespace-nowrap",
+                aiPrivacyMode === 'private'
+                  ? "bg-emerald-500/20 text-emerald-200 border-emerald-400/40 hover:bg-emerald-500/30"
+                  : "bg-sky-500/25 text-sky-200 border-sky-400/50 hover:bg-sky-500/35"
+              )}
+            >
+              {aiPrivacyMode === 'private' ? "🔒 Private Mode" : "⚡ Live AI"}
+            </button>
+
             {/* Global Multi-Language Switcher */}
             <LanguageSwitcher compact={true} align="right" />
 
@@ -1594,6 +1675,10 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                             Live Noctis AI
+                          </span>
+                        ) : msg.source === 'private' ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                            🔒 Private Mode (Local)
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">

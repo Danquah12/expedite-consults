@@ -365,7 +365,7 @@ const ROLE_WORKFLOWS = [
       { name: "Vibe Calls & Studio", tag: "Encrypted HD", href: "/connectin?tab=vibecomms" },
       { name: "ConnectLn Forms", tag: "Intake", href: "/connectin?tab=forms" },
       { name: "Noctis Learning Academy", tag: "CE Videos", href: "/connectin?tab=learning" },
-      { name: "Trust & Passkeys", tag: "FIDO2 Auth", href: "/connectin" },
+      { name: "Trust & Passkeys", tag: "FIDO2 Auth", href: "/connectin?tab=accountsecurity" },
     ],
   },
   {
@@ -600,6 +600,7 @@ const SUITE_APPS: Array<{
     icon: Mail,
     bg: "bg-[#0078D4]",
     cta: "Open Mail & Chat",
+    href: "/connectin?tab=messaging",
   },
   {
     name: "Vibe Calls & Studio",
@@ -608,6 +609,7 @@ const SUITE_APPS: Array<{
     icon: Video,
     bg: "bg-emerald-600",
     cta: "Launch Studio",
+    href: "/connectin?tab=vibecomms",
   },
   {
     name: "Verified Jobs",
@@ -616,6 +618,7 @@ const SUITE_APPS: Array<{
     icon: Briefcase,
     bg: "bg-indigo-600",
     cta: "Browse Jobs",
+    href: "/connectin?tab=jobs",
   },
   {
     name: "Noctis Learning Academy",
@@ -624,6 +627,7 @@ const SUITE_APPS: Array<{
     icon: GraduationCap,
     bg: "bg-amber-600",
     cta: "Watch Courses",
+    href: "/connectin?tab=learning",
   },
   {
     name: "Business & RFPs",
@@ -632,6 +636,7 @@ const SUITE_APPS: Array<{
     icon: Building2,
     bg: "bg-sky-700",
     cta: "Open Business Hub",
+    href: "/connectin?tab=workbusiness",
   },
   {
     name: "Trust & Passkeys",
@@ -640,6 +645,7 @@ const SUITE_APPS: Array<{
     icon: ShieldCheck,
     bg: "bg-[#0B1F3A]",
     cta: "View Security",
+    href: "/connectin?tab=accountsecurity",
   },
   {
     name: "Noctis Social",
@@ -735,6 +741,7 @@ const TIPS_ITEMS = [
     title: "Seamless hangup & instant audio cleanup across Android, iOS & Desktop",
     desc: "When the host ends a group meeting, every connected phone closes cleanly and shuts down microphone hardware immediately.",
     accent: "from-sky-500 to-blue-700",
+    href: "/connectin?tab=vibecomms",
   },
   {
     cat: "Skilled Trades",
@@ -742,6 +749,7 @@ const TIPS_ITEMS = [
     title: "Watch electrical, carpentry, plumbing & clinical videos curated for your role",
     desc: "Selecting your profession during sign-in automatically unlocks field-specific walkthroughs, jobs, and peer communities.",
     accent: "from-emerald-500 to-teal-700",
+    href: "/connectin?tab=learning",
   },
   {
     cat: "Healthcare",
@@ -749,6 +757,7 @@ const TIPS_ITEMS = [
     title: "Full responsive Jobs board & safe-area mobile navigation for Android & iOS",
     desc: "Every header button, call banner, and job application drawer stays comfortably reachable on modern notched phones.",
     accent: "from-indigo-500 to-violet-700",
+    href: "/connectin?tab=jobs",
   },
   {
     cat: "Tech & Cyber",
@@ -756,6 +765,7 @@ const TIPS_ITEMS = [
     title: "Switch between Mail, Calls, Calendar, Jobs & RFPs from the 9-dot App Launcher",
     desc: "Zero tab overload — pin your everyday workspace tools on the slim desktop rail while keeping Full Menu one tap away.",
     accent: "from-amber-500 to-orange-600",
+    href: "/connectin",
   },
 ]
 
@@ -1233,14 +1243,23 @@ export function ConnectLn360PortalLanding() {
                     &ldquo;{card.prompt}&rdquo;
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleCopyPrompt(card.title, card.prompt)}
-                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#0067B8] hover:underline cursor-pointer"
-                >
-                  {isCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                  <span>{isCopied ? "Copied to clipboard" : "Copy prompt"}</span>
-                </button>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleCopyPrompt(card.title, card.prompt)}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0067B8] hover:underline cursor-pointer"
+                  >
+                    {isCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    <span>{isCopied ? "Copied to clipboard" : "Copy prompt"}</span>
+                  </button>
+                  <Link
+                    href={`/connectin?askNoctis=${encodeURIComponent(card.prompt)}`}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0B1F3A] hover:text-[#0067B8] hover:underline"
+                  >
+                    <span>Run in Noctis</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
               </div>
             )
           })}
@@ -1621,7 +1640,13 @@ export function ConnectLn360PortalLanding() {
                 </div>
                 <div className="px-6 pb-6 pt-2">
                   <Link
-                    href="/connectin-login?mode=join"
+                    href={
+                      mounted && signedInUserName
+                        ? `/connectin?tab=plans&plan=${encodeURIComponent(
+                            plan.name.toLowerCase().replace(/^connectln\s+/i, "").replace(/\s+/g, "_")
+                          )}&cycle=${billingCycle}&seats=${businessSeats}`
+                        : "/connectin-login?mode=join"
+                    }
                     className={`block w-full rounded-xl py-2.5 text-center text-xs font-bold transition-colors ${
                       plan.highlight
                         ? "bg-[#0B1F3A] hover:bg-[#163259] text-white"
@@ -2078,7 +2103,7 @@ export function ConnectLn360PortalLanding() {
                 </div>
                 <div className="px-5 pb-5">
                   <Link
-                    href="/connectin-login"
+                    href={tip.href || "/connectin"}
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0B1F3A] hover:text-[#0067B8]"
                   >
                     <span>Explore feature</span>
@@ -2536,7 +2561,7 @@ export function ConnectLn360PortalLanding() {
                 </button>
               </li>
               <li>
-                <Link href="/connectin" className="hover:text-white hover:underline transition-colors">
+                <Link href="/connectin?tab=accountsecurity" className="hover:text-white hover:underline transition-colors">
                   Account &amp; Passkeys
                 </Link>
               </li>
@@ -2572,7 +2597,7 @@ export function ConnectLn360PortalLanding() {
                 </a>
               </li>
               <li>
-                <Link href="/connectin-login" className="hover:text-white hover:underline transition-colors">
+                <Link href="/connectin?tab=trustcenter" className="hover:text-white hover:underline transition-colors">
                   Privacy, Security &amp; Trust Policies
                 </Link>
               </li>

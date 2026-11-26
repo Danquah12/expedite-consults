@@ -1,3 +1,5 @@
+import { pushStudioModuleCloud } from './connectln-studio-cloud'
+
 export type SignEnvelopeStatus = 'draft' | 'sent' | 'completed' | 'declined' | 'voided'
 
 export interface SignSigner {
@@ -510,4 +512,5 @@ export function saveSignEnvelopes(
   } catch {
     // ignore quota errors
   }
+  pushStudioModuleCloud(user, 'sign', envelopes)
 }

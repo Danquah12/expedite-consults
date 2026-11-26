@@ -61,7 +61,8 @@ import {
   Kanban,
   Table2,
   Presentation,
-  Receipt
+  Receipt,
+  Crown
 } from "lucide-react"
 import { UserProfile, SuggestedConnection, getEnclaveConnectedMembers } from "@/lib/connectln-data"
 import { WORK_BUSINESS_MENU_ITEMS, WorkBusinessItemId } from "@/lib/work-business-data"
@@ -634,6 +635,7 @@ export function ConnectLnNavbar({
                     { id: "workbusiness", label: "Business", icon: Building2, bg: "bg-[#0B1F3A]" },
                     { id: "__noctis", label: "Noctis AI", icon: Sparkles, bg: "bg-blue-700" },
                     { id: "accountsecurity", label: "Security", icon: ShieldCheck, bg: "bg-zinc-700" },
+                    { id: "plans", label: "Plans", icon: Crown, bg: "bg-[#0067B8]" },
                   ].map((app) => {
                     const AppIcon = app.icon
                     const isAppActive =
@@ -1516,6 +1518,24 @@ export function ConnectLnNavbar({
                       >
                         <Briefcase className="h-5 w-5 text-zinc-600 dark:text-zinc-400 shrink-0" />
                         <span>Job Posting Account</span>
+                      </button>
+
+                      {/* Plans & Billing */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onSelectTab('plans')
+                          setIsMeOpen(false)
+                        }}
+                        className="w-full rounded-lg px-2.5 py-2.5 flex items-center justify-between gap-3 text-left text-sm font-semibold text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Crown className="h-5 w-5 text-[#0067B8] shrink-0" />
+                          <span>Plans &amp; Billing</span>
+                        </div>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-[#0067B8] dark:text-sky-300">
+                          360
+                        </span>
                       </button>
 
                       {/* Settings & Privacy */}

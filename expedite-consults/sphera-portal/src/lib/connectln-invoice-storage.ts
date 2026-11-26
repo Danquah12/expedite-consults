@@ -1,5 +1,6 @@
 import { evaluateSheet, makeCellKey } from './connectln-sheets-engine'
 import type { StudioSheetTab } from './connectln-studio-storage'
+import { pushStudioModuleCloud } from './connectln-studio-cloud'
 
 export type InvoiceDocKind = 'invoice' | 'estimate' | 'receipt'
 export type InvoiceStatus = 'draft' | 'sent' | 'partial' | 'paid' | 'overdue' | 'void'
@@ -771,11 +772,13 @@ export function saveInvoices(
 ): void {
   if (typeof window === 'undefined') return
   const key = `connectln_power_invoice_v1:${normalizeUserStorageKey(user)}`
+  const sliced = invoices.slice(0, 60)
   try {
-    localStorage.setItem(key, JSON.stringify(invoices.slice(0, 60)))
+    localStorage.setItem(key, JSON.stringify(sliced))
   } catch {
     // ignore quota issues
   }
+  pushStudioModuleCloud(user, 'invoices', sliced)
 }
 
 export function loadLedgerEntries(
@@ -868,9 +871,11 @@ export function saveLedgerEntries(
 ): void {
   if (typeof window === 'undefined') return
   const key = `connectln_power_ledger_v1:${normalizeUserStorageKey(user)}`
+  const sliced = entries.slice(0, 150)
   try {
-    localStorage.setItem(key, JSON.stringify(entries.slice(0, 150)))
+    localStorage.setItem(key, JSON.stringify(sliced))
   } catch {
     // ignore
   }
+  pushStudioModuleCloud(user, 'ledger', sliced)
 }

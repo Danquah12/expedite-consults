@@ -1,4 +1,5 @@
 import type { StudioSheetTab } from './connectln-studio-storage'
+import { pushStudioModuleCloud } from './connectln-studio-cloud'
 
 export type BoardPriority = 'low' | 'medium' | 'high' | 'urgent'
 
@@ -533,9 +534,11 @@ export function saveBoards(
 ): void {
   if (typeof window === 'undefined') return
   const key = `connectln_power_boards_v1:${normalizeUserStorageKey(user)}`
+  const sliced = boards.slice(0, 40)
   try {
-    localStorage.setItem(key, JSON.stringify(boards.slice(0, 40)))
+    localStorage.setItem(key, JSON.stringify(sliced))
   } catch {
     // ignore
   }
+  pushStudioModuleCloud(user, 'boards', sliced)
 }
