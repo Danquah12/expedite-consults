@@ -11,6 +11,7 @@ import {
   ChevronRight,
   ChevronUp,
   Copy,
+  ExternalLink,
   FileText,
   Globe,
   HelpCircle,
@@ -174,46 +175,133 @@ const CAPABILITY_TABS: Array<{
   },
 ]
 
-const BUILTIN_APPS = [
+interface BuiltInAppQuickLink {
+  label: string
+  href: string
+  external?: boolean
+  action?: "open_noctis"
+}
+
+const BUILTIN_APPS: Array<{
+  id: string
+  name: string
+  tagline: string
+  adminNote: string
+  caption: string
+  highlights: string[]
+  primaryLabel: string
+  href: string
+  bg: string
+  icon: React.ComponentType<{ className?: string }>
+  quickLinks: BuiltInAppQuickLink[]
+}> = [
   {
     id: "messaging",
     name: "Mail & Chat",
+    tagline: "Encrypted Messaging & External Email",
+    adminNote: "E2EE threads · Synced across all devices",
     caption: "Keep teams aligned in ConnectLn Mail & Chat with E2EE threads and instant member search.",
+    highlights: [
+      "End-to-end encrypted direct & group threads",
+      "Instant first-name search across all registered members",
+      "Full-width multi-line composer, drafts & scheduled send",
+    ],
+    primaryLabel: "Open Mail & Chat",
     href: "/connectin?tab=messaging",
     bg: "bg-sky-50 text-[#0A66C2]",
     icon: Mail,
+    quickLinks: [
+      { label: "Calendar", href: "/connectin?tab=calendar" },
+      { label: "Security & Privacy", href: "/connectin?tab=accountsecurity" },
+      { label: "Admin Directory", href: "/connectin-admin" },
+    ],
   },
   {
     id: "vibecomms",
     name: "Vibe HD Calls",
+    tagline: "WebRTC Audio, Video & Mobile Bridge",
+    adminNote: "1-on-1 & Group HD · Zero Carrier Lock-In",
     caption: "Launch crystal-clear 1-on-1 and group voice or video meetings right from any browser or phone.",
+    highlights: [
+      "1-on-1 and multi-party HD WebRTC voice & video",
+      "First-name call list search across every registered member",
+      "Screen sharing, studio backgrounds & mobile SIM handoff",
+    ],
+    primaryLabel: "Open Vibe HD Calls",
     href: "/connectin?tab=vibecomms",
     bg: "bg-emerald-50 text-emerald-700",
     icon: Video,
+    quickLinks: [
+      { label: "Messaging Calls Rail", href: "/connectin?tab=messaging" },
+      { label: "Live Video Studio", href: "/connectin?tab=vibecomms" },
+      { label: "Admin Console", href: "/connectin-admin" },
+    ],
   },
   {
     id: "noctis",
     name: "Noctis AI",
+    tagline: "In-Call AI Notetaker & Workspace Copilot",
+    adminNote: "Private 'Only You' Mode · Live Transcripts",
     caption: "Automate live meeting notes, Q&A, action items, and draft replies directly inside workflows.",
+    highlights: [
+      "Native in-call AI Notetaker tile with live transcripts",
+      "Private 'Ask Noctis · Only you' real-time meeting Q&A",
+      "Instant action items, summaries & smart draft replies",
+    ],
+    primaryLabel: "Open Noctis AI",
     href: "/connectin?tab=noctis",
     bg: "bg-violet-50 text-violet-700",
     icon: Sparkles,
+    quickLinks: [
+      { label: "Noctis Social", href: "/connectin?tab=noctissocial" },
+      { label: "Ask Noctis Now", href: "#ask-noctis", action: "open_noctis" },
+      { label: "Admin Console", href: "/connectin-admin" },
+    ],
   },
   {
     id: "studio",
     name: "ConnectLn Studio",
+    tagline: "Docs, Sheets, Decks, e-Sign & Invoices",
+    adminNote: "Unified Office Suite · Client-Ready Deliverables",
     caption: "Co-author documents, spreadsheets, pitch decks, invoices, and verified e-signatures.",
+    highlights: [
+      "Docs, Sheets & Slide Decks built into one workspace",
+      "Verified e-Signatures and direct client Invoicing",
+      "Project Kanban Boards and structured Intake Forms",
+    ],
+    primaryLabel: "Open ConnectLn Studio",
     href: "/connectin?tab=docs",
     bg: "bg-amber-50 text-amber-700",
     icon: FileText,
+    quickLinks: [
+      { label: "Docs", href: "/connectin?tab=docs" },
+      { label: "Sheets", href: "/connectin?tab=sheets" },
+      { label: "Slides", href: "/connectin?tab=slides" },
+      { label: "e-Sign", href: "/connectin?tab=sign" },
+      { label: "Invoice", href: "/connectin?tab=invoice" },
+    ],
   },
   {
     id: "marketplace",
     name: "ConnectLn Market",
+    tagline: "Curated Partner Platforms & Field Apps",
+    adminNote: "Global Enclave Access · Direct Launch Links",
     caption: "Discover curated apps including SkillHands.us, VeritasLens, CampusSync, and TruePlace.",
+    highlights: [
+      "SkillHands.us — Trusted Local Home Services (No Account Required)",
+      "VeritasLens Blindspot Briefing & TruePlace HomeTruth™",
+      "CampusSync College Hub & VibeTok Clinic partner apps",
+    ],
+    primaryLabel: "Open ConnectLn Market",
     href: "/connectin?tab=marketplace",
     bg: "bg-rose-50 text-rose-700",
     icon: Store,
+    quickLinks: [
+      { label: "SkillHands.us", href: "https://skillhands-client.vercel.app/", external: true },
+      { label: "VeritasLens", href: "https://portal.expediteconsults.com/veritaslens", external: true },
+      { label: "CampusSync", href: "https://expedite-consults.vercel.app/campus", external: true },
+      { label: "TruePlace", href: "https://expedite-consults.vercel.app/trueplace", external: true },
+    ],
   },
 ]
 
@@ -729,17 +817,88 @@ export function ConnectLnAdminGuideView() {
           })}
         </div>
 
-        <p className="mt-7 text-sm font-medium text-slate-700 max-w-xl mx-auto">
-          {currentApp.caption}
-        </p>
-        <div className="mt-4">
-          <Link
-            href={currentApp.href}
-            className="inline-block rounded-lg bg-[#0F2438] hover:bg-[#1A3550] text-white px-5 py-2 text-xs font-semibold transition-colors"
-          >
-            Learn more
-          </Link>
-        </div>
+        {(() => {
+          const ActiveAppIcon = currentApp.icon
+          return (
+            <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-7 text-left shadow-sm">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${currentApp.bg}`}
+                  >
+                    <ActiveAppIcon className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <h3 className="text-lg font-bold text-[#0B1F3A]">{currentApp.name}</h3>
+                    <p className="text-xs font-medium text-slate-500">{currentApp.tagline}</p>
+                  </div>
+                </div>
+                <span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-700">
+                  {currentApp.adminNote}
+                </span>
+              </div>
+
+              <p className="mt-4 text-sm text-slate-700 leading-relaxed">{currentApp.caption}</p>
+
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {currentApp.highlights.map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-xl bg-slate-50/80 border border-slate-200/70 p-3 flex items-start gap-2"
+                  >
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-xs font-medium text-slate-700 leading-snug">{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5 pt-4 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+                <Link
+                  href={currentApp.href}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#0F2438] hover:bg-[#1A3550] text-white px-4 py-2 text-xs font-semibold transition-colors"
+                >
+                  <span>{currentApp.primaryLabel}</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {currentApp.quickLinks.map((ql) =>
+                    ql.action === "open_noctis" ? (
+                      <button
+                        key={ql.label}
+                        type="button"
+                        onClick={() => setNoctisOpen(true)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 hover:bg-violet-100 px-2.5 py-1.5 text-[11px] font-semibold text-violet-800 transition-colors cursor-pointer"
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        <span>{ql.label}</span>
+                      </button>
+                    ) : ql.external ? (
+                      <a
+                        key={ql.label}
+                        href={ql.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 transition-colors"
+                      >
+                        <span>{ql.label}</span>
+                        <ExternalLink className="h-3 w-3 text-slate-400" />
+                      </a>
+                    ) : (
+                      <Link
+                        key={ql.label}
+                        href={ql.href}
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 transition-colors"
+                      >
+                        <span>{ql.label}</span>
+                      </Link>
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })()}
       </section>
 
       {/* ─── 6. RESOURCES + 30-DAY TRIAL + SUPPORT ─── */}
