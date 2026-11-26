@@ -1149,14 +1149,14 @@ export default function ConnectLnPage() {
         return
       }
 
-      // If explicitly signed out, ensure neutral identity and redirect cleanly to login
+      // If explicitly signed out, ensure neutral identity and redirect cleanly to the ConnectLn 360 Portal
       if (isSignedOut) {
         if (isMounted) {
           setUserData(NEUTRAL_UNAUTHENTICATED_USER)
           setIsAuthenticated(false)
           setHasHydrated(true)
           if (typeof window !== "undefined") {
-            window.location.replace("/connectin-login")
+            window.location.replace("/connectin-portal")
           }
         }
         return
@@ -1409,7 +1409,7 @@ export default function ConnectLnPage() {
     }
   }, [activeTab, userData])
 
-  // Sign out handler: Completely signs out and redirects to login without background
+  // Sign out handler: Completely signs out and redirects to the ConnectLn 360 Portal
   const handleSignOut = async () => {
     trackUserActivity({
       actionType: 'USER_LOGOUT',
@@ -1429,9 +1429,10 @@ export default function ConnectLnPage() {
       localStorage.removeItem("connectin_session_route")
       localStorage.removeItem("connectin_active_tab_v1")
       localStorage.removeItem("connectin_verified")
+      sessionStorage.removeItem("connectin_authenticated")
       localStorage.setItem("connectin_is_signed_out", "true")
       setIsAuthenticated(false)
-      window.location.href = "/connectin-login"
+      window.location.replace("/connectin-portal")
     }
   }
 
