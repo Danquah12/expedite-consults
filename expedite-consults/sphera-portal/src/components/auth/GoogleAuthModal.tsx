@@ -1,14 +1,12 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog"
-import { Loader2, ArrowRight, UserPlus, CheckCircle2, AlertCircle, X, ShieldCheck } from "lucide-react"
-import { saveStoredUser, saveStoredSessionRoute, getDefaultPortraitForUser, loadStoredAdminUsers, trackUserActivity } from "@/lib/connectin-storage"
+import { Loader2, ArrowRight, UserPlus, CheckCircle2, AlertCircle, X } from "lucide-react"
+import { saveStoredUser, saveStoredSessionRoute, getDefaultPortraitForUser, trackUserActivity } from "@/lib/connectin-storage"
 import { isSuperAdminUser, isDedicatedAdminAccount, isExactKwesiUser, isForeignPersonaAvatar, generatePersonalSignatureAvatar, resolveDisplayName } from "@/lib/connectin-profile"
 
 interface GoogleAuthModalProps {
@@ -18,6 +16,75 @@ interface GoogleAuthModalProps {
   initialName?: string
   professionId?: string
   onSuccess?: (user: any) => void
+}
+
+interface SessionSsoAccount {
+  email: string
+  name: string
+  workspace: string
+  avatar: string
+  isCurrent?: boolean
+}
+
+const GOOGLE_SESSION_ACCOUNTS_KEY = "connectln_google_session_accounts_v1"
+
+function readGoogleSessionAccounts(): SessionSsoAccount[] {
+  if (typeof window === "undefined") return []
+  try {
+    const raw = window.sessionStorage.getItem(GOOGLE_SESSION_ACCOUNTS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .filter((item: any) => item && typeof item.email === "string" && item.email.includes("@"))
+      .slice(0, 3)
+      .map((item: any) => {
+        const cleanEmail = String(item.email).toLowerCase().trim()
+        const cleanName = String(item.name || "").trim() || resolveDisplayName("", cleanEmail)
+        return {
+          email: cleanEmail,
+          name: cleanName,
+          workspace: cleanEmail.includes("expedite-consults")
+            ? "Expedite Consults Google Workspace"
+            : "Google Account",
+          avatar:
+            typeof item.avatar === "string" && item.avatar.trim()
+              ? item.avatar
+              : generatePersonalSignatureAvatar({ name: cleanName, email: cleanEmail }),
+          isCurrent: true,
+        }
+      })
+  } catch {
+    return []
+  }
+}
+
+function saveGoogleSessionAccount(account: SessionSsoAccount): SessionSsoAccount[] {
+  if (typeof window === "undefined") return []
+  try {
+    const existing = readGoogleSessionAccounts()
+    const cleanEmail = account.email.toLowerCase().trim()
+    const next = [
+      { ...account, email: cleanEmail, isCurrent: true },
+      ...existing.filter((item) => item.email !== cleanEmail),
+    ].slice(0, 3)
+    window.sessionStorage.setItem(GOOGLE_SESSION_ACCOUNTS_KEY, JSON.stringify(next))
+    return next
+  } catch {
+    return []
+  }
+}
+
+function removeGoogleSessionAccount(emailToRemove: string): SessionSsoAccount[] {
+  if (typeof window === "undefined") return []
+  try {
+    const cleanTarget = emailToRemove.toLowerCase().trim()
+    const next = readGoogleSessionAccounts().filter((item) => item.email !== cleanTarget)
+    window.sessionStorage.setItem(GOOGLE_SESSION_ACCOUNTS_KEY, JSON.stringify(next))
+    return next
+  } catch {
+    return []
+  }
 }
 
 export function GoogleAuthModal({
@@ -35,6 +102,17 @@ export function GoogleAuthModal({
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successNotice, setSuccessNotice] = useState<string | null>(null)
+  const [sessionAccounts, setSessionAccounts] = useState<SessionSsoAccount[]>([])
+
+  // Load ONLY accounts authenticated during this active browser session
+  useEffect(() => {
+    if (!isOpen) return
+    setSessionAccounts(readGoogleSessionAccounts())
+    setIsUsingCustom(false)
+    setErrorMessage(null)
+    setSuccessNotice(null)
+    setSelectedEmail(null)
+  }, [isOpen])
 
   const activeEmailClean = initialEmail.trim().toLowerCase()
   const activeNameClean = initialName.trim()
@@ -45,63 +123,33 @@ export function GoogleAuthModal({
     ? "Kwesi Asiedu"
     : resolveDisplayName("", activeEmailClean)
 
-  // Also include recent accounts from browser storage so returning users can 1-click sign in with Google
-  const recentStoredAccounts = typeof window !== "undefined"
-    ? loadStoredAdminUsers()
-        .filter(u =>
-          u.email &&
-          !u.email.endsWith("@connectin.internal") &&
-          !u.email.endsWith("@unknown-proxy.io") &&
-          !u.email.endsWith("@crawler.net") &&
-          !u.email.startsWith("alex.taylor@") &&
-          !u.email.startsWith("marcus.vance@") &&
-          !u.email.startsWith("sarah.chen@") &&
-          !u.email.startsWith("david.k@") &&
-          !u.email.startsWith("elena.rostova@")
-        )
-        .slice(0, 4)
-        .map(u => ({
-          email: u.email.toLowerCase().trim(),
-          name: u.name,
-          workspace: u.email.includes("expedite-consults") ? "Expedite Consults Google Workspace" : "Google Account",
-          avatar: u.avatar || generatePersonalSignatureAvatar({ name: u.name, email: u.email }),
-          isCurrent: false
-        }))
-    : []
-
-  const rawAccounts = [
-    ...(hasPrefilled ? [{
-      email: activeEmailClean,
-      name: prefilledName,
-      workspace: activeEmailClean.includes("expedite-consults") ? "Expedite Consults Google Workspace" : "Google Account",
-      avatar: generatePersonalSignatureAvatar({ name: prefilledName, email: activeEmailClean }),
-      isCurrent: true
-    }] : []),
-    ...recentStoredAccounts,
-    ...(!activeEmailClean.startsWith("kasied1@") ? [{
-      email: "kasied1@expedite-consults.com",
-      name: "Kasied1 Asiedu",
-      workspace: "Expedite Consults Google Workspace",
-      avatar: generatePersonalSignatureAvatar({ name: "Kasied1 Asiedu", email: "kasied1@expedite-consults.com" }),
-      isCurrent: false
-    }] : []),
-    ...(!activeEmailClean.startsWith("kasiedu@") ? [{
-      email: "kasiedu@expedite-consults.com",
-      name: "Kwesi Asiedu (Platform Admin)",
-      workspace: "Expedite Consults Enterprise",
-      avatar: "/brand/kwesi-avatar.png",
-      isCurrent: false
-    }] : []),
+  const rawAccounts: SessionSsoAccount[] = [
+    ...(hasPrefilled
+      ? [
+          {
+            email: activeEmailClean,
+            name: prefilledName,
+            workspace: activeEmailClean.includes("expedite-consults")
+              ? "Expedite Consults Google Workspace"
+              : "Google Account",
+            avatar: generatePersonalSignatureAvatar({ name: prefilledName, email: activeEmailClean }),
+            isCurrent: true,
+          },
+        ]
+      : []),
+    ...sessionAccounts,
   ]
 
-  // Deduplicate accounts by name + email
-  const seenAccountKeys = new Set<string>()
-  const accounts = rawAccounts.filter(acc => {
-    const key = `${acc.name.toLowerCase().trim()}::${acc.email.toLowerCase().trim()}`
-    if (seenAccountKeys.has(key)) return false
-    seenAccountKeys.add(key)
+  // Deduplicate by email so each session account appears once
+  const seenEmails = new Set<string>()
+  const accounts = rawAccounts.filter((acc) => {
+    const emailKey = acc.email.toLowerCase().trim()
+    if (!emailKey || seenEmails.has(emailKey)) return false
+    seenEmails.add(emailKey)
     return true
   })
+
+  const showCustomForm = isUsingCustom || accounts.length === 0
 
   const handleSelectAccount = async (accountEmail: string, accountName?: string) => {
     setIsLoading(true)
@@ -158,6 +206,17 @@ export function GoogleAuthModal({
 
       saveStoredUser(profileToSave)
       saveStoredSessionRoute(targetTab, "personal")
+      setSessionAccounts(
+        saveGoogleSessionAccount({
+          email: accountEmail,
+          name: finalName,
+          workspace: accountEmail.includes("expedite-consults")
+            ? "Expedite Consults Google Workspace"
+            : "Google Account",
+          avatar: safeAvatar,
+          isCurrent: true,
+        })
+      )
       trackUserActivity({
         actionType: "USER_LOGIN",
         actionLabel: "Signed In via Google SSO ✓",
@@ -171,7 +230,7 @@ export function GoogleAuthModal({
         sessionStorage.setItem("connectin_authenticated", "true")
       }
 
-      // Await server-side user directory sync before redirecting so the admin console always sees this Google login
+      // Await server-side user directory sync before redirecting
       await fetch("/api/connectin/users", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -210,6 +269,7 @@ export function GoogleAuthModal({
         {/* Header */}
         <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-zinc-100 dark:border-zinc-800/80 text-center relative shrink-0">
           <button
+            type="button"
             onClick={onClose}
             disabled={isLoading}
             className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-full p-2 transition-colors disabled:opacity-50 touch-manipulation"
@@ -230,7 +290,17 @@ export function GoogleAuthModal({
             Sign in with Google
           </h2>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Choose an account to continue to <span className="font-semibold text-zinc-800 dark:text-zinc-200">ConnectLn</span>
+            {showCustomForm ? (
+              <>
+                Sign in with your Google account to continue to{" "}
+                <span className="font-semibold text-zinc-800 dark:text-zinc-200">ConnectLn</span>
+              </>
+            ) : (
+              <>
+                Choose your session account to continue to{" "}
+                <span className="font-semibold text-zinc-800 dark:text-zinc-200">ConnectLn</span>
+              </>
+            )}
           </p>
         </div>
 
@@ -251,68 +321,84 @@ export function GoogleAuthModal({
           )}
         </div>
 
-        {/* Account Selector List */}
+        {/* Session-Scoped Account Selector OR Direct Email Form */}
         <div className="p-3.5 sm:p-6 pt-1 sm:pt-2 space-y-2 max-h-[55dvh] overflow-y-auto">
-          {!isUsingCustom ? (
+          {!showCustomForm ? (
             <>
               {accounts.map((acc) => {
                 const isSelected = selectedEmail === acc.email
                 return (
-                  <button
+                  <div
                     key={acc.email}
-                    onClick={() => handleSelectAccount(acc.email, acc.name)}
-                    disabled={isLoading}
-                    className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer disabled:opacity-60 min-h-[56px] active:scale-[0.98] touch-manipulation ${
+                    className={`w-full rounded-2xl border transition-all flex items-center justify-between gap-2 pr-2 ${
                       isSelected
                         ? "border-[#4285F4] bg-blue-50/50 dark:bg-blue-950/30 ring-2 ring-[#4285F4]/30"
                         : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-850"
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                      <div className="relative shrink-0">
-                        <img
-                          src={acc.avatar}
-                          alt={acc.name}
-                          className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 object-cover"
-                        />
-                        <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
-                          <svg className="h-2.5 w-2.5" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                          </svg>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectAccount(acc.email, acc.name)}
+                      disabled={isLoading}
+                      className="flex-1 text-left p-3 sm:p-3.5 flex items-center justify-between gap-3 cursor-pointer disabled:opacity-60 min-h-[56px] active:scale-[0.99] touch-manipulation min-w-0"
+                    >
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <div className="relative shrink-0">
+                          <img
+                            src={acc.avatar}
+                            alt={acc.name}
+                            className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 object-cover"
+                          />
+                          <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+                            <svg className="h-2.5 w-2.5" viewBox="0 0 24 24">
+                              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                            </svg>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="font-semibold text-xs text-zinc-900 dark:text-zinc-100 truncate">
-                            {acc.name}
-                          </p>
-                          {acc.isCurrent && (
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="font-semibold text-xs text-zinc-900 dark:text-zinc-100 truncate">
+                              {acc.name}
+                            </p>
                             <span className="text-[9px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 px-1.5 py-0.2 rounded-full">
-                              Active
+                              This session
                             </span>
-                          )}
+                          </div>
+                          <p className="text-[11px] text-zinc-500 truncate">
+                            {acc.email}
+                          </p>
+                          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate mt-0.5">
+                            {acc.workspace}
+                          </p>
                         </div>
-                        <p className="text-[11px] text-zinc-500 truncate">
-                          {acc.email}
-                        </p>
-                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate mt-0.5">
-                          {acc.workspace}
-                        </p>
                       </div>
-                    </div>
 
-                    <div className="shrink-0 text-zinc-400">
-                      {isSelected ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-[#4285F4]" />
-                      ) : (
-                        <ArrowRight className="h-4 w-4" />
-                      )}
-                    </div>
-                  </button>
+                      <div className="shrink-0 text-zinc-400">
+                        {isSelected ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-[#4285F4]" />
+                        ) : (
+                          <ArrowRight className="h-4 w-4" />
+                        )}
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSessionAccounts(removeGoogleSessionAccount(acc.email))
+                      }}
+                      disabled={isLoading}
+                      title="Forget from this session"
+                      className="h-7 w-7 rounded-full text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center justify-center shrink-0 cursor-pointer"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 )
               })}
 
@@ -336,11 +422,11 @@ export function GoogleAuthModal({
               </button>
             </>
           ) : (
-            /* Custom Google Email Form */
+            /* Clean Google Email Form */
             <form onSubmit={handleCustomSubmit} className="space-y-3 pt-1">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                  Full Name (for your profile & signature)
+                  Full Name (for your profile &amp; signature)
                 </label>
                 <input
                   type="text"
@@ -366,16 +452,22 @@ export function GoogleAuthModal({
               </div>
 
               <div className="flex items-center justify-between gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsUsingCustom(false)
-                    setErrorMessage(null)
-                  }}
-                  className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 font-medium px-2 sm:px-3 py-2 cursor-pointer touch-manipulation"
-                >
-                  ← Back
-                </button>
+                {accounts.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUsingCustom(false)
+                      setErrorMessage(null)
+                    }}
+                    className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 font-medium px-2 sm:px-3 py-2 cursor-pointer touch-manipulation"
+                  >
+                    ← Back
+                  </button>
+                ) : (
+                  <span className="text-[11px] text-zinc-400">
+                    Session-private sign-in
+                  </span>
+                )}
 
                 <button
                   type="submit"

@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog"
 import { Loader2, ArrowRight, UserPlus, CheckCircle2, AlertCircle, X } from "lucide-react"
-import { saveStoredUser, saveStoredSessionRoute, getDefaultPortraitForUser, loadStoredAdminUsers, trackUserActivity } from "@/lib/connectin-storage"
+import { saveStoredUser, saveStoredSessionRoute, getDefaultPortraitForUser, trackUserActivity } from "@/lib/connectin-storage"
 import { isSuperAdminUser, isDedicatedAdminAccount, isExactKwesiUser, isForeignPersonaAvatar, generatePersonalSignatureAvatar, resolveDisplayName } from "@/lib/connectin-profile"
 
 interface MicrosoftAuthModalProps {
@@ -16,6 +16,75 @@ interface MicrosoftAuthModalProps {
   initialName?: string
   professionId?: string
   onSuccess?: (user: any) => void
+}
+
+interface SessionMsAccount {
+  email: string
+  name: string
+  workspace: string
+  avatar: string
+  isCurrent?: boolean
+}
+
+const MICROSOFT_SESSION_ACCOUNTS_KEY = "connectln_microsoft_session_accounts_v1"
+
+function readMicrosoftSessionAccounts(): SessionMsAccount[] {
+  if (typeof window === "undefined") return []
+  try {
+    const raw = window.sessionStorage.getItem(MICROSOFT_SESSION_ACCOUNTS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .filter((item: any) => item && typeof item.email === "string" && item.email.includes("@"))
+      .slice(0, 3)
+      .map((item: any) => {
+        const cleanEmail = String(item.email).toLowerCase().trim()
+        const cleanName = String(item.name || "").trim() || resolveDisplayName("", cleanEmail)
+        return {
+          email: cleanEmail,
+          name: cleanName,
+          workspace: cleanEmail.includes("expedite-consults")
+            ? "Expedite Consults Entra ID"
+            : "Work or school account",
+          avatar:
+            typeof item.avatar === "string" && item.avatar.trim()
+              ? item.avatar
+              : generatePersonalSignatureAvatar({ name: cleanName, email: cleanEmail }),
+          isCurrent: true,
+        }
+      })
+  } catch {
+    return []
+  }
+}
+
+function saveMicrosoftSessionAccount(account: SessionMsAccount): SessionMsAccount[] {
+  if (typeof window === "undefined") return []
+  try {
+    const existing = readMicrosoftSessionAccounts()
+    const cleanEmail = account.email.toLowerCase().trim()
+    const next = [
+      { ...account, email: cleanEmail, isCurrent: true },
+      ...existing.filter((item) => item.email !== cleanEmail),
+    ].slice(0, 3)
+    window.sessionStorage.setItem(MICROSOFT_SESSION_ACCOUNTS_KEY, JSON.stringify(next))
+    return next
+  } catch {
+    return []
+  }
+}
+
+function removeMicrosoftSessionAccount(emailToRemove: string): SessionMsAccount[] {
+  if (typeof window === "undefined") return []
+  try {
+    const cleanTarget = emailToRemove.toLowerCase().trim()
+    const next = readMicrosoftSessionAccounts().filter((item) => item.email !== cleanTarget)
+    window.sessionStorage.setItem(MICROSOFT_SESSION_ACCOUNTS_KEY, JSON.stringify(next))
+    return next
+  } catch {
+    return []
+  }
 }
 
 export function MicrosoftAuthModal({
@@ -33,6 +102,17 @@ export function MicrosoftAuthModal({
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successNotice, setSuccessNotice] = useState<string | null>(null)
+  const [sessionAccounts, setSessionAccounts] = useState<SessionMsAccount[]>([])
+
+  // Load ONLY accounts authenticated during this active browser session
+  useEffect(() => {
+    if (!isOpen) return
+    setSessionAccounts(readMicrosoftSessionAccounts())
+    setIsUsingCustom(false)
+    setErrorMessage(null)
+    setSuccessNotice(null)
+    setSelectedEmail(null)
+  }, [isOpen])
 
   const activeEmailClean = initialEmail.trim().toLowerCase()
   const activeNameClean = initialName.trim()
@@ -43,61 +123,32 @@ export function MicrosoftAuthModal({
     ? "Kwesi Asiedu"
     : resolveDisplayName("", activeEmailClean)
 
-  const recentStoredAccounts = typeof window !== "undefined"
-    ? loadStoredAdminUsers()
-        .filter(u =>
-          u.email &&
-          !u.email.endsWith("@connectin.internal") &&
-          !u.email.endsWith("@unknown-proxy.io") &&
-          !u.email.endsWith("@crawler.net") &&
-          !u.email.startsWith("alex.taylor@") &&
-          !u.email.startsWith("marcus.vance@") &&
-          !u.email.startsWith("sarah.chen@") &&
-          !u.email.startsWith("david.k@") &&
-          !u.email.startsWith("elena.rostova@")
-        )
-        .slice(0, 4)
-        .map(u => ({
-          email: u.email.toLowerCase().trim(),
-          name: u.name,
-          workspace: u.email.includes("expedite-consults") ? "Expedite Consults Entra ID" : "Work or school account",
-          avatar: u.avatar || generatePersonalSignatureAvatar({ name: u.name, email: u.email }),
-          isCurrent: false
-        }))
-    : []
-
-  const rawAccounts = [
-    ...(hasPrefilled ? [{
-      email: activeEmailClean,
-      name: prefilledName,
-      workspace: activeEmailClean.includes("expedite-consults") ? "Expedite Consults Entra ID" : "Work or school account",
-      avatar: generatePersonalSignatureAvatar({ name: prefilledName, email: activeEmailClean }),
-      isCurrent: true
-    }] : []),
-    ...recentStoredAccounts,
-    ...(!activeEmailClean.startsWith("kasied1@") ? [{
-      email: "kasied1@expedite-consults.com",
-      name: "Kasied1 Asiedu",
-      workspace: "Expedite Consults Entra ID",
-      avatar: generatePersonalSignatureAvatar({ name: "Kasied1 Asiedu", email: "kasied1@expedite-consults.com" }),
-      isCurrent: false
-    }] : []),
-    ...(!activeEmailClean.startsWith("kasiedu@") ? [{
-      email: "kasiedu@expedite-consults.com",
-      name: "Kwesi Asiedu (Root Authority)",
-      workspace: "Expedite Consults Enterprise",
-      avatar: "/brand/kwesi-avatar.png",
-      isCurrent: false
-    }] : []),
+  const rawAccounts: SessionMsAccount[] = [
+    ...(hasPrefilled
+      ? [
+          {
+            email: activeEmailClean,
+            name: prefilledName,
+            workspace: activeEmailClean.includes("expedite-consults")
+              ? "Expedite Consults Entra ID"
+              : "Work or school account",
+            avatar: generatePersonalSignatureAvatar({ name: prefilledName, email: activeEmailClean }),
+            isCurrent: true,
+          },
+        ]
+      : []),
+    ...sessionAccounts,
   ]
 
-  const seenAccountKeys = new Set<string>()
-  const accounts = rawAccounts.filter(acc => {
-    const key = `${acc.name.toLowerCase().trim()}::${acc.email.toLowerCase().trim()}`
-    if (seenAccountKeys.has(key)) return false
-    seenAccountKeys.add(key)
+  const seenEmails = new Set<string>()
+  const accounts = rawAccounts.filter((acc) => {
+    const emailKey = acc.email.toLowerCase().trim()
+    if (!emailKey || seenEmails.has(emailKey)) return false
+    seenEmails.add(emailKey)
     return true
   })
+
+  const showCustomForm = isUsingCustom || accounts.length === 0
 
   const handleSelectAccount = async (accountEmail: string, accountName?: string) => {
     setIsLoading(true)
@@ -153,6 +204,17 @@ export function MicrosoftAuthModal({
 
       saveStoredUser(profileToSave)
       saveStoredSessionRoute(targetTab, "personal")
+      setSessionAccounts(
+        saveMicrosoftSessionAccount({
+          email: accountEmail,
+          name: finalName,
+          workspace: accountEmail.includes("expedite-consults")
+            ? "Expedite Consults Entra ID"
+            : "Work or school account",
+          avatar: safeAvatar,
+          isCurrent: true,
+        })
+      )
       trackUserActivity({
         actionType: "USER_LOGIN",
         actionLabel: "Signed In via Microsoft Entra ID ✓",
@@ -203,6 +265,7 @@ export function MicrosoftAuthModal({
       <DialogContent className="w-[calc(100vw-20px)] sm:w-full max-w-[420px] p-0 overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl max-h-[90dvh] flex flex-col mx-auto my-auto">
         <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-zinc-100 dark:border-zinc-800/80 text-center relative shrink-0">
           <button
+            type="button"
             onClick={onClose}
             disabled={isLoading}
             className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-full p-2 transition-colors disabled:opacity-50 touch-manipulation"
@@ -223,7 +286,17 @@ export function MicrosoftAuthModal({
             Sign in with Microsoft
           </h2>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Pick an account to continue to <span className="font-semibold text-zinc-800 dark:text-zinc-200">ConnectLn</span>
+            {showCustomForm ? (
+              <>
+                Sign in with your Microsoft Entra ID account to continue to{" "}
+                <span className="font-semibold text-zinc-800 dark:text-zinc-200">ConnectLn</span>
+              </>
+            ) : (
+              <>
+                Pick your session account to continue to{" "}
+                <span className="font-semibold text-zinc-800 dark:text-zinc-200">ConnectLn</span>
+              </>
+            )}
           </p>
         </div>
 
@@ -244,55 +317,71 @@ export function MicrosoftAuthModal({
         </div>
 
         <div className="p-3.5 sm:p-6 pt-1 sm:pt-2 space-y-2 max-h-[55dvh] overflow-y-auto">
-          {!isUsingCustom ? (
+          {!showCustomForm ? (
             <>
               {accounts.map((acc) => {
                 const isSelected = selectedEmail === acc.email
                 return (
-                  <button
+                  <div
                     key={acc.email}
-                    onClick={() => handleSelectAccount(acc.email, acc.name)}
-                    disabled={isLoading}
-                    className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer disabled:opacity-60 min-h-[56px] active:scale-[0.98] touch-manipulation ${
+                    className={`w-full rounded-2xl border transition-all flex items-center justify-between gap-2 pr-2 ${
                       isSelected
                         ? "border-[#00a4ef] bg-sky-50/50 dark:bg-sky-950/30 ring-2 ring-[#00a4ef]/30"
                         : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-850"
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                      <img
-                        src={acc.avatar}
-                        alt={acc.name}
-                        className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 object-cover shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="font-semibold text-xs text-zinc-900 dark:text-zinc-100 truncate">
-                            {acc.name}
-                          </p>
-                          {acc.isCurrent && (
+                    <button
+                      type="button"
+                      onClick={() => handleSelectAccount(acc.email, acc.name)}
+                      disabled={isLoading}
+                      className="flex-1 text-left p-3 sm:p-3.5 flex items-center justify-between gap-3 cursor-pointer disabled:opacity-60 min-h-[56px] active:scale-[0.99] touch-manipulation min-w-0"
+                    >
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <img
+                          src={acc.avatar}
+                          alt={acc.name}
+                          className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 object-cover shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="font-semibold text-xs text-zinc-900 dark:text-zinc-100 truncate">
+                              {acc.name}
+                            </p>
                             <span className="text-[9px] font-bold bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300 px-1.5 py-0.2 rounded-full">
-                              Active
+                              This session
                             </span>
-                          )}
+                          </div>
+                          <p className="text-[11px] text-zinc-500 truncate">
+                            {acc.email}
+                          </p>
+                          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate mt-0.5">
+                            {acc.workspace}
+                          </p>
                         </div>
-                        <p className="text-[11px] text-zinc-500 truncate">
-                          {acc.email}
-                        </p>
-                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate mt-0.5">
-                          {acc.workspace}
-                        </p>
                       </div>
-                    </div>
 
-                    <div className="shrink-0 text-zinc-400">
-                      {isSelected ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-[#00a4ef]" />
-                      ) : (
-                        <ArrowRight className="h-4 w-4" />
-                      )}
-                    </div>
-                  </button>
+                      <div className="shrink-0 text-zinc-400">
+                        {isSelected ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-[#00a4ef]" />
+                        ) : (
+                          <ArrowRight className="h-4 w-4" />
+                        )}
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSessionAccounts(removeMicrosoftSessionAccount(acc.email))
+                      }}
+                      disabled={isLoading}
+                      title="Forget from this session"
+                      className="h-7 w-7 rounded-full text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center justify-center shrink-0 cursor-pointer"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 )
               })}
 
@@ -318,7 +407,7 @@ export function MicrosoftAuthModal({
             <form onSubmit={handleCustomSubmit} className="space-y-3 pt-1">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                  Full Name (for your profile & signature)
+                  Full Name (for your profile &amp; signature)
                 </label>
                 <input
                   type="text"
@@ -344,16 +433,22 @@ export function MicrosoftAuthModal({
               </div>
 
               <div className="flex items-center justify-between gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsUsingCustom(false)
-                    setErrorMessage(null)
-                  }}
-                  className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 font-medium px-2 sm:px-3 py-2 cursor-pointer touch-manipulation"
-                >
-                  ← Back
-                </button>
+                {accounts.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUsingCustom(false)
+                      setErrorMessage(null)
+                    }}
+                    className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 font-medium px-2 sm:px-3 py-2 cursor-pointer touch-manipulation"
+                  >
+                    ← Back
+                  </button>
+                ) : (
+                  <span className="text-[11px] text-zinc-400">
+                    Session-private sign-in
+                  </span>
+                )}
 
                 <button
                   type="submit"
