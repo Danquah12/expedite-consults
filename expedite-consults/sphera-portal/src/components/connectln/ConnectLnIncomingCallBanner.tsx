@@ -43,7 +43,6 @@ import {
   closeStandbyPipForLocalCall,
   isDocumentPipSupported,
   isAlwaysOnTopReceiverOpen,
-  openAlwaysOnTopCallStandbyPiP,
   setForegroundCallPollCallback,
   createUnthrottledCallPollWorker,
   setCallMediaSilenceActive,
@@ -478,30 +477,7 @@ export function ConnectLnIncomingCallBanner({
       unlockBackgroundRingingSession()
       setAudioUnlocked(isBackgroundAudioUnlocked())
 
-      // 2) On Desktop Edge/Chrome, auto-open the compact Always-On-Top Call Standby Receiver
-      //    so minimizing the browser IMMEDIATELY keeps the Pop-Up Call Screen ready on top of desktop!
-      //    (Skip only if user clicked an outgoing call button or manually dismissed the PiP window.)
-      const btnText = (targetEl?.closest("button")?.textContent || "").trim()
-      const isStartingOutgoingCallClick =
-        isLocalTabHostingOpenCall() ||
-        (/\b(Start call|Call a number|Call|Video|Answer|Decline)\b/i.test(btnText) &&
-          !/Activate|Enable Ringing|Enable Minimized/i.test(btnText))
-
-      if (
-        ev.type === "click" &&
-        !mob &&
-        isDocumentPipSupported() &&
-        !isAlwaysOnTopReceiverOpen() &&
-        !isStartingOutgoingCallClick &&
-        sessionStorage.getItem("connectln_pip_dismissed") !== "1"
-      ) {
-        openAlwaysOnTopCallStandbyPiP(false)
-          .then((opened) => {
-            if (opened) setPipReceiverActive(true)
-          })
-          .catch(() => {})
-      }
-
+      // 2) Keep background calling 100% invisible (never auto-open a floating Document PiP box on idle clicks).
       // 3) Synchronously request Notification permission (before any `await`!) or sync existing granted subscription!
       if (!autoPushAttemptedRef.current && typeof Notification !== "undefined") {
         if (Notification.permission === "default") {
@@ -721,11 +697,6 @@ export function ConnectLnIncomingCallBanner({
               ? Notification.permission
               : ("default" as NotificationPermission)
           )
-
-    if (supportsDocPip) {
-      const opened = await openAlwaysOnTopCallStandbyPiP(true)
-      setPipReceiverActive(opened)
-    }
 
     const perm = await permPromise
     setNotifGranted(perm === "granted")
@@ -1136,15 +1107,13 @@ export function ConnectLnIncomingCallBanner({
       <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[88] w-[94vw] max-w-xl rounded-2xl bg-[#071E1A] border-2 border-emerald-400 shadow-2xl px-4 py-2.5 text-[#FBF8F3] flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-extrabold text-emerald-300 flex items-center gap-1.5">
-            <PictureInPicture2 className="h-4 w-4 shrink-0" />
-            <span>Enable Pop-Up Call Screen &amp; Ringing When Minimized</span>
+            <Bell className="h-4 w-4 shrink-0" />
+            <span>Enable Background Call Ringing &amp; Alerts</span>
           </p>
           <p className="text-[11px] text-zinc-200 leading-snug mt-0.5">
             {isIosBrowserTab
               ? "iPhone: Tap Activate to unlock minimized ringing (or Share ⬆️ → Add to Home Screen for lock-screen calls)."
-              : supportsDocPip
-              ? "Click Activate once before minimizing your browser so incoming calls ring out loud and pop up on top of your screen!"
-              : `Tap Activate once before minimizing so calls to ${prettyClientPhone(myPhone)} ring out loud.`}
+              : "Click Activate once so incoming calls ring out loud and alert you silently in the background even when minimized."}
           </p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">

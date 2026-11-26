@@ -501,67 +501,23 @@ function setupMediaSessionAndAutoPip(): void {
         })
       }
       navigator.mediaSession.playbackState = "playing"
+      // Never auto-open the PiP standby popup while idle; only arm enterpictureinpicture when a call is actively ringing.
       try {
-        ;(navigator.mediaSession as any).setActionHandler("enterpictureinpicture", () => {
-          void openAlwaysOnTopCallStandbyPiP()
-        })
+        ;(navigator.mediaSession as any).setActionHandler("enterpictureinpicture", null)
       } catch {}
     }
 
-    // Create a lightweight 2fps offscreen `<video>` in top frame so Chrome/Edge Auto-PiP criteria are met
-    if (
-      isDocumentPipSupported() &&
-      !autoPipVideoEl &&
-      typeof document !== "undefined" &&
-      document.body &&
-      liveAudioCtx &&
-      typeof liveAudioCtx.createMediaStreamDestination === "function"
-    ) {
-      const canvas = document.createElement("canvas")
-      canvas.width = 160
-      canvas.height = 90
-      const c2d = canvas.getContext("2d")
-      const drawStandby = () => {
-        if (!c2d) return
-        c2d.fillStyle = "#071E1A"
-        c2d.fillRect(0, 0, 160, 90)
-        c2d.fillStyle = "#34D399"
-        c2d.font = "bold 12px sans-serif"
-        c2d.fillText("ConnectLn Ready", 24, 48)
-      }
-      drawStandby()
-      if (!autoPipCanvasTimer) {
-        autoPipCanvasTimer = setInterval(drawStandby, 1500)
-      }
-
-      if (typeof canvas.captureStream === "function") {
-        const vStream = canvas.captureStream(2)
-        const aDest = liveAudioCtx.createMediaStreamDestination()
-        if (keepAliveBuffer) {
-          const src = liveAudioCtx.createBufferSource()
-          src.buffer = keepAliveBuffer
-          src.loop = true
-          src.connect(aDest)
-          src.start(0)
-        }
-        const combined = new MediaStream([
-          ...vStream.getVideoTracks(),
-          ...aDest.stream.getAudioTracks(),
-        ])
-        autoPipVideoEl = document.createElement("video")
-        autoPipVideoEl.dataset.connectlnCallAudio = "true"
-        autoPipVideoEl.srcObject = combined
-        autoPipVideoEl.autoplay = true
-        autoPipVideoEl.playsInline = true
-        autoPipVideoEl.volume = 1.0
-        autoPipVideoEl.setAttribute("aria-hidden", "true")
-        autoPipVideoEl.style.cssText =
-          "position:fixed;left:-9999px;top:-9999px;width:4px;height:4px;opacity:0.01;pointer-events:none;"
-        document.body.appendChild(autoPipVideoEl)
-        autoPipVideoEl.play().catch(() => {})
-      }
-    } else if (autoPipVideoEl && autoPipVideoEl.paused) {
-      autoPipVideoEl.play().catch(() => {})
+    if (autoPipCanvasTimer) {
+      clearInterval(autoPipCanvasTimer)
+      autoPipCanvasTimer = null
+    }
+    if (autoPipVideoEl) {
+      try {
+        autoPipVideoEl.pause()
+        autoPipVideoEl.srcObject = null
+        autoPipVideoEl.remove()
+      } catch {}
+      autoPipVideoEl = null
     }
   } catch {}
 }
@@ -1692,10 +1648,29 @@ export async function openAlwaysOnTopCallStandbyPiP(manualUserAction = false): P
   }
 }
 
+function closeAndClearActivePipWindow(): void {
+  if (pipForegroundPollTimer) {
+    try {
+      activePipWin?.clearInterval(pipForegroundPollTimer)
+    } catch {}
+    pipForegroundPollTimer = null
+  }
+  if (activePipWin && !activePipWin.closed) {
+    try {
+      programmaticPipClose = true
+      activePipWin.close()
+    } catch {}
+  }
+  activePipWin = null
+  try {
+    if (typeof navigator !== "undefined" && "mediaSession" in navigator && navigator.mediaSession) {
+      ;(navigator.mediaSession as any).setActionHandler("enterpictureinpicture", null)
+    }
+  } catch {}
+}
+
 /**
- * Returns any open standby PiP window to clean standby mode when the user opens an active
- * call modal on this tab so ZERO extra incoming call boxes overlap their active call,
- * while keeping the Always-On-Top receiver alive across calls without needing a fresh click gesture!
+ * Closes any open PiP or popup window cleanly when a local call opens or ends so zero idle popup stays visible.
  */
 export function closeStandbyPipForLocalCall(): void {
   currentRingingSpec = null
@@ -1705,10 +1680,7 @@ export function closeStandbyPipForLocalCall(): void {
     } catch {}
   }
   activePopupWin = null
-
-  if (activePipWin && !activePipWin.closed) {
-    renderIncomingCallDomIntoWindow(activePipWin, null, true)
-  }
+  closeAndClearActivePipWindow()
   notifyUnlockSubscribers()
 }
 
@@ -1720,10 +1692,8 @@ export function dismissFloatingCallPopups(): void {
     } catch {}
   }
   activePopupWin = null
-
-  if (activePipWin && !activePipWin.closed) {
-    renderIncomingCallDomIntoWindow(activePipWin, null, true)
-  }
+  closeAndClearActivePipWindow()
+  notifyUnlockSubscribers()
 }
 
 export async function triggerSystemIncomingCallAlert(
@@ -1754,28 +1724,17 @@ export async function triggerSystemIncomingCallAlert(
       ms.setActionHandler?.("play", () => currentRingingSpec?.onAnswer?.())
       ms.setActionHandler?.("pause", () => currentRingingSpec?.onDecline?.())
       ms.setActionHandler?.("stop", () => currentRingingSpec?.onDecline?.())
+      ms.setActionHandler?.("enterpictureinpicture", () => {
+        if (currentRingingSpec) {
+          void openAlwaysOnTopCallStandbyPiP()
+        }
+      })
     }
   } catch {}
 
-  // 1. If Always-On-Top Document PiP Receiver is open, transform it immediately into the Incoming Call Pop-Up Screen!
+  // Update an already-open PiP window if the user explicitly opened one for this call; otherwise rely silently on OS notification + background ringtone without spawning extra blank popup windows.
   if (activePipWin && !activePipWin.closed) {
     renderIncomingCallDomIntoWindow(activePipWin, spec, true)
-  } else {
-    // 2. Also attempt opening a standalone 460x440 Pop-Up Call Window (succeeds whenever popups are allowed!)
-    try {
-      const left = Math.max(20, Math.round((window.screen.availWidth - 460) / 2))
-      const top = Math.max(30, Math.round((window.screen.availHeight - 440) / 2))
-      if (!activePopupWin || activePopupWin.closed) {
-        activePopupWin = window.open(
-          "",
-          "connectln_incoming_call_popup",
-          `popup=yes,width=460,height=440,left=${left},top=${top}`
-        )
-      }
-      if (activePopupWin && !activePopupWin.closed) {
-        renderIncomingCallDomIntoWindow(activePopupWin, spec, false)
-      }
-    } catch {}
   }
 
   const nowMs = Date.now()
