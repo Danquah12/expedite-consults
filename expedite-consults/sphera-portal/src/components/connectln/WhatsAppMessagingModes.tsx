@@ -32,6 +32,15 @@ import {
 import { ConnectLnTeamsCalendarView } from './ConnectLnTeamsCalendarView';
 import { ConnectLnVoicemailInbox } from './ConnectLnVoicemailInbox';
 import { MeetingInvitee } from './ScheduleMeetingModal';
+import {
+    ConnectLnChannelsView,
+    CommunityGroupToolsPanel,
+} from './ConnectLnChannelsCommunitiesPanels';
+import {
+    COMM_PRO_CHANGED_EVENT,
+    getCommPrivacySettings,
+    updateCommPrivacySettings,
+} from '@/lib/connectln-comm-pro';
 
 export type MessagingWorkspaceMode =
     | 'chats'
@@ -1148,6 +1157,17 @@ export function WhatsAppLeftIconRail({
             ),
         },
         {
+            id: 'channels',
+            label: 'Channels, Broadcasts & Communities',
+            shortLabel: 'Channels',
+            icon: (
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.85}>
+                    <polygon points="12 3 20 19 4 19" strokeLinejoin="round" />
+                    <circle cx="12" cy="13.5" r="2" fill="currentColor" stroke="none" />
+                </svg>
+            ),
+        },
+        {
             id: 'archived',
             label: 'ConnectLn Vault & Archived Folios',
             shortLabel: 'Vault',
@@ -1244,6 +1264,7 @@ export function WhatsAppModeWorkspace({
     currentUser,
     threads,
     archivedThreadIds,
+    onSelectMode,
     onUnarchiveThread,
     onSelectChatThread,
     onStartLiveCall,
@@ -1257,6 +1278,7 @@ export function WhatsAppModeWorkspace({
     currentUser?: any;
     threads: B2BConversationThread[];
     archivedThreadIds: string[];
+    onSelectMode?: (m: MessagingWorkspaceMode) => void;
     onUnarchiveThread: (id: string) => void;
     onSelectChatThread: (threadId: string) => void;
     onStartLiveCall: (mode: 'audio' | 'video', targetName?: string) => void;
@@ -1551,6 +1573,19 @@ export function WhatsAppModeWorkspace({
         'linear-gradient(135deg, #5e3119 0%, #7c4225 55%, #3d3730 100%)'
     );
     const [statusReplyText, setStatusReplyText] = useState('');
+    const [statusPrivacyAudience, setStatusPrivacyAudience] = useState<'everyone' | 'contacts' | 'selected'>('everyone');
+    const [statusMusicBadge, setStatusMusicBadge] = useState<string>('');
+    const [voiceStatusRecActive, setVoiceStatusRecActive] = useState<boolean>(false);
+    const [voiceStatusDataUrl, setVoiceStatusDataUrl] = useState<string>('');
+    const voiceStatusMrRef = React.useRef<MediaRecorder | null>(null);
+    const [showCommunityGroupTools, setShowCommunityGroupTools] = useState<boolean>(false);
+    const [commProPrivacy, setCommProPrivacy] = useState(() => getCommPrivacySettings());
+
+    useEffect(() => {
+        const onSync = () => setCommProPrivacy(getCommPrivacySettings());
+        window.addEventListener(COMM_PRO_CHANGED_EVENT, onSync);
+        return () => window.removeEventListener(COMM_PRO_CHANGED_EVENT, onSync);
+    }, []);
 
     // Derived active Status Box & slide for automatic sequential per-user playback
     const topActiveStatusBox =
@@ -2743,9 +2778,29 @@ export function WhatsAppModeWorkspace({
                     });
                 }
             } else if (statusComposerMode === 'info') {
-                if (!statusDraftText.trim() && !statusDraftTitle.trim() && !statusDraftInfoDetails.trim()) {
+                if (
+                    !statusDraftText.trim() &&
+                    !statusDraftTitle.trim() &&
+                    !statusDraftInfoDetails.trim() &&
+                    !voiceStatusDataUrl
+                ) {
                     return;
                 }
+                const audienceNote =
+                    statusPrivacyAudience === 'contacts'
+                        ? 'Contacts Only'
+                        : statusPrivacyAudience === 'selected'
+                        ? 'Selected Contacts'
+                        : 'Everyone';
+                const musicNote = statusMusicBadge ? `🎵 ${statusMusicBadge}` : '';
+                const badgeCombined = [
+                    statusDraftInfoBadge || (voiceStatusDataUrl ? 'Voice Status' : 'Training Briefing'),
+                    audienceNote,
+                    musicNote,
+                ]
+                    .filter(Boolean)
+                    .join(' · ');
+
                 createdSlides.push({
                     id: `st_pub_${nowMs}_${randTag()}`,
                     authorName: userName,
@@ -2754,21 +2809,30 @@ export function WhatsAppModeWorkspace({
                     timestampLabel: nowStamp,
                     createdAtMs: nowMs,
                     viewed: false,
-                    mediaType: 'info',
-                    infoBadge: statusDraftInfoBadge || 'Training Briefing',
-                    title: statusDraftTitle.trim() || 'Member Training & Status Briefing',
-                    text: statusDraftText.trim() || statusDraftInfoDetails.trim(),
+                    mediaType: voiceStatusDataUrl ? 'audio' : 'info',
+                    audioUrl: voiceStatusDataUrl || undefined,
+                    infoBadge: badgeCombined,
+                    title:
+                        statusDraftTitle.trim() ||
+                        (voiceStatusDataUrl ? '🎙️ Live Voice Status Update' : 'Member Training & Status Briefing'),
+                    text:
+                        statusDraftText.trim() ||
+                        statusDraftInfoDetails.trim() ||
+                        (voiceStatusDataUrl ? 'Voice status audio update' : ''),
                     infoDetails: statusDraftInfoDetails.trim() || undefined,
                     attachmentName: statusDraftAttachmentName || undefined,
                     attachmentUrl: statusDraftAttachmentUrl || undefined,
                     imageUrl: queuedPhotoUploads[0]?.dataUrl || undefined,
                     bgColor: statusBgColor,
-                    professionTag: statusDraftInfoBadge || 'Training Briefing',
+                    professionTag: badgeCombined,
                     sourcePlatform: 'ConnectLn',
-                    mediaFormat: statusDraftAttachmentName
+                    mediaFormat: voiceStatusDataUrl
+                        ? 'AUDIO'
+                        : statusDraftAttachmentName
                         ? detectMediaFormatLabel(statusDraftAttachmentName, 'PDF')
                         : 'BRIEF',
                 });
+                setVoiceStatusDataUrl('');
             }
 
             if (createdSlides.length === 0) return;
@@ -3670,6 +3734,88 @@ export function WhatsAppModeWorkspace({
                                         </div>
                                     </div>
                                 )}
+
+                                <div className="rounded-xl border border-[#D0C4AE] bg-[#F8F4EC] p-3 grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-extrabold text-[#5E3119]">
+                                            🔒 Status Privacy
+                                        </label>
+                                        <select
+                                            value={statusPrivacyAudience}
+                                            onChange={(e) =>
+                                                setStatusPrivacyAudience(e.target.value as any)
+                                            }
+                                            className="w-full rounded-lg border border-[#D0C4AE] bg-white px-2.5 py-1.5 text-xs font-bold text-[#1C1917]"
+                                        >
+                                            <option value="everyone">🌍 Everyone</option>
+                                            <option value="contacts">👥 My Contacts Only</option>
+                                            <option value="selected">🔒 Selected Recipients</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-extrabold text-[#5E3119]">
+                                            🎵 Music Track Badge
+                                        </label>
+                                        <select
+                                            value={statusMusicBadge}
+                                            onChange={(e) => setStatusMusicBadge(e.target.value)}
+                                            className="w-full rounded-lg border border-[#D0C4AE] bg-white px-2.5 py-1.5 text-xs font-bold text-[#1C1917]"
+                                        >
+                                            <option value="">No music overlay</option>
+                                            <option value="Studio Lo-Fi Beat">Studio Lo-Fi Beat</option>
+                                            <option value="Afrobeats Pulse">Afrobeats Pulse</option>
+                                            <option value="Acoustic Warmth">Acoustic Warmth</option>
+                                            <option value="Choir Praise Anthem">Choir Praise Anthem</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-extrabold text-[#5E3119]">
+                                            🎙️ Voice Status Clip
+                                        </label>
+                                        <div className="flex items-center gap-1.5">
+                                            {!voiceStatusRecActive ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        try {
+                                                            const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                                            const chunks: BlobPart[] = [];
+                                                            const mr = new MediaRecorder(st);
+                                                            voiceStatusMrRef.current = mr;
+                                                            mr.ondataavailable = (ev) => {
+                                                                if (ev.data.size > 0) chunks.push(ev.data);
+                                                            };
+                                                            mr.onstop = () => {
+                                                                const blob = new Blob(chunks, { type: mr.mimeType || 'audio/webm' });
+                                                                const reader = new FileReader();
+                                                                reader.onload = () => setVoiceStatusDataUrl(String(reader.result || ''));
+                                                                reader.readAsDataURL(blob);
+                                                                st.getTracks().forEach((t) => t.stop());
+                                                                setVoiceStatusRecActive(false);
+                                                            };
+                                                            mr.start();
+                                                            setVoiceStatusRecActive(true);
+                                                            setStatusComposerMode('info');
+                                                        } catch {
+                                                            triggerToast('🎙️ Microphone unavailable — enter a status note instead.');
+                                                        }
+                                                    }}
+                                                    className="w-full rounded-lg border border-[#7C4225] bg-[#EFE8DA] hover:bg-[#E2D9C8] px-2.5 py-1.5 text-xs font-extrabold text-[#5E3119] cursor-pointer"
+                                                >
+                                                    {voiceStatusDataUrl ? '✓ Re-record Voice' : '🎙️ Record Voice'}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => voiceStatusMrRef.current?.stop()}
+                                                    className="w-full rounded-lg bg-rose-600 px-2.5 py-1.5 text-xs font-extrabold text-white animate-pulse cursor-pointer"
+                                                >
+                                                    ⏹ Stop Recording
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <div className="flex justify-end gap-2 pt-2 border-t border-[#E0D6C5]">
                                     <button
@@ -5213,12 +5359,22 @@ export function WhatsAppModeWorkspace({
                             </span>
                             <h2 className="text-xl font-bold text-[#1C1917]">Communities</h2>
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => setShowNewCommunityModal(true)}
-                            title="New community"
-                            className="w-8 h-8 rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#5E3119] cursor-pointer transition-colors"
-                        >
+                        <div className="flex items-center gap-1.5">
+                            {onSelectMode && (
+                                <button
+                                    type="button"
+                                    onClick={() => onSelectMode('channels')}
+                                    className="px-2.5 py-1 rounded-lg bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[11px] font-bold text-[#5E3119] cursor-pointer"
+                                >
+                                    Channels ↗
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => setShowNewCommunityModal(true)}
+                                title="New community"
+                                className="w-8 h-8 rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#5E3119] cursor-pointer transition-colors"
+                            >
                             {/* ConnectLn Hexagonal Guild + Seal */}
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                 <polygon points="12 2.5 19.5 6.8 19.5 15.2 12 19.5 4.5 15.2 4.5 6.8" strokeLinejoin="round" />
@@ -5226,6 +5382,7 @@ export function WhatsAppModeWorkspace({
                                 <line x1="9" y1="11" x2="15" y2="11" strokeLinecap="round" />
                             </svg>
                         </button>
+                        </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-2 pt-2">
@@ -5406,21 +5563,59 @@ export function WhatsAppModeWorkspace({
                         </form>
                     ) : activeCommObj && activeGroupObj ? (
                         <div className="w-full h-full flex flex-col bg-[#F3EDE2] rounded-xl overflow-hidden border border-[#E0D6C5]">
-                            <div className="px-4 py-3 bg-[#FBF8F3] border-b border-[#E0D6C5] flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-bold text-[#1C1917]">
+                            <div className="px-4 py-3 bg-[#FBF8F3] border-b border-[#E0D6C5] flex items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                    <p className="text-sm font-bold text-[#1C1917] truncate">
                                         {activeCommObj.name} · {activeGroupObj.name}
+                                        {Boolean(commProPrivacy.communityAdminOnlyByGroup?.[`${activeCommObj.id}:${activeGroupObj.id}`]) && (
+                                            <span className="ml-2 rounded-full bg-[#EFE8DA] border border-[#D0C4AE] px-2 py-0.5 text-[10px] font-extrabold text-[#5E3119]">
+                                                🔒 Admins Only
+                                            </span>
+                                        )}
                                     </p>
-                                    <p className="text-xs text-[#78716C]">{activeCommObj.subtitle}</p>
+                                    <p className="text-xs text-[#78716C] truncate">{activeCommObj.subtitle}</p>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedCommunityGroup(null)}
-                                    className="text-xs font-semibold text-[#57534E] hover:text-[#1C1917] cursor-pointer"
-                                >
-                                    ✕ Close
-                                </button>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCommunityGroupTools((v) => !v)}
+                                        className="rounded-lg bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] px-2.5 py-1 text-xs font-extrabold text-[#5E3119] cursor-pointer"
+                                    >
+                                        ⚙️ Group Tools
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedCommunityGroup(null)}
+                                        className="text-xs font-semibold text-[#57534E] hover:text-[#1C1917] cursor-pointer"
+                                    >
+                                        ✕ Close
+                                    </button>
+                                </div>
                             </div>
+                            {showCommunityGroupTools && (
+                                <CommunityGroupToolsPanel
+                                    communityId={activeCommObj.id}
+                                    communityName={activeCommObj.name}
+                                    groupId={activeGroupObj.id}
+                                    groupName={activeGroupObj.name}
+                                    isAdminOnly={Boolean(
+                                        commProPrivacy.communityAdminOnlyByGroup?.[
+                                            `${activeCommObj.id}:${activeGroupObj.id}`
+                                        ]
+                                    )}
+                                    onToggleAdminOnly={(next) => {
+                                        const mapKey = `${activeCommObj.id}:${activeGroupObj.id}`;
+                                        updateCommPrivacySettings((prev) => ({
+                                            ...prev,
+                                            communityAdminOnlyByGroup: {
+                                                ...(prev.communityAdminOnlyByGroup || {}),
+                                                [mapKey]: next,
+                                            },
+                                        }));
+                                    }}
+                                    onToast={triggerToast}
+                                />
+                            )}
                             <div className="flex-1 p-4 space-y-3 overflow-y-auto">
                                 {activeGroupObj.messages.map((m) => (
                                     <div
@@ -5756,8 +5951,22 @@ export function WhatsAppModeWorkspace({
     }
 
     // =========================================================================
-    // 5. CHANNELS VIEW (Desk Note Warm Parchment & Espresso Theme)
+    // 5. CHANNELS, BROADCASTS & ANALYTICS VIEW (Desk Note Parchment Theme)
     // =========================================================================
+    if (mode === 'channels') {
+        return (
+            <ConnectLnChannelsView
+                userName={userName}
+                privacy={commProPrivacy}
+                contacts={threads
+                    .filter((t) => t.id !== 'thread_saved_messages_self')
+                    .map((t) => ({ id: t.id, name: t.title }))}
+                onSwitchToCommunities={() => onSelectMode?.('communities')}
+                onToast={triggerToast}
+            />
+        );
+    }
+
     const activeChan = channels.find((c) => c.id === selectedChannelId) || null;
     return (
         <div className="flex-1 flex flex-col md:flex-row h-full bg-[#FBF8F3] overflow-hidden">

@@ -1,5 +1,10 @@
 "use client"
 
+import {
+  E2eeIdentityRecord,
+  getOrCreateE2eeIdentity,
+} from "./connectln-e2ee-crypto"
+
 export type DisappearingDuration = "off" | "24h" | "7d" | "90d"
 
 export interface PinnedThreadMessage {
@@ -21,6 +26,10 @@ export interface CommPrivacySettings {
   deletedForMeIds: string[]
   viewedOnceIds: string[]
   pollVotesByMsgId: Record<string, Record<string, string[]>>
+  e2eeEnabledByThread: Record<string, boolean>
+  autoDownloadWifiOnly: boolean
+  followedChannelIds: string[]
+  communityAdminOnlyByGroup: Record<string, boolean>
 }
 
 export interface LinkedDeviceSession {
@@ -66,7 +75,19 @@ const DEFAULT_PRIVACY_SETTINGS: CommPrivacySettings = {
   deletedForMeIds: [],
   viewedOnceIds: [],
   pollVotesByMsgId: {},
+  e2eeEnabledByThread: {},
+  autoDownloadWifiOnly: false,
+  followedChannelIds: ["ch_connectln_official", "ch_builders_guild"],
+  communityAdminOnlyByGroup: {},
 }
+
+let activeCloudUserKey = ""
+let activeCloudAliases: string[] = []
+let cloudSyncTimer: ReturnType<typeof setTimeout> | null = null
+const peerPubKeyCache = new Map<
+  string,
+  { publicJwk: JsonWebKey | null; fingerprint?: string; fetchedAtMs: number }
+>()
 
 export function normalizeCommKey(val?: string): string {
   return String(val || "")
@@ -111,9 +132,196 @@ export function getCommPrivacySettings(): CommPrivacySettings {
         parsed?.pollVotesByMsgId && typeof parsed.pollVotesByMsgId === "object"
           ? parsed.pollVotesByMsgId
           : {},
+      e2eeEnabledByThread:
+        parsed?.e2eeEnabledByThread && typeof parsed.e2eeEnabledByThread === "object"
+          ? parsed.e2eeEnabledByThread
+          : {},
+      autoDownloadWifiOnly: Boolean(parsed?.autoDownloadWifiOnly),
+      followedChannelIds: Array.isArray(parsed?.followedChannelIds)
+        ? parsed.followedChannelIds
+        : DEFAULT_PRIVACY_SETTINGS.followedChannelIds,
+      communityAdminOnlyByGroup:
+        parsed?.communityAdminOnlyByGroup && typeof parsed.communityAdminOnlyByGroup === "object"
+          ? parsed.communityAdminOnlyByGroup
+          : {},
     }
   } catch {
     return { ...DEFAULT_PRIVACY_SETTINGS }
+  }
+}
+
+export function scheduleCloudCommSync(
+  userKeyRaw?: string,
+  aliases?: string[]
+): void {
+  const key = normalizeCommKey(userKeyRaw || activeCloudUserKey)
+  if (!key || typeof window === "undefined") return
+  activeCloudUserKey = key
+  if (Array.isArray(aliases) && aliases.length > 0) {
+    activeCloudAliases = aliases
+  }
+  if (cloudSyncTimer) clearTimeout(cloudSyncTimer)
+  cloudSyncTimer = setTimeout(async () => {
+    try {
+      const privacy = getCommPrivacySettings()
+      const devices = getLinkedDevices()
+      const identity = await getOrCreateE2eeIdentity(key)
+      await fetch("/api/connectin/comm-state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "sync_state",
+          userKey: key,
+          aliases: activeCloudAliases,
+          privacy,
+          linkedDevices: devices,
+          e2eePublicJwk: identity?.publicJwk || undefined,
+          e2eeFingerprint: identity?.fingerprint || undefined,
+        }),
+      })
+    } catch {}
+  }, 450)
+}
+
+export async function hydrateCommStateFromCloud(
+  userKeyRaw: string,
+  aliases: string[] = []
+): Promise<{
+  synced: boolean
+  identity: E2eeIdentityRecord | null
+}> {
+  const key = normalizeCommKey(userKeyRaw)
+  if (!key || typeof window === "undefined") {
+    return { synced: false, identity: null }
+  }
+  activeCloudUserKey = key
+  activeCloudAliases = aliases
+  const identity = await getOrCreateE2eeIdentity(key)
+
+  try {
+    const res = await fetch(
+      `/api/connectin/comm-state?userKey=${encodeURIComponent(key)}`,
+      { cache: "no-store" }
+    )
+    if (res.ok) {
+      const data = await res.json()
+      const serverPrivacy = data?.state?.privacy
+      if (serverPrivacy && typeof serverPrivacy === "object") {
+        const local = getCommPrivacySettings()
+        const merged: CommPrivacySettings = {
+          ...local,
+          ...serverPrivacy,
+          blockedKeys: Array.from(
+            new Set([...(serverPrivacy.blockedKeys || []), ...local.blockedKeys])
+          ),
+          reportedKeys: Array.from(
+            new Set([...(serverPrivacy.reportedKeys || []), ...local.reportedKeys])
+          ),
+          lockedThreadPins: {
+            ...(serverPrivacy.lockedThreadPins || {}),
+            ...local.lockedThreadPins,
+          },
+          disappearingByThread: {
+            ...(serverPrivacy.disappearingByThread || {}),
+            ...local.disappearingByThread,
+          },
+          pinnedMsgByThread: {
+            ...(serverPrivacy.pinnedMsgByThread || {}),
+            ...local.pinnedMsgByThread,
+          },
+          e2eeEnabledByThread: {
+            ...(serverPrivacy.e2eeEnabledByThread || {}),
+            ...local.e2eeEnabledByThread,
+          },
+          followedChannelIds: Array.from(
+            new Set([
+              ...(serverPrivacy.followedChannelIds || []),
+              ...local.followedChannelIds,
+            ])
+          ),
+          communityAdminOnlyByGroup: {
+            ...(serverPrivacy.communityAdminOnlyByGroup || {}),
+            ...local.communityAdminOnlyByGroup,
+          },
+        }
+        try {
+          window.localStorage.setItem(PRIVACY_STORAGE_KEY, JSON.stringify(merged))
+        } catch {}
+        emitCommProChanged()
+      }
+
+      if (Array.isArray(data?.linkedDevices) && data.linkedDevices.length > 0) {
+        const localDevs = getLinkedDevices()
+        const byId = new Map<string, LinkedDeviceSession>()
+        localDevs.forEach((d) => byId.set(d.id, d))
+        data.linkedDevices.forEach((d: LinkedDeviceSession) => {
+          if (d?.id && !byId.has(d.id)) byId.set(d.id, d)
+        })
+        try {
+          window.localStorage.setItem(
+            DEVICES_STORAGE_KEY,
+            JSON.stringify(Array.from(byId.values()))
+          )
+        } catch {}
+        emitCommProChanged()
+      }
+    }
+
+    if (identity?.publicJwk) {
+      await fetch("/api/connectin/comm-state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "sync_state",
+          userKey: key,
+          aliases,
+          privacy: getCommPrivacySettings(),
+          linkedDevices: getLinkedDevices(),
+          e2eePublicJwk: identity.publicJwk,
+          e2eeFingerprint: identity.fingerprint,
+        }),
+      }).catch(() => {})
+    }
+    return { synced: true, identity }
+  } catch {
+    return { synced: false, identity }
+  }
+}
+
+export async function fetchPeerE2eePublicKey(
+  peerKeys: string[]
+): Promise<{ found: boolean; publicJwk: JsonWebKey | null; fingerprint?: string }> {
+  const cleanKeys = peerKeys.map((k) => normalizeCommKey(k)).filter(Boolean)
+  if (!cleanKeys.length) return { found: false, publicJwk: null }
+  const cacheKey = cleanKeys.join(",")
+  const cached = peerPubKeyCache.get(cacheKey)
+  if (cached && Date.now() - cached.fetchedAtMs < 60000) {
+    return {
+      found: Boolean(cached.publicJwk),
+      publicJwk: cached.publicJwk,
+      fingerprint: cached.fingerprint,
+    }
+  }
+  try {
+    const res = await fetch(
+      `/api/connectin/comm-state?pubkey=${encodeURIComponent(cacheKey)}`,
+      { cache: "no-store" }
+    )
+    if (!res.ok) return { found: false, publicJwk: null }
+    const data = await res.json()
+    const publicJwk = data?.found && data?.publicJwk ? (data.publicJwk as JsonWebKey) : null
+    peerPubKeyCache.set(cacheKey, {
+      publicJwk,
+      fingerprint: data?.fingerprint,
+      fetchedAtMs: Date.now(),
+    })
+    return {
+      found: Boolean(publicJwk),
+      publicJwk,
+      fingerprint: data?.fingerprint,
+    }
+  } catch {
+    return { found: false, publicJwk: null }
   }
 }
 
@@ -130,6 +338,7 @@ export function updateCommPrivacySettings(
     } catch {}
   }
   emitCommProChanged()
+  scheduleCloudCommSync()
   return next
 }
 
@@ -342,9 +551,136 @@ export function encodePollMarker(question: string, options: string[]): string {
   return `[[POLL|${q}|${opts.join("|")}]]`
 }
 
-export function encodeLocationMarker(lat: number, lng: number, label: string): string {
+export function estimateLocalCommStorageKb(): number {
+  if (typeof window === "undefined") return 0
+  try {
+    let totalChars = 0
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i) || ""
+      if (k.startsWith("connectln") || k.startsWith("connectin")) {
+        totalChars += k.length + (window.localStorage.getItem(k)?.length || 0)
+      }
+    }
+    return Math.round((totalChars * 2) / 1024)
+  } catch {
+    return 0
+  }
+}
+
+export function clearLocalCommMediaCache(): number {
+  if (typeof window === "undefined") return 0
+  let clearedCount = 0
+  try {
+    const keysToKeep = new Set([
+      PRIVACY_STORAGE_KEY,
+      DEVICES_STORAGE_KEY,
+      "connectin_user_profile",
+      "connectin_verified",
+    ])
+    for (let i = window.localStorage.length - 1; i >= 0; i--) {
+      const k = window.localStorage.key(i) || ""
+      if (
+        !keysToKeep.has(k) &&
+        !k.startsWith("connectln_e2ee_identity_v1_") &&
+        (k.includes("cache") || k.includes("preview") || k.includes("draft_media"))
+      ) {
+        window.localStorage.removeItem(k)
+        clearedCount++
+      }
+    }
+  } catch {}
+  return clearedCount
+}
+
+export async function createCloudPairToken(
+  userKey: string,
+  ownerName: string
+): Promise<{ ok: boolean; token?: string; shortCode?: string; pairUrl?: string; expiresAtMs?: number }> {
+  try {
+    const res = await fetch("/api/connectin/comm-state", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "create_pair_token",
+        userKey: normalizeCommKey(userKey || activeCloudUserKey || ownerName),
+        ownerName,
+      }),
+    })
+    return await res.json()
+  } catch {
+    return { ok: false }
+  }
+}
+
+export async function approveCloudPairToken(
+  tokenOrCode: string,
+  deviceName = "Linked ConnectLn Companion"
+): Promise<{ ok: boolean; device?: LinkedDeviceSession; ownerName?: string; error?: string }> {
+  try {
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : ""
+    const platform = /iPhone|iPad/i.test(ua)
+      ? "iOS Companion"
+      : /Android/i.test(ua)
+      ? "Android Companion"
+      : "Web Companion"
+    const res = await fetch("/api/connectin/comm-state", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "approve_pair_token",
+        token: tokenOrCode.trim(),
+        deviceName,
+        platform,
+        location: "QR Pairing Verified",
+      }),
+    })
+    return await res.json()
+  } catch {
+    return { ok: false, error: "Network error approving pairing token" }
+  }
+}
+
+export async function pollCloudPairToken(token: string): Promise<{
+  status?: "pending" | "approved" | "expired"
+  device?: LinkedDeviceSession
+}> {
+  try {
+    const res = await fetch(
+      `/api/connectin/comm-state?pairToken=${encodeURIComponent(token)}`,
+      { cache: "no-store" }
+    )
+    if (!res.ok) return {}
+    const data = await res.json()
+    return data?.pairing || {}
+  } catch {
+    return {}
+  }
+}
+
+export function encodeLocationMarker(
+  lat: number,
+  lng: number,
+  label: string,
+  liveDurationMinutes?: number
+): string {
   const cleanLabel = cleanMarkerField(label || "Pinned Location", 120)
-  return `[[LOC|${lat.toFixed(5)}|${lng.toFixed(5)}|${cleanLabel}]]`
+  const suffix =
+    liveDurationMinutes && liveDurationMinutes > 0
+      ? `|LIVE_${liveDurationMinutes}`
+      : ""
+  return `[[LOC|${lat.toFixed(5)}|${lng.toFixed(5)}|${cleanLabel}${suffix}]]`
+}
+
+export function encodeStickerMarker(label: string, imageDataUrl: string): string {
+  const cleanLabel = cleanMarkerField(label || "ConnectLn Sticker", 80)
+  const safeUrl = String(imageDataUrl || "").replace(/\]\]/g, "")
+  return `[[STICKER|${cleanLabel}|${safeUrl}]]`
+}
+
+export function encodeDocScanMarker(label: string, imageDataUrl: string): string {
+  const cleanLabel = cleanMarkerField(label || "Scanned Document", 90)
+  const safeUrl = String(imageDataUrl || "").replace(/\]\]/g, "")
+  return `[[DOCSCAN|${cleanLabel}|${safeUrl}]]`
 }
 
 export function encodeContactMarker(name: string, role: string, email?: string): string {
@@ -382,11 +718,13 @@ export function encodeVideoNoteMarker(
 export interface ParsedRichMessage {
   reply?: { sender: string; snippet: string }
   poll?: { question: string; options: string[] }
-  location?: { lat: string; lng: string; label: string }
+  location?: { lat: string; lng: string; label: string; liveDurationMinutes?: number }
   contact?: { name: string; role: string; email?: string }
   viewOnce?: { label: string; dataUrl: string }
   voice?: { durationSec: number; transcript: string; dataUrl?: string }
   videoNote?: { durationSec: number; caption: string; dataUrl?: string }
+  sticker?: { label: string; dataUrl: string }
+  docScan?: { label: string; dataUrl: string }
   bodyText: string
 }
 
@@ -417,7 +755,34 @@ export function parseRichMessage(rawText: string): ParsedRichMessage {
 
   const locMatch = /^\[\[LOC\|([^|\]]+)\|([^|\]]+)\|([^\]]*)\]\]$/.exec(trimmed)
   if (locMatch) {
-    out.location = { lat: locMatch[1], lng: locMatch[2], label: locMatch[3] || "Shared Location" }
+    const rawThird = locMatch[3] || "Shared Location"
+    const liveSplit = /^(.*?)\|LIVE_(\d+)$/.exec(rawThird)
+    out.location = {
+      lat: locMatch[1],
+      lng: locMatch[2],
+      label: (liveSplit ? liveSplit[1] : rawThird) || "Shared Location",
+      liveDurationMinutes: liveSplit ? Number(liveSplit[2]) || undefined : undefined,
+    }
+    out.bodyText = ""
+    return out
+  }
+
+  const stickerMatch = /^\[\[STICKER\|([^|\]]*)\|([\s\S]*)\]\]$/.exec(trimmed)
+  if (stickerMatch) {
+    out.sticker = {
+      label: stickerMatch[1] || "Sticker",
+      dataUrl: stickerMatch[2] || "",
+    }
+    out.bodyText = ""
+    return out
+  }
+
+  const docScanMatch = /^\[\[DOCSCAN\|([^|\]]*)\|([\s\S]*)\]\]$/.exec(trimmed)
+  if (docScanMatch) {
+    out.docScan = {
+      label: docScanMatch[1] || "Scanned Document",
+      dataUrl: docScanMatch[2] || "",
+    }
     out.bodyText = ""
     return out
   }
@@ -579,6 +944,42 @@ export function scanThreadForScamRisks(
       uniqueFindings.length > 0
         ? uniqueFindings
         : ["No phishing links, urgent credential harvesting, or high-risk payment indicators detected."],
+  }
+}
+
+export function analyzeThreadFilesWithNoctis(
+  messages: Array<{
+    sender?: { name?: string }
+    text: string
+    attachments?: Array<{ name?: string; type?: string }>
+    isDeleted?: boolean
+  }>,
+  threadTitle: string
+): { summary: string; items: string[] } {
+  const items: string[] = []
+  for (const m of messages) {
+    if (m.isDeleted) continue
+    const who = m.sender?.name || "Member"
+    if (Array.isArray(m.attachments)) {
+      for (const att of m.attachments) {
+        if (att?.name) {
+          items.push(`${who} shared attachment: ${att.name} (${att.type || "file"})`)
+        }
+      }
+    }
+    const parsed = parseRichMessage(m.text || "")
+    if (parsed.docScan) items.push(`${who} scanned document: ${parsed.docScan.label}`)
+    if (parsed.sticker) items.push(`${who} sent custom sticker: ${parsed.sticker.label}`)
+    if (parsed.viewOnce) items.push(`${who} sent 1x View-Once media: ${parsed.viewOnce.label}`)
+    if (parsed.voice) items.push(`${who} sent voice note (${parsed.voice.durationSec}s)`)
+    if (parsed.videoNote) items.push(`${who} sent video note (${parsed.videoNote.durationSec}s)`)
+  }
+  return {
+    summary:
+      items.length > 0
+        ? `Inspected ${items.length} media/document item(s) in "${threadTitle}". No sensitive raw-key leaks flagged in filenames.`
+        : `No rich media, scanned documents, or file attachments found in "${threadTitle}".`,
+    items: items.slice(-6),
   }
 }
 

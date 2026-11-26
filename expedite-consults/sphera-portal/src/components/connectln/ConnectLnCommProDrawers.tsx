@@ -25,20 +25,30 @@ import {
   CommPrivacySettings,
   DisappearingDuration,
   LinkedDeviceSession,
+  analyzeThreadFilesWithNoctis,
+  approveCloudPairToken,
+  clearLocalCommMediaCache,
+  createCloudPairToken,
   deriveE2eeSafetyCode,
   encodeContactMarker,
+  encodeDocScanMarker,
   encodeLocationMarker,
   encodePollMarker,
+  encodeStickerMarker,
   encodeVideoNoteMarker,
   encodeViewOnceMarker,
   encodeVoiceNoteMarker,
+  estimateLocalCommStorageKb,
   extractActionItemsFromThread,
+  fetchPeerE2eePublicKey,
+  getCommPrivacySettings,
   getLinkedDevices,
   isContactBlocked,
   linkNewDevice,
   markViewOnceOpened,
   parseRichMessage,
   polishDraftWithNoctis,
+  pollCloudPairToken,
   reportContact,
   revokeLinkedDevice,
   scanThreadForScamRisks,
@@ -47,6 +57,15 @@ import {
   togglePollVote,
   updateCommPrivacySettings,
 } from "@/lib/connectln-comm-pro"
+import {
+  buildQrSvgDataUrl,
+  decryptE2eeEnvelope,
+  decryptVaultBackup,
+  encryptVaultBackup,
+  getOrCreateE2eeIdentity,
+  importE2eeIdentityRecord,
+  isE2eeEnvelope,
+} from "@/lib/connectln-e2ee-crypto"
 
 export interface ShareTargetItem {
   id: string
@@ -60,6 +79,7 @@ export function ConnectLnRichBubbleContent({
   msg,
   isMe,
   viewerName,
+  currentUserKey,
   privacy,
   renderPlainText,
   onStartDirectChatOrCall,
@@ -67,14 +87,67 @@ export function ConnectLnRichBubbleContent({
   msg: B2BMessageItem
   isMe: boolean
   viewerName: string
+  currentUserKey?: string
   privacy: CommPrivacySettings
   renderPlainText: (txt: string, isOwnBubble: boolean) => React.ReactNode
   onStartDirectChatOrCall?: (name: string, email?: string) => void
 }) {
-  const parsed = parseRichMessage(msg.text || "")
+  const rawText = msg.text || ""
+  const encryptedEnvelope = isE2eeEnvelope(rawText)
+  const [decryptedPlaintext, setDecryptedPlaintext] = useState<string | null>(null)
+  const [decryptNotice, setDecryptNotice] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!encryptedEnvelope) {
+      setDecryptedPlaintext(null)
+      setDecryptNotice(null)
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      const idKey = currentUserKey || viewerName || "member"
+      const identity = await getOrCreateE2eeIdentity(idKey)
+      const res = await decryptE2eeEnvelope(rawText, identity)
+      if (cancelled) return
+      if (res.ok && typeof res.plaintext === "string") {
+        setDecryptedPlaintext(res.plaintext)
+        setDecryptNotice(null)
+      } else {
+        setDecryptedPlaintext(null)
+        setDecryptNotice(res.reason || "Encrypted message — restore your key backup to read.")
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [rawText, encryptedEnvelope, currentUserKey, viewerName])
+
+  const effectiveText = encryptedEnvelope ? decryptedPlaintext || "" : rawText
+  const parsed = parseRichMessage(effectiveText)
   const [viewOncePreview, setViewOncePreview] = useState<{ label: string; dataUrl: string } | null>(
     null
   )
+
+  const e2eePill = encryptedEnvelope ? (
+    <div
+      className={`mb-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-extrabold ${
+        isMe ? "bg-white/15 text-emerald-200" : "bg-emerald-50 text-emerald-800 border border-emerald-200"
+      }`}
+    >
+      <span>🔐 E2EE · Server-Blind</span>
+    </div>
+  ) : null
+
+  if (encryptedEnvelope && !decryptedPlaintext) {
+    return (
+      <div className="min-w-0 max-w-full space-y-1 break-words [overflow-wrap:anywhere]">
+        {e2eePill}
+        <p className={`text-xs italic ${isMe ? "text-white/85" : "text-slate-600"}`}>
+          {decryptNotice || "Decrypting with local WebCrypto key..."}
+        </p>
+      </div>
+    )
+  }
 
   const quoteBlock = parsed.reply ? (
     <div
@@ -168,9 +241,14 @@ export function ConnectLnRichBubbleContent({
             isMe ? "bg-white/15 border-white/25" : "bg-emerald-50/70 border-emerald-200 text-slate-800"
           }`}
         >
-          <p className="text-xs font-extrabold flex items-center gap-1.5">
+          <p className="text-xs font-extrabold flex items-center gap-1.5 flex-wrap">
             <MapPin className="h-3.5 w-3.5 shrink-0" />
             <span>{parsed.location.label}</span>
+            {parsed.location.liveDurationMinutes && (
+              <span className="rounded-full bg-rose-600 text-white px-2 py-0.5 text-[9.5px] font-extrabold">
+                🔴 Live · {parsed.location.liveDurationMinutes >= 60 ? `${parsed.location.liveDurationMinutes / 60}h` : `${parsed.location.liveDurationMinutes}m`}
+              </span>
+            )}
           </p>
           <p className={`text-[10.5px] font-mono mt-0.5 ${isMe ? "text-white/80" : "text-slate-600"}`}>
             {parsed.location.lat}, {parsed.location.lng}
@@ -358,10 +436,59 @@ export function ConnectLnRichBubbleContent({
     )
   }
 
+  if (parsed.sticker) {
+    return (
+      <div className="min-w-0 max-w-full space-y-1.5 break-words [overflow-wrap:anywhere]">
+        {e2eePill}
+        {quoteBlock}
+        <div className="inline-flex flex-col items-start gap-1">
+          {parsed.sticker.dataUrl.startsWith("data:image/") && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={parsed.sticker.dataUrl}
+              alt={parsed.sticker.label}
+              className="w-36 h-36 object-cover rounded-2xl border border-white/25 shadow-sm bg-white"
+            />
+          )}
+          <span className={`text-[10px] font-bold ${isMe ? "text-white/80" : "text-slate-500"}`}>
+            🎨 {parsed.sticker.label}
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  if (parsed.docScan) {
+    return (
+      <div className="min-w-0 max-w-full space-y-1.5 break-words [overflow-wrap:anywhere]">
+        {e2eePill}
+        {quoteBlock}
+        <div
+          className={`rounded-xl p-2.5 border space-y-1.5 ${
+            isMe ? "bg-white/15 border-white/25" : "bg-slate-50 border-slate-200 text-slate-800"
+          }`}
+        >
+          <p className="text-xs font-extrabold flex items-center gap-1.5">
+            <span>📄 Document Scan · {parsed.docScan.label}</span>
+          </p>
+          {parsed.docScan.dataUrl.startsWith("data:image/") && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={parsed.docScan.dataUrl}
+              alt={parsed.docScan.label}
+              className="w-56 max-w-full rounded-lg border border-slate-300 bg-white"
+            />
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-w-0 max-w-full break-words [overflow-wrap:anywhere]">
+      {e2eePill}
       {quoteBlock}
-      <p className={isMe && !(msg.text.includes("Meeting invitation from") || msg.text.includes("Meeting RSVP Response")) ? "text-white" : "text-slate-800"}>
+      <p className={isMe && !(effectiveText.includes("Meeting invitation from") || effectiveText.includes("Meeting RSVP Response")) ? "text-white" : "text-slate-800"}>
         {renderPlainText(parsed.bodyText, isMe)}
         {msg.editedAtIso && (
           <span className={`ml-1.5 text-[10px] ${isMe ? "text-white/75" : "text-slate-400"}`}>
@@ -380,6 +507,8 @@ export function ConnectLnThreadControlsDrawer({
   threadTitle,
   threadSubtitle,
   recipientEmail,
+  currentUserKey,
+  currentUserName,
   messages,
   privacy,
   isArchived,
@@ -394,6 +523,8 @@ export function ConnectLnThreadControlsDrawer({
   threadTitle: string
   threadSubtitle: string
   recipientEmail?: string
+  currentUserKey?: string
+  currentUserName?: string
   messages: B2BMessageItem[]
   privacy: CommPrivacySettings
   isArchived: boolean
@@ -414,19 +545,64 @@ export function ConnectLnThreadControlsDrawer({
     riskLevel: "low" | "medium" | "high"
     findings: string[]
   } | null>(null)
+  const [fileAnalysisOut, setFileAnalysisOut] = useState<{
+    summary: string
+    items: string[]
+  } | null>(null)
   const [devices, setDevices] = useState<LinkedDeviceSession[]>(() => getLinkedDevices())
   const [newDeviceName, setNewDeviceName] = useState("")
+  const [myFingerprint, setMyFingerprint] = useState<string>("")
+  const [peerKeyStatus, setPeerKeyStatus] = useState<"checking" | "verified" | "self">("checking")
+  const [qrPairState, setQrPairState] = useState<{
+    token: string
+    shortCode: string
+    pairUrl: string
+    qrDataUrl: string
+  } | null>(null)
+  const [pairCodeInput, setPairCodeInput] = useState("")
+  const [backupPassphrase, setBackupPassphrase] = useState("")
+  const [storageKb, setStorageKb] = useState(0)
+
+  const idKey = currentUserKey || currentUserName || "member"
 
   useEffect(() => {
-    if (open) {
-      setDevices(getLinkedDevices())
+    if (!open) return
+    setDevices(getLinkedDevices())
+    setStorageKb(estimateLocalCommStorageKb())
+    let cancelled = false
+    ;(async () => {
+      const id = await getOrCreateE2eeIdentity(idKey)
+      if (!cancelled && id) setMyFingerprint(id.fingerprint)
+      const peer = await fetchPeerE2eePublicKey([recipientEmail || "", threadTitle])
+      if (!cancelled) {
+        setPeerKeyStatus(peer.found ? "verified" : "self")
+      }
+    })()
+    return () => {
+      cancelled = true
     }
-  }, [open])
+  }, [open, idKey, recipientEmail, threadTitle])
+
+  useEffect(() => {
+    if (!open || !qrPairState?.token) return
+    const timer = setInterval(async () => {
+      const res = await pollCloudPairToken(qrPairState.token)
+      if (res?.status === "approved" && res.device) {
+        setDevices(linkNewDevice(res.device.name, res.device.platform))
+        setQrPairState(null)
+        onToast(`📱 Paired new device: ${res.device.name}`)
+      } else if (res?.status === "expired") {
+        setQrPairState(null)
+      }
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [open, qrPairState?.token, onToast])
 
   if (!open) return null
 
   const currentDisappearing: DisappearingDuration = privacy.disappearingByThread[threadId] || "off"
   const currentPin = privacy.lockedThreadPins[threadId] || ""
+  const isThreadE2eeOn = Boolean(privacy.e2eeEnabledByThread?.[threadId])
   const contactKey = recipientEmail || threadTitle
   const blockedNow = isContactBlocked(contactKey)
   const safetyCode = deriveE2eeSafetyCode(`${threadId}:${threadTitle}`)
@@ -580,13 +756,52 @@ export function ConnectLnThreadControlsDrawer({
                 )}
               </div>
 
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3 space-y-1.5">
-                <p className="font-extrabold text-emerald-950 flex items-center gap-1.5">
-                  <ShieldCheck className="h-4 w-4 text-emerald-700" /> E2EE Encryption Safety Number
-                </p>
-                <p className="font-mono text-xs font-bold tracking-wider text-emerald-900 bg-white rounded-xl p-2 border border-emerald-200">
-                  {safetyCode}
-                </p>
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-extrabold text-emerald-950 flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4 text-emerald-700" /> E2EE Encryption &amp; Sync
+                  </p>
+                  <span className="rounded-full bg-white border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                    ☁️ Cloud Synced
+                  </span>
+                </div>
+                <label className="flex items-center justify-between gap-2 rounded-xl bg-white border border-emerald-200 px-2.5 py-2 cursor-pointer">
+                  <div>
+                    <p className="font-extrabold text-slate-900">Server-Blind E2EE Ciphertext</p>
+                    <p className="text-[10.5px] text-slate-500">
+                      {peerKeyStatus === "verified"
+                        ? "ECDH P-256 + AES-256-GCM · Peer public key verified"
+                        : "AES-256-GCM local identity key (encrypts stored messages)"}
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={isThreadE2eeOn}
+                    onChange={(e) => {
+                      updateCommPrivacySettings((prev) => ({
+                        ...prev,
+                        e2eeEnabledByThread: {
+                          ...(prev.e2eeEnabledByThread || {}),
+                          [threadId]: e.target.checked,
+                        },
+                      }))
+                      onToast(
+                        e.target.checked
+                          ? "🔐 Server-Blind E2EE enabled for outgoing messages here."
+                          : "🔓 Standard TLS messaging mode restored."
+                      )
+                    }}
+                    className="h-4 w-4 accent-emerald-700"
+                  />
+                </label>
+                <div className="font-mono text-[10.5px] font-bold tracking-wider text-emerald-900 bg-white rounded-xl p-2 border border-emerald-200 space-y-1">
+                  <p>Safety #: {safetyCode}</p>
+                  {myFingerprint && (
+                    <p className="text-[10px] text-slate-600 truncate" title={myFingerprint}>
+                      ECDH P-256 Key: {myFingerprint}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
@@ -667,6 +882,13 @@ export function ConnectLnThreadControlsDrawer({
                 >
                   🛡️ Check for Scam / Phishing Risks
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setFileAnalysisOut(analyzeThreadFilesWithNoctis(messages, threadTitle))}
+                  className="rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 py-2 px-3 font-extrabold text-indigo-950 cursor-pointer"
+                >
+                  🔍 Analyze Shared Files / Images
+                </button>
               </div>
 
               {summaryOut && (
@@ -739,6 +961,20 @@ export function ConnectLnThreadControlsDrawer({
                   </ul>
                 </div>
               )}
+
+              {fileAnalysisOut && (
+                <div className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-3 space-y-1.5">
+                  <p className="font-extrabold text-indigo-950">Shared Files &amp; Media Inspection</p>
+                  <p className="text-slate-700">{fileAnalysisOut.summary}</p>
+                  {fileAnalysisOut.items.length > 0 && (
+                    <ul className="list-disc pl-4 text-slate-600 space-y-0.5">
+                      {fileAnalysisOut.items.map((it, idx) => (
+                        <li key={idx}>{it}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </>
           )}
 
@@ -783,26 +1019,99 @@ export function ConnectLnThreadControlsDrawer({
               </div>
 
               <div className="rounded-2xl border border-slate-200 p-3 space-y-2.5">
-                <p className="font-extrabold text-slate-900 flex items-center gap-1.5">
-                  <Smartphone className="h-3.5 w-3.5 text-[#0A66C2]" /> Linked Devices &amp; QR Sync
-                </p>
-                <div className="rounded-xl bg-slate-50 border border-slate-200 p-2.5 flex items-center justify-between gap-2">
-                  <div>
-                    <p className="font-bold text-slate-800">QR Pairing Token</p>
-                    <p className="font-mono text-[10.5px] text-[#0A66C2]">
-                      {safetyCode.slice(0, 17)}
-                    </p>
-                  </div>
-                  <span className="rounded-lg bg-emerald-100 text-emerald-800 px-2 py-1 text-[10px] font-extrabold">
-                    E2EE Ready
-                  </span>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-extrabold text-slate-900 flex items-center gap-1.5">
+                    <Smartphone className="h-3.5 w-3.5 text-[#0A66C2]" /> Linked Devices &amp; QR Pairing
+                  </p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const created = await createCloudPairToken(idKey, currentUserName || "Member")
+                      if (created?.ok && created.token && created.shortCode && created.pairUrl) {
+                        setQrPairState({
+                          token: created.token,
+                          shortCode: created.shortCode,
+                          pairUrl: created.pairUrl,
+                          qrDataUrl: buildQrSvgDataUrl(created.pairUrl),
+                        })
+                        onToast(`📲 QR pairing code ready: ${created.shortCode}`)
+                      } else {
+                        onToast("⚠️ Could not create QR pairing token.")
+                      }
+                    }}
+                    className="rounded-lg bg-[#0A66C2] px-2.5 py-1 text-[10.5px] font-extrabold cursor-pointer"
+                    style={{ color: "#FFFFFF" }}
+                  >
+                    Generate QR
+                  </button>
                 </div>
+
+                {qrPairState && (
+                  <div className="rounded-xl bg-slate-50 border border-slate-200 p-2.5 flex items-center gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={qrPairState.qrDataUrl}
+                      alt="Device pairing QR"
+                      className="w-20 h-20 rounded-lg border border-slate-300 bg-white shrink-0"
+                    />
+                    <div className="min-w-0 space-y-1">
+                      <p className="text-[11px] font-extrabold text-slate-900">
+                        Code: <span className="font-mono text-[#0A66C2]">{qrPairState.shortCode}</span>
+                      </p>
+                      <p className="text-[10px] text-slate-500">
+                        Scan QR or enter this code on a companion device within 5 min.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard?.writeText(qrPairState.pairUrl).catch(() => {})
+                          onToast("✓ Copied pairing link.")
+                        }}
+                        className="text-[10.5px] font-bold text-[#0A66C2] underline cursor-pointer"
+                      >
+                        Copy Pairing Link
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={pairCodeInput}
+                    onChange={(e) => setPairCodeInput(e.target.value.toUpperCase())}
+                    placeholder="Enter 6-char pairing code to link"
+                    className="flex-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-mono"
+                  />
+                  <button
+                    type="button"
+                    disabled={!pairCodeInput.trim()}
+                    onClick={async () => {
+                      const res = await approveCloudPairToken(
+                        pairCodeInput,
+                        newDeviceName || "Companion Browser"
+                      )
+                      if (res.ok && res.device) {
+                        setDevices(linkNewDevice(res.device.name, res.device.platform))
+                        setPairCodeInput("")
+                        onToast(`✓ Paired with ${res.ownerName || "account"}!`)
+                      } else {
+                        onToast(`⚠️ ${res.error || "Invalid or expired pairing code."}`)
+                      }
+                    }}
+                    className="rounded-xl bg-emerald-700 disabled:bg-slate-200 px-3 py-1.5 text-xs font-extrabold cursor-pointer"
+                    style={pairCodeInput.trim() ? { color: "#FFFFFF" } : undefined}
+                  >
+                    Pair
+                  </button>
+                </div>
+
                 <div className="flex items-center gap-1.5">
                   <input
                     type="text"
                     value={newDeviceName}
                     onChange={(e) => setNewDeviceName(e.target.value)}
-                    placeholder="Device name (e.g. iPad Field Unit)"
+                    placeholder="Quick local device label (e.g. iPad Field Unit)"
                     className="flex-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs"
                   />
                   <button
@@ -811,14 +1120,15 @@ export function ConnectLnThreadControlsDrawer({
                       const next = linkNewDevice(newDeviceName || "Workstation Tablet")
                       setDevices(next)
                       setNewDeviceName("")
-                      onToast("📱 Linked new companion device.")
+                      onToast("📱 Linked companion device & synced to cloud.")
                     }}
-                    className="rounded-xl bg-[#0A66C2] px-3 py-1.5 text-xs font-extrabold cursor-pointer"
+                    className="rounded-xl bg-slate-800 px-3 py-1.5 text-xs font-extrabold cursor-pointer"
                     style={{ color: "#FFFFFF" }}
                   >
                     + Link
                   </button>
                 </div>
+
                 <div className="space-y-1.5">
                   {devices.map((d) => (
                     <div
@@ -838,7 +1148,18 @@ export function ConnectLnThreadControlsDrawer({
                       ) : (
                         <button
                           type="button"
-                          onClick={() => setDevices(revokeLinkedDevice(d.id))}
+                          onClick={async () => {
+                            setDevices(revokeLinkedDevice(d.id))
+                            await fetch("/api/connectin/comm-state", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                action: "revoke_device",
+                                userKey: idKey,
+                                deviceId: d.id,
+                              }),
+                            }).catch(() => {})
+                          }}
                           className="rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 px-2 py-1 text-[10.5px] font-bold cursor-pointer shrink-0 flex items-center gap-1"
                         >
                           <Trash2 className="h-3 w-3" /> Revoke
@@ -846,6 +1167,104 @@ export function ConnectLnThreadControlsDrawer({
                       )}
                     </div>
                   ))}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 p-3 space-y-2">
+                <p className="font-extrabold text-slate-900">🔐 AES-256-GCM Encrypted Backup</p>
+                <input
+                  type="password"
+                  value={backupPassphrase}
+                  onChange={(e) => setBackupPassphrase(e.target.value)}
+                  placeholder="Backup passphrase (6+ characters)"
+                  className="w-full rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const identity = await getOrCreateE2eeIdentity(idKey)
+                        const encJson = await encryptVaultBackup(
+                          {
+                            identity,
+                            privacy: getCommPrivacySettings(),
+                            threadTitle,
+                            messages: messages.slice(-200),
+                          },
+                          backupPassphrase
+                        )
+                        const blob = new Blob([encJson], { type: "application/json" })
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement("a")
+                        a.href = url
+                        a.download = `connectln_vault_backup_${Date.now()}.enc.json`
+                        a.click()
+                        URL.revokeObjectURL(url)
+                        onToast("🔐 Downloaded AES-256-GCM encrypted backup.")
+                      } catch (err: any) {
+                        onToast(`⚠️ ${err?.message || "Enter 6+ char passphrase first."}`)
+                      }
+                    }}
+                    className="rounded-xl bg-[#0A66C2] py-1.5 px-2.5 text-[11px] font-extrabold cursor-pointer"
+                    style={{ color: "#FFFFFF" }}
+                  >
+                    Export Backup
+                  </button>
+                  <label className="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 py-1.5 px-2.5 text-[11px] font-extrabold text-center text-slate-800 cursor-pointer">
+                    Restore Backup
+                    <input
+                      type="file"
+                      accept=".json"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const f = e.target.files?.[0]
+                        if (!f) return
+                        try {
+                          const raw = await f.text()
+                          const restored = await decryptVaultBackup(raw, backupPassphrase)
+                          if (restored?.identity) {
+                            importE2eeIdentityRecord(restored.identity as any)
+                          }
+                          if (restored?.privacy) {
+                            updateCommPrivacySettings(restored.privacy as any)
+                          }
+                          onToast("✓ Encrypted E2EE key & vault settings restored!")
+                        } catch (err: any) {
+                          onToast(`⚠️ ${err?.message || "Failed to decrypt backup."}`)
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 p-3 space-y-2">
+                <p className="font-extrabold text-slate-900">💾 Storage &amp; Auto-Download</p>
+                <label className="flex items-center justify-between gap-2 cursor-pointer">
+                  <span className="font-bold text-slate-700">Auto-download media on Wi-Fi only</span>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(privacy.autoDownloadWifiOnly)}
+                    onChange={(e) =>
+                      updateCommPrivacySettings({ autoDownloadWifiOnly: e.target.checked })
+                    }
+                    className="h-4 w-4 accent-[#0A66C2]"
+                  />
+                </label>
+                <div className="flex items-center justify-between gap-2 text-[11px] text-slate-600 pt-1">
+                  <span>Local Vault Footprint: {storageKb} KB</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const n = clearLocalCommMediaCache()
+                      setStorageKb(estimateLocalCommStorageKb())
+                      onToast(`🧹 Cleared ${n} cached media preview item(s).`)
+                    }}
+                    className="rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 px-2.5 py-1 font-bold text-slate-800 cursor-pointer"
+                  >
+                    Clear Cache
+                  </button>
                 </div>
               </div>
             </>
@@ -856,7 +1275,16 @@ export function ConnectLnThreadControlsDrawer({
   )
 }
 
-export type RichComposerMode = "voice" | "video" | "poll" | "location" | "contact" | "viewonce" | null
+export type RichComposerMode =
+  | "voice"
+  | "video"
+  | "poll"
+  | "location"
+  | "contact"
+  | "viewonce"
+  | "sticker_crop"
+  | "doc_scan"
+  | null
 
 export function ConnectLnRichComposerModal({
   mode,
@@ -879,8 +1307,11 @@ export function ConnectLnRichComposerModal({
   const [pollQ, setPollQ] = useState("")
   const [pollOpts, setPollOpts] = useState(["Yes — Proceed", "Need Revision", "Schedule Review"])
   const [locLabel, setLocLabel] = useState("Jobsite / Office Check-In")
+  const [locLiveMins, setLocLiveMins] = useState<number>(0)
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [voLabel, setVoLabel] = useState("Confidential Photo")
+  const [stickerLabel, setStickerLabel] = useState("ConnectLn Stamp")
+  const [docScanLabel, setDocScanLabel] = useState("Signed Site Document")
 
   const mrRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -1005,6 +1436,8 @@ export function ConnectLnRichComposerModal({
             {mode === "location" && "📍 Share Location Pin"}
             {mode === "contact" && "👤 Share Verified Contact Card"}
             {mode === "viewonce" && "👁️ Send View-Once Media"}
+            {mode === "sticker_crop" && "🎨 Custom Sticker / Square Crop"}
+            {mode === "doc_scan" && "📄 Document Scanner"}
           </h3>
           <button
             type="button"
@@ -1166,6 +1599,31 @@ export function ConnectLnRichComposerModal({
             <p className="text-[11px] font-mono text-slate-600">
               Coordinates: {coords ? `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}` : "38.90720, -77.03690 (Default)"}
             </p>
+            <div className="space-y-1">
+              <p className="text-[11px] font-bold text-slate-700">Live Sharing Window:</p>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[
+                  { mins: 0, label: "Static Pin" },
+                  { mins: 15, label: "Live 15m" },
+                  { mins: 60, label: "Live 1h" },
+                  { mins: 480, label: "Live 8h" },
+                ].map((opt) => (
+                  <button
+                    key={opt.mins}
+                    type="button"
+                    onClick={() => setLocLiveMins(opt.mins)}
+                    className={`rounded-lg border py-1 text-[10.5px] font-extrabold cursor-pointer ${
+                      locLiveMins === opt.mins
+                        ? "bg-[#0A66C2] border-[#0A66C2] text-white"
+                        : "bg-slate-50 border-slate-200 text-slate-700"
+                    }`}
+                    style={locLiveMins === opt.mins ? { color: "#FFFFFF" } : undefined}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -1178,7 +1636,9 @@ export function ConnectLnRichComposerModal({
                 type="button"
                 onClick={() => {
                   const c = coords || { lat: 38.9072, lng: -77.0369 }
-                  onSendMarker(encodeLocationMarker(c.lat, c.lng, locLabel))
+                  onSendMarker(
+                    encodeLocationMarker(c.lat, c.lng, locLabel, locLiveMins || undefined)
+                  )
                   onClose()
                 }}
                 className="rounded-xl bg-[#0A66C2] px-4 py-2 font-extrabold cursor-pointer"
@@ -1252,6 +1712,102 @@ export function ConnectLnRichComposerModal({
                 style={mediaDataUrl ? { color: "#FFFFFF" } : undefined}
               >
                 Send 1x Media
+              </button>
+            </div>
+          </div>
+        )}
+
+        {(mode === "sticker_crop" || mode === "doc_scan") && (
+          <div className="space-y-3 text-xs">
+            <input
+              type="text"
+              value={mode === "sticker_crop" ? stickerLabel : docScanLabel}
+              onChange={(e) =>
+                mode === "sticker_crop"
+                  ? setStickerLabel(e.target.value)
+                  : setDocScanLabel(e.target.value)
+              }
+              placeholder={mode === "sticker_crop" ? "Sticker label" : "Document title"}
+              className="w-full rounded-xl border border-slate-200 p-2 font-bold"
+            />
+            <input
+              type="file"
+              accept="image/*"
+              capture={mode === "doc_scan" ? "environment" : undefined}
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                const reader = new FileReader()
+                reader.onload = () => {
+                  const rawUrl = String(reader.result || "")
+                  const img = new Image()
+                  img.onload = () => {
+                    const canvas = document.createElement("canvas")
+                    const ctx = canvas.getContext("2d")
+                    if (!ctx) {
+                      setMediaDataUrl(rawUrl)
+                      return
+                    }
+                    if (mode === "sticker_crop") {
+                      const side = Math.min(img.width, img.height)
+                      const sx = Math.round((img.width - side) / 2)
+                      const sy = Math.round((img.height - side) / 2)
+                      canvas.width = 280
+                      canvas.height = 280
+                      ctx.drawImage(img, sx, sy, side, side, 0, 0, 280, 280)
+                      setMediaDataUrl(canvas.toDataURL("image/png"))
+                    } else {
+                      const scale = Math.min(1, 900 / Math.max(img.width || 1, img.height || 1))
+                      const w = Math.max(1, Math.round(img.width * scale))
+                      const h = Math.max(1, Math.round(img.height * scale))
+                      canvas.width = w
+                      canvas.height = h
+                      ctx.filter = "grayscale(100%) contrast(155%) brightness(108%)"
+                      ctx.drawImage(img, 0, 0, w, h)
+                      setMediaDataUrl(canvas.toDataURL("image/jpeg", 0.85))
+                    }
+                  }
+                  img.src = rawUrl
+                }
+                reader.readAsDataURL(file)
+              }}
+              className="w-full text-xs"
+            />
+            {mediaDataUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={mediaDataUrl}
+                alt="Processed preview"
+                className={
+                  mode === "sticker_crop"
+                    ? "w-28 h-28 mx-auto rounded-2xl border border-slate-200 object-cover"
+                    : "w-full max-h-48 rounded-xl border border-slate-200 object-contain bg-slate-50"
+                }
+              />
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-xl bg-slate-100 px-4 py-2 font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!mediaDataUrl}
+                onClick={() => {
+                  onSendMarker(
+                    mode === "sticker_crop"
+                      ? encodeStickerMarker(stickerLabel, mediaDataUrl)
+                      : encodeDocScanMarker(docScanLabel, mediaDataUrl)
+                  )
+                  onClose()
+                }}
+                className="rounded-xl bg-[#0A66C2] disabled:bg-slate-200 px-4 py-2 font-extrabold cursor-pointer"
+                style={mediaDataUrl ? { color: "#FFFFFF" } : undefined}
+              >
+                {mode === "sticker_crop" ? "Send Sticker" : "Send Scanned Doc"}
               </button>
             </div>
           </div>

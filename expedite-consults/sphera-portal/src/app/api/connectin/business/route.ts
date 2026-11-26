@@ -61,6 +61,10 @@ export interface BusinessLeadAndInquiry {
   appointmentConfirmed: boolean
   appointmentSlot?: string
   invoiceStatus: "Unbilled" | "Escrow Funded" | "Paid" | "Refunded"
+  customerLabels?: string[]
+  cartItems?: Array<{ id: string; title: string; unitPrice: number; qty: number }>
+  checkoutReference?: string
+  paymentMethod?: string
   createdAtIso: string
   updatedAtIso: string
 }
@@ -115,6 +119,16 @@ export interface BusinessProfileTenant {
   ownerName: string
   ownerEmail: string
   members: BusinessTeamMember[]
+  automationConfig?: {
+    greetingEnabled: boolean
+    greetingMessage: string
+    awayEnabled: boolean
+    awayMessage: string
+    businessHours: string
+    quickReplies: string[]
+    webhookUrl: string
+    webhookSecret: string
+  }
   createdAtIso: string
 }
 
@@ -957,6 +971,173 @@ export async function POST(req: NextRequest) {
         await saveBusinessState(state)
       }
       return NextResponse.json({ ok: true, state })
+    }
+
+    if (action === "assign_lead_agent") {
+      const lead = state.leads.find((l) => l.id === String(body?.leadId || ""))
+      if (lead) {
+        const biz = state.businesses.find((b) => b.id === lead.businessId)
+        const role = getMemberRoleForBusiness(biz, actorName, actorEmail)
+        if (!role) {
+          return NextResponse.json({ ok: false, error: "Unauthorized tenant access" }, { status: 403 })
+        }
+        const assigned = String(body?.assignedStaffName || "").trim() || actorName
+        lead.assignedStaffName = assigned
+        lead.updatedAtIso = new Date().toISOString()
+        appendAuditEvent(state, {
+          businessId: lead.businessId,
+          actorName,
+          actorRole: role,
+          eventCode: "INBOX_AGENT_ASSIGNED",
+          summary: `Assigned ${lead.customerName} inquiry to ${assigned}`,
+        })
+        await saveBusinessState(state)
+      }
+      return NextResponse.json({ ok: true, state })
+    }
+
+    if (action === "update_lead_labels") {
+      const lead = state.leads.find((l) => l.id === String(body?.leadId || ""))
+      if (lead) {
+        const biz = state.businesses.find((b) => b.id === lead.businessId)
+        const role = getMemberRoleForBusiness(biz, actorName, actorEmail)
+        if (!role) {
+          return NextResponse.json({ ok: false, error: "Unauthorized tenant access" }, { status: 403 })
+        }
+        const labels = Array.isArray(body?.customerLabels)
+          ? body.customerLabels.map((x: any) => String(x).trim()).filter(Boolean)
+          : []
+        lead.customerLabels = Array.from(new Set(labels))
+        lead.updatedAtIso = new Date().toISOString()
+        appendAuditEvent(state, {
+          businessId: lead.businessId,
+          actorName,
+          actorRole: role,
+          eventCode: "CRM_LABELS_UPDATED",
+          summary: `Updated labels on ${lead.customerName}: ${lead.customerLabels.join(", ") || "None"}`,
+        })
+        await saveBusinessState(state)
+      }
+      return NextResponse.json({ ok: true, state })
+    }
+
+    if (action === "update_lead_cart_checkout") {
+      const lead = state.leads.find((l) => l.id === String(body?.leadId || ""))
+      if (lead) {
+        const biz = state.businesses.find((b) => b.id === lead.businessId)
+        const role = getMemberRoleForBusiness(biz, actorName, actorEmail)
+        if (!role) {
+          return NextResponse.json({ ok: false, error: "Unauthorized tenant access" }, { status: 403 })
+        }
+        const cartItems = Array.isArray(body?.cartItems) ? body.cartItems : []
+        const total = cartItems.reduce(
+          (sum: number, item: any) =>
+            sum + Math.max(0, Number(item?.unitPrice || 0)) * Math.max(1, Number(item?.qty || 1)),
+          0
+        )
+        lead.cartItems = cartItems
+        if (total > 0) {
+          lead.quoteAmount = `$${total.toLocaleString()} Cart Checkout`
+        }
+        const requestedStatus = body?.invoiceStatus as BusinessLeadAndInquiry["invoiceStatus"] | undefined
+        if (requestedStatus) {
+          lead.invoiceStatus = requestedStatus
+          if (requestedStatus === "Paid") lead.crmStage = "Completed"
+        }
+        if (!lead.checkoutReference) {
+          lead.checkoutReference = `CHK-${Date.now().toString(36).toUpperCase()}`
+        }
+        lead.paymentMethod = String(body?.paymentMethod || "ConnectLn Escrow / Card")
+        lead.updatedAtIso = new Date().toISOString()
+        appendAuditEvent(state, {
+          businessId: lead.businessId,
+          actorName,
+          actorRole: role,
+          eventCode: "CHECKOUT_ORDER_UPDATED",
+          summary: `Checkout ${lead.checkoutReference} (${lead.quoteAmount || lead.estimatedBudget}) -> ${lead.invoiceStatus}`,
+        })
+        await saveBusinessState(state)
+      }
+      return NextResponse.json({
+        ok: true,
+        state,
+        stripeConfigured: Boolean((process.env.STRIPE_SECRET_KEY || "").trim()),
+      })
+    }
+
+    if (action === "save_automation_config") {
+      const businessId = String(body?.businessId || "")
+      const biz = state.businesses.find((b) => b.id === businessId)
+      const role = getMemberRoleForBusiness(biz, actorName, actorEmail)
+      if (!biz || !role) {
+        return NextResponse.json({ ok: false, error: "Unauthorized tenant access" }, { status: 403 })
+      }
+      const cfg = body?.automationConfig || {}
+      biz.automationConfig = {
+        greetingEnabled: Boolean(cfg.greetingEnabled),
+        greetingMessage: String(cfg.greetingMessage || "Thanks for contacting us! How can we help today?"),
+        awayEnabled: Boolean(cfg.awayEnabled),
+        awayMessage: String(cfg.awayMessage || "We are currently outside business hours and will reply promptly."),
+        businessHours: String(cfg.businessHours || "Mon–Fri · 8:00 AM – 6:00 PM EST"),
+        quickReplies: Array.isArray(cfg.quickReplies)
+          ? cfg.quickReplies.map((q: any) => String(q).trim()).filter(Boolean)
+          : ["We received your inquiry and will send an itemized quote today."],
+        webhookUrl: String(cfg.webhookUrl || "").trim(),
+        webhookSecret: String(cfg.webhookSecret || "").trim(),
+      }
+      appendAuditEvent(state, {
+        businessId: biz.id,
+        actorName,
+        actorRole: role,
+        eventCode: "BIZ_AUTOMATION_SAVED",
+        summary: `Updated Business Inbox automation, hours, quick replies & webhook config`,
+      })
+      await saveBusinessState(state)
+      return NextResponse.json({ ok: true, state })
+    }
+
+    if (action === "test_webhook") {
+      const businessId = String(body?.businessId || "")
+      const biz = state.businesses.find((b) => b.id === businessId)
+      const role = getMemberRoleForBusiness(biz, actorName, actorEmail)
+      if (!biz || !role) {
+        return NextResponse.json({ ok: false, error: "Unauthorized tenant access" }, { status: 403 })
+      }
+      const targetUrl = String(body?.webhookUrl || biz.automationConfig?.webhookUrl || "").trim()
+      const secret = String(body?.webhookSecret || biz.automationConfig?.webhookSecret || "connectln-dev-secret")
+      const sampleBody = JSON.stringify({
+        event: "connectln.business.webhook_test",
+        businessId: biz.id,
+        businessName: biz.name,
+        ts: new Date().toISOString(),
+      })
+      const sig = crypto.createHmac("sha256", secret).update(sampleBody).digest("hex")
+      let deliveryStatus = "Dry-run HMAC-SHA256 signature generated"
+      if (targetUrl.startsWith("https://")) {
+        try {
+          const whRes = await fetch(targetUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-ConnectLn-Signature": `sha256=${sig}`,
+            },
+            body: sampleBody,
+            signal: AbortSignal.timeout(3000),
+          })
+          deliveryStatus = `Delivered HTTP ${whRes.status}`
+        } catch (whErr: any) {
+          deliveryStatus = `Attempted (${whErr?.message || "timeout"})`
+        }
+      }
+      appendAuditEvent(state, {
+        businessId: biz.id,
+        actorName,
+        actorRole: role,
+        eventCode: "BIZ_WEBHOOK_TESTED",
+        summary: `Webhook test (${deliveryStatus}) · sig=${sig.slice(0, 12)}...`,
+      })
+      await saveBusinessState(state)
+      return NextResponse.json({ ok: true, state, deliveryStatus, signature: sig })
     }
 
     return NextResponse.json({ ok: true, state })

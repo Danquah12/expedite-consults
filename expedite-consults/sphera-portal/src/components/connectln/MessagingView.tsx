@@ -68,15 +68,23 @@ import {
 import {
     COMM_PRO_CHANGED_EVENT,
     CommPrivacySettings,
+    approveCloudPairToken,
     encodeQuoteReply,
     enqueueOfflineMessage,
+    fetchPeerE2eePublicKey,
     getCommPrivacySettings,
     getOfflineQueue,
+    hydrateCommStateFromCloud,
     isMessageExpiredForThread,
     polishDraftWithNoctis,
     removeOfflineMessage,
     updateCommPrivacySettings,
 } from '@/lib/connectln-comm-pro';
+import {
+    encryptE2eeEnvelope,
+    getOrCreateE2eeIdentity,
+} from '@/lib/connectln-e2ee-crypto';
+import { registerNativePushAndVoipBridge } from '@/lib/connectln-native-bridge';
 import {
     ConnectLnRichBubbleContent,
     ConnectLnRichComposerModal,
@@ -797,6 +805,8 @@ export function MessagingView({
     const [richComposerMode, setRichComposerMode] = useState<RichComposerMode>(null);
     const [deleteMenuMsgId, setDeleteMenuMsgId] = useState<string | null>(null);
     const [offlineQueueCount, setOfflineQueueCount] = useState<number>(() => getOfflineQueue().length);
+    const [pendingPairDeviceToken, setPendingPairDeviceToken] = useState<string | null>(null);
+    const commUserKey = String(currentUser?.email || currentUser?.name || 'member').trim().toLowerCase();
 
     useEffect(() => {
         const syncPrivacy = () => {
@@ -810,6 +820,18 @@ export function MessagingView({
             window.removeEventListener('storage', syncPrivacy);
         };
     }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const aliases = [currentUser?.email || '', currentUser?.name || ''].filter(Boolean);
+        void hydrateCommStateFromCloud(commUserKey, aliases);
+        void registerNativePushAndVoipBridge(currentUser);
+        try {
+            const url = new URL(window.location.href);
+            const pt = url.searchParams.get('pairDevice');
+            if (pt) setPendingPairDeviceToken(pt);
+        } catch {}
+    }, [commUserKey, currentUser]);
 
     useEffect(() => {
         if (showNewMessageModal || showScheduler || workspaceMode === 'calendar') {
@@ -3216,7 +3238,7 @@ export function MessagingView({
         const nowStr = formatMessageSentDateTime(nowIso);
 
         const rawFinalText = trimmed || `Attached ${pendingAttachment}`;
-        const finalText = replyingToMsg
+        const composedPlainText = replyingToMsg
             ? encodeQuoteReply(
                   replyingToMsg.sender?.name || 'Member',
                   replyingToMsg.text || '',
@@ -3224,6 +3246,30 @@ export function MessagingView({
               )
             : rawFinalText;
         if (replyingToMsg) setReplyingToMsg(null);
+
+        const targetThreadId = activeThread.id;
+        const targetEntityName = activeThread.title;
+
+        let finalText = composedPlainText;
+        if (commPrivacy.e2eeEnabledByThread?.[targetThreadId]) {
+            try {
+                const identity = await getOrCreateE2eeIdentity(commUserKey);
+                if (identity) {
+                    const peerKeyRes =
+                        targetThreadId === 'thread_saved_messages_self'
+                            ? { found: false, publicJwk: null }
+                            : await fetchPeerE2eePublicKey([
+                                  activeThread.recipientEmail || '',
+                                  activeThread.title,
+                              ]);
+                    finalText = await encryptE2eeEnvelope(
+                        composedPlainText,
+                        identity,
+                        peerKeyRes.publicJwk
+                    );
+                }
+            } catch {}
+        }
 
         const optimisticMsg: B2BMessageItem = {
             id: `local-${Date.now()}`,
@@ -3240,9 +3286,6 @@ export function MessagingView({
                 ? [{ name: pendingAttachment, type: 'Document' }]
                 : undefined,
         };
-
-        const targetThreadId = activeThread.id;
-        const targetEntityName = activeThread.title;
 
         // Self-messaging / Saved Messages stays cleanly in personal local cloud vault
         if (targetThreadId === 'thread_saved_messages_self') {
@@ -4319,6 +4362,42 @@ export function MessagingView({
                 </div>
 
                 {/* Collapsible 15-Profession Pill Bar (Shown when user clicks the Profession pill) */}
+                {pendingPairDeviceToken && (
+                    <div className="px-4 py-2 bg-emerald-50 border-b border-emerald-200 flex items-center justify-between gap-2 text-xs">
+                        <span className="font-bold text-emerald-950">
+                            📲 Companion device pairing request detected (<span className="font-mono">{pendingPairDeviceToken.slice(0, 14)}...</span>)
+                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    const res = await approveCloudPairToken(
+                                        pendingPairDeviceToken,
+                                        `${currentUser?.name || 'Member'} Companion`
+                                    );
+                                    setPendingPairDeviceToken(null);
+                                    triggerToast(
+                                        res.ok
+                                            ? `✓ Linked companion device for ${res.ownerName || 'your account'}!`
+                                            : `⚠️ ${res.error || 'Pairing link expired.'}`
+                                    );
+                                }}
+                                className="rounded-lg bg-emerald-700 px-3 py-1 font-extrabold text-white cursor-pointer"
+                                style={{ color: '#FFFFFF' }}
+                            >
+                                Approve Pairing
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPendingPairDeviceToken(null)}
+                                className="rounded-lg bg-white border border-emerald-200 px-2.5 py-1 font-bold text-slate-700 cursor-pointer"
+                            >
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {showEnclaveFilterBar && (
                     <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100 animate-in fade-in">
                         <button
@@ -4408,6 +4487,7 @@ export function MessagingView({
                         currentUser={currentUser}
                         threads={threads}
                         archivedThreadIds={archivedThreadIds}
+                        onSelectMode={setWorkspaceMode}
                         onUnarchiveThread={(id) => toggleArchiveThread(id)}
                         onSelectChatThread={(threadId) => {
                             setSelectedThreadId(threadId);
@@ -5689,6 +5769,7 @@ export function MessagingView({
                                                             msg={msg}
                                                             isMe={isMe}
                                                             viewerName={currentUser?.name || 'You'}
+                                                            currentUserKey={commUserKey}
                                                             privacy={commPrivacy}
                                                             renderPlainText={renderMessageWithMentions}
                                                             onStartDirectChatOrCall={(name) => {
@@ -5998,6 +6079,8 @@ export function MessagingView({
                                             { mode: 'poll' as const, label: '📊 Poll' },
                                             { mode: 'location' as const, label: '📍 Location' },
                                             { mode: 'contact' as const, label: '👤 Contact' },
+                                            { mode: 'sticker_crop' as const, label: '🎨 Sticker / Crop' },
+                                            { mode: 'doc_scan' as const, label: '📄 Scan Document' },
                                         ]
                                     ).map((tool) => (
                                         <button
@@ -7562,6 +7645,8 @@ export function MessagingView({
                     threadTitle={activeThread.title}
                     threadSubtitle={activeThread.subtitle}
                     recipientEmail={activeThread.recipientEmail}
+                    currentUserKey={commUserKey}
+                    currentUserName={currentUser?.name || 'Member'}
                     messages={activeThread.messages || []}
                     privacy={commPrivacy}
                     isArchived={archivedThreadIds.includes(activeThread.id)}

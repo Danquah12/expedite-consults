@@ -131,6 +131,8 @@ export function TeamsCallOverlays({
   onResumeHold,
   onLeaveDenied,
   onTeamsSignal,
+  captionTranslateLang,
+  translatedCaptionsById,
 }: {
   teamsState: CommTeamsStateClient
   localUserId: string
@@ -143,6 +145,8 @@ export function TeamsCallOverlays({
   onResumeHold: () => void
   onLeaveDenied: () => void
   onTeamsSignal: TeamsSignalFn
+  captionTranslateLang?: string
+  translatedCaptionsById?: Record<string, string>
 }) {
   const nowMs = Date.now()
   const visibleReactions = (teamsState.reactions || []).filter((r) => nowMs - r.ts < 5500)
@@ -338,12 +342,25 @@ export function TeamsCallOverlays({
             </p>
           ) : (
             <div className="space-y-0.5">
-              {latestCaptions.map((c) => (
-                <p key={c.id} className="text-xs sm:text-sm text-white leading-snug">
-                  <span className="font-extrabold text-emerald-300">{c.speaker_name}: </span>
-                  <span>{c.text}</span>
-                </p>
-              ))}
+              {latestCaptions.map((c) => {
+                const translated =
+                  captionTranslateLang &&
+                  captionTranslateLang !== "off" &&
+                  translatedCaptionsById?.[c.id]
+                    ? translatedCaptionsById[c.id]
+                    : null
+                return (
+                  <p key={c.id} className="text-xs sm:text-sm text-white leading-snug">
+                    <span className="font-extrabold text-emerald-300">{c.speaker_name}: </span>
+                    <span>{c.text}</span>
+                    {translated && captionTranslateLang && (
+                      <span className="block text-[11px] font-semibold text-sky-300 mt-0.5">
+                        🌐 [{captionTranslateLang.toUpperCase()}] {translated}
+                      </span>
+                    )}
+                  </p>
+                )
+              })}
             </div>
           )}
         </div>
@@ -381,6 +398,9 @@ export function TeamsMoreMenuPopover({
   selectedAudioOutputId,
   onSelectAudioOutput,
   e2eeSafetyCode,
+  captionTranslateLang,
+  onChangeCaptionTranslateLang,
+  transportStatusLabel,
 }: {
   open: boolean
   onClose: () => void
@@ -410,6 +430,9 @@ export function TeamsMoreMenuPopover({
   selectedAudioOutputId?: string
   onSelectAudioOutput?: (deviceId: string) => void
   e2eeSafetyCode?: string
+  captionTranslateLang?: string
+  onChangeCaptionTranslateLang?: (lang: string) => void
+  transportStatusLabel?: string
 }) {
   if (!open) return null
 
@@ -552,6 +575,33 @@ export function TeamsMoreMenuPopover({
               </option>
             ))}
           </select>
+        </div>
+      )}
+      {onChangeCaptionTranslateLang && (
+        <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between gap-2">
+          <span className="text-[11px] font-bold text-slate-300 shrink-0">
+            🌐 Translate CC:
+          </span>
+          <select
+            aria-label="Translate live captions language"
+            value={captionTranslateLang || "off"}
+            onChange={(e) => onChangeCaptionTranslateLang(e.target.value)}
+            className="flex-1 min-w-0 rounded-lg bg-[#1F2C34] border border-white/15 px-2 py-1 text-[11px] text-white font-semibold"
+          >
+            <option value="off">Off (Original Speech)</option>
+            <option value="es">Spanish (ES)</option>
+            <option value="fr">French (FR)</option>
+            <option value="de">German (DE)</option>
+            <option value="pt">Portuguese (PT)</option>
+            <option value="ar">Arabic (AR)</option>
+            <option value="hi">Hindi (HI)</option>
+          </select>
+        </div>
+      )}
+      {transportStatusLabel && (
+        <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between gap-2 text-[10px] text-sky-300 font-semibold">
+          <span>📡 Transport Engine:</span>
+          <span className="truncate">{transportStatusLabel}</span>
         </div>
       )}
       {e2eeSafetyCode && (

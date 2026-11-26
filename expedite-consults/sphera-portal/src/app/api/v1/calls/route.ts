@@ -395,14 +395,32 @@ async function getCloudflareTurnServers(): Promise<any[]> {
   }
 }
 
+function getCoturnTimeLimitedIceServers(): any[] {
+  const rawUrls = (process.env.COTURN_URLS || "").trim()
+  const secret = (process.env.COTURN_STATIC_AUTH_SECRET || "").trim()
+  if (!rawUrls || !secret) return []
+  const urls = rawUrls
+    .split(",")
+    .map((u) => u.trim())
+    .filter(Boolean)
+  if (!urls.length) return []
+  const expiry = Math.floor(Date.now() / 1000) + 86400
+  const username = `${expiry}:connectln`
+  const credential = crypto.createHmac("sha1", secret).update(username).digest("base64")
+  return [{ urls, username, credential }]
+}
+
 async function getCachedTwilioIceServers(): Promise<any[]> {
   const stun = [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun.cloudflare.com:3478" },
   ]
+  const coturn = getCoturnTimeLimitedIceServers()
   const dedicated = await getCloudflareTurnServers()
-  if (dedicated.length > 0) return [...dedicated, ...stun]
+  if (coturn.length > 0 || dedicated.length > 0) {
+    return [...coturn, ...dedicated, ...stun]
+  }
   // Fallback: free public OpenRelay TURN (shared, best-effort)
   return [
     ...stun,

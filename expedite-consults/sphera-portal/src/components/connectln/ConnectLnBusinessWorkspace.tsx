@@ -100,9 +100,27 @@ export function ConnectLnBusinessWorkspace({
   const [quoteDateByService, setQuoteDateByService] = useState<Record<string, string>>({})
   const [quoteBudgetByService, setQuoteBudgetByService] = useState<Record<string, string>>({})
 
-  // Forms: MSG-01 Inbox Quote Reply
+  // Forms: MSG-01 Inbox Quote Reply, Shared Agent Inbox, Labels, Cart & Automation
   const [replyAmountByLead, setReplyAmountByLead] = useState<Record<string, string>>({})
   const [replyNoteByLead, setReplyNoteByLead] = useState<Record<string, string>>({})
+  const [inboxAgentFilter, setInboxAgentFilter] = useState<string>("ALL")
+  const [inboxLabelFilter, setInboxLabelFilter] = useState<string>("ALL")
+  const [showAutomationPanel, setShowAutomationPanel] = useState<boolean>(false)
+  const [openCartByLead, setOpenCartByLead] = useState<Record<string, boolean>>({})
+  const [autoGreetingOn, setAutoGreetingOn] = useState<boolean>(true)
+  const [autoGreetingMsg, setAutoGreetingMsg] = useState<string>(
+    "Thanks for reaching out! Share your scope & preferred date and our specialist will reply shortly."
+  )
+  const [awayEnabled, setAwayEnabled] = useState<boolean>(false)
+  const [awayMsg, setAwayMsg] = useState<string>(
+    "We are currently outside business hours and will respond first thing next business day."
+  )
+  const [bizHours, setBizHours] = useState<string>("Mon–Fri · 8:00 AM – 6:00 PM EST")
+  const [quickRepliesDraft, setQuickRepliesDraft] = useState<string>(
+    "We received your inquiry and can schedule a site walkthrough.\nYour itemized quote is ready — approve to lock your slot."
+  )
+  const [webhookUrlDraft, setWebhookUrlDraft] = useState<string>("")
+  const [webhookSecretDraft, setWebhookSecretDraft] = useState<string>("whsec_connectln_live_demo")
 
   // Forms: REV-01 Customer Review
   const [reviewComment, setReviewComment] = useState("")
@@ -1303,45 +1321,374 @@ export function ConnectLnBusinessWorkspace({
           )}
 
           {/* 6. BUSINESS INBOX (MSG-01) */}
-          {activeTab === "inbox" && (
+          {activeTab === "inbox" && (() => {
+            const quickReplyOptions = (
+              activeBiz.automationConfig?.quickReplies ||
+              quickRepliesDraft.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)
+            )
+            const filteredInboxLeads = tenantLeads.filter((l) => {
+              if (inboxAgentFilter !== "ALL" && l.assignedStaffName !== inboxAgentFilter) return false
+              if (
+                inboxLabelFilter !== "ALL" &&
+                !(l.customerLabels || []).includes(inboxLabelFilter)
+              ) {
+                return false
+              }
+              return true
+            })
+            return (
             <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3">
-              <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
                 <div>
                   <h3 className="text-sm font-black">
-                    Business Inquiry Inbox — {activeBiz.name} (MSG-01)
+                    Shared Agent Inbox &amp; Commerce — {activeBiz.name} (MSG-01)
                   </h3>
                   <p className="text-xs text-zinc-500">
-                    Role-authorized staff ({myRoleInActiveBiz}) can respond to customer inquiries and send formal quotes.
+                    Role-authorized staff ({myRoleInActiveBiz}) assign agents, label leads, use quick replies, and issue order checkouts.
                   </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <select
+                    aria-label="Filter by assigned agent"
+                    value={inboxAgentFilter}
+                    onChange={(e) => setInboxAgentFilter(e.target.value)}
+                    className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-1.5 text-xs font-bold"
+                  >
+                    <option value="ALL">All Agents</option>
+                    {activeBiz.members.map((m) => (
+                      <option key={m.id} value={m.name}>
+                        Agent: {m.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    aria-label="Filter by customer label"
+                    value={inboxLabelFilter}
+                    onChange={(e) => setInboxLabelFilter(e.target.value)}
+                    className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-1.5 text-xs font-bold"
+                  >
+                    <option value="ALL">All Labels</option>
+                    {["VIP", "Pending Quote", "Paid", "Follow-Up"].map((lbl) => (
+                      <option key={lbl} value={lbl}>
+                        Label: {lbl}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowAutomationPanel((v) => !v)}
+                    className="rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-[#0A66C2] px-3 py-1.5 text-xs font-extrabold cursor-pointer"
+                  >
+                    🤖 Automation &amp; Quick Replies
+                  </button>
                 </div>
               </div>
 
+              {showAutomationPanel && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 p-3.5 space-y-2.5 text-xs">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    <div className="space-y-1">
+                      <label className="flex items-center gap-2 font-extrabold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={autoGreetingOn}
+                          onChange={(e) => setAutoGreetingOn(e.target.checked)}
+                        />
+                        <span>Automated Welcome Greeting</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={autoGreetingMsg}
+                        onChange={(e) => setAutoGreetingMsg(e.target.value)}
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="flex items-center gap-2 font-extrabold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={awayEnabled}
+                          onChange={(e) => setAwayEnabled(e.target.checked)}
+                        />
+                        <span>After-Hours Away Auto-Reply</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={awayMsg}
+                        onChange={(e) => setAwayMsg(e.target.value)}
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block font-bold text-zinc-600 mb-1">Business Hours</label>
+                      <input
+                        type="text"
+                        value={bizHours}
+                        onChange={(e) => setBizHours(e.target.value)}
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-zinc-600 mb-1">
+                        Saved Quick Replies (one per line)
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={quickRepliesDraft}
+                        onChange={(e) => setQuickRepliesDraft(e.target.value)}
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-xs"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void dispatchBizAction(
+                          {
+                            action: "save_automation_config",
+                            businessId: activeBiz.id,
+                            automationConfig: {
+                              greetingEnabled: autoGreetingOn,
+                              greetingMessage: autoGreetingMsg,
+                              awayEnabled,
+                              awayMessage: awayMsg,
+                              businessHours: bizHours,
+                              quickReplies: quickRepliesDraft
+                                .split(/\r?\n/)
+                                .map((s) => s.trim())
+                                .filter(Boolean),
+                              webhookUrl: webhookUrlDraft,
+                              webhookSecret: webhookSecretDraft,
+                            },
+                          },
+                          "✓ Saved Business Inbox automation, hours & quick replies!"
+                        )
+                      }
+                      className="rounded-xl bg-[#0A66C2] text-white px-4 py-1.5 text-xs font-extrabold cursor-pointer"
+                    >
+                      Save Automation Rules
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-3">
-                {tenantLeads.map((lead) => (
+                {filteredInboxLeads.map((lead) => {
+                  const labels = lead.customerLabels || []
+                  const cartItems = lead.cartItems || []
+                  const cartTotal = cartItems.reduce(
+                    (sum, it) => sum + Number(it.unitPrice || 0) * Math.max(1, Number(it.qty || 1)),
+                    0
+                  )
+                  return (
                   <div
                     key={lead.id}
                     className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <span className="rounded bg-blue-50 text-[#0A66C2] px-2 py-0.5 text-[10px] font-extrabold">
-                          {lead.crmStage} · {lead.invoiceStatus}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="rounded bg-blue-50 text-[#0A66C2] px-2 py-0.5 text-[10px] font-extrabold">
+                            {lead.crmStage} · {lead.invoiceStatus}
+                          </span>
+                          {lead.checkoutReference && (
+                            <span className="rounded bg-emerald-50 text-emerald-800 px-2 py-0.5 text-[10px] font-mono font-bold">
+                              {lead.checkoutReference}
+                            </span>
+                          )}
+                          {labels.map((lbl) => (
+                            <span
+                              key={lbl}
+                              className="rounded bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 text-[10px] font-bold"
+                            >
+                              🏷 {lbl}
+                            </span>
+                          ))}
+                        </div>
                         <h4 className="text-sm font-black mt-1">
                           {lead.customerName} ({lead.customerEmail}) — {lead.serviceTitle}
                         </h4>
                         <p className="text-xs text-zinc-500">
-                          📍 {lead.customerLocation} · Preferred Slot: {lead.preferredDate}
+                          📍 {lead.customerLocation} · Preferred Slot: {lead.preferredDate} · Agent: <strong>{lead.assignedStaffName}</strong>
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleExportLeadPdf(lead, "QUOTE")}
-                        className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/50 hover:bg-[#0A66C2] hover:text-white px-3 py-1.5 text-xs font-extrabold text-[#0A66C2] dark:text-sky-300 transition-colors cursor-pointer shrink-0"
-                      >
-                        📄 Export PDF Quote
-                      </button>
+                      <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                        <select
+                          aria-label={`Assign agent for ${lead.customerName}`}
+                          value={lead.assignedStaffName}
+                          onChange={(e) =>
+                            void dispatchBizAction(
+                              {
+                                action: "assign_lead_agent",
+                                leadId: lead.id,
+                                assignedStaffName: e.target.value,
+                              },
+                              `✓ Assigned ${lead.customerName} to ${e.target.value}.`
+                            )
+                          }
+                          className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-1.5 text-[11px] font-bold"
+                        >
+                          {activeBiz.members.map((m) => (
+                            <option key={m.id} value={m.name}>
+                              Assign: {m.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenCartByLead((prev) => ({
+                              ...prev,
+                              [lead.id]: !prev[lead.id],
+                            }))
+                          }
+                          className="rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-2.5 py-1.5 text-xs font-extrabold cursor-pointer"
+                        >
+                          🛒 Order Cart ({cartItems.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleExportLeadPdf(lead, "QUOTE")}
+                          className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/50 hover:bg-[#0A66C2] hover:text-white px-3 py-1.5 text-xs font-extrabold text-[#0A66C2] dark:text-sky-300 transition-colors cursor-pointer shrink-0"
+                        >
+                          📄 Export PDF Quote
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Customer Labels Strip */}
+                    <div className="flex flex-wrap items-center gap-1.5 text-[10.5px]">
+                      <span className="font-bold text-zinc-500">Labels:</span>
+                      {["VIP", "Pending Quote", "Paid", "Follow-Up"].map((lbl) => {
+                        const active = labels.includes(lbl)
+                        return (
+                          <button
+                            key={lbl}
+                            type="button"
+                            onClick={() => {
+                              const nextLabels = active
+                                ? labels.filter((x) => x !== lbl)
+                                : [...labels, lbl]
+                              void dispatchBizAction(
+                                {
+                                  action: "update_lead_labels",
+                                  leadId: lead.id,
+                                  customerLabels: nextLabels,
+                                },
+                                `✓ Updated labels for ${lead.customerName}.`
+                              )
+                            }}
+                            className={`rounded-full px-2 py-0.5 font-bold border cursor-pointer ${
+                              active
+                                ? "bg-amber-600 border-amber-700 text-white"
+                                : "bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100"
+                            }`}
+                          >
+                            {active ? "✓ " : "+ "}
+                            {lbl}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {openCartByLead[lead.id] && (
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3 space-y-2 text-xs">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-black text-emerald-950">
+                            In-Chat Order Cart &amp; Checkout ({lead.paymentMethod || "ConnectLn Escrow"})
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {tenantServices.map((srv) => (
+                              <button
+                                key={srv.id}
+                                type="button"
+                                onClick={() => {
+                                  const nextCart = [
+                                    ...cartItems,
+                                    {
+                                      id: srv.id,
+                                      title: srv.title.slice(0, 42),
+                                      unitPrice: 1450,
+                                      qty: 1,
+                                    },
+                                  ]
+                                  void dispatchBizAction(
+                                    {
+                                      action: "update_lead_cart_checkout",
+                                      leadId: lead.id,
+                                      cartItems: nextCart,
+                                    },
+                                    `🛒 Added "${srv.title.slice(0, 30)}" to order cart.`
+                                  )
+                                }}
+                                className="rounded-lg bg-white border border-emerald-200 px-2 py-1 text-[10.5px] font-bold text-emerald-900 hover:bg-emerald-100 cursor-pointer"
+                              >
+                                + Add {srv.category} ($1,450)
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {cartItems.length > 0 && (
+                          <div className="space-y-1">
+                            {cartItems.map((it, idx) => (
+                              <div
+                                key={`${it.id}_${idx}`}
+                                className="flex items-center justify-between bg-white rounded-lg px-2.5 py-1 border border-emerald-100"
+                              >
+                                <span className="font-semibold">
+                                  {it.qty}x {it.title}
+                                </span>
+                                <span className="font-mono font-bold">
+                                  ${(it.unitPrice * it.qty).toLocaleString()}
+                                </span>
+                              </div>
+                            ))}
+                            <div className="flex items-center justify-between pt-1">
+                              <span className="font-black">Cart Total: ${cartTotal.toLocaleString()}</span>
+                              <div className="flex gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void dispatchBizAction(
+                                      {
+                                        action: "update_lead_cart_checkout",
+                                        leadId: lead.id,
+                                        cartItems,
+                                        invoiceStatus: "Escrow Funded",
+                                      },
+                                      `✓ Checkout issued (${lead.customerName}) -> Escrow Funded!`
+                                    )
+                                  }
+                                  className="rounded-lg bg-[#0A66C2] text-white px-2.5 py-1 text-[11px] font-extrabold cursor-pointer"
+                                >
+                                  Create Checkout (Escrow)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void dispatchBizAction(
+                                      {
+                                        action: "update_lead_cart_checkout",
+                                        leadId: lead.id,
+                                        cartItems,
+                                        invoiceStatus: "Paid",
+                                      },
+                                      `✓ Checkout marked Paid & completed!`
+                                    )
+                                  }
+                                  className="rounded-lg bg-emerald-700 text-white px-2.5 py-1 text-[11px] font-extrabold cursor-pointer"
+                                >
+                                  Mark Checkout Paid
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 p-3 text-xs">
                       <strong>Customer Inquiry:</strong> {lead.projectScope}
@@ -1357,6 +1704,24 @@ export function ConnectLnBusinessWorkspace({
                             <strong>Staff Response:</strong> {lead.staffReply}
                           </p>
                         )}
+                      </div>
+                    )}
+
+                    {quickReplyOptions.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-1.5 text-[10.5px]">
+                        <span className="font-bold text-zinc-500">⚡ Quick Reply:</span>
+                        {quickReplyOptions.slice(0, 3).map((qr, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() =>
+                              setReplyNoteByLead((prev) => ({ ...prev, [lead.id]: qr }))
+                            }
+                            className="rounded-lg bg-zinc-100 hover:bg-blue-50 border border-zinc-200 px-2 py-0.5 font-semibold text-zinc-700 hover:text-[#0A66C2] cursor-pointer truncate max-w-[260px]"
+                          >
+                            {qr}
+                          </button>
+                        ))}
                       </div>
                     )}
 
@@ -1410,10 +1775,11 @@ export function ConnectLnBusinessWorkspace({
                       </button>
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             </div>
-          )}
+            )
+          })()}
 
           {/* 7. QUOTES, BOOKINGS & VERIFIED REVIEWS (BOOK-01 & REV-01) */}
           {activeTab === "bookings_reviews" && (
@@ -1994,6 +2360,55 @@ export function ConnectLnBusinessWorkspace({
                       </span>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* API-01: Business Messaging API & HMAC Webhooks */}
+              <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-black">
+                      🔌 Business Messaging API &amp; Webhooks (HMAC-SHA256)
+                    </h3>
+                    <p className="text-xs text-zinc-500">
+                      Deliver real-time quote, checkout, and inquiry events to your ERP/CRM webhook endpoint.
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
+                  <input
+                    type="url"
+                    value={webhookUrlDraft}
+                    onChange={(e) => setWebhookUrlDraft(e.target.value)}
+                    placeholder="https://api.yourcompany.com/webhooks/connectln"
+                    className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5"
+                  />
+                  <input
+                    type="text"
+                    value={webhookSecretDraft}
+                    onChange={(e) => setWebhookSecretDraft(e.target.value)}
+                    placeholder="HMAC-SHA256 signing secret"
+                    className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 font-mono"
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void dispatchBizAction(
+                        {
+                          action: "test_webhook",
+                          businessId: activeBiz.id,
+                          webhookUrl: webhookUrlDraft,
+                          webhookSecret: webhookSecretDraft,
+                        },
+                        "✓ Signed webhook event verified & logged to SHA-256 Audit Ledger."
+                      )
+                    }
+                    className="rounded-xl bg-[#0A66C2] text-white px-4 py-1.5 text-xs font-extrabold cursor-pointer"
+                  >
+                    Test HMAC Webhook
+                  </button>
                 </div>
               </div>
             </div>

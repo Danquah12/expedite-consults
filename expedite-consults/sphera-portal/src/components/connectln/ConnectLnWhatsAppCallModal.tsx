@@ -1289,6 +1289,9 @@ export function ConnectLnWhatsAppCallModal({
   const [showTransferDrawer, setShowTransferDrawer] = useState<boolean>(false)
   const [showVoicemailModal, setShowVoicemailModal] = useState<boolean>(false)
   const [isCaptionsOn, setIsCaptionsOn] = useState<boolean>(false)
+  const [captionTranslateLang, setCaptionTranslateLang] = useState<string>("off")
+  const [translatedCaptionsById, setTranslatedCaptionsById] = useState<Record<string, string>>({})
+  const [transportStatusLabel, setTransportStatusLabel] = useState<string>("WebRTC Mesh + ICE/TURN")
   const [isRecordingMeeting, setIsRecordingMeeting] = useState<boolean>(false)
   const [isOnHold, setIsOnHold] = useState<boolean>(false)
   const [layoutMode, setLayoutMode] = useState<"gallery" | "spotlight">("gallery")
@@ -3987,6 +3990,55 @@ export function ConnectLnWhatsAppCallModal({
     [callId, callerName, localPeerUid]
   )
 
+  // Check SFU / Coturn transport capability cleanly when call opens
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    fetch("/api/v1/calls/sfu-token?status=1", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d) return
+        if (d.sfuConfigured) setTransportStatusLabel("LiveKit SFU · E2EE/DTLS")
+        else if (d.coturnConfigured) setTransportStatusLabel("WebRTC + Dedicated Coturn")
+        else setTransportStatusLabel("WebRTC Mesh + ICE/TURN")
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [open])
+
+  // Translate incoming live closed captions on demand when participant picks a language
+  useEffect(() => {
+    if (!open || !isCaptionsOn || captionTranslateLang === "off") return
+    const latest = (teamsState.captions || []).slice(-3)
+    const pending = latest.filter((c) => c?.id && c?.text && !translatedCaptionsById[`${captionTranslateLang}:${c.id}`])
+    if (!pending.length) return
+    pending.forEach((cap) => {
+      const cacheKey = `${captionTranslateLang}:${cap.id}`
+      fetch("/api/connectin/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: cap.text,
+          targetLang: captionTranslateLang,
+        }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          const out = d?.translatedText || d?.translation || ""
+          if (out) {
+            setTranslatedCaptionsById((prev) => ({
+              ...prev,
+              [cap.id]: out,
+              [cacheKey]: out,
+            }))
+          }
+        })
+        .catch(() => {})
+    })
+  }, [open, isCaptionsOn, captionTranslateLang, teamsState.captions, translatedCaptionsById])
+
   // Live Captions via Web Speech API -> synced across participants
   useEffect(() => {
     if (!open || !isCaptionsOn || typeof window === "undefined") return
@@ -4824,6 +4876,8 @@ export function ConnectLnWhatsAppCallModal({
         onResumeHold={handleToggleCallHold}
         onLeaveDenied={() => handleHangup(false)}
         onTeamsSignal={sendTeamsSignal}
+        captionTranslateLang={captionTranslateLang}
+        translatedCaptionsById={translatedCaptionsById}
       />
 
       {/* HOST MUTED YOUR MIC BANNER */}
@@ -6693,6 +6747,12 @@ export function ConnectLnWhatsAppCallModal({
           setPushBannerNote("🔊 Switched call audio output device.")
         }}
         e2eeSafetyCode={deriveE2eeSafetyCode(callId || "connectln-call")}
+        captionTranslateLang={captionTranslateLang}
+        onChangeCaptionTranslateLang={(lang) => {
+          setCaptionTranslateLang(lang)
+          if (lang !== "off" && !isCaptionsOn) setIsCaptionsOn(true)
+        }}
+        transportStatusLabel={transportStatusLabel}
       />
 
       {/* BOTTOM WHATSAPP FLOATING CALL CONTROLS PILL */}
