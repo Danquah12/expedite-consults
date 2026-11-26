@@ -3107,6 +3107,7 @@ export default function ConnectLnPage() {
       <div className="lg:pl-[68px]">
       <main
         className={
+          activeTab === 'messaging' ||
           activeTab === 'noctissocial' ||
           activeTab === 'noctisclinic' ||
           activeTab === 'docs' ||

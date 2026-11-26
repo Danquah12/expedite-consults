@@ -570,7 +570,12 @@ export function MessagingView({
             return [];
         }
     });
-    const composerInputRef = useRef<HTMLInputElement | null>(null);
+    const composerInputRef = useRef<HTMLTextAreaElement | null>(null);
+    useEffect(() => {
+        if (!messageInput && composerInputRef.current) {
+            composerInputRef.current.style.height = '';
+        }
+    }, [messageInput]);
     const enclaveScrollRef = useRef<HTMLDivElement | null>(null);
     const DEFAULT_CUSTOM_LABELS = [
         { id: 'verified_dm', name: 'Verified DMs', color: '#0A66C2' },
@@ -5027,7 +5032,7 @@ export function MessagingView({
                     <>
                         {/* Column 2: Channels & Conversation Thread List */}
                         <div
-                            className={`w-full md:w-[356px] border-r border-slate-200 flex-col bg-white shrink-0 h-full ${
+                            className={`w-full md:w-[300px] lg:w-[320px] border-r border-slate-200 flex-col bg-white shrink-0 h-full ${
                                 mobileShowChat ? 'hidden md:flex' : 'flex'
                             }`}
                         >
@@ -6486,74 +6491,18 @@ export function MessagingView({
                             </div>
                         )}
 
-                        {/* Message Input Composer */}
+                        {/* Message Input Composer — Spacious 2-Row Auto-Growing Card */}
                         <form
                             onSubmit={(e) => {
                                 sendComposerTypingPing(false);
                                 void handleSendMessage(e);
                             }}
-                            className="p-3.5 bg-white border-t border-slate-200 flex items-center gap-2.5"
+                            className="px-3.5 py-3 bg-white border-t border-slate-200"
                         >
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowAttachmentMenu((prev) => !prev);
-                                    setShowEmojiBar(false);
-                                }}
-                                className={`p-2.5 rounded-xl border transition-all ${
-                                    showAttachmentMenu || pendingAttachment
-                                        ? 'bg-blue-50 border-[#0A66C2] text-[#0A66C2]'
-                                        : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
-                                }`}
-                                title="Attach Blueprint, Spec Sheet, or Verified Resume"
-                            >
-                                📎
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowEmojiBar((prev) => !prev);
-                                    setShowAttachmentMenu(false);
-                                }}
-                                className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-                                    showEmojiBar
-                                        ? 'bg-blue-50 border-[#0A66C2] text-[#0A66C2]'
-                                        : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
-                                }`}
-                                title="Insert Emoji"
-                            >
-                                😊
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowQuickRepliesBar((prev) => !prev);
-                                }}
-                                className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-                                    showQuickRepliesBar
-                                        ? 'bg-blue-50 border-[#0A66C2] text-[#0A66C2]'
-                                        : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
-                                }`}
-                                title="QUICK-REPLY — Toggle Instant Smart Replies"
-                            >
-                                ⚡
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setRichComposerMode('voice')}
-                                className="p-2.5 rounded-xl border bg-slate-100 border-slate-200 text-slate-600 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 transition-all cursor-pointer"
-                                title="Record Live Voice Message (with auto-transcript)"
-                            >
-                                🎙️
-                            </button>
-
-                            <div className="flex-1 relative">
-                                <input
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 focus-within:bg-white focus-within:border-[#0A66C2] focus-within:ring-2 focus-within:ring-[#0A66C2]/15 transition-all">
+                                <textarea
                                     ref={composerInputRef}
-                                    type="text"
+                                    rows={2}
                                     value={messageInput}
                                     onChange={(e) => {
                                         const val = e.target.value;
@@ -6562,64 +6511,145 @@ export function MessagingView({
                                         const mMatch = val.match(/@([A-Za-z0-9._\s]*)$/);
                                         setMentionQuery(mMatch ? mMatch[1] : null);
                                         sendComposerTypingPing(Boolean(val.trim()));
+                                        e.currentTarget.style.height = 'auto';
+                                        e.currentTarget.style.height = `${Math.min(
+                                            e.currentTarget.scrollHeight,
+                                            180
+                                        )}px`;
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            if ((messageInput.trim() || pendingAttachment) && !isSending) {
+                                                e.currentTarget.form?.requestSubmit();
+                                            }
+                                        }
                                     }}
                                     placeholder={`Message ${activeThread.title} (type @ to mention)...`}
-                                    className="w-full bg-slate-100 focus:bg-white border border-slate-200 focus:border-[#0A66C2] rounded-xl py-3 px-4 text-sm font-medium text-slate-900 focus:outline-none transition-all"
+                                    className="w-full min-h-[60px] max-h-[180px] resize-none bg-transparent px-4 pt-3 pb-2 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none leading-relaxed overflow-y-auto"
                                 />
+
+                                <div className="flex items-center justify-between gap-2 px-2.5 pb-2.5 pt-1.5 border-t border-slate-200/70">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowAttachmentMenu((prev) => !prev);
+                                                setShowEmojiBar(false);
+                                            }}
+                                            className={`h-8 w-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                                                showAttachmentMenu || pendingAttachment
+                                                    ? 'bg-blue-50 border-[#0A66C2] text-[#0A66C2]'
+                                                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                                            }`}
+                                            title="Attach Blueprint, Spec Sheet, or Verified Resume"
+                                        >
+                                            📎
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowEmojiBar((prev) => !prev);
+                                                setShowAttachmentMenu(false);
+                                            }}
+                                            className={`h-8 w-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                                                showEmojiBar
+                                                    ? 'bg-blue-50 border-[#0A66C2] text-[#0A66C2]'
+                                                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                                            }`}
+                                            title="Insert Emoji"
+                                        >
+                                            😊
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowQuickRepliesBar((prev) => !prev);
+                                            }}
+                                            className={`h-8 w-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                                                showQuickRepliesBar
+                                                    ? 'bg-blue-50 border-[#0A66C2] text-[#0A66C2]'
+                                                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                                            }`}
+                                            title="QUICK-REPLY — Toggle Instant Smart Replies"
+                                        >
+                                            ⚡
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setRichComposerMode('voice')}
+                                            className="h-8 w-8 rounded-lg border bg-white border-slate-200 text-slate-600 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 flex items-center justify-center transition-all cursor-pointer"
+                                            title="Record Live Voice Message (with auto-transcript)"
+                                        >
+                                            🎙️
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (!scheduleSendDateTime) {
+                                                    const d = new Date(Date.now() + 3600000);
+                                                    const localIso = new Date(
+                                                        d.getTime() - d.getTimezoneOffset() * 60000
+                                                    )
+                                                        .toISOString()
+                                                        .slice(0, 16);
+                                                    setScheduleSendDateTime(localIso);
+                                                }
+                                                setShowScheduleSendPopover((v) => !v);
+                                            }}
+                                            className={`relative h-8 w-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                                                showScheduleSendPopover
+                                                    ? 'bg-blue-50 border-[#0A66C2] text-[#0A66C2]'
+                                                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                                            }`}
+                                            title="Schedule Send (deliver message later)"
+                                        >
+                                            ⏰
+                                            {queuedScheduledCount > 0 && (
+                                                <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-[#0A66C2] text-[9px] font-extrabold text-white flex items-center justify-center">
+                                                    {queuedScheduledCount}
+                                                </span>
+                                            )}
+                                        </button>
+
+                                        <span className="hidden xl:inline text-[11px] text-slate-400 ml-1">
+                                            Enter to send · Shift+Enter for new line
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        {messageInput.trim() && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    saveDraftForThread(activeThread.id, messageInput, true)
+                                                }
+                                                className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-extrabold text-xs transition-all shrink-0 cursor-pointer"
+                                                title="Save message to your Drafts folder"
+                                            >
+                                                📝 Save Draft
+                                            </button>
+                                        )}
+
+                                        <button
+                                            type="submit"
+                                            disabled={(!messageInput.trim() && !pendingAttachment) || isSending}
+                                            className="px-4 py-1.5 rounded-xl bg-[#0A66C2] hover:bg-[#004182] disabled:bg-slate-200 disabled:text-slate-400 font-black text-xs uppercase tracking-wider transition-all shadow-sm shrink-0 cursor-pointer"
+                                            style={
+                                                (!messageInput.trim() && !pendingAttachment) || isSending
+                                                    ? undefined
+                                                    : { color: '#FFFFFF' }
+                                            }
+                                        >
+                                            {isSending ? 'Sending...' : 'Send ➤'}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    if (!scheduleSendDateTime) {
-                                        const d = new Date(Date.now() + 3600000);
-                                        const localIso = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-                                            .toISOString()
-                                            .slice(0, 16);
-                                        setScheduleSendDateTime(localIso);
-                                    }
-                                    setShowScheduleSendPopover((v) => !v);
-                                }}
-                                className={`relative p-2.5 rounded-xl border transition-all cursor-pointer ${
-                                    showScheduleSendPopover
-                                        ? 'bg-blue-50 border-[#0A66C2] text-[#0A66C2]'
-                                        : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
-                                }`}
-                                title="Schedule Send (deliver message later)"
-                            >
-                                ⏰
-                                {queuedScheduledCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-[#0A66C2] text-[9px] font-extrabold text-white flex items-center justify-center">
-                                        {queuedScheduledCount}
-                                    </span>
-                                )}
-                            </button>
-
-                            {messageInput.trim() && (
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        saveDraftForThread(activeThread.id, messageInput, true)
-                                    }
-                                    className="px-3.5 py-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-extrabold text-xs transition-all shrink-0 cursor-pointer"
-                                    title="Save message to your Drafts folder"
-                                >
-                                    📝 Save Draft
-                                </button>
-                            )}
-
-                            <button
-                                type="submit"
-                                disabled={(!messageInput.trim() && !pendingAttachment) || isSending}
-                                className="px-5 py-3 rounded-xl bg-[#0A66C2] hover:bg-[#004182] disabled:bg-slate-200 disabled:text-slate-400 font-black text-xs uppercase tracking-wider transition-all shadow-sm shrink-0"
-                                style={
-                                    (!messageInput.trim() && !pendingAttachment) || isSending
-                                        ? undefined
-                                        : { color: '#FFFFFF' }
-                                }
-                            >
-                                {isSending ? 'Sending...' : 'Send ➤'}
-                            </button>
                         </form>
                         </>
                         )}
