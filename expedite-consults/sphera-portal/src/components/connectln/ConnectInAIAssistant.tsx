@@ -445,7 +445,10 @@ export function ConnectInAIAssistant({
       // Check for localized responses first
       const localized = getLocalizedAIAnswer(promptText, language, currentUser)
       if (localized) {
-        setMessages(prev => [...prev, localized as ChatMessage])
+        setMessages(prev => [
+          ...prev,
+          { ...(localized as ChatMessage), source: aiPrivacyMode === 'private' ? 'private' : 'demo' }
+        ])
         setIsTyping(false)
         return
       }
@@ -459,6 +462,7 @@ export function ConnectInAIAssistant({
         const zeroDayReply: ChatMessage = {
           id: `ai_${Date.now()}`,
           sender: 'assistant',
+          source: aiPrivacyMode === 'private' ? 'private' : 'demo',
           text: buildNoctisZeroDayReport(promptText),
           suggestedCards: [
             {
@@ -485,12 +489,14 @@ export function ConnectInAIAssistant({
       // ConnectLn platform Q&A: answer from the comprehensive knowledge base (Home to Pulse tabs + features)
       const platformAnswer = buildConnectLnPlatformAnswer(promptText)
       const kbTopic = findConnectLnTopic(promptText)
+      const isWorkflowTaskPrompt = /\b(draft|update|recap|triage|unread|summarize|prioritiz|rfp|bid|pipeline|escrow|invoice|interview|training digest|playlist)\b/.test(lower)
       const asksPlatform = /connect\s?l[ni]|this (app|platform|site)|home\s+to\s+pulse|all\s+tabs?|every\s+tab|how (do|does|can|to)|where (is|can|do)|what (is|are|does)|tell me (about|everything)|everything about|features?/.test(lower)
-      if (platformAnswer && (asksPlatform || platformAnswer.title.includes('Home to Pulse') || kbTopic)) {
+      if (!isWorkflowTaskPrompt && platformAnswer && (asksPlatform || platformAnswer.title.includes('Home to Pulse') || kbTopic)) {
         const wantsAll = /everything|all features|overview|full tour|tour|home\s+to\s+pulse|all\s+tabs|every\s+tab/.test(lower)
         const topicReply: ChatMessage = {
           id: `ai_${Date.now()}`,
           sender: 'assistant',
+          source: aiPrivacyMode === 'private' ? 'private' : 'demo',
           text: wantsAll
             ? `📘 **ConnectLn — Complete Platform Overview (Home to Pulse Tabs)**\n\n${connectLnOverview()}`
             : `📘 **${platformAnswer.title}**\n\n${platformAnswer.answer}`,
