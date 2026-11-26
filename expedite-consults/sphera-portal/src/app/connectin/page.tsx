@@ -570,9 +570,17 @@ export default function ConnectLnPage() {
 
   const buildFeedPostFromHarvestedItem = (item: HarvestedMediaItem): Post => {
     const postId = `harvest_post_${item.id}`
+    const parsedSyncMs = Date.parse(item.publishedAtIso || item.harvestedAtIso || "")
+    const syncedAtMs =
+      Number.isFinite(parsedSyncMs) && parsedSyncMs > 0
+        ? parsedSyncMs
+        : (Number(item.minuteSlot) || 0) * 60_000
     return {
       id: postId,
       isUserCreated: false,
+      feedCategory: "for_you",
+      feedSubCategory: item.category,
+      createdAtIso: item.publishedAtIso || item.harvestedAtIso || new Date().toISOString(),
       author: {
         id: `hv_${item.minuteSlot}`,
         name: item.organization || item.authorName,
@@ -619,6 +627,7 @@ export default function ConnectLnPage() {
       userReaction: null,
       isSaved: false,
       comments: [],
+      ...(syncedAtMs ? ({ syncedAtMs } as Record<string, any>) : {}),
     }
   }
 
@@ -739,23 +748,20 @@ export default function ConnectLnPage() {
       setHarvestedHomeItems(homeItems)
       if (homeItems.length === 0) return
 
-      const candidates = homeItems.slice(0, 24)
+      const candidates = homeItems.slice(0, 48)
+      const freshById = new Map<string, Post>()
+      for (const item of candidates) {
+        const built = buildFeedPostFromHarvestedItem(item)
+        freshById.set(built.id, built)
+      }
 
       setPosts((prev) => {
-        // Strictly additive: preserve all existing unique posts and never delete old videos!
+        // Strictly additive: preserve all existing unique posts while refreshing synced metadata & placing newly published videos on top!
         const seenSigs = new Set<string>()
         const seenIds = new Set<string>()
-        const preservedPrev: Post[] = []
-        for (const p of prev) {
-          if (!p || !p.id || seenIds.has(p.id)) continue
-          const sig = getPostMediaDedupeSignature(p)
-          if (p.id.startsWith("harvest_post_") && seenSigs.has(sig)) continue
-          seenIds.add(p.id)
-          seenSigs.add(sig)
-          preservedPrev.push(p)
-        }
-
         const freshAdditivePosts: Post[] = []
+        const preservedPrev: Post[] = []
+
         for (const item of candidates) {
           const candidatePost = buildFeedPostFromHarvestedItem(item)
           const sig = getPostMediaDedupeSignature(candidatePost)
@@ -764,6 +770,15 @@ export default function ConnectLnPage() {
             seenIds.add(candidatePost.id)
             seenSigs.add(sig)
           }
+        }
+
+        for (const p of prev) {
+          if (!p || !p.id || seenIds.has(p.id)) continue
+          const sig = getPostMediaDedupeSignature(p)
+          if (p.id.startsWith("harvest_post_") && seenSigs.has(sig)) continue
+          seenIds.add(p.id)
+          seenSigs.add(sig)
+          preservedPrev.push(freshById.get(p.id) || p)
         }
 
         const nextPosts = [...freshAdditivePosts, ...preservedPrev].slice(0, 500)
@@ -2657,41 +2672,58 @@ export default function ConnectLnPage() {
     setPosts(loadStoredPosts(updatedUser))
   }
 
+  const isAllEnclavesSelected =
+    selectedEnclaves.includes('all') || selectedEnclaves.length >= PROFESSION_ENCLAVES.length
+  const hasEnclaveLiveSyncedVideo = combinedFeedPosts.some(
+    (p) =>
+      p.id?.startsWith('harvest_post_') &&
+      p.media?.type === 'video' &&
+      (isAllEnclavesSelected || selectedEnclaves.includes(p.professionEnclave || ''))
+  )
+
   const filteredPosts = combinedFeedPosts
     .filter(post => {
       // Respect post privacy: only public / Anyone posts (or 1st-degree connection posts) are eligible via following
+      const isLiveHarvestedPost = Boolean(post.id?.startsWith('harvest_post_'))
       const isUserOwnPost = Boolean(
-        post.isUserCreated ||
-          post.id?.startsWith('harvest_post_') ||
-          post.author?.connectionDegree === 'You'
+        !isLiveHarvestedPost &&
+          (post.isUserCreated ||
+            post.id?.startsWith('user_post_') ||
+            post.id?.startsWith('post_story_share_') ||
+            post.author?.connectionDegree === 'You')
       )
       const isFollowedAuthor = Boolean(
         post.author?.isFollowing ||
         followedNamesSet.has(normalizeFollowKey(post.author?.name))
       )
-      if (!isUserOwnPost && post.visibility === 'Connections' && post.author?.connectionDegree !== '1st') {
+      if (!isUserOwnPost && !isLiveHarvestedPost && post.visibility === 'Connections' && post.author?.connectionDegree !== '1st') {
         return false
       }
 
-      // 0. Home Screen houses playable profession videos scoped strictly to the logged-in user's profession & active enclave
+      // 0. Home Screen houses playable profession & live-synced videos scoped to the logged-in user's profession & active enclave
       const isActiveProfTiered = Boolean(
         activeProfId &&
         (post.professionId === activeProfId || post.targetProfessions?.includes(activeProfId))
       )
       const isPlayableVideoPost = post.media?.type === 'video'
       const postEnclave = post.professionEnclave || 'tech_software'
-      const isAllSelected = selectedEnclaves.includes('all') || selectedEnclaves.length >= PROFESSION_ENCLAVES.length
+      const isAllSelected = isAllEnclavesSelected
       const matchesSelectedEnclave = postEnclave === 'all' || selectedEnclaves.includes(postEnclave)
+      const isLiveSyncedEligible = Boolean(
+        isLiveHarvestedPost &&
+          isPlayableVideoPost &&
+          (isAllSelected || matchesSelectedEnclave || !hasEnclaveLiveSyncedVideo)
+      )
       const isProfessionCatalogVideo = Boolean(
         post.isProfessionTiered &&
           isPlayableVideoPost &&
           (isAllSelected || isActiveProfTiered || matchesSelectedEnclave)
       )
       if (!isAllSelected && activeFeedCategory === 'for_you' && !searchQuery && !selectedTagFilter) {
-        if (!isUserOwnPost && !isFollowedAuthor && !isActiveProfTiered && !isProfessionCatalogVideo) {
+        if (!isUserOwnPost && !isFollowedAuthor && !isActiveProfTiered && !isProfessionCatalogVideo && !isLiveSyncedEligible) {
           return false
         }
-      } else if (!isAllSelected && !isUserOwnPost && !isFollowedAuthor && !isActiveProfTiered && !isProfessionCatalogVideo) {
+      } else if (!isAllSelected && !isUserOwnPost && !isFollowedAuthor && !isActiveProfTiered && !isProfessionCatalogVideo && !isLiveSyncedEligible) {
         if (!matchesSelectedEnclave) {
           return false
         }
@@ -2762,15 +2794,25 @@ export default function ConnectLnPage() {
     })
     .sort((a, b) => {
       const mappedActiveKey = mapHandyman250IdToProfessionVideoKey(activeProfId)
+      const getSyncedTs = (p: Post) => {
+        const direct = Number((p as any).syncedAtMs || 0)
+        if (direct > 0) return direct
+        const iso = Date.parse(String(p.createdAtIso || ''))
+        return Number.isFinite(iso) ? iso : 0
+      }
       const score = (p: Post) => {
         const isVideoBonus = p.media?.type === 'video' ? 15 : -10
-        if (activeProfId && (p.professionId === activeProfId || p.targetProfessions?.includes(activeProfId))) {
-          const primaryBoost =
-            p.id === 'post_dstrike_wheel_masterclass' || p.id?.startsWith('post_prof_video_') ? 5 : 0
-          return 100 + primaryBoost + isVideoBonus
-        }
-        if (mappedActiveKey && (p.professionId === mappedActiveKey || p.targetProfessions?.includes(mappedActiveKey))) {
-          return 65 + isVideoBonus
+        const isLiveSynced = Boolean(
+          p.id?.startsWith('harvest_post_cln_custom_') || p.id?.startsWith('harvest_post_cln_live_')
+        )
+        const matchesUserEnclave = Boolean(
+          p.professionEnclave &&
+            (userData?.professionEnclave === p.professionEnclave ||
+              selectedEnclaves.includes(p.professionEnclave))
+        )
+        // Fresh 24h live-synced videos matching the user's selected profession enclave rise straight to the top
+        if (isLiveSynced && matchesUserEnclave) {
+          return 145 + isVideoBonus
         }
         if (
           p.id?.startsWith('user_post_') ||
@@ -2783,20 +2825,30 @@ export default function ConnectLnPage() {
                 !p.id.startsWith('post_prof_') &&
                 p.id !== 'post_poll_1')))
         ) {
-          return 55 + isVideoBonus
+          return 125 + isVideoBonus
         }
-        if (userData?.professionEnclave && p.professionEnclave === userData.professionEnclave) {
-          return 30 + isVideoBonus
+        if (activeProfId && (p.professionId === activeProfId || p.targetProfessions?.includes(activeProfId))) {
+          const primaryBoost =
+            p.id === 'post_dstrike_wheel_masterclass' || p.id?.startsWith('post_prof_video_') ? 5 : 0
+          return 100 + primaryBoost + isVideoBonus
         }
-        if (p.id?.startsWith('harvest_post_cln_custom_') || p.id?.startsWith('harvest_post_cln_live_')) {
-          return 20 + isVideoBonus
+        if (mappedActiveKey && (p.professionId === mappedActiveKey || p.targetProfessions?.includes(mappedActiveKey))) {
+          return 85 + isVideoBonus
+        }
+        if (isLiveSynced) {
+          return 70 + isVideoBonus
+        }
+        if (matchesUserEnclave) {
+          return 45 + isVideoBonus
         }
         if (p.id?.startsWith('harvest_post_') || p.isProfessionTiered) {
-          return 15 + isVideoBonus
+          return 20 + isVideoBonus
         }
         return isVideoBonus
       }
-      return score(b) - score(a)
+      const diff = score(b) - score(a)
+      if (diff !== 0) return diff
+      return getSyncedTs(b) - getSyncedTs(a)
     })
 
   const isUserCreatedFeedPost = (p: Post) =>
@@ -3297,7 +3349,7 @@ export default function ConnectLnPage() {
                       </span>
                     </span>
                     <span className="shrink-0 rounded-full bg-[#0A66C2] px-2.5 py-0.5 text-[10px] font-bold text-white">
-                      Profession Tiered
+                      Live 24h Sync · Tiered
                     </span>
                   </div>
                   {communityFeedPosts.slice(0, 3).map((post) => (

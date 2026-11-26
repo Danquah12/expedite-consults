@@ -392,8 +392,15 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     name: user?.name
   })
 
-  const primaryVideo = strictVideos[0]
-  const secondaryVideo = strictVideos[1] || strictVideos[0]
+  const dayRotationSeed = Math.floor(Date.now() / 86_400_000)
+  const rotationOffset = strictVideos.length > 0 ? dayRotationSeed % strictVideos.length : 0
+  const rotatedVideos =
+    rotationOffset > 0
+      ? [...strictVideos.slice(rotationOffset), ...strictVideos.slice(0, rotationOffset)]
+      : strictVideos
+
+  const primaryVideo = rotatedVideos[0]
+  const secondaryVideo = rotatedVideos[1] || rotatedVideos[0]
 
   const mappedPackKey = mapHandyman250IdToProfessionVideoKey(resolvedProf.id)
   const pack =
