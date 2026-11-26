@@ -264,6 +264,371 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     }
   },
   {
+    id: 'prod_veritaslens_blindspot',
+    name: 'VeritasLens — Blindspot Briefing & Unspun Fact Engine',
+    tagline: 'Cross-spectrum media bias breakdown (Left / Center / Right), wire-verified Unspun Facts & shareable Docket Briefings',
+    category: 'Software',
+    subCategory: 'AI',
+    launchpadCategory: 'ai',
+    isLaunchpadDeployed: true,
+    icon: '🔍',
+    badge: '🚨 Blindspot Briefing Live',
+    rating: 4.98,
+    reviewsCount: 312,
+    activeUsersCount: '22,400+ Analysts & Readers',
+    pricing: {
+      displayPrice: 'Free / Pro Access',
+      billingPeriod: 'cloud platform',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'Expedite Consults',
+      logo: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'VeritasLens delivers real-time Blindspot Briefings showing Left/Center/Right coverage splits (e.g., "Dolly Parton was the one thing most Americans could agree on" — Left 32% | Center 46% | Right 22%) paired with wire-verified Associated Press Unspun Facts and shareable Docket links.',
+    features: [
+      { title: 'Blindspot Coverage Splits', desc: 'Instant Left / Center / Right media distribution analysis on breaking cultural, policy, and global stories.' },
+      { title: 'Wire-Verified Unspun Facts', desc: 'Distills primary Associated Press and wire reporting free from partisan framing.' },
+      { title: 'Shareable Docket Briefings', desc: 'One-click WhatsApp and workspace docket cards linking directly to the live VeritasLens briefing.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://portal.expediteconsults.com/veritaslens',
+    liveUrl: 'https://portal.expediteconsults.com/veritaslens',
+    isVercelLive: true,
+    architecture: {
+      title: 'Multi-Source Media Framing & Fact Graph',
+      summary: 'Ingests cross-spectrum coverage and correlates primary AP wire facts into structured Blindspot Briefings.',
+      layers: ['VeritasLens Portal Edge App', 'Spectrum Classifier & Split Analyzer', 'Unspun Fact Docket Engine'],
+      latency: '< 35ms Briefing Lookup',
+      dataPrivacy: 'Public Wire Attribution & Audit Trail'
+    },
+    integrations: ['ConnectLn Market', 'ConnectLn News', 'WhatsApp Briefings', 'Expedite Portal'],
+    security: {
+      compliance: ['SOC 2 Type II', 'Source Provenance Verification'],
+      encryption: 'TLS 1.3',
+      isolation: 'Read-Only Verified Wire Feeds'
+    },
+    pricingTiers: [
+      {
+        name: 'VeritasLens Open Docket',
+        price: '$0',
+        period: 'instant launch',
+        description: 'Immediate browser access to VeritasLens Blindspot Briefings and Unspun Fact dockets.',
+        features: ['Left / Center / Right Coverage Splits', 'Associated Press Unspun Facts', 'Shareable Docket Links'],
+        recommended: true,
+        ctaText: 'Open VeritasLens'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Open https://portal.expediteconsults.com/veritaslens to inspect live Blindspot Briefings and Unspun Facts.',
+      apiEndpoints: ['https://portal.expediteconsults.com/veritaslens'],
+      sdkSupport: ['Web Browser', 'ConnectLn Market Embed']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime SLA',
+      channel: 'VeritasLens Editorial & Intelligence Desk',
+      responseHours: '< 2 Hours'
+    }
+  },
+  {
+    id: 'prod_campussync_hub',
+    name: 'CampusSync | College Community Hub',
+    tagline: 'Verified campus communities, student organizations, academic groups, events & peer study rooms',
+    category: 'Software',
+    subCategory: 'Business',
+    launchpadCategory: 'campus',
+    isLaunchpadDeployed: true,
+    icon: '🎓',
+    badge: '🎓 Campus Hub Live',
+    rating: 4.95,
+    reviewsCount: 418,
+    activeUsersCount: '31,000+ Students & Faculty',
+    pricing: {
+      displayPrice: 'Free for Campus',
+      billingPeriod: 'cloud platform',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'Expedite Consults',
+      logo: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'CampusSync connects college students, alumni mentors, academic clubs, and campus events inside one fast community hub integrated with the Expedite Consults and ConnectLn ecosystem.',
+    features: [
+      { title: 'Verified College Communities', desc: 'Dedicated spaces for universities, cohorts, study groups, and student organizations.' },
+      { title: 'Campus Events & Mentorship', desc: 'Coordinate live study sessions, workshops, career fairs, and alumni networking.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://expedite-consults.vercel.app/campus',
+    liveUrl: 'https://expedite-consults.vercel.app/campus',
+    isVercelLive: true,
+    architecture: {
+      title: 'Federated Campus Community Runtime',
+      summary: 'Low-latency web portal connecting campus cohorts, event feeds, and student mentorship rooms.',
+      layers: ['CampusSync Web App', 'Cohort & Event Directory', 'ConnectLn Identity Bridge'],
+      latency: '< 30ms Edge Load',
+      dataPrivacy: 'Role-Scoped Campus Membership'
+    },
+    integrations: ['ConnectLn', 'ConnectLn Learn', 'VeritasLens', 'TruePlace™'],
+    security: {
+      compliance: ['FERPA Aligned', 'SOC 2 Type II'],
+      encryption: 'TLS 1.3 + AES-256',
+      isolation: 'Per-Campus Tenant Isolation'
+    },
+    pricingTiers: [
+      {
+        name: 'Campus Community Access',
+        price: '$0',
+        period: 'instant launch',
+        description: 'Instant entry to CampusSync College Community Hub.',
+        features: ['College Groups & Clubs', 'Event & Study Coordination', 'Alumni & Peer Mentorship'],
+        recommended: true,
+        ctaText: 'Open CampusSync'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Open https://expedite-consults.vercel.app/campus to browse active campus hubs and communities.',
+      apiEndpoints: ['https://expedite-consults.vercel.app/campus'],
+      sdkSupport: ['Web Browser', 'Mobile Web']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime SLA',
+      channel: 'CampusSync Support Desk',
+      responseHours: '< 4 Hours'
+    }
+  },
+  {
+    id: 'prod_vibetok_clinic',
+    name: 'VibeTok Clinic — Interactive Sparks & Media Hub',
+    tagline: 'Shareable short-form video sparks, choir & performance clips, interactive clinics & instant playback',
+    category: 'Software',
+    subCategory: 'Productivity',
+    launchpadCategory: 'marketplace',
+    isLaunchpadDeployed: true,
+    icon: '🎬',
+    badge: '🎬 VibeTok Live',
+    rating: 4.94,
+    reviewsCount: 265,
+    activeUsersCount: '18,900+ Creators & Performers',
+    pricing: {
+      displayPrice: 'Free / Creator Pro',
+      billingPeriod: 'cloud clinic',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'VibeTok Clinic',
+      logo: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'VibeTok Clinic powers interactive short-form sparks, music & hymn choir performances, creator clinics, and shareable video sessions playable in one click across web and mobile.',
+    features: [
+      { title: 'Instant Spark Playback', desc: 'Deep-linked short-form video sparks and live ensemble sessions with zero install friction.' },
+      { title: 'Interactive Creator Clinics', desc: 'Share curated performance rooms and practice clinics across ConnectLn communities.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://comet-fair-turbo-clover.grok.me/?v=C2arm5ydeJc&p=mu-hymn-choir-grace',
+    liveUrl: 'https://comet-fair-turbo-clover.grok.me/?v=C2arm5ydeJc&p=mu-hymn-choir-grace',
+    isVercelLive: true,
+    architecture: {
+      title: 'Interactive Media Spark Streamer',
+      summary: 'Deep-linked media player and clinic session router supporting adaptive playback.',
+      layers: ['VibeTok Edge Player', 'Adaptive Spark Delivery', 'Creator Playlist Router'],
+      latency: '< 50ms Spark Start',
+      dataPrivacy: 'HTTPS Encrypted Delivery'
+    },
+    integrations: ['ConnectLn Media', 'ConnectLn Market', 'Noctis Clinic'],
+    security: {
+      compliance: ['HTTPS Strict Transport', 'Safe Media Sandboxing'],
+      encryption: 'TLS 1.3',
+      isolation: 'Origin-Isolated Media Streams'
+    },
+    pricingTiers: [
+      {
+        name: 'Open Clinic Access',
+        price: '$0',
+        period: 'instant play',
+        description: 'Watch and share VibeTok Clinic sparks immediately in the browser.',
+        features: ['Featured Music & Choir Sparks', 'Direct Share Links', 'Cross-Device Playback'],
+        recommended: true,
+        ctaText: 'Open VibeTok Clinic'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Open https://comet-fair-turbo-clover.grok.me/?v=C2arm5ydeJc&p=mu-hymn-choir-grace to watch the featured VibeTok Clinic session.',
+      apiEndpoints: ['https://comet-fair-turbo-clover.grok.me/?v=C2arm5ydeJc&p=mu-hymn-choir-grace'],
+      sdkSupport: ['Web Browser', 'Mobile Web']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime SLA',
+      channel: 'VibeTok Clinic Community Support',
+      responseHours: '< 4 Hours'
+    }
+  },
+  {
+    id: 'prod_connectln_network_invite',
+    name: 'ConnectLn — Verified Tickets, Vouches & Real Work',
+    tagline: 'Trusted professional network built on verified tickets, peer vouches, and direct real-work collaboration',
+    category: 'Enterprise Solutions',
+    subCategory: 'SaaS',
+    launchpadCategory: 'career',
+    isLaunchpadDeployed: true,
+    icon: '🤝',
+    badge: '🤝 Verified Network Live',
+    rating: 5.0,
+    reviewsCount: 540,
+    activeUsersCount: '42,000+ Verified Practitioners',
+    pricing: {
+      displayPrice: 'Free / Pro Network',
+      billingPeriod: 'cloud platform',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'ConnectLn / Expedite Consults',
+      logo: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Connect on ConnectLn through Kasied1’s verified referral link for provable work tickets, peer vouches, encrypted calling with Noctis Notetaker, and real-world project collaboration.',
+    features: [
+      { title: 'Verified Tickets & Peer Vouches', desc: 'Replace unverified resumes with cryptographically backed work dossiers and peer vouches.' },
+      { title: 'Direct Referral Onboarding', desc: 'Instant referral-tracked sign-in linking you directly with inviting network peers.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://connectln.vercel.app/connectin-login?ref=kasied1&cid=cin_mvcm6xu3',
+    liveUrl: 'https://connectln.vercel.app/connectin-login?ref=kasied1&cid=cin_mvcm6xu3',
+    isVercelLive: true,
+    architecture: {
+      title: 'Zero-Trust Verified Work Mesh',
+      summary: 'Connects identity, peer vouches, E2EE communications, and live workspace collaboration.',
+      layers: ['ConnectLn Login & Referral Gateway', 'Peer Vouch & Ticket Ledger', 'E2EE Mail, Chat & Call Engine'],
+      latency: '< 25ms Edge Auth',
+      dataPrivacy: 'Zero-Trust Identity & E2EE Media'
+    },
+    integrations: ['ConnectLn 360 Portal', 'SkillHands', 'CampusSync', 'VeritasLens'],
+    security: {
+      compliance: ['SOC 2 Type II', 'FIDO2 / MFA Verified'],
+      encryption: 'TLS 1.3 + AES-256-GCM',
+      isolation: 'Session-Private SSO & Enclave RBAC'
+    },
+    pricingTiers: [
+      {
+        name: 'Verified Member Access',
+        price: '$0',
+        period: 'instant join',
+        description: 'Join ConnectLn via verified referral invitation for tickets, vouches, and real work.',
+        features: ['Verified Work Tickets', 'Peer Vouch Network', 'Encrypted Calls & Chat'],
+        recommended: true,
+        ctaText: 'Join ConnectLn'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Open https://connectln.vercel.app/connectin-login?ref=kasied1&cid=cin_mvcm6xu3 to connect directly on ConnectLn.',
+      apiEndpoints: ['https://connectln.vercel.app/connectin-login?ref=kasied1&cid=cin_mvcm6xu3'],
+      sdkSupport: ['Web Browser', 'ConnectLn PWA']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime SLA',
+      channel: 'ConnectLn Member Support',
+      responseHours: '< 2 Hours'
+    }
+  },
+  {
+    id: 'prod_skillhands',
+    professionEnclave: 'trades_construction',
+    name: 'SkillHands Vocational Trade Hub',
+    tagline: 'Hands-on trade task platform, verified craftsman matching & vocational apprenticeships',
+    category: 'Services',
+    subCategory: 'Trades & Vocational Network',
+    launchpadCategory: 'trades',
+    isLaunchpadDeployed: true,
+    icon: '🛠️',
+    badge: '🔨 Live Trade Hub',
+    rating: 4.97,
+    reviewsCount: 380,
+    activeUsersCount: '12,500+ Verified Craftsmen',
+    pricing: {
+      displayPrice: '$79',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'SkillHands Vocational Guild',
+      logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'SkillHands is the dedicated marketplace connecting verified carpenters, electricians, plumbers, masons, and mechanics with high-value residential and commercial contracts.',
+    features: [
+      { title: 'Verified Trade Credentials', desc: 'Validates state licensing, OSHA cards, insurance certificates, and photographic proof of prior builds.' },
+      { title: 'Direct Subcontractor Matching', desc: 'General contractors post commercial bid packages and book specialized craft crews directly.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://skillhands-client.vercel.app',
+    liveUrl: 'https://skillhands-client.vercel.app',
+    isVercelLive: true,
+    architecture: {
+      title: 'Real-Time Job Dispatch Bus',
+      summary: 'Geolocation-based matching engine pairing certified tradesmen with local project specifications.',
+      layers: ['Craftsman Mobile Client', 'Contractor Dispatch Engine', 'Escrow Payment Pipeline'],
+      latency: 'Instant contractor bidding',
+      dataPrivacy: 'Encrypted trade credentials.'
+    },
+    integrations: ['Procore', 'QuickBooks', 'Buildertrend', 'Stripe Connect'],
+    security: {
+      compliance: ['OSHA Compliant', 'State Licensing Boards Verified'],
+      encryption: 'AES-256',
+      isolation: 'Secure Escrow Accounts'
+    },
+    pricingTiers: [
+      {
+        name: 'Master Craftsman Listing',
+        price: '$79',
+        period: '/ month',
+        description: 'Unlimited bid submissions, featured artisan directory placement, and instant milestone escrow.',
+        features: ['Unlimited Bid Submissions', 'Verified Guild Badge', 'Lien Waiver Automation', 'Fast-Pay Escrow Draws'],
+        ctaText: 'Join Trade Hub'
+      }
+    ],
+    reviews: [
+      {
+        author: 'David Miller',
+        role: 'Master Timber Carpenter',
+        company: 'Heritage Guild',
+        avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'SkillHands brought our timber framing crew two $300k+ custom home contracts within our first month.',
+        date: 'August 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Register your license and submit three photographic portfolio builds to unlock verified status.',
+      apiEndpoints: ['POST /api/bids/create', 'GET /api/contractors/:id'],
+      sdkSupport: ['Web', 'Mobile App']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Trade Dispatch Helpline & SMS',
+      responseHours: '< 15 Minutes'
+    }
+  },
+  {
     id: 'prod_trueplace_hometruth',
     name: 'TruePlace HomeTruth™ — Carfax for Homes',
     tagline: 'Property history dossier, structural/title verification, neighborhood risk signals & HomeTruth™ inspection audits',
@@ -2528,86 +2893,6 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       sla: '99.9% Uptime',
       channel: 'Member Helpdesk',
       responseHours: '< 4 Hours'
-    }
-  },
-  {
-    id: 'prod_skillhands',
-    professionEnclave: 'trades_construction',
-    name: 'SkillHands Vocational Trade Hub',
-    tagline: 'Hands-on trade task platform, verified craftsman matching & vocational apprenticeships',
-    category: 'Services',
-    subCategory: 'Trades & Vocational Network',
-    launchpadCategory: 'trades',
-    isLaunchpadDeployed: true,
-    icon: '🛠️',
-    badge: '🔨 Live Trade Hub',
-    rating: 4.97,
-    reviewsCount: 380,
-    activeUsersCount: '12,500+ Verified Craftsmen',
-    pricing: {
-      displayPrice: '$79',
-      billingPeriod: '/ month',
-      hasFreeTrial: true,
-      trialDays: 14
-    },
-    vendor: {
-      name: 'SkillHands Vocational Guild',
-      logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
-      isVerified: true
-    },
-    overview: 'SkillHands is the dedicated marketplace connecting verified carpenters, electricians, plumbers, masons, and mechanics with high-value residential and commercial contracts.',
-    features: [
-      { title: 'Verified Trade Credentials', desc: 'Validates state licensing, OSHA cards, insurance certificates, and photographic proof of prior builds.' },
-      { title: 'Direct Subcontractor Matching', desc: 'General contractors post commercial bid packages and book specialized craft crews directly.' }
-    ],
-    screenshots: ['https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80'],
-    demoUrl: 'https://skillhands-client.vercel.app',
-    liveUrl: 'https://skillhands-client.vercel.app',
-    isVercelLive: true,
-    architecture: {
-      title: 'Real-Time Job Dispatch Bus',
-      summary: 'Geolocation-based matching engine pairing certified tradesmen with local project specifications.',
-      layers: ['Craftsman Mobile Client', 'Contractor Dispatch Engine', 'Escrow Payment Pipeline'],
-      latency: 'Instant contractor bidding',
-      dataPrivacy: 'Encrypted trade credentials.'
-    },
-    integrations: ['Procore', 'QuickBooks', 'Buildertrend', 'Stripe Connect'],
-    security: {
-      compliance: ['OSHA Compliant', 'State Licensing Boards Verified'],
-      encryption: 'AES-256',
-      isolation: 'Secure Escrow Accounts'
-    },
-    pricingTiers: [
-      {
-        name: 'Master Craftsman Listing',
-        price: '$79',
-        period: '/ month',
-        description: 'Unlimited bid submissions, featured artisan directory placement, and instant milestone escrow.',
-        features: ['Unlimited Bid Submissions', 'Verified Guild Badge', 'Lien Waiver Automation', 'Fast-Pay Escrow Draws'],
-        ctaText: 'Join Trade Hub'
-      }
-    ],
-    reviews: [
-      {
-        author: 'David Miller',
-        role: 'Master Timber Carpenter',
-        company: 'Heritage Guild',
-        avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
-        rating: 5,
-        text: 'SkillHands brought our timber framing crew two $300k+ custom home contracts within our first month.',
-        date: 'August 2026'
-      }
-    ],
-    documentation: {
-      quickstart: 'Register your license and submit three photographic portfolio builds to unlock verified status.',
-      apiEndpoints: ['POST /api/bids/create', 'GET /api/contractors/:id'],
-      sdkSupport: ['Web', 'Mobile App']
-    },
-    caseStudies: [],
-    support: {
-      sla: '99.9% Uptime',
-      channel: 'Trade Dispatch Helpline & SMS',
-      responseHours: '< 15 Minutes'
     }
   },
   {

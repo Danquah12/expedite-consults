@@ -266,6 +266,11 @@ export function MarketplaceView({
       p.id === 'prod_trueplace_homeos' ||
       p.id === 'prod_trueplace_hometruth' ||
       p.id === 'prod_trueplace_housing_passport' ||
+      p.id === 'prod_veritaslens_blindspot' ||
+      p.id === 'prod_campussync_hub' ||
+      p.id === 'prod_vibetok_clinic' ||
+      p.id === 'prod_connectln_network_invite' ||
+      p.id === 'prod_skillhands' ||
       p.id === 'prod_aagiis_federal_rmf' ||
       p.id === 'prod_expedite_strike_dast_engine' ||
       p.id === 'prod_expedite_strike_dast_landing' ||
