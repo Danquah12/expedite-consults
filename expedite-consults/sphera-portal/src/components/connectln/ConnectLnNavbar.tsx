@@ -134,6 +134,7 @@ export function ConnectLnNavbar({
   const [liveDirectoryUsers, setLiveDirectoryUsers] = useState<Array<{
     id: string
     name: string
+    email?: string
     headline: string
     avatar: string
     capabilities: string[]
@@ -266,13 +267,14 @@ export function ConnectLnNavbar({
 
   const categorizedMoreMenu = getCategorizedMoreMenu(user.professionEnclave, isAdminUser, user.profession)
 
-  // Load all registered accounts from localStorage vault + /api/connectin/users
+  // Load all registered accounts from localStorage vault + live /api/connectin/users
   useEffect(() => {
     const loadAllUsers = () => {
       try {
         const localAccounts = loadStoredAdminUsers().map((acc, idx) => ({
           id: acc.id || `vault_${idx}_${acc.email}`,
           name: acc.name || acc.email.split("@")[0],
+          email: acc.email || "",
           headline: acc.headline || `${acc.organization || "Verified Member"} · ConnectIn`,
           avatar: acc.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(acc.name || acc.email)}&backgroundColor=0a66c2`,
           capabilities: [
@@ -294,13 +296,14 @@ export function ConnectLnNavbar({
 
     loadAllUsers()
 
-    fetch("/api/connectin/users")
+    fetch("/api/connectin/users", { cache: "no-store" })
       .then(res => res.json())
       .then(data => {
         if (data?.users && Array.isArray(data.users)) {
           const apiUsers = data.users.map((u: any) => ({
             id: u.id || `api_${u.email || u.name}`,
             name: u.name || "ConnectIn Member",
+            email: u.email || "",
             headline: u.headline || `${u.profession || "Professional"} · ${u.company || "ConnectIn"}`,
             avatar: u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.name || "Member")}&backgroundColor=0a66c2`,
             capabilities: Array.isArray(u.capabilities) && u.capabilities.length > 0
@@ -311,7 +314,10 @@ export function ConnectLnNavbar({
           setLiveDirectoryUsers(prev => {
             const combined = [...apiUsers, ...prev]
             return combined.filter((item, index, self) =>
-              index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
+              index === self.findIndex(t =>
+                t.name.toLowerCase() === item.name.toLowerCase() &&
+                (t.email || "").toLowerCase() === (item.email || "").toLowerCase()
+              )
             )
           })
         }
@@ -397,15 +403,19 @@ export function ConnectLnNavbar({
     ...suggestedPeople.map(p => ({
       id: p.id,
       name: p.name,
+      email: (p as any).email || "",
       headline: p.headline,
       avatar: p.avatar,
       capabilities: p.capabilities || [],
       role: "Member"
     })),
-    ...defaultDirectory,
-    ...allEnclaveMembers
+    ...defaultDirectory.map(d => ({ ...d, email: "" })),
+    ...allEnclaveMembers.map(m => ({ ...m, email: "" }))
   ].filter((item, index, self) =>
-    index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
+    index === self.findIndex(t =>
+      t.name.toLowerCase() === item.name.toLowerCase() &&
+      ((t as any).email || "").toLowerCase() === ((item as any).email || "").toLowerCase()
+    )
   )
 
   // Core Platform Modules & Connected Ecosystem Apps + All Enclave Modules
@@ -452,20 +462,76 @@ export function ConnectLnNavbar({
       idx === self.findIndex(m => m.id === mod.id || m.label.toLowerCase() === mod.label.toLowerCase())
   )
 
-  // Multi-word token matcher so users can search any combination of words
-  const matchesSearchTokens = (fields: (string | undefined)[], query: string) => {
-    const q = query.toLowerCase().trim()
-    if (!q) return true
-    const tokens = q.split(/\s+/).filter(Boolean)
-    const haystack = fields.filter(Boolean).join(" ").toLowerCase()
-    return tokens.every(token => haystack.includes(token))
+  const isNavbarTokenEditOne = (a: string, b: string) => {
+    if (a === b) return true
+    if (Math.abs(a.length - b.length) > 1) return false
+    let i = 0
+    let j = 0
+    let edits = 0
+    while (i < a.length && j < b.length) {
+      if (a[i] === b[j]) {
+        i += 1
+        j += 1
+      } else {
+        edits += 1
+        if (edits > 1) return false
+        if (a.length > b.length) i += 1
+        else if (b.length > a.length) j += 1
+        else {
+          i += 1
+          j += 1
+        }
+      }
+    }
+    if (i < a.length || j < b.length) edits += 1
+    return edits <= 1
   }
 
-  // Filter members by query
+  const scoreNavbarSearchTokens = (fields: (string | undefined)[], query: string): number => {
+    const q = query.toLowerCase().trim()
+    if (!q) return 1
+    const tokens = q.split(/\s+/).filter(Boolean)
+    const haystack = fields.filter(Boolean).join(" ").toLowerCase()
+    const words = haystack.split(/[^a-z0-9]+/).filter(Boolean)
+    let score = 0
+    for (const token of tokens) {
+      if (haystack.includes(token)) {
+        score += 2
+        continue
+      }
+      if (
+        token.length >= 3 &&
+        words.some(
+          (w) =>
+            isNavbarTokenEditOne(token, w) ||
+            (w.length >= token.length && isNavbarTokenEditOne(token, w.slice(0, token.length)))
+        )
+      ) {
+        score += 1
+        continue
+      }
+      return 0
+    }
+    return score
+  }
+
+  // Multi-word token matcher so users can search any combination of words
+  const matchesSearchTokens = (fields: (string | undefined)[], query: string) =>
+    scoreNavbarSearchTokens(fields, query) > 0
+
+  // Filter members by query (exact substring matches prioritized ahead of 1-typo fuzzy matches)
   const matchingMembers = (searchQuery.trim()
-    ? allSearchableMembers.filter(p =>
-        matchesSearchTokens([p.name, p.headline, p.role, ...(p.capabilities || [])], searchQuery)
-      )
+    ? allSearchableMembers
+        .map((p) => ({
+          member: p,
+          score: scoreNavbarSearchTokens(
+            [p.name, (p as any).email, p.headline, p.role, ...(p.capabilities || [])],
+            searchQuery
+          ),
+        }))
+        .filter((entry) => entry.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map((entry) => entry.member)
     : allSearchableMembers.filter(p => p.name.toLowerCase() !== (user?.name || "").toLowerCase())
   ).slice(0, searchDropdownTab === 'members' ? 12 : 5)
 

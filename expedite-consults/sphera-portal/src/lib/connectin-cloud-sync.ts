@@ -264,114 +264,243 @@ export interface CloudUserPayload {
 }
 
 /**
- * Upserts a logged-in or registered user to the global Twilio Sync Map (`connectin_users_map_v1`)
- * so that logins from ANY country or ANY device immediately appear in User Management & Network.
+ * Upserts a logged-in or registered user to both ConnectLn's primary MongoDB Atlas KV (`connectin_users_map_v1`)
+ * and Twilio Sync Map so that registrations/logins from ANY country or ANY device immediately appear in Search & Directory.
  */
 export async function upsertCloudUser(payload: CloudUserPayload): Promise<boolean> {
-  const auth = getTwilioAuthHeader()
-  if (!auth) return false
+  const key = makeUserMapKey(payload.email, payload.name, payload.id)
+  // Keep item compact (use DiceBear if custom data URL exceeds 7KB)
+  const safeAvatar =
+    payload.avatar && payload.avatar.startsWith("data:") && payload.avatar.length > 7000
+      ? `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(payload.name + "-" + payload.email)}&backgroundColor=0a66c2`
+      : payload.avatar
+  const safeCover =
+    payload.coverImage && payload.coverImage.startsWith("data:") && payload.coverImage.length > 4000
+      ? "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80"
+      : payload.coverImage
 
-  try {
-    const key = makeUserMapKey(payload.email, payload.name, payload.id)
-    // Keep item under 16KB Twilio Sync Map Item limit (use DiceBear if custom data URL exceeds 7KB)
-    const safeAvatar =
-      payload.avatar && payload.avatar.startsWith("data:") && payload.avatar.length > 7000
-        ? `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(payload.name + "-" + payload.email)}&backgroundColor=0a66c2`
-        : payload.avatar
-    const safeCover =
-      payload.coverImage && payload.coverImage.startsWith("data:") && payload.coverImage.length > 4000
-        ? "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80"
-        : payload.coverImage
+  const compactData: CloudUserPayload = {
+    ...payload,
+    email: String(payload.email || "").toLowerCase().trim(),
+    name: String(payload.name || "").trim(),
+    avatar: safeAvatar,
+    coverImage: safeCover,
+    about: (payload.about || "").slice(0, 500),
+    skills: (payload.skills || []).slice(0, 15)
+  }
 
-    const compactData: CloudUserPayload = {
-      ...payload,
-      avatar: safeAvatar,
-      coverImage: safeCover,
-      about: (payload.about || "").slice(0, 500),
-      skills: (payload.skills || []).slice(0, 15)
-    }
+  // Always write directly to primary MongoDB Atlas KV (unbounded collection, no 50-item Sync page cap)
+  const kvPromise = firebaseKvSetItem(SYNC_MAP_NAME, key, compactData).catch(() => false)
 
-    const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${SYNC_MAP_NAME}`
-    const serialized = JSON.stringify(compactData)
+  const twilioSyncWrite = async (): Promise<boolean> => {
+    const auth = getTwilioAuthHeader()
+    if (!auth) return false
+    try {
+      const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${SYNC_MAP_NAME}`
+      const serialized = JSON.stringify(compactData)
 
-    // 1. Try updating existing item first
-    const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
-      method: "POST",
-      headers: {
-        Authorization: auth,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: new URLSearchParams({ Data: serialized }).toString(),
-      signal: AbortSignal.timeout(4000)
-    })
-
-    if (updateRes.ok) return true
-
-    // 2. If item doesn't exist (404), ensure map exists and create item
-    if (updateRes.status === 404) {
-      await fetch("https://sync.twilio.com/v1/Services/default/Maps", {
+      const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
         method: "POST",
         headers: {
           Authorization: auth,
           "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: new URLSearchParams({ UniqueName: SYNC_MAP_NAME }).toString(),
-        signal: AbortSignal.timeout(4000)
-      }).catch(() => {})
-
-      const createRes = await fetch(`${baseUrl}/Items`, {
-        method: "POST",
-        headers: {
-          Authorization: auth,
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: new URLSearchParams({
-          Key: key,
-          Data: serialized
-        }).toString(),
+        body: new URLSearchParams({ Data: serialized }).toString(),
         signal: AbortSignal.timeout(4000)
       })
-      return createRes.ok
-    }
 
-    return false
-  } catch (err) {
-    console.warn("[connectin-cloud-sync] upsertCloudUser notice:", err)
-    return false
+      if (updateRes.ok) return true
+
+      if (updateRes.status === 404) {
+        await fetch("https://sync.twilio.com/v1/Services/default/Maps", {
+          method: "POST",
+          headers: {
+            Authorization: auth,
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: new URLSearchParams({ UniqueName: SYNC_MAP_NAME }).toString(),
+          signal: AbortSignal.timeout(4000)
+        }).catch(() => {})
+
+        const createRes = await fetch(`${baseUrl}/Items`, {
+          method: "POST",
+          headers: {
+            Authorization: auth,
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: new URLSearchParams({
+            Key: key,
+            Data: serialized
+          }).toString(),
+          signal: AbortSignal.timeout(4000)
+        })
+        return createRes.ok
+      }
+
+      return false
+    } catch (err) {
+      console.warn("[connectin-cloud-sync] upsertCloudUser Twilio notice:", err)
+      return false
+    }
   }
+
+  const [kvOk, twilioOk] = await Promise.all([kvPromise, twilioSyncWrite()])
+  return Boolean(kvOk || twilioOk)
 }
 
 /**
- * Fetches all globally logged-in users from Twilio Sync Map (`connectin_users_map_v1`)
- * and merges them into `connectinDb` so every serverless region sees all users worldwide.
+ * Fetches ALL globally registered & logged-in users across MongoDB Atlas KV, ALL paginated pages of
+ * Twilio Sync Map (`connectin_users_map_v1`), and verified calling directory members (`connectln_whatsapp_directory_v1`),
+ * and merges them into `connectinDb` so every member worldwide appears in Search & Network.
  */
 export async function pullCloudUsersIntoDb(): Promise<CloudUserPayload[]> {
-  const auth = getTwilioAuthHeader()
-  if (!auth) return []
+  const byIdentityKey = new Map<string, CloudUserPayload>()
+  const kvKeysExisting = new Set<string>()
+  const backfillCandidates: Array<{ key: string; data: CloudUserPayload }> = []
 
-  try {
-    const url = `https://sync.twilio.com/v1/Services/default/Maps/${SYNC_MAP_NAME}/Items?PageSize=100`
-    const res = await fetch(url, {
-      method: "GET",
-      headers: { Authorization: auth },
-      cache: "no-store",
-      signal: AbortSignal.timeout(4000)
-    })
-    if (!res.ok) return []
-
-    const json = await res.json()
-    const items: CloudUserPayload[] = Array.isArray(json.items)
-      ? json.items.map((it: any) => it.data as CloudUserPayload).filter((d: any) => d && d.email)
-      : []
-
-    if (items.length > 0) {
-      connectinDb.mergeCloudUsers(items)
+  const addRecord = (raw: any, recordKey?: string, isFromKv = false) => {
+    if (!raw || typeof raw !== "object") return
+    const cleanEmail = String(raw.email || "").toLowerCase().trim()
+    const cleanName = String(raw.name || "").trim()
+    if (!cleanEmail && !cleanName) return
+    const effectiveEmail =
+      cleanEmail ||
+      `${cleanName.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@connectin.app`
+    const dedupKey = makeUserMapKey(effectiveEmail, cleanName, raw.id)
+    if (isFromKv) {
+      kvKeysExisting.add(dedupKey)
+      if (recordKey) kvKeysExisting.add(recordKey)
     }
-    return items
-  } catch (err) {
-    console.warn("[connectin-cloud-sync] pullCloudUsersIntoDb notice:", err)
-    return []
+
+    const existing = byIdentityKey.get(dedupKey)
+    if (!existing) {
+      const normalized: CloudUserPayload = {
+        ...raw,
+        email: effectiveEmail,
+        name: cleanName || effectiveEmail.split("@")[0],
+      }
+      byIdentityKey.set(dedupKey, normalized)
+      if (!isFromKv && !kvKeysExisting.has(dedupKey)) {
+        backfillCandidates.push({ key: dedupKey, data: normalized })
+      }
+    } else {
+      // Merge fresher timestamp / phone / avatar / headline without losing fields
+      const existingTs = Date.parse(String(existing.lastLoginAt || existing.updatedAt || "")) || 0
+      const incomingTs = Date.parse(String(raw.lastLoginAt || raw.updatedAt || "")) || 0
+      const newer = incomingTs >= existingTs ? raw : existing
+      const older = incomingTs >= existingTs ? existing : raw
+      byIdentityKey.set(dedupKey, {
+        ...older,
+        ...newer,
+        email: effectiveEmail,
+        name: (cleanName || existing.name).trim(),
+        phone: newer.phone || older.phone || "",
+        avatar: newer.avatar || older.avatar,
+        headline: newer.headline || older.headline,
+      })
+    }
   }
+
+  const fetchTwilioAllPages = async (): Promise<void> => {
+    const auth = getTwilioAuthHeader()
+    if (!auth) return
+    let nextUrl: string | null =
+      `https://sync.twilio.com/v1/Services/default/Maps/${SYNC_MAP_NAME}/Items?PageSize=100`
+    let pageCount = 0
+    while (nextUrl && pageCount < 25) {
+      pageCount += 1
+      try {
+        const res = await fetch(nextUrl, {
+          method: "GET",
+          headers: { Authorization: auth },
+          cache: "no-store",
+          signal: AbortSignal.timeout(4000)
+        })
+        if (!res.ok) break
+        const json: any = await res.json()
+        const pageItems = Array.isArray(json?.items) ? json.items : []
+        for (const it of pageItems) {
+          if (it?.data) {
+            addRecord(it.data, it.key, false)
+          }
+        }
+        nextUrl = typeof json?.meta?.next_page_url === "string" && json.meta.next_page_url
+          ? json.meta.next_page_url
+          : null
+      } catch (err) {
+        console.warn("[connectin-cloud-sync] pullCloudUsersIntoDb Twilio page notice:", err)
+        break
+      }
+    }
+  }
+
+  const [kvUserItems, kvDirItems] = await Promise.all([
+    firebaseKvListItems<CloudUserPayload>(SYNC_MAP_NAME, false).catch(() => []),
+    firebaseKvListItems<any>("connectln_whatsapp_directory_v1", false).catch(() => []),
+    fetchTwilioAllPages(),
+  ])
+
+  for (const item of kvUserItems) {
+    if (item?.data) {
+      addRecord(item.data, item.key, true)
+    }
+  }
+
+  // Merge verified members from the calling/2FA directory if missing from SYNC_MAP_NAME
+  for (const dirEntry of kvDirItems) {
+    const m = dirEntry?.data
+    if (!m || !m.name) continue
+    const cleanEmail = String(m.email || "").toLowerCase().trim()
+    const cleanName = String(m.name || "").trim()
+    if (!cleanName || cleanName.toLowerCase() === "connectin member") continue
+    const synthEmail =
+      cleanEmail ||
+      (m.phone
+        ? `${String(m.phone).replace(/[^\d]/g, "")}@connectin.phone`
+        : `${cleanName.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@connectin.app`)
+    const dedupKey = makeUserMapKey(synthEmail, cleanName, m.userId)
+    const alreadyPresent = Array.from(byIdentityKey.values()).some(
+      (u) =>
+        (cleanEmail && u.email.toLowerCase().trim() === cleanEmail) ||
+        u.name.toLowerCase().trim() === cleanName.toLowerCase().trim()
+    )
+    if (!alreadyPresent && !byIdentityKey.has(dedupKey)) {
+      const synthesized: CloudUserPayload = {
+        id: m.userId || `USR-DIR-${dedupKey.slice(-6).toUpperCase()}`,
+        email: synthEmail,
+        phone: m.phone || "",
+        name: cleanName,
+        role: "personal",
+        status: "Active",
+        headline: m.headline || "Verified Professional · ConnectLn Member",
+        avatar:
+          m.avatar ||
+          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanName)}&backgroundColor=0a66c2`,
+        location: "Global Network",
+        authProvider: m.verifiedBy2FA ? "Verified 2FA Member" : "ConnectLn Directory",
+        lastLoginAt: m.updatedAtIso || new Date().toISOString(),
+        createdAt: m.updatedAtIso || new Date().toISOString(),
+        updatedAt: m.updatedAtIso || new Date().toISOString(),
+      }
+      byIdentityKey.set(dedupKey, synthesized)
+    }
+  }
+
+  // Background-backfill Twilio-only legacy users into MongoDB KV (bounded batch of 20 per call)
+  const pendingBackfill = backfillCandidates.filter((c) => !kvKeysExisting.has(c.key))
+  if (pendingBackfill.length > 0) {
+    void Promise.allSettled(
+      pendingBackfill
+        .slice(0, 20)
+        .map((c) => firebaseKvSetItem(SYNC_MAP_NAME, c.key, c.data))
+    )
+  }
+
+  const allItems = Array.from(byIdentityKey.values())
+  if (allItems.length > 0) {
+    connectinDb.mergeCloudUsers(allItems)
+  }
+  return allItems
 }
 
 export interface CloudTelemetryState {

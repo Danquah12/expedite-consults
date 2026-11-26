@@ -45,12 +45,38 @@ interface UniversalSearchModalProps {
 interface PersonSearchResult {
   id?: string
   name: string
+  email?: string
   role: string
   org: string
   rating: number
   verified: boolean
   avatar: string
   skills?: string[]
+}
+
+function isTokenWithinEditOne(a: string, b: string): boolean {
+  if (a === b) return true
+  if (Math.abs(a.length - b.length) > 1) return false
+  let i = 0
+  let j = 0
+  let edits = 0
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      i += 1
+      j += 1
+    } else {
+      edits += 1
+      if (edits > 1) return false
+      if (a.length > b.length) i += 1
+      else if (b.length > a.length) j += 1
+      else {
+        i += 1
+        j += 1
+      }
+    }
+  }
+  if (i < a.length || j < b.length) edits += 1
+  return edits <= 1
 }
 
 export function UniversalSearchModal({
@@ -193,6 +219,7 @@ export function UniversalSearchModal({
         const localVaultPeople: PersonSearchResult[] = loadStoredAdminUsers().map((acc, idx) => ({
           id: acc.id || `vault_${idx}_${acc.email}`,
           name: String(acc.name || acc.email.split("@")[0]),
+          email: String(acc.email || ""),
           role: String(acc.headline || `${acc.organization || "Verified Member"} · ConnectIn`),
           org: String(acc.organization || "ConnectIn Member"),
           rating: 4.95,
@@ -205,13 +232,14 @@ export function UniversalSearchModal({
         }))
 
         let apiPeople: PersonSearchResult[] = []
-        const res = await fetch("/api/connectin/users")
+        const res = await fetch("/api/connectin/users", { cache: "no-store" })
         if (res.ok) {
           const data = await res.json()
           if (data.success && Array.isArray(data.users)) {
             apiPeople = data.users.map((u: any) => ({
               id: u.id,
               name: String(u.name || "ConnectIn Member"),
+              email: String(u.email || ""),
               role: String(u.headline || "ConnectIn Member"),
               org: u.role ? `ConnectIn ${String(u.role).charAt(0).toUpperCase() + String(u.role).slice(1)}` : "ConnectIn Member",
               rating: 4.9,
@@ -224,8 +252,11 @@ export function UniversalSearchModal({
           }
         }
 
-        const merged = [...localVaultPeople, ...apiPeople, ...allEnclavePeople].filter((item, index, self) =>
-          index === self.findIndex(t => (t.name || "").toLowerCase() === (item.name || "").toLowerCase())
+        const merged = [...apiPeople, ...localVaultPeople, ...allEnclavePeople].filter((item, index, self) =>
+          index === self.findIndex(t =>
+            (t.name || "").toLowerCase() === (item.name || "").toLowerCase() &&
+            (t.email || "").toLowerCase() === (item.email || "").toLowerCase()
+          )
         )
         setLiveUsers(merged)
       } catch (err) {
@@ -240,22 +271,50 @@ export function UniversalSearchModal({
 
   const q = (query || "").toLowerCase().trim()
 
-  const matchesTokens = (fields: (string | undefined)[]) => {
-    if (!q) return true
-    const tokens = q.split(/\s+/).filter(Boolean)
+  const scoreTokensMatch = (fields: (string | undefined)[], rawQuery: string): number => {
+    const cleanQ = rawQuery.toLowerCase().trim()
+    if (!cleanQ) return 1
+    const tokens = cleanQ.split(/\s+/).filter(Boolean)
     const haystack = fields.filter(Boolean).join(" ").toLowerCase()
-    return tokens.every(token => haystack.includes(token))
+    const words = haystack.split(/[^a-z0-9]+/).filter(Boolean)
+    let score = 0
+    for (const token of tokens) {
+      if (haystack.includes(token)) {
+        score += 2
+        continue
+      }
+      if (
+        token.length >= 3 &&
+        words.some(
+          (w) =>
+            isTokenWithinEditOne(token, w) ||
+            (w.length >= token.length && isTokenWithinEditOne(token, w.slice(0, token.length)))
+        )
+      ) {
+        score += 1
+        continue
+      }
+      return 0
+    }
+    return score
   }
+
+  const matchesTokens = (fields: (string | undefined)[]) => scoreTokensMatch(fields, q) > 0
 
   // Filter modules & hubs
   const filteredModules = ALL_MODULES.filter(m =>
     matchesTokens([m.label, m.desc, m.id, m.badge])
   )
 
-  // Filter people
-  const filteredPeople = liveUsers.filter(p =>
-    matchesTokens([p.name, p.role, p.org, ...(p.skills || [])])
-  )
+  // Filter people (exact matches sorted ahead of 1-typo fuzzy matches, plus email searchable)
+  const filteredPeople = liveUsers
+    .map((p) => ({
+      person: p,
+      score: scoreTokensMatch([p.name, p.email, p.role, p.org, ...(p.skills || [])], q),
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map((entry) => entry.person)
 
   // Track search lookup appearances when a user searches in Universal Omnisearch
   useEffect(() => {

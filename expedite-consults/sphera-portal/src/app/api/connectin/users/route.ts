@@ -9,11 +9,20 @@ import {
   resolveRequestGeoLocation
 } from "@/lib/connectin-cloud-sync"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(req: NextRequest) {
   try {
     await pullCloudUsersIntoDb()
     const users = connectinDb.getAllUsersWithProfiles()
-    return NextResponse.json({ success: true, users })
+    return NextResponse.json(
+      { success: true, users },
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
+    )
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 })
   }
