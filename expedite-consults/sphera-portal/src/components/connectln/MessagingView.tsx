@@ -35,6 +35,7 @@ import {
     prettyClientPhone,
 } from './ConnectLnCellPhoneSoftphone';
 import { MessageActionBar, ReactionBadges, loadMembers, ShareTarget, MessageReactionKind } from './MessageActionBar';
+import { filterAndRankMembers, scoreMemberSearchMatch } from '@/lib/connectin-search-match';
 import { resolveUserProfilePicture, trackUserActivity } from '@/lib/connectin-storage';
 import {
     isPlaceholderCallAvatar,
@@ -843,8 +844,12 @@ export function MessagingView({
     }, [commUserKey, currentUser]);
 
     useEffect(() => {
+        loadMembers(true).then(setAllPlatformMembers);
+    }, []);
+
+    useEffect(() => {
         if (showNewMessageModal || showScheduler || workspaceMode === 'calendar') {
-            loadMembers().then(setAllPlatformMembers);
+            loadMembers(true).then(setAllPlatformMembers);
         }
     }, [showNewMessageModal, showScheduler, workspaceMode]);
 
@@ -1933,18 +1938,104 @@ export function MessagingView({
                 : matchesMailboxFolder(t, activeMailboxFolder);
         const matchesLabel = matchesCustomLabel(t, activeCustomLabel);
         const matchesChannel = activeChannel === 'All' || t.channelType === activeChannel;
-        const q = searchQuery.trim().toLowerCase();
-        const draftPreview = getEffectiveDraftForThread(t).toLowerCase();
+        const q = searchQuery.trim();
+        const draftPreview = getEffectiveDraftForThread(t);
         const matchesSearch =
             !q ||
-            t.title.toLowerCase().includes(q) ||
-            t.lastMessage.toLowerCase().includes(q) ||
-            t.subtitle.toLowerCase().includes(q) ||
-            draftPreview.includes(q) ||
-            (t.companyMetadata?.industry || '').toLowerCase().includes(q) ||
-            (t.productMetadata?.productName || '').toLowerCase().includes(q);
+            scoreMemberSearchMatch(
+                [
+                    t.title,
+                    t.recipientEmail,
+                    t.subtitle,
+                    t.lastMessage,
+                    draftPreview,
+                    t.companyMetadata?.industry,
+                    t.productMetadata?.productName,
+                ],
+                q
+            ) > 0;
         return matchesFolder && matchesLabel && matchesChannel && matchesSearch;
     });
+
+    const matchedDirectoryPeopleForSidebar: ShareTarget[] = (() => {
+        const q = searchQuery.trim();
+        if (!q) return [];
+        const compactKey = (v?: string) => String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const myNameKey = compactKey(currentUser?.name);
+        const myEmailKey = String(currentUser?.email || '').trim().toLowerCase();
+        const threadTitleKeys = new Set(filteredThreads.map((t) => compactKey(t.title)));
+
+        return filterAndRankMembers(allPlatformMembers, q, (m) => [
+            m.name,
+            m.email,
+            m.phone,
+            m.subtitle,
+        ])
+            .filter((m) => {
+                const mk = compactKey(m.name);
+                const me = String(m.email || '').trim().toLowerCase();
+                if (!mk || threadTitleKeys.has(mk)) return false;
+                if ((myNameKey && mk === myNameKey) || (myEmailKey && me && me === myEmailKey)) {
+                    return false;
+                }
+                return true;
+            })
+            .slice(0, 8);
+    })();
+
+    const openDirectThreadForMember = (
+        member: ShareTarget,
+        autoCallMode?: 'audio' | 'video'
+    ) => {
+        const compactKey = (v?: string) => String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const memberNameKey = compactKey(member.name);
+        const memberEmailKey = String(member.email || '').trim().toLowerCase();
+
+        const existing = threads.find(
+            (t) =>
+                compactKey(t.title) === memberNameKey ||
+                (memberEmailKey && String(t.recipientEmail || '').trim().toLowerCase() === memberEmailKey)
+        );
+
+        setActiveMailboxFolder('inbox');
+        setActiveChannel('All');
+        setActiveCustomLabel(null);
+        setSearchQuery('');
+
+        if (existing) {
+            handleSelectThread(existing);
+        } else {
+            const avatarUrl =
+                member.avatar ||
+                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.name)}&backgroundColor=0a66c2`;
+            const newThread: B2BConversationThread = {
+                id: `dm_${Date.now()}_${memberNameKey.slice(0, 12)}`,
+                channelType: 'People',
+                subType: 'DM',
+                title: member.name,
+                subtitle: member.subtitle || 'Verified ConnectLn Member',
+                recipientEmail: member.email,
+                avatar: avatarUrl,
+                isVerified: true,
+                verifiedBadge: 'Verified Member',
+                onlineStatus: 'online',
+                lastMessage: `Direct conversation with ${member.name}`,
+                lastMessageTime: 'Just now',
+                unreadCount: 0,
+                messages: [],
+            };
+            setThreads((prev) => [newThread, ...prev]);
+            setSelectedThreadId(newThread.id);
+            setMobileShowChat(true);
+            setMessageInput('');
+        }
+
+        if (autoCallMode) {
+            setActiveCallMode(autoCallMode);
+        } else {
+            setTimeout(() => composerInputRef.current?.focus(), 40);
+        }
+    };
 
     const activeThread =
         filteredThreads.find((t) => t.id === selectedThreadId) ||
@@ -4998,7 +5089,7 @@ export function MessagingView({
                         <div className="relative mb-2">
                             <input
                                 type="text"
-                                placeholder="Search conversations..."
+                                placeholder="Search conversations or people..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full bg-slate-100 focus:bg-white border border-slate-200 focus:border-[#0A66C2] rounded-xl py-1.5 pl-8 pr-7 text-xs font-medium text-slate-900 focus:outline-none transition-all"
@@ -5079,9 +5170,78 @@ export function MessagingView({
                         </div>
                     </div>
 
-                    {/* Thread List */}
+                    {/* Thread List & Instant Registered Member Matches */}
                     <div className="flex-1 overflow-y-auto divide-y divide-slate-200/60">
-                        {filteredThreads.length === 0 ? (
+                        {searchQuery.trim().length > 0 && matchedDirectoryPeopleForSidebar.length > 0 && (
+                            <div className="bg-blue-50/40">
+                                <div className="px-3.5 py-1.5 flex items-center justify-between bg-blue-50/80 border-b border-blue-100">
+                                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0A66C2]">
+                                        Registered People on ConnectLn ({matchedDirectoryPeopleForSidebar.length})
+                                    </span>
+                                    <span className="text-[10px] font-semibold text-slate-500">
+                                        Click to chat or call
+                                    </span>
+                                </div>
+                                {matchedDirectoryPeopleForSidebar.map((member) => {
+                                    const avatarSrc =
+                                        member.avatar ||
+                                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.name)}&backgroundColor=0a66c2`;
+                                    return (
+                                        <div
+                                            key={member.id}
+                                            onClick={() => openDirectThreadForMember(member)}
+                                            className="px-3.5 py-2.5 flex items-center justify-between gap-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                <img
+                                                    src={avatarSrc}
+                                                    alt={member.name}
+                                                    className="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-200 shadow-2xs"
+                                                />
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className="text-xs font-extrabold text-slate-900 truncate">
+                                                            {member.name}
+                                                        </p>
+                                                        <span className="shrink-0 px-1.5 py-0.2 rounded-full bg-emerald-50 border border-emerald-200 text-[9px] font-bold text-emerald-700">
+                                                            ConnectLn
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[11px] text-slate-500 truncate">
+                                                        {member.subtitle || member.email || 'Verified ConnectLn Member'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openDirectThreadForMember(member, 'audio');
+                                                    }}
+                                                    title={`Voice Call ${member.name}`}
+                                                    className="w-7 h-7 rounded-lg bg-white hover:bg-[#0A66C2] text-slate-700 hover:text-white border border-slate-200 flex items-center justify-center text-xs cursor-pointer transition-colors"
+                                                >
+                                                    📞
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openDirectThreadForMember(member, 'video');
+                                                    }}
+                                                    title={`Video Call ${member.name}`}
+                                                    className="w-7 h-7 rounded-lg bg-white hover:bg-[#0A66C2] text-slate-700 hover:text-white border border-slate-200 flex items-center justify-center text-xs cursor-pointer transition-colors"
+                                                >
+                                                    🎥
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                        {filteredThreads.length === 0 && matchedDirectoryPeopleForSidebar.length === 0 ? (
                             <div className="p-8 text-center">
                                 <p className="text-sm font-bold text-slate-700 mb-1">
                                     {activeMailboxFolder === 'snoozed'
@@ -6647,12 +6807,10 @@ export function MessagingView({
                                     className="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm font-medium text-slate-900 focus:outline-none focus:border-[#0A66C2]"
                                 />
                                 {showRecipientSuggestions && newRecipientName.trim().length > 0 && (() => {
-                                    const q = newRecipientName.trim().toLowerCase();
-                                    const qc = q.replace(/[^a-z0-9]/g, '');
                                     const typedEmailInName = extractEmailsFromText(newRecipientName)[0] || '';
                                     const myCompact = (currentUser?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
                                     const seen = new Set<string>(myCompact ? [myCompact] : []);
-                                    const candidates: ShareTarget[] = [];
+                                    const dedupedCombined: ShareTarget[] = [];
                                     const combined: ShareTarget[] = [
                                         ...allPlatformMembers,
                                         ...threads.map((t) => ({
@@ -6671,18 +6829,13 @@ export function MessagingView({
                                         const key = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
                                         if (!key || seen.has(key)) continue;
                                         seen.add(key);
-                                        const lower = item.name.toLowerCase();
-                                        const subLower = (item.subtitle || '').toLowerCase();
-                                        const emailLower = (item.email || '').toLowerCase();
-                                        if (
-                                            lower.includes(q) ||
-                                            emailLower.includes(q) ||
-                                            subLower.includes(q) ||
-                                            (qc && key.includes(qc))
-                                        ) {
-                                            candidates.push(item);
-                                        }
+                                        dedupedCombined.push(item);
                                     }
+                                    const candidates = filterAndRankMembers(
+                                        dedupedCombined,
+                                        newRecipientName,
+                                        (item) => [item.name, item.email, item.phone, item.subtitle]
+                                    );
                                     if (candidates.length === 0 && !typedEmailInName) return null;
                                     return (
                                         <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">

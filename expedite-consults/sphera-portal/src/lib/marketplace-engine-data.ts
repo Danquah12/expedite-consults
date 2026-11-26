@@ -550,59 +550,60 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
   },
   {
     id: 'prod_skillhands',
-    professionEnclave: 'trades_construction',
-    name: 'SkillHands Vocational Trade Hub',
-    tagline: 'Hands-on trade task platform, verified craftsman matching & vocational apprenticeships',
+    name: 'SkillHands.us — Trusted Local Home Services | No Account Required',
+    tagline: 'Book trusted local home services instantly — verified pros, transparent pricing & no account required',
     category: 'Services',
-    subCategory: 'Trades & Vocational Network',
+    subCategory: 'Local Home Services',
     launchpadCategory: 'trades',
     isLaunchpadDeployed: true,
     icon: '🛠️',
-    badge: '🔨 Live Trade Hub',
+    badge: '🛠️ No Account Required',
     rating: 4.97,
     reviewsCount: 380,
-    activeUsersCount: '12,500+ Verified Craftsmen',
+    activeUsersCount: 'Trusted Local Pros · No Account Required',
     pricing: {
-      displayPrice: '$79',
-      billingPeriod: '/ month',
+      displayPrice: 'Free',
+      billingPeriod: 'No Account Required',
       hasFreeTrial: true,
-      trialDays: 14
+      trialDays: 0
     },
     vendor: {
-      name: 'SkillHands Vocational Guild',
+      name: 'SkillHands.us',
       logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
       isVerified: true
     },
-    overview: 'SkillHands is the dedicated marketplace connecting verified carpenters, electricians, plumbers, masons, and mechanics with high-value residential and commercial contracts.',
+    overview: 'SkillHands.us connects homeowners and businesses with trusted local home service professionals — plumbing, electrical, handyman, HVAC, carpentry, and repairs — with instant booking and zero account required.',
     features: [
-      { title: 'Verified Trade Credentials', desc: 'Validates state licensing, OSHA cards, insurance certificates, and photographic proof of prior builds.' },
-      { title: 'Direct Subcontractor Matching', desc: 'General contractors post commercial bid packages and book specialized craft crews directly.' }
+      { title: 'No Account Required', desc: 'Request and book trusted local home service professionals immediately without creating an account.' },
+      { title: 'Trusted Local Pros', desc: 'Vetted neighborhood electricians, plumbers, carpenters, HVAC technicians, and handymen.' },
+      { title: 'Direct Booking & Transparent Quotes', desc: 'Upfront scope, clear scheduling, and fast dispatch right from SkillHands.us.' }
     ],
     screenshots: ['https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80'],
-    demoUrl: 'https://skillhands-client.vercel.app',
-    liveUrl: 'https://skillhands-client.vercel.app',
+    demoUrl: 'https://skillhands-client.vercel.app/',
+    liveUrl: 'https://skillhands-client.vercel.app/',
     isVercelLive: true,
     architecture: {
-      title: 'Real-Time Job Dispatch Bus',
-      summary: 'Geolocation-based matching engine pairing certified tradesmen with local project specifications.',
-      layers: ['Craftsman Mobile Client', 'Contractor Dispatch Engine', 'Escrow Payment Pipeline'],
-      latency: 'Instant contractor bidding',
-      dataPrivacy: 'Encrypted trade credentials.'
+      title: 'Instant No-Signup Service Dispatch',
+      summary: 'Fast geolocation-based matching engine pairing homeowners with trusted local pros in seconds.',
+      layers: ['Instant Client Request', 'Local Pro Matching Engine', 'Direct Scheduling & Dispatch'],
+      latency: 'Instant booking without sign-up',
+      dataPrivacy: 'Zero account wall required to browse or book.'
     },
-    integrations: ['Procore', 'QuickBooks', 'Buildertrend', 'Stripe Connect'],
+    integrations: ['QuickBooks', 'Stripe Connect', 'Google Calendar', 'SMS Alerts'],
     security: {
-      compliance: ['OSHA Compliant', 'State Licensing Boards Verified'],
-      encryption: 'AES-256',
-      isolation: 'Secure Escrow Accounts'
+      compliance: ['Verified Service Professionals', 'Transparent Estimates'],
+      encryption: 'TLS 1.3 & AES-256',
+      isolation: 'Privacy-First Instant Access'
     },
     pricingTiers: [
       {
-        name: 'Master Craftsman Listing',
-        price: '$79',
-        period: '/ month',
-        description: 'Unlimited bid submissions, featured artisan directory placement, and instant milestone escrow.',
-        features: ['Unlimited Bid Submissions', 'Verified Guild Badge', 'Lien Waiver Automation', 'Fast-Pay Escrow Draws'],
-        ctaText: 'Join Trade Hub'
+        name: 'Instant Home Service Booking',
+        price: '$0',
+        period: 'no account required',
+        description: 'Browse and book trusted local home services right away without creating an account.',
+        features: ['No Account Required', 'Trusted Local Pros', 'Upfront Quotes & Scheduling'],
+        recommended: true,
+        ctaText: 'Open SkillHands.us'
       }
     ],
     reviews: [
@@ -612,19 +613,19 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
         company: 'Heritage Guild',
         avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
         rating: 5,
-        text: 'SkillHands brought our timber framing crew two $300k+ custom home contracts within our first month.',
+        text: 'SkillHands makes booking trusted local pros effortless for homeowners — zero friction and no account wall.',
         date: 'August 2026'
       }
     ],
     documentation: {
-      quickstart: 'Register your license and submit three photographic portfolio builds to unlock verified status.',
-      apiEndpoints: ['POST /api/bids/create', 'GET /api/contractors/:id'],
-      sdkSupport: ['Web', 'Mobile App']
+      quickstart: 'Visit https://skillhands-client.vercel.app/ to book trusted local home services immediately — no account required.',
+      apiEndpoints: ['https://skillhands-client.vercel.app/'],
+      sdkSupport: ['Web Browser', 'Mobile Web']
     },
     caseStudies: [],
     support: {
       sla: '99.9% Uptime',
-      channel: 'Trade Dispatch Helpline & SMS',
+      channel: 'SkillHands.us Live Booking Desk',
       responseHours: '< 15 Minutes'
     }
   },

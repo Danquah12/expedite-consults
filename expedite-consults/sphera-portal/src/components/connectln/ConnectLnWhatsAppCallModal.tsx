@@ -38,6 +38,7 @@ import {
 } from "lucide-react"
 import { enterInCallPresence, exitInCallPresence } from "@/lib/connectln-presence"
 import { deriveE2eeSafetyCode } from "@/lib/connectln-comm-pro"
+import { filterAndRankMembers } from "@/lib/connectin-search-match"
 import {
   CommTeamsStateClient,
   EMPTY_TEAMS_STATE,
@@ -2619,17 +2620,47 @@ export function ConnectLnWhatsAppCallModal({
     syncWebRtcOutgoingVideoTrack,
   ])
 
-  // Load ConnectLn directory contacts when `Add People` or `Transfer` drawer opens
+  // Load ConnectLn directory + ALL registered users when `Add People` or `Transfer` drawer opens
   useEffect(() => {
     if (!open || (!showAddPeopleDrawer && !showTransferDrawer)) return
-    fetch("/api/connectin/calls/whatsapp?list=1", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data?.directoryMembers)) {
-          setDirectoryContacts(data.directoryMembers)
+    Promise.allSettled([
+      fetch("/api/connectin/calls/whatsapp?list=1", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/connectin/users", { cache: "no-store" }).then((r) => r.json()),
+    ]).then((results) => {
+      const waData = results[0].status === "fulfilled" ? results[0].value : null
+      const usersData = results[1].status === "fulfilled" ? results[1].value : null
+      const merged: DirectoryContactOption[] = []
+      const seen = new Set<string>()
+      const compactKey = (v?: string) => String(v || "").toLowerCase().replace(/[^a-z0-9]/g, "")
+
+      const pushContact = (c: DirectoryContactOption) => {
+        const cleanName = String(c.name || "").trim()
+        if (!cleanName) return
+        const nk = compactKey(cleanName)
+        const ek = String(c.email || "").trim().toLowerCase()
+        if ((nk && seen.has(nk)) || (ek && seen.has(`e:${ek}`))) return
+        if (nk) seen.add(nk)
+        if (ek) seen.add(`e:${ek}`)
+        merged.push({ ...c, name: cleanName })
+      }
+
+      if (Array.isArray(waData?.directoryMembers)) {
+        for (const m of waData.directoryMembers) pushContact(m)
+      }
+      if (Array.isArray(usersData?.users)) {
+        for (const u of usersData.users) {
+          pushContact({
+            name: String(u.name || ""),
+            phone: String(u.phone || ""),
+            prettyPhone: String(u.phone || ""),
+            email: u.email ? String(u.email).trim().toLowerCase() : undefined,
+            avatar: u.avatar && !String(u.avatar).startsWith("data:") ? u.avatar : undefined,
+            headline: u.headline || "Verified ConnectLn Member",
+          })
         }
-      })
-      .catch(() => {})
+      }
+      setDirectoryContacts(merged)
+    })
   }, [open, showAddPeopleDrawer, showTransferDrawer])
 
   // Initialize initial call recipient on open
@@ -4969,15 +5000,11 @@ export function ConnectLnWhatsAppCallModal({
       primaryName || "CL"
     )}&backgroundColor=075e54`
 
-  const filteredContacts = directoryContacts.filter((c) => {
-    if (!contactSearch.trim()) return true
-    const q = contactSearch.toLowerCase()
-    return (
-      c.name.toLowerCase().includes(q) ||
-      c.phone.includes(q) ||
-      c.prettyPhone.toLowerCase().includes(q)
-    )
-  })
+  const filteredContacts = filterAndRankMembers(
+    directoryContacts,
+    contactSearch,
+    (c) => [c.name, c.email, c.phone, c.prettyPhone, c.headline]
+  )
 
   const activeBgBackgroundStyle: React.CSSProperties =
     selectedBgId === "custom-image" && customBgDataUrl

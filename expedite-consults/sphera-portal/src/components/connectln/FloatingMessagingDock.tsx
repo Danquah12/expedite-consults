@@ -29,6 +29,8 @@ import {
   formatMessageSentDateTime
 } from "@/lib/direct-mailbox-sync"
 import { startVisiblePoller } from "@/lib/visible-poller"
+import { filterAndRankMembers, scoreMemberSearchMatch } from "@/lib/connectin-search-match"
+import { loadMembers, ShareTarget } from "./MessageActionBar"
 
 export interface DirectMessageRecipient {
   id?: string
@@ -87,6 +89,7 @@ export function FloatingMessagingDock({
   const [subjectInput, setSubjectInput] = useState("")
   const [miniMessageInput, setMiniMessageInput] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
+  const [allMembers, setAllMembers] = useState<ShareTarget[]>([])
   const [isExpandedBox, setIsExpandedBox] = useState(false)
   const [showWhyFreeTooltip, setShowWhyFreeTooltip] = useState(false)
   const [attachedFileName, setAttachedFileName] = useState<string | null>(null)
@@ -442,12 +445,43 @@ export function FloatingMessagingDock({
     }
   }
 
-  const filteredThreads = threads.filter(
-    (t) =>
-      t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.subtitle.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredThreads = searchQuery.trim()
+    ? threads.filter(
+        (t) =>
+          scoreMemberSearchMatch(
+            [t.title, t.recipientEmail, t.lastMessage, t.subtitle],
+            searchQuery
+          ) > 0
+      )
+    : threads
+
+  useEffect(() => {
+    if (!isDockOpen) return
+    loadMembers().then(setAllMembers)
+  }, [isDockOpen])
+
+  const matchedDockPeople = React.useMemo(() => {
+    const q = searchQuery.trim()
+    if (!q) return []
+    const compactKey = (v?: string) => String(v || "").toLowerCase().replace(/[^a-z0-9]/g, "")
+    const myKey = compactKey(viewerName)
+    const myEmail = viewerEmail.trim().toLowerCase()
+    const shownKeys = new Set(filteredThreads.map((t) => compactKey(t.title)))
+    return filterAndRankMembers(allMembers, q, (m) => [
+      m.name,
+      m.email,
+      m.phone,
+      m.subtitle,
+    ])
+      .filter((m) => {
+        const mk = compactKey(m.name)
+        const me = String(m.email || "").trim().toLowerCase()
+        if (!mk || shownKeys.has(mk)) return false
+        if ((myKey && mk === myKey) || (myEmail && me && me === myEmail)) return false
+        return true
+      })
+      .slice(0, 6)
+  }, [allMembers, searchQuery, filteredThreads, viewerName, viewerEmail])
 
   return (
     <div className="fixed bottom-0 right-2 sm:right-4 z-[70] flex items-end gap-3 pointer-events-none">
@@ -1173,6 +1207,63 @@ export function FloatingMessagingDock({
                   </p>
                 </div>
               </div>
+              {matchedDockPeople.length > 0 && (
+                <div className="bg-blue-50/40">
+                  <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#0A66C2]">
+                    People on ConnectLn
+                  </div>
+                  {matchedDockPeople.map((person) => {
+                    const personAvatar =
+                      person.avatar ||
+                      `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(person.name)}&backgroundColor=0a66c2`
+                    return (
+                      <div
+                        key={person.id}
+                        onClick={() => {
+                          const newThread: B2BConversationThread = {
+                            id: `dm_${Date.now()}_${person.name.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12)}`,
+                            channelType: "People",
+                            subType: "DM",
+                            title: person.name,
+                            subtitle: person.subtitle || "Verified ConnectLn Member",
+                            recipientEmail: person.email,
+                            avatar: personAvatar,
+                            isVerified: true,
+                            verifiedBadge: "Verified Member",
+                            onlineStatus: "online",
+                            lastMessage: `Start a direct conversation with ${person.name}`,
+                            lastMessageTime: "Just now",
+                            unreadCount: 0,
+                            messages: [],
+                          }
+                          setActiveChatThread(newThread)
+                          setSearchQuery("")
+                        }}
+                        className="flex items-center gap-2.5 px-2.5 py-2 hover:bg-blue-50 cursor-pointer transition-colors"
+                      >
+                        <img
+                          src={personAvatar}
+                          alt={person.name}
+                          className="h-8 w-8 rounded-full object-cover shrink-0 border border-zinc-200"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-bold text-xs text-zinc-900 truncate">
+                              {person.name}
+                            </p>
+                            <span className="shrink-0 rounded-full bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 text-[9px] font-bold text-emerald-700">
+                              Member
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-zinc-500 truncate">
+                            {person.subtitle || person.email || "Verified ConnectLn Member"}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
               {filteredThreads.map((t) => (
                 <div
                   key={t.id}

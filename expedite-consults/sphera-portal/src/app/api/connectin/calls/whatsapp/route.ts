@@ -14,7 +14,7 @@ import {
   formatPrettyPhoneDisplay,
 } from "@/lib/connectin-twilio-voice"
 import { connectinDb } from "@/lib/connectin-db"
-import { upsertCloudUser } from "@/lib/connectin-cloud-sync"
+import { upsertCloudUser, pullCloudUsersIntoDb } from "@/lib/connectin-cloud-sync"
 import { createDynamicOTP, validateOTP } from "@/lib/connectin-otp"
 import { sendConnectInSMS } from "@/lib/connectin-sms"
 import { sendConnectInOTPEmail } from "@/lib/connectin-email"
@@ -158,28 +158,112 @@ export async function GET(req: NextRequest) {
     }
 
     const wantList = sp.get("list") === "1"
-    const directoryMembers = wantList
-      ? Array.from(cache.values())
-          .slice(0, 35)
-          .map((m) => ({
-            phone: m.phone,
-            prettyPhone: m.prettyPhone,
-            name: m.name,
-            email: m.email,
-            avatar: m.avatar,
-            headline: m.headline,
-          }))
-      : undefined
+    let directoryMembers: Array<{
+      phone: string
+      prettyPhone: string
+      name: string
+      email?: string
+      avatar?: string
+      headline?: string
+    }> | undefined = undefined
 
-    return NextResponse.json({
-      ok: true,
-      vapidPublicKey: vapid.publicKey,
-      verifiedAccountPhone: verifiedAccountPhone || undefined,
-      myRegistration,
-      lookup,
-      directoryMembers,
-      registeredMembersCount: cache.size,
-    })
+    if (wantList) {
+      await pullCloudUsersIntoDb().catch(() => {})
+      const mergedMap = new Map<
+        string,
+        {
+          phone: string
+          prettyPhone: string
+          name: string
+          email?: string
+          avatar?: string
+          headline?: string
+        }
+      >()
+      const compactName = (v?: string) => String(v || "").toLowerCase().replace(/[^a-z0-9]/g, "")
+      const seenEmails = new Set<string>()
+      const seenPhones = new Set<string>()
+      const seenNames = new Set<string>()
+
+      for (const m of cache.values()) {
+        const cleanName = String(m.name || "").trim()
+        if (!cleanName) continue
+        const normEmail = m.email ? String(m.email).trim().toLowerCase() : ""
+        const normPhone = m.phone ? normalizeDialablePhone(m.phone) : ""
+        const nameKey = compactName(cleanName)
+        const mapKey = normEmail || normPhone || nameKey
+        if (!mapKey) continue
+        if (normEmail) seenEmails.add(normEmail)
+        if (normPhone) seenPhones.add(normPhone)
+        if (nameKey) seenNames.add(nameKey)
+        mergedMap.set(mapKey, {
+          phone: normPhone || m.phone || "",
+          prettyPhone: m.prettyPhone || (normPhone ? formatPrettyPhoneDisplay(normPhone) : ""),
+          name: cleanName,
+          email: normEmail || undefined,
+          avatar: m.avatar,
+          headline: m.headline,
+        })
+      }
+
+      const allRegisteredUsers = connectinDb.getAllUsersWithProfiles()
+      for (const u of allRegisteredUsers) {
+        const cleanName = String(u.name || "").trim()
+        if (!cleanName) continue
+        const normEmail = u.email ? String(u.email).trim().toLowerCase() : ""
+        const normPhone = u.phone && looksLikePhoneNumber(u.phone) ? normalizeDialablePhone(u.phone) : ""
+        const nameKey = compactName(cleanName)
+
+        if (
+          (normEmail && seenEmails.has(normEmail)) ||
+          (normPhone && seenPhones.has(normPhone)) ||
+          (nameKey && seenNames.has(nameKey))
+        ) {
+          // Enrich existing cache entry if missing email/avatar/headline
+          for (const existing of mergedMap.values()) {
+            const matchByEmail = normEmail && existing.email === normEmail
+            const matchByPhone = normPhone && existing.phone === normPhone
+            const matchByName = nameKey && compactName(existing.name) === nameKey
+            if (matchByEmail || matchByPhone || matchByName) {
+              if (!existing.email && normEmail) existing.email = normEmail
+              if (!existing.avatar && u.avatar) existing.avatar = u.avatar
+              if (!existing.headline && u.headline) existing.headline = u.headline
+              break
+            }
+          }
+          continue
+        }
+
+        const mapKey = normEmail || normPhone || nameKey
+        if (!mapKey) continue
+        if (normEmail) seenEmails.add(normEmail)
+        if (normPhone) seenPhones.add(normPhone)
+        if (nameKey) seenNames.add(nameKey)
+        mergedMap.set(mapKey, {
+          phone: normPhone,
+          prettyPhone: normPhone ? formatPrettyPhoneDisplay(normPhone) : "",
+          name: cleanName,
+          email: normEmail || undefined,
+          avatar: u.avatar,
+          headline: u.headline || "Verified ConnectLn Member",
+        })
+      }
+
+      directoryMembers = Array.from(mergedMap.values())
+    }
+
+    return NextResponse.json(
+      {
+        ok: true,
+        vapidPublicKey: vapid.publicKey,
+        verifiedAccountPhone: verifiedAccountPhone || undefined,
+        myRegistration,
+        lookup,
+        directoryMembers,
+        registeredMembersCount: directoryMembers ? directoryMembers.length : cache.size,
+      },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    )
   } catch (err: any) {
     return NextResponse.json(
       { ok: false, error: err?.message || "Failed to query WhatsApp call directory" },

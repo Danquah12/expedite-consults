@@ -41,6 +41,8 @@ import {
     getCommPrivacySettings,
     updateCommPrivacySettings,
 } from '@/lib/connectln-comm-pro';
+import { filterAndRankMembers } from '@/lib/connectin-search-match';
+import { loadMembers, ShareTarget } from './MessageActionBar';
 
 export type MessagingWorkspaceMode =
     | 'chats'
@@ -1728,6 +1730,17 @@ export function WhatsAppModeWorkspace({
         }
     });
     const [callSearch, setCallSearch] = useState('');
+    const [callDirectoryMembers, setCallDirectoryMembers] = useState<
+        Array<{
+            id: string;
+            name: string;
+            email?: string;
+            phone?: string;
+            prettyPhone?: string;
+            avatar?: string;
+            headline?: string;
+        }>
+    >([]);
     const [callsSidebarTab, setCallsSidebarTab] = useState<'calls' | 'voicemail'>('calls');
     const [unreadVoicemailsCount, setUnreadVoicemailsCount] = useState(0);
     const callSearchInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -1736,12 +1749,14 @@ export function WhatsAppModeWorkspace({
     const [activeSoftphoneTarget, setActiveSoftphoneTarget] = useState<{
         label: string;
         phone?: string;
+        email?: string;
         avatar?: string;
     } | null>(null);
     const [activeWhatsAppCall, setActiveWhatsAppCall] = useState<{
         callId: string;
         label: string;
         phone?: string;
+        email?: string;
         avatar?: string;
         mode: 'audio' | 'video';
     } | null>(null);
@@ -1752,6 +1767,109 @@ export function WhatsAppModeWorkspace({
         getCustomDeviceRingtoneName()
     );
     const ringtoneUploadInputRef = React.useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+        if (mode !== 'calls') return;
+        let cancelled = false;
+        const compactKey = (v?: string) => String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const viewerEmailNorm = String(currentUser?.email || '').trim().toLowerCase();
+        const viewerNameKey = compactKey(userName);
+
+        Promise.allSettled([
+            fetch('/api/connectin/calls/whatsapp?list=1', { cache: 'no-store' }).then((r) => r.json()),
+            fetch('/api/connectin/users', { cache: 'no-store' }).then((r) => r.json()),
+            loadMembers(true),
+        ]).then((results) => {
+            if (cancelled) return;
+            const waData = results[0].status === 'fulfilled' ? results[0].value : null;
+            const usersData = results[1].status === 'fulfilled' ? results[1].value : null;
+            const shareTargets: ShareTarget[] = results[2].status === 'fulfilled' ? results[2].value : [];
+
+            const rawCombined: Array<{
+                id: string;
+                name: string;
+                email?: string;
+                phone?: string;
+                prettyPhone?: string;
+                avatar?: string;
+                headline?: string;
+            }> = [];
+
+            if (Array.isArray(waData?.directoryMembers)) {
+                for (const m of waData.directoryMembers) {
+                    if (!m?.name) continue;
+                    rawCombined.push({
+                        id: `wa_${m.email || m.phone || m.name}`,
+                        name: String(m.name).trim(),
+                        email: m.email ? String(m.email).trim().toLowerCase() : undefined,
+                        phone: m.phone ? String(m.phone).trim() : undefined,
+                        prettyPhone: m.prettyPhone ? String(m.prettyPhone).trim() : undefined,
+                        avatar: m.avatar,
+                        headline: m.headline,
+                    });
+                }
+            }
+            if (Array.isArray(usersData?.users)) {
+                for (const u of usersData.users) {
+                    if (!u?.name) continue;
+                    rawCombined.push({
+                        id: `usr_${u.email || u.phone || u.name}`,
+                        name: String(u.name).trim(),
+                        email: u.email ? String(u.email).trim().toLowerCase() : undefined,
+                        phone: u.phone ? String(u.phone).trim() : undefined,
+                        prettyPhone: u.phone && looksLikeClientPhone(u.phone) ? prettyClientPhone(u.phone) : undefined,
+                        avatar: u.avatar && !String(u.avatar).startsWith('data:') ? u.avatar : undefined,
+                        headline: u.headline || 'Verified ConnectLn Member',
+                    });
+                }
+            }
+            for (const m of shareTargets) {
+                if (!m?.name) continue;
+                rawCombined.push({
+                    id: m.id,
+                    name: String(m.name).trim(),
+                    email: m.email,
+                    phone: m.phone,
+                    prettyPhone: m.phone && looksLikeClientPhone(m.phone) ? prettyClientPhone(m.phone) : undefined,
+                    avatar: m.avatar,
+                    headline: m.subtitle,
+                });
+            }
+
+            const deduped: typeof callDirectoryMembers = [];
+            const seenKeys = new Set<string>();
+            for (const item of rawCombined) {
+                const nKey = compactKey(item.name);
+                const eKey = String(item.email || '').trim().toLowerCase();
+                if (!nKey) continue;
+                if ((viewerEmailNorm && eKey && eKey === viewerEmailNorm) || (viewerNameKey && nKey === viewerNameKey)) {
+                    continue;
+                }
+                if (seenKeys.has(nKey) || (eKey && seenKeys.has(`e:${eKey}`))) {
+                    // Enrich existing record if it was missing phone/email/avatar/headline
+                    const existing = deduped.find(
+                        (d) => compactKey(d.name) === nKey || (eKey && d.email === eKey)
+                    );
+                    if (existing) {
+                        if (!existing.phone && item.phone) existing.phone = item.phone;
+                        if (!existing.prettyPhone && item.prettyPhone) existing.prettyPhone = item.prettyPhone;
+                        if (!existing.email && item.email) existing.email = item.email;
+                        if (!existing.avatar && item.avatar) existing.avatar = item.avatar;
+                        if (!existing.headline && item.headline) existing.headline = item.headline;
+                    }
+                    continue;
+                }
+                seenKeys.add(nKey);
+                if (eKey) seenKeys.add(`e:${eKey}`);
+                deduped.push(item);
+            }
+            setCallDirectoryMembers(deduped);
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [mode, currentUser?.email, userName]);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -1793,13 +1911,18 @@ export function WhatsAppModeWorkspace({
     const launchWhatsAppDirectCall = (
         rawTarget: string,
         callMode: 'audio' | 'video',
-        avatarOverride?: string
+        avatarOverride?: string,
+        phoneOverride?: string,
+        emailOverride?: string
     ) => {
         if (!ensureVerifiedCallerBeforeCalling()) return;
         const clean = resolveDialTarget(rawTarget);
         if (!clean) return;
         const isNum = looksLikeClientPhone(clean);
         const displayLabel = isNum ? prettyClientPhone(clean) : clean;
+        const resolvedPhone =
+            (phoneOverride && looksLikeClientPhone(phoneOverride) ? phoneOverride : '') ||
+            (isNum ? clean : undefined);
         const avatar =
             avatarOverride ||
             `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(clean)}&backgroundColor=7c4225`;
@@ -1820,27 +1943,41 @@ export function WhatsAppModeWorkspace({
         setActiveWhatsAppCall({
             callId: `wa_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
             label: displayLabel,
-            phone: isNum ? clean : undefined,
+            phone: resolvedPhone,
+            email: emailOverride,
             avatar,
             mode: callMode,
         });
         startOutgoingCallerRingbackTone();
     };
 
-    const launchSmartVoiceCall = async (rawTarget: string, avatarOverride?: string) => {
+    const launchSmartVoiceCall = async (
+        rawTarget: string,
+        avatarOverride?: string,
+        phoneOverride?: string,
+        emailOverride?: string
+    ) => {
         if (!ensureVerifiedCallerBeforeCalling()) return;
         const clean = resolveDialTarget(rawTarget);
         if (!clean) return;
         // 100% Free Internet Voice Call ($0.00 Twilio cost) + User-Borne SIM/SMS Handoff inside the call screen
-        launchWhatsAppDirectCall(clean, 'audio', avatarOverride);
+        launchWhatsAppDirectCall(clean, 'audio', avatarOverride, phoneOverride, emailOverride);
     };
 
-    const launchCellPhoneCall = (rawTarget: string, avatarOverride?: string) => {
+    const launchCellPhoneCall = (
+        rawTarget: string,
+        avatarOverride?: string,
+        phoneOverride?: string,
+        emailOverride?: string
+    ) => {
         if (!ensureVerifiedCallerBeforeCalling()) return;
         const clean = rawTarget.trim();
         if (!clean) return;
         const isNum = looksLikeClientPhone(clean);
         const displayLabel = isNum ? prettyClientPhone(clean) : clean;
+        const resolvedPhone =
+            (phoneOverride && looksLikeClientPhone(phoneOverride) ? phoneOverride : '') ||
+            (isNum ? clean : undefined);
         const avatar =
             avatarOverride ||
             `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(clean)}&backgroundColor=7c4225`;
@@ -1860,7 +1997,8 @@ export function WhatsAppModeWorkspace({
 
         setActiveSoftphoneTarget({
             label: displayLabel,
-            phone: isNum ? clean : undefined,
+            phone: resolvedPhone,
+            email: emailOverride,
             avatar,
         });
     };
@@ -4758,11 +4896,15 @@ export function WhatsAppModeWorkspace({
     // 2. CALLS VIEW (Desk Note Warm Parchment & Espresso Theme)
     // =========================================================================
     if (mode === 'calls') {
-        const filteredCalls = callLogs.filter(
-            (c) =>
-                !callSearch.trim() ||
-                c.name.toLowerCase().includes(callSearch.toLowerCase()) ||
-                (c.subtitle || '').toLowerCase().includes(callSearch.toLowerCase())
+        const filteredCalls = filterAndRankMembers(
+            callLogs,
+            callSearch,
+            (c) => [c.name, c.subtitle]
+        );
+        const matchedCallDirectory = filterAndRankMembers(
+            callDirectoryMembers,
+            callSearch,
+            (m) => [m.name, m.email, m.phone, m.prettyPhone, m.headline]
         );
 
         const handleCreateNewCallLink = () => {
@@ -4847,13 +4989,19 @@ export function WhatsAppModeWorkspace({
                         </div>
                     ) : (
                     <>
-                    {/* Search / Quick Dial Bar */}
-                    <div className="px-3 py-2.5">
+                    {/* Search / Quick Dial Bar with Instant Registered-User Autocomplete */}
+                    <div className="px-3 py-2.5 relative">
                         <form
                             onSubmit={(e) => {
                                 e.preventDefault();
-                                if (callSearch.trim()) {
-                                    void launchSmartVoiceCall(callSearch.trim());
+                                const typed = callSearch.trim();
+                                if (!typed) return;
+                                if (!looksLikeClientPhone(typed) && matchedCallDirectory[0]) {
+                                    const pick = matchedCallDirectory[0];
+                                    setCallSearch('');
+                                    void launchSmartVoiceCall(pick.name, pick.avatar, pick.phone, pick.email);
+                                } else {
+                                    void launchSmartVoiceCall(typed);
                                 }
                             }}
                             className="relative flex items-center gap-1.5"
@@ -4864,8 +5012,8 @@ export function WhatsAppModeWorkspace({
                                     type="text"
                                     value={callSearch}
                                     onChange={(e) => setCallSearch(e.target.value)}
-                                    placeholder="Search name, number or @username"
-                                    className="w-full bg-[#F3EDE2] border border-[#E0D6C5] rounded-full py-2 pl-9 pr-4 text-xs text-[#1C1917] placeholder-[#78716C] focus:outline-none focus:border-[#7C4225]"
+                                    placeholder="Type first name, full name, or number..."
+                                    className="w-full bg-[#F3EDE2] border border-[#E0D6C5] rounded-full py-2 pl-9 pr-7 text-xs text-[#1C1917] placeholder-[#78716C] focus:outline-none focus:border-[#7C4225]"
                                 />
                                 <svg
                                     className="w-4 h-4 text-[#78716C] absolute left-3 top-2.5"
@@ -4880,21 +5028,121 @@ export function WhatsAppModeWorkspace({
                                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                                     />
                                 </svg>
+                                {callSearch && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setCallSearch('')}
+                                        className="absolute right-2.5 top-2 text-xs text-[#78716C] hover:text-[#1C1917] font-bold cursor-pointer"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
                             </div>
                             {callSearch.trim() && (
                                 <button
                                     type="submit"
                                     style={{ color: '#FBF8F3' }}
                                     className="rounded-full bg-[#7C4225] hover:bg-[#5E3119] px-3 py-1.5 text-[11px] font-bold cursor-pointer shrink-0"
-                                    title="Ring on Cell Phone"
+                                    title="Ring on ConnectLn"
                                 >
                                     📞 Dial
                                 </button>
                             )}
                         </form>
+
+                        {callSearch.trim().length > 0 && matchedCallDirectory.length > 0 && (
+                            <div className="mt-2 rounded-2xl border border-[#D0C4AE] bg-[#FBF8F3] shadow-lg overflow-hidden divide-y divide-[#E7DFD2] max-h-64 overflow-y-auto z-30 relative">
+                                <div className="px-3 py-1.5 bg-[#EFE8DA] flex items-center justify-between">
+                                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#5E3119]">
+                                        Registered Members ({matchedCallDirectory.length})
+                                    </span>
+                                    <span className="text-[10px] font-semibold text-[#78716C]">
+                                        Tap to Voice or Video Call
+                                    </span>
+                                </div>
+                                {matchedCallDirectory.slice(0, 8).map((member) => {
+                                    const mAvatar =
+                                        member.avatar ||
+                                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.name)}&backgroundColor=7c4225`;
+                                    return (
+                                        <div
+                                            key={member.id}
+                                            onClick={() => {
+                                                setCallSearch('');
+                                                void launchSmartVoiceCall(
+                                                    member.name,
+                                                    mAvatar,
+                                                    member.phone,
+                                                    member.email
+                                                );
+                                            }}
+                                            className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-[#EFE8DA]/80 cursor-pointer transition-colors"
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                <img
+                                                    src={mAvatar}
+                                                    alt={member.name}
+                                                    className="w-9 h-9 rounded-xl object-cover shrink-0 border border-[#D0C4AE]"
+                                                />
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className="text-xs font-extrabold text-[#1C1917] truncate">
+                                                            {member.name}
+                                                        </p>
+                                                        <span className="shrink-0 px-1.5 py-0.2 rounded-full bg-emerald-50 border border-emerald-200 text-[9px] font-bold text-emerald-700">
+                                                            Registered
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[10.5px] text-[#78716C] truncate">
+                                                        {member.prettyPhone || member.headline || member.email || 'Verified ConnectLn Member'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setCallSearch('');
+                                                        void launchSmartVoiceCall(
+                                                            member.name,
+                                                            mAvatar,
+                                                            member.phone,
+                                                            member.email
+                                                        );
+                                                    }}
+                                                    title={`Voice Call ${member.name}`}
+                                                    className="w-7 h-7 rounded-lg bg-[#EFE8DA] hover:bg-[#7C4225] text-[#5E3119] hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                                                >
+                                                    📞
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setCallSearch('');
+                                                        launchWhatsAppDirectCall(
+                                                            member.name,
+                                                            'video',
+                                                            mAvatar,
+                                                            member.phone,
+                                                            member.email
+                                                        );
+                                                    }}
+                                                    title={`Video Call ${member.name}`}
+                                                    className="w-7 h-7 rounded-lg bg-[#EFE8DA] hover:bg-[#7C4225] text-[#5E3119] hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                                                >
+                                                    🎥
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
-                    {/* Favorites & Recent Calls */}
+                    {/* Favorites, Recent Calls & ConnectLn People Directory */}
                     <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-3">
                         <div>
                             <p className="px-2.5 py-1 text-xs font-bold text-[#57534E] uppercase tracking-wider">
@@ -5000,6 +5248,86 @@ export function WhatsAppModeWorkspace({
                                 ))}
                             </div>
                         </div>
+
+                        {matchedCallDirectory.length > 0 && (
+                            <div>
+                                <p className="px-2.5 py-1 text-xs font-bold text-[#57534E] uppercase tracking-wider">
+                                    ConnectLn People ({callDirectoryMembers.length})
+                                </p>
+                                <div className="space-y-0.5">
+                                    {(callSearch.trim() ? matchedCallDirectory.slice(0, 20) : matchedCallDirectory.slice(0, 15)).map((member) => {
+                                        const mAvatar =
+                                            member.avatar ||
+                                            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.name)}&backgroundColor=7c4225`;
+                                        return (
+                                            <div
+                                                key={`dir_${member.id}`}
+                                                onClick={() =>
+                                                    void launchSmartVoiceCall(
+                                                        member.name,
+                                                        mAvatar,
+                                                        member.phone,
+                                                        member.email
+                                                    )
+                                                }
+                                                className="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-[#EFE8DA]/70 cursor-pointer group transition-colors"
+                                            >
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <img
+                                                        src={mAvatar}
+                                                        alt={member.name}
+                                                        className="w-10 h-10 rounded-xl object-cover shrink-0 border border-[#D0C4AE]"
+                                                    />
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-medium text-[#1C1917] truncate">
+                                                            {member.name}
+                                                        </p>
+                                                        <p className="text-[11px] text-[#78716C] truncate">
+                                                            {member.prettyPhone || member.headline || member.email || 'Verified ConnectLn Member'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            void launchSmartVoiceCall(
+                                                                member.name,
+                                                                mAvatar,
+                                                                member.phone,
+                                                                member.email
+                                                            );
+                                                        }}
+                                                        title={`Direct Voice Call ${member.name}`}
+                                                        className="w-7 h-7 rounded-lg bg-[#EFE8DA] hover:bg-[#7C4225] text-[#5E3119] hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                                                    >
+                                                        📞
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            launchWhatsAppDirectCall(
+                                                                member.name,
+                                                                'video',
+                                                                mAvatar,
+                                                                member.phone,
+                                                                member.email
+                                                            );
+                                                        }}
+                                                        title={`Direct Video Call ${member.name}`}
+                                                        className="w-7 h-7 rounded-lg bg-[#EFE8DA] hover:bg-[#7C4225] text-[#5E3119] hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                                                    >
+                                                        🎥
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
                     </>
                     )}
@@ -5263,6 +5591,7 @@ export function WhatsAppModeWorkspace({
                             initialMode={activeWhatsAppCall.mode}
                             targetLabel={activeWhatsAppCall.label}
                             targetPhone={activeWhatsAppCall.phone}
+                            targetEmail={activeWhatsAppCall.email}
                             targetAvatar={activeWhatsAppCall.avatar}
                             callerName={userName}
                             callerEmail={currentUser?.email}
@@ -5280,6 +5609,7 @@ export function WhatsAppModeWorkspace({
                         onClose={() => setActiveSoftphoneTarget(null)}
                         targetLabel={activeSoftphoneTarget?.label || ''}
                         targetPhone={activeSoftphoneTarget?.phone}
+                        targetEmail={activeSoftphoneTarget?.email}
                         targetAvatar={activeSoftphoneTarget?.avatar}
                         callerName={userName}
                         callerEmail={currentUser?.email}
@@ -5288,8 +5618,9 @@ export function WhatsAppModeWorkspace({
                         onUpgradeToVideoHuddle={(label) => {
                             const targetAvatar = activeSoftphoneTarget?.avatar;
                             const targetPhone = activeSoftphoneTarget?.phone;
+                            const targetEmail = activeSoftphoneTarget?.email;
                             setActiveSoftphoneTarget(null);
-                            launchWhatsAppDirectCall(targetPhone || label, 'video', targetAvatar);
+                            launchWhatsAppDirectCall(targetPhone || label, 'video', targetAvatar, targetPhone, targetEmail);
                         }}
                     />
                 </div>

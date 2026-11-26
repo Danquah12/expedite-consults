@@ -9,6 +9,7 @@ export interface ShareTarget {
     id: string;
     name: string;
     email?: string;
+    phone?: string;
     avatar?: string;
     subtitle?: string;
 }
@@ -80,35 +81,48 @@ const RSVP_OPTIONS: { kind: 'rsvp_yes' | 'rsvp_no' | 'rsvp_maybe'; choice: 'yes'
 
 const compact = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-// Registered members are loaded once and merged with default verified ConnectLn professionals.
+// Registered members are cached briefly (20s) and merged with default verified ConnectLn professionals.
 let membersCache: ShareTarget[] | null = null;
+let membersCacheTs = 0;
 let membersPromise: Promise<ShareTarget[]> | null = null;
-export function loadMembers(): Promise<ShareTarget[]> {
-    if (membersCache) return Promise.resolve(membersCache);
-    if (!membersPromise) {
+const MEMBERS_CACHE_TTL_MS = 20_000;
+
+export function loadMembers(forceRefresh = false): Promise<ShareTarget[]> {
+    const now = Date.now();
+    if (!forceRefresh && membersCache && now - membersCacheTs < MEMBERS_CACHE_TTL_MS) {
+        return Promise.resolve(membersCache);
+    }
+    if (forceRefresh || !membersPromise) {
         membersPromise = fetch('/api/connectin/users', { cache: 'no-store' })
             .then((r) => r.json())
             .then((d) => {
-                const apiList: ShareTarget[] = (d?.users || []).map((u: any) => ({
-                    id: `member_${String(u.email || u.name).toLowerCase()}`,
-                    name: String(u.name || ''),
-                    email: u.email ? String(u.email).trim().toLowerCase() : undefined,
-                    avatar: u.avatar && !String(u.avatar).startsWith('data:') ? u.avatar : undefined,
-                    subtitle: u.headline || 'Verified ConnectLn Professional',
-                }));
+                const apiList: ShareTarget[] = (d?.users || [])
+                    .filter((u: any) => String(u?.name || '').trim().length > 0)
+                    .map((u: any) => ({
+                        id: `member_${String(u.email || u.phone || u.name).toLowerCase()}`,
+                        name: String(u.name || '').trim(),
+                        email: u.email ? String(u.email).trim().toLowerCase() : undefined,
+                        phone: u.phone ? String(u.phone).trim() : undefined,
+                        avatar: u.avatar && !String(u.avatar).startsWith('data:') ? u.avatar : undefined,
+                        subtitle: u.headline || 'Verified ConnectLn Professional',
+                    }));
                 const seen = new Set<string>();
                 const merged: ShareTarget[] = [];
-                for (const item of [...DEFAULT_CONNECTLN_SHARE_MEMBERS, ...apiList]) {
+                // Prioritize real registered API users so their live email, phone, avatar & headline win
+                for (const item of [...apiList, ...DEFAULT_CONNECTLN_SHARE_MEMBERS]) {
                     const key = compact(item.name);
                     if (!key || seen.has(key)) continue;
                     seen.add(key);
                     merged.push(item);
                 }
                 membersCache = merged;
+                membersCacheTs = Date.now();
+                membersPromise = null;
                 return membersCache;
             })
             .catch(() => {
                 membersPromise = null;
+                if (membersCache) return membersCache;
                 membersCache = DEFAULT_CONNECTLN_SHARE_MEMBERS;
                 return DEFAULT_CONNECTLN_SHARE_MEMBERS;
             });

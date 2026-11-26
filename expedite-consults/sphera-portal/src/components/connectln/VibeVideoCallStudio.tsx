@@ -31,6 +31,7 @@ import {
   Sparkles,
 } from "lucide-react"
 import { loadStoredAdminUsers, loadStoredConnections } from "@/lib/connectin-storage"
+import { filterAndRankMembers } from "@/lib/connectin-search-match"
 import {
   initialConnectedMembers,
   suggestedConnections,
@@ -5358,15 +5359,10 @@ export function VibeVideoCallStudio({
               <div className="space-y-2 max-h-[230px] overflow-y-auto pr-1">
                 {(() => {
                   const q = inviteSearchQuery.trim().toLowerCase()
-                  const matchedFriends = invitableFriends.filter(
-                    (f) =>
-                      !q ||
-                      f.name.toLowerCase().includes(q) ||
-                      (f.email && f.email.toLowerCase().includes(q)) ||
-                      (f.phone && f.phone.toLowerCase().includes(q)) ||
-                      f.role.toLowerCase().includes(q) ||
-                      f.enclave.toLowerCase().includes(q) ||
-                      (f.sourceBadge && f.sourceBadge.toLowerCase().includes(q))
+                  const matchedFriends = filterAndRankMembers(
+                    invitableFriends,
+                    inviteSearchQuery,
+                    (f) => [f.name, f.email, f.phone, f.role, f.enclave, f.sourceBadge]
                   )
                   const hasExactMatch =
                     !q || matchedFriends.some((f) => f.name.trim().toLowerCase() === q)
