@@ -2089,6 +2089,15 @@ export function ConnectLnNavbar({
                   <span>📓 Desk Note</span>
                   <ExternalLink className="h-3 w-3" />
                 </a>
+                <Link
+                  href="/connectin-portal/admin"
+                  onClick={() => setIsMoreOpen(false)}
+                  className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 px-2.5 py-1 text-[11px] font-bold text-slate-800 dark:text-zinc-100 hover:bg-slate-200 transition-colors"
+                  title="Open ConnectLn Administration Guide"
+                >
+                  <ShieldCheck className="h-3 w-3 text-[#0A66C2]" />
+                  <span>Admin Guide</span>
+                </Link>
                 <button
                   type="button"
                   onClick={() => setIsMoreOpen(false)}

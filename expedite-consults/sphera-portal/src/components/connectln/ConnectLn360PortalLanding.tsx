@@ -925,6 +925,12 @@ export function ConnectLn360PortalLanding() {
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <Link
+              href="/connectin-portal/admin"
+              className="hidden sm:inline-flex items-center rounded-full border border-[#0B1F3A]/25 bg-white hover:bg-[#FAF7F2] text-[#0B1F3A] px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-colors"
+            >
+              Admin center
+            </Link>
             {mounted && signedInUserName ? (
               <>
                 <span className="hidden md:inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-bold text-emerald-800">
