@@ -394,15 +394,73 @@ export function NetworkView({
   const [circles, setCircles] = useState<ProfessionalCircleItem[]>(() => getEnclaveCircles(enclaveId))
   const [topics, setTopics] = useState<FollowedTopicItem[]>(() => getEnclaveTopics(enclaveId))
   const [baseEnclaveInvitations, setBaseEnclaveInvitations] = useState<any[]>(() => getEnclaveInvitations(enclaveId))
+  const [endorsedSkillsByConn, setEndorsedSkillsByConn] = useState<Record<string, string[]>>({})
+  const [celebratedEventIds, setCelebratedEventIds] = useState<string[]>([])
+
+  const persistNetworkPrefsPatch = React.useCallback(async (patch: Record<string, any>) => {
+    if (typeof window === 'undefined' || !userScopeKey) return
+    try {
+      await fetch('/api/connectin/network-state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userKey: userScopeKey, patch })
+      })
+    } catch {
+      // ignore offline error
+    }
+  }, [userScopeKey])
 
   useEffect(() => {
+    let cancelled = false
     setCompanies(getEnclaveCompanies(enclaveId))
     setOrganizations(getEnclaveOrganizations(enclaveId))
     setCircles(getEnclaveCircles(enclaveId))
     setTopics(getEnclaveTopics(enclaveId))
     setBaseEnclaveInvitations(getEnclaveInvitations(enclaveId))
     setSelectedCapability('All')
-  }, [enclaveId])
+
+    if (typeof window !== 'undefined' && userScopeKey) {
+      fetch(`/api/connectin/network-state?userKey=${encodeURIComponent(userScopeKey)}`, { cache: 'no-store' })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (cancelled || !data?.prefs) return
+          const prefs = data.prefs
+          if (Array.isArray(prefs.followedCompanyIds)) {
+            const setIds = new Set<string>(prefs.followedCompanyIds)
+            setCompanies(getEnclaveCompanies(enclaveId).map(c => ({ ...c, isFollowing: setIds.has(c.id) })))
+          }
+          if (Array.isArray(prefs.followedOrgIds)) {
+            const setIds = new Set<string>(prefs.followedOrgIds)
+            setOrganizations(getEnclaveOrganizations(enclaveId).map(o => ({ ...o, isFollowing: setIds.has(o.id) })))
+          }
+          if (Array.isArray(prefs.joinedCircleIds)) {
+            const setIds = new Set<string>(prefs.joinedCircleIds)
+            setCircles(getEnclaveCircles(enclaveId).map(c => ({ ...c, isJoined: setIds.has(c.id) })))
+          }
+          if (Array.isArray(prefs.followedTopicIds)) {
+            const setIds = new Set<string>(prefs.followedTopicIds)
+            setTopics(getEnclaveTopics(enclaveId).map(t => ({ ...t, isFollowing: setIds.has(t.id) })))
+          }
+          if (prefs.endorsedSkillsByConn && typeof prefs.endorsedSkillsByConn === 'object') {
+            setEndorsedSkillsByConn(prefs.endorsedSkillsByConn)
+          }
+          if (Array.isArray(prefs.celebratedEventIds)) {
+            const celSet = new Set<string>(prefs.celebratedEventIds)
+            setCelebratedEventIds(prefs.celebratedEventIds)
+            setCatchUpEvents(prev => prev.map(evt => ({ ...evt, hasCongratulated: celSet.has(evt.id) || evt.hasCongratulated })))
+          }
+          if (Array.isArray(prefs.removedConnectionNames) && prefs.removedConnectionNames.length > 0) {
+            setRemovedConnectionNames(prev => {
+              const merged = Array.from(new Set([...prev, ...prefs.removedConnectionNames].map((n: any) => String(n).toLowerCase().trim()).filter(Boolean)))
+              try { localStorage.setItem(`connectin_removed_v6_${userScopeKey}`, JSON.stringify(merged)) } catch {}
+              return merged
+            })
+          }
+        })
+        .catch(() => {})
+    }
+    return () => { cancelled = true }
+  }, [enclaveId, userScopeKey])
 
   // Sync local outbound invites to cloud & fetch live received/sent/accepted invitations from /api/connectin/invite
   const syncInvitationsWithCloud = React.useCallback(async () => {
@@ -596,6 +654,7 @@ export function NetworkView({
         localStorage.setItem(`connectin_removed_v6_${userScopeKey}`, JSON.stringify(next))
       } catch {}
     }
+    void persistNetworkPrefsPatch({ removedConnectionNames: next })
   }
 
   const showToast = (msg: string) => {
@@ -960,26 +1019,59 @@ export function NetworkView({
     setTimeout(() => syncInvitationsWithCloud(), 400)
   }
 
-  // Toggle company / org / circle / topic follows
+  // Toggle company / org / circle / topic follows (persisted in MongoDB Atlas KV)
   const toggleFollowCompany = (id: string) => {
-    setCompanies(prev => prev.map(c => c.id === id ? { ...c, isFollowing: !c.isFollowing } : c))
+    setCompanies(prev => {
+      const next = prev.map(c => c.id === id ? { ...c, isFollowing: !c.isFollowing } : c)
+      const target = next.find(c => c.id === id)
+      void persistNetworkPrefsPatch({ followedCompanyIds: next.filter(c => c.isFollowing).map(c => c.id) })
+      if (target) showToast(target.isFollowing ? `Following ${target.name}.` : `Unfollowed ${target.name}.`)
+      return next
+    })
   }
 
   const toggleFollowOrg = (id: string) => {
-    setOrganizations(prev => prev.map(o => o.id === id ? { ...o, isFollowing: !o.isFollowing } : o))
+    setOrganizations(prev => {
+      const next = prev.map(o => o.id === id ? { ...o, isFollowing: !o.isFollowing } : o)
+      const target = next.find(o => o.id === id)
+      void persistNetworkPrefsPatch({ followedOrgIds: next.filter(o => o.isFollowing).map(o => o.id) })
+      if (target) showToast(target.isFollowing ? `Following ${target.name}.` : `Unfollowed ${target.name}.`)
+      return next
+    })
   }
 
   const toggleJoinCircle = (id: string) => {
-    setCircles(prev => prev.map(c => c.id === id ? { ...c, isJoined: !c.isJoined } : c))
+    setCircles(prev => {
+      const next = prev.map(c => c.id === id ? { ...c, isJoined: !c.isJoined } : c)
+      const target = next.find(c => c.id === id)
+      void persistNetworkPrefsPatch({ joinedCircleIds: next.filter(c => c.isJoined).map(c => c.id) })
+      if (target) showToast(target.isJoined ? `✓ Joined ${target.name}.` : `Left ${target.name}.`)
+      return next
+    })
   }
 
   const toggleFollowTopic = (id: string) => {
-    setTopics(prev => prev.map(t => t.id === id ? { ...t, isFollowing: !t.isFollowing } : t))
+    setTopics(prev => {
+      const next = prev.map(t => t.id === id ? { ...t, isFollowing: !t.isFollowing } : t)
+      const target = next.find(t => t.id === id)
+      void persistNetworkPrefsPatch({ followedTopicIds: next.filter(t => t.isFollowing).map(t => t.id) })
+      if (target) showToast(target.isFollowing ? `Following ${target.hashtag}.` : `Unfollowed ${target.hashtag}.`)
+      return next
+    })
   }
 
-  // Endorse connection skill
+  // Endorse connection skill (persisted in MongoDB Atlas KV)
   const handleEndorseSkill = (connId: string, skill: string) => {
-    showToast(`✓ Endorsed ${skill} for connection!`)
+    const existing = endorsedSkillsByConn[connId] || []
+    const alreadyEndorsed = existing.includes(skill)
+    const updatedList = alreadyEndorsed ? existing.filter(s => s !== skill) : [...existing, skill]
+    const nextMap = { ...endorsedSkillsByConn, [connId]: updatedList }
+    if (updatedList.length === 0) {
+      delete nextMap[connId]
+    }
+    setEndorsedSkillsByConn(nextMap)
+    void persistNetworkPrefsPatch({ endorsedSkillsByConn: nextMap })
+    showToast(alreadyEndorsed ? `Removed endorsement for ${skill}.` : `✓ Endorsed ${skill} for connection!`)
   }
 
   // Remove connection — immediately removes from My Connections and decrements count
@@ -1600,17 +1692,24 @@ export function NetworkView({
 
                             {/* Capabilities */}
                             <div className="flex flex-wrap gap-1 pt-1">
-                              {conn.capabilities.map((cap) => (
-                                <button
-                                  key={cap}
-                                  onClick={() => handleEndorseSkill(conn.id, cap)}
-                                  className="rounded-full bg-zinc-100 hover:bg-blue-50 hover:text-[#0A66C2] px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 transition-colors flex items-center gap-1"
-                                  title={`Endorse ${conn.name} for ${cap}`}
-                                >
-                                  <span>+ Endorse</span>
-                                  <span className="font-bold">{cap}</span>
-                                </button>
-                              ))}
+                              {conn.capabilities.map((cap) => {
+                                const isEndorsed = (endorsedSkillsByConn[conn.id] || []).includes(cap)
+                                return (
+                                  <button
+                                    key={cap}
+                                    onClick={() => handleEndorseSkill(conn.id, cap)}
+                                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors flex items-center gap-1 cursor-pointer ${
+                                      isEndorsed
+                                        ? "bg-emerald-50 border border-emerald-300 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:border-emerald-700 dark:text-emerald-300"
+                                        : "bg-zinc-100 hover:bg-blue-50 hover:text-[#0A66C2] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                                    }`}
+                                    title={isEndorsed ? `Endorsed ${conn.name} for ${cap} (click to undo)` : `Endorse ${conn.name} for ${cap}`}
+                                  >
+                                    <span>{isEndorsed ? "✓ Endorsed" : "+ Endorse"}</span>
+                                    <span className="font-bold">{cap}</span>
+                                  </button>
+                                )
+                              })}
                             </div>
                           </div>
                         </div>
@@ -3040,10 +3139,10 @@ export function NetworkView({
                       </div>
 
                       {/* Bottom ConnectLn Dossier Actions */}
-                      <div className="p-3 pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center gap-1.5">
+                      <div className="p-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center gap-1 min-w-0">
                         <button
                           onClick={() => onSelectMember?.(person)}
-                          className="flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700 py-1.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                          className="px-2 shrink-0 rounded-xl border border-zinc-300 dark:border-zinc-700 py-1.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1 whitespace-nowrap cursor-pointer"
                           title={`Inspect ${person.name}'s Dossier`}
                         >
                           <span>Dossier</span>
@@ -3051,10 +3150,10 @@ export function NetworkView({
 
                         <button
                           onClick={() => onNavigateMessaging && onNavigateMessaging(person)}
-                          className="flex-1 rounded-xl border border-[#0A66C2] py-1.5 text-[11px] font-bold text-[#0A66C2] hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                          className="px-2 shrink-0 rounded-xl border border-[#0A66C2] py-1.5 text-[11px] font-bold text-[#0A66C2] hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all flex items-center justify-center gap-1 whitespace-nowrap cursor-pointer"
                           title={`Message ${person.name}`}
                         >
-                          <MessageSquare className="h-3 w-3" />
+                          <MessageSquare className="h-3 w-3 shrink-0" />
                           <span>DM</span>
                         </button>
 
@@ -3097,7 +3196,7 @@ export function NetworkView({
                                 }
                                 setTimeout(() => setToastMessage(null), 3000)
                               }}
-                              className={`flex-1 rounded-xl py-1.5 text-[11px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                              className={`flex-1 min-w-0 px-2 rounded-xl py-1.5 text-[11px] font-extrabold transition-all flex items-center justify-center gap-1 whitespace-nowrap cursor-pointer ${
                                 rel.isFollowing
                                   ? "border border-emerald-600 bg-emerald-50 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700 dark:bg-emerald-950/40 dark:text-emerald-300"
                                   : rel.followsYou
@@ -3114,18 +3213,18 @@ export function NetworkView({
                             >
                               {rel.isFollowing ? (
                                 <>
-                                  <Check className="h-3 w-3" />
-                                  <span>Following</span>
+                                  <Check className="h-3 w-3 shrink-0" />
+                                  <span className="truncate">Following</span>
                                 </>
                               ) : rel.followsYou ? (
                                 <>
-                                  <Plus className="h-3 w-3" />
-                                  <span>Follow back</span>
+                                  <Plus className="h-3 w-3 shrink-0" />
+                                  <span className="truncate">Follow back</span>
                                 </>
                               ) : (
                                 <>
-                                  <Plus className="h-3 w-3" />
-                                  <span>Follow</span>
+                                  <Plus className="h-3 w-3 shrink-0" />
+                                  <span className="truncate">Follow</span>
                                 </>
                               )}
                             </button>
@@ -3149,32 +3248,32 @@ export function NetworkView({
                             }
                             handleSendConnectionWithNote(person.id)
                           }}
-                          className={`flex-1 rounded-xl py-1.5 text-[11px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                          className={`flex-1 min-w-0 px-2 rounded-xl py-1.5 text-[11px] font-extrabold transition-all flex items-center justify-center gap-1 whitespace-nowrap cursor-pointer ${
                             receivedInviteByNameMap.has(String(person.name || '').toLowerCase().trim())
-                              ? "bg-[#0A66C2] text-white hover:bg-[#004182] shadow-sm ring-2 ring-blue-300"
+                              ? "bg-[#0A66C2] !text-white hover:bg-[#004182] shadow-sm ring-2 ring-blue-300"
                               : person.isConnected
                               ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300"
                               : person.isPending
                               ? "border border-zinc-300 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400"
-                              : "bg-[#0A66C2] text-white hover:bg-[#004182] shadow-2xs"
+                              : "bg-[#0A66C2] !text-white hover:bg-[#004182] shadow-2xs"
                           }`}
                         >
                           {receivedInviteByNameMap.has(String(person.name || '').toLowerCase().trim()) ? (
                             <>
-                              <Check className="h-3 w-3" />
-                              <span>Accept Invite</span>
+                              <Check className="h-3 w-3 shrink-0" />
+                              <span className="truncate">Accept Invite</span>
                             </>
                           ) : person.isConnected ? (
                             <>
-                              <Check className="h-3 w-3 text-emerald-600" />
-                              <span>Connected</span>
+                              <Check className="h-3 w-3 shrink-0 text-emerald-600" />
+                              <span className="truncate">Connected</span>
                             </>
                           ) : person.isPending ? (
-                            <span>Invite Sent</span>
+                            <span className="truncate">Invite Sent</span>
                           ) : (
                             <>
-                              <UserPlus className="h-3 w-3" />
-                              <span>Connect</span>
+                              <UserPlus className="h-3 w-3 shrink-0" />
+                              <span className="truncate">Connect</span>
                             </>
                           )}
                         </button>
@@ -3482,13 +3581,31 @@ export function NetworkView({
                     <button
                       onClick={() => {
                         setCatchUpEvents(prev => prev.map(e => e.id === evt.id ? { ...e, hasCongratulated: true } : e))
+                        const nextCelebrated = Array.from(new Set([...celebratedEventIds, evt.id]))
+                        setCelebratedEventIds(nextCelebrated)
+                        void persistNetworkPrefsPatch({ celebratedEventIds: nextCelebrated })
+                        void fetch('/api/connectin/messages', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            action: 'send_message',
+                            senderName: currentUser?.name || 'Member',
+                            senderEmail: (currentUser as any)?.email || '',
+                            senderAvatar: currentUser?.avatar || '',
+                            senderRole: currentUser?.headline || 'ConnectLn Member',
+                            recipientName: evt.person.name,
+                            recipientHeadline: evt.person.headline || 'ConnectLn Member',
+                            text: `👏 Congratulations on ${evt.details}! Wishing you continued success.`,
+                            channelType: 'People'
+                          })
+                        }).catch(() => {})
                         showToast(`👏 Congratulated ${evt.person.name}!`)
                       }}
                       disabled={evt.hasCongratulated}
-                      className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all shrink-0 ${
+                      className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all shrink-0 cursor-pointer ${
                         evt.hasCongratulated
                           ? "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-400"
-                          : "bg-[#0A66C2] text-white hover:bg-[#004182]"
+                          : "bg-[#0A66C2] !text-white hover:bg-[#004182]"
                       }`}
                     >
                       {evt.hasCongratulated ? "✓ Celebrated" : "Say Congrats 👏"}
@@ -3508,6 +3625,7 @@ export function NetworkView({
           onClose={() => setIsWarmIntroOpen(false)}
           targetPerson={warmIntroTarget}
           currentUser={currentUser}
+          onIntroSent={(person) => showToast(`✨ Warm intro request sent for ${person.name}!`)}
         />
       )}
 

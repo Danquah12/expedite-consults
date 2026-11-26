@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Users,
   Share2,
@@ -25,27 +25,63 @@ interface WarmIntroModalProps {
   onClose: () => void
   targetPerson: SuggestedConnection | null
   currentUser: UserProfile
+  onIntroSent?: (target: SuggestedConnection) => void
+}
+
+function buildWarmIntroDraft(targetPerson: SuggestedConnection | null): string {
+  const targetName = targetPerson?.name || "your colleague"
+  const focus = targetPerson?.capabilities?.slice(0, 2).join(" & ") || targetPerson?.headline || "cross-guild collaboration"
+  return `Hi Elena! I noticed you are closely connected with ${targetName} (${targetPerson?.headline || "ConnectLn Specialist"}). Given our shared work in ${focus}, would you be open to making a quick warm introduction? I've attached a one-paragraph blurb below!`
 }
 
 export function WarmIntroModal({
   isOpen,
   onClose,
   targetPerson,
-  currentUser
+  currentUser,
+  onIntroSent
 }: WarmIntroModalProps) {
-  const [introMessage, setIntroMessage] = useState(
-    `Hi Elena! I noticed you are closely connected with ${targetPerson?.name || "Victoria"}. Given our joint research on Autonomous Defense Loops and her work scaling zero-trust FinTech systems, would you be open to making a quick warm introduction? I've attached a one-paragraph blurb below!`
-  )
+  const [introMessage, setIntroMessage] = useState(() => buildWarmIntroDraft(targetPerson))
   const [isSent, setIsSent] = useState(false)
+  const [isSending, setIsSending] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const handleSendRequest = (e: React.FormEvent) => {
+  useEffect(() => {
+    setIntroMessage(buildWarmIntroDraft(targetPerson))
+    setIsSent(false)
+    setIsSending(false)
+  }, [targetPerson?.id, targetPerson?.name, isOpen])
+
+  const handleSendRequest = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!targetPerson || isSending || isSent) return
+    setIsSending(true)
+    try {
+      await fetch("/api/connectin/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "send_message",
+          senderName: currentUser?.name || "Member",
+          senderEmail: (currentUser as any)?.email || "",
+          senderAvatar: currentUser?.avatar || "",
+          senderRole: currentUser?.headline || "ConnectLn Member",
+          recipientName: "Dr. Elena Rostova",
+          recipientHeadline: `Mutual Bridge Connection · Warm Intro for ${targetPerson.name}`,
+          text: `[Warm Intro Request -> ${targetPerson.name}]\n${introMessage}`,
+          channelType: "People"
+        })
+      })
+    } catch {
+      // Keep UX smooth even if offline
+    }
+    setIsSending(false)
     setIsSent(true)
+    onIntroSent?.(targetPerson)
     setTimeout(() => {
       onClose()
       setIsSent(false)
-    }, 1500)
+    }, 1200)
   }
 
   const handleCopyCard = () => {
@@ -159,12 +195,16 @@ export function WarmIntroModal({
               </span>
               <button
                 type="submit"
-                disabled={isSent}
-                className="flex items-center gap-1.5 rounded-full bg-[#0A66C2] px-5 py-2 font-bold text-white hover:bg-[#004182] transition-all shadow-xs"
+                disabled={isSent || isSending}
+                className="flex items-center gap-1.5 rounded-full bg-[#0A66C2] px-5 py-2 font-bold text-white hover:bg-[#004182] disabled:opacity-70 transition-all shadow-xs cursor-pointer"
               >
                 {isSent ? (
                   <>
                     <Check className="h-4 w-4" /> Request Sent to Elena!
+                  </>
+                ) : isSending ? (
+                  <>
+                    <Send className="h-3.5 w-3.5 animate-pulse" /> Sending Request...
                   </>
                 ) : (
                   <>

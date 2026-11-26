@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { sendConnectInInviteSMS, sendConnectInInviteVoiceCall, formatE164Phone } from "@/lib/connectin-sms"
 import { sendConnectInInviteEmail } from "@/lib/connectin-email"
 import { recordGlobalUserActivity, pullCloudUsersIntoDb } from "@/lib/connectin-cloud-sync"
+import { firebaseKvListItems, firebaseKvSetItem } from "@/lib/connectin-firebase-kv"
 
 export interface StoredInviteRecord {
   cid: string
@@ -145,7 +146,6 @@ function mergeInviteRecord(
 
 async function pullCloudInvites(): Promise<StoredInviteRecord[]> {
   const auth = getTwilioAuthHeader()
-  if (!auth) return []
   const recordsMap = new Map<string, StoredInviteRecord>()
 
   const putRecord = (candidate: StoredInviteRecord) => {
@@ -156,7 +156,20 @@ async function pullCloudInvites(): Promise<StoredInviteRecord[]> {
     recordsMap.set(cleanCid, mergeInviteRecord(prev, normalized))
   }
 
+  try {
+    const kvEntries = await firebaseKvListItems<StoredInviteRecord>(SYNC_INVITES_MAP)
+    for (const entry of kvEntries) {
+      const d = entry?.data
+      if (d && d.cid && d.senderName && (d.recipientName || d.recipientEmail || d.recipientPhone)) {
+        putRecord(d)
+      }
+    }
+  } catch {
+    // ignore KV error and continue to Twilio/in-memory fallback
+  }
+
   const collectFromMap = async (mapName: string) => {
+    if (!auth) return
     try {
       const res = await fetch(
         `https://sync.twilio.com/v1/Services/default/Maps/${mapName}/Items?PageSize=100`,
@@ -187,7 +200,17 @@ async function pullCloudInvites(): Promise<StoredInviteRecord[]> {
     }
   }
 
-  await collectFromMap(SYNC_INVITES_MAP)
+  if (auth) {
+    await collectFromMap(SYNC_INVITES_MAP)
+  }
+
+  const store = getInviteStore()
+  for (const memRec of store.values()) {
+    putRecord(memRec)
+  }
+  for (const [k, merged] of recordsMap.entries()) {
+    store.set(k, merged)
+  }
 
   return Array.from(recordsMap.values())
 }
@@ -195,6 +218,20 @@ async function pullCloudInvites(): Promise<StoredInviteRecord[]> {
 async function syncAndSaveInviteRecord(rawRecord: StoredInviteRecord): Promise<StoredInviteRecord[]> {
   const record = sanitizeInviteRecord(rawRecord)
   const store = getInviteStore()
+  if (store.size === 0) {
+    try {
+      const kvEntries = await firebaseKvListItems<StoredInviteRecord>(SYNC_INVITES_MAP)
+      for (const entry of kvEntries) {
+        const d = entry?.data
+        if (d && d.cid && d.senderName) {
+          const cleanCid = String(d.cid).replace(/^(inv_|out_)/, "").trim()
+          if (cleanCid) store.set(cleanCid, { ...d, cid: cleanCid })
+        }
+      }
+    } catch {
+      // ignore cold-start KV hydrate failure
+    }
+  }
 
   // Prevent duplicate records for the same sender -> recipient pair
   const sNorm = record.senderName.toLowerCase().trim()
@@ -218,7 +255,10 @@ async function syncAndSaveInviteRecord(rawRecord: StoredInviteRecord): Promise<S
   store.set(finalCid, finalRecord)
 
   const itemKey = `inv_${finalCid.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48)}`
-  await upsertMapItemInTwilio(SYNC_INVITES_MAP, itemKey, finalRecord)
+  await Promise.allSettled([
+    firebaseKvSetItem(SYNC_INVITES_MAP, itemKey, finalRecord),
+    upsertMapItemInTwilio(SYNC_INVITES_MAP, itemKey, finalRecord),
+  ])
 
   return Array.from(store.values()).sort((a, b) => b.createdAt - a.createdAt)
 }

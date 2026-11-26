@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { normalizeParticipantKey, recordGlobalUserActivity } from '@/lib/connectin-cloud-sync';
+import { firebaseKvGetItem, firebaseKvSetItem } from '@/lib/connectin-firebase-kv';
 
 export interface CloudFollowMember {
     id: string;
@@ -86,7 +87,30 @@ function dedupFollowList(list: CloudFollowMember[]): CloudFollowMember[] {
     return Array.from(map.values()).sort((a, b) => (b.followedAtIso || '').localeCompare(a.followedAtIso || ''));
 }
 
+function normalizeFollowBundle(d: Partial<CloudUserFollowBundle> | null | undefined): CloudUserFollowBundle {
+    return {
+        following: dedupFollowList(Array.isArray(d?.following) ? d.following : []),
+        followers: dedupFollowList(Array.isArray(d?.followers) ? d.followers : []),
+        notifications: Array.isArray(d?.notifications) ? d.notifications : [],
+        blockedUsers: Array.isArray(d?.blockedUsers) ? d.blockedUsers : [],
+        settings: {
+            ...defaultSettings(),
+            ...(d?.settings || {}),
+        },
+    };
+}
+
 async function pullCloudFollowForUser(key: string): Promise<CloudUserFollowBundle> {
+    try {
+        const kvStored = await firebaseKvGetItem<CloudUserFollowBundle>(SYNC_FOLLOW_MAP, key);
+        if (kvStored && typeof kvStored === 'object') {
+            const normalized = normalizeFollowBundle(kvStored);
+            memoryFollowByKey[key] = normalized;
+            return normalized;
+        }
+    } catch {
+        // fallback to Twilio Sync / memory below
+    }
     const auth = getTwilioAuthHeader();
     if (!auth) return memoryFollowByKey[key] || emptyFollowBundle();
     try {
@@ -100,34 +124,33 @@ async function pullCloudFollowForUser(key: string): Promise<CloudUserFollowBundl
         );
         if (!res.ok) return memoryFollowByKey[key] || emptyFollowBundle();
         const json = await res.json();
-        const d = json?.data || {};
-        return {
-            following: dedupFollowList(Array.isArray(d.following) ? d.following : []),
-            followers: dedupFollowList(Array.isArray(d.followers) ? d.followers : []),
-            notifications: Array.isArray(d.notifications) ? d.notifications : [],
-            blockedUsers: Array.isArray(d.blockedUsers) ? d.blockedUsers : [],
-            settings: {
-                ...defaultSettings(),
-                ...(d.settings || {}),
-            },
-        };
+        const normalized = normalizeFollowBundle(json?.data || {});
+        memoryFollowByKey[key] = normalized;
+        void firebaseKvSetItem(SYNC_FOLLOW_MAP, key, normalized).catch(() => {});
+        return normalized;
     } catch {
         return memoryFollowByKey[key] || emptyFollowBundle();
     }
 }
 
 async function pushCloudFollowForUser(key: string, bundle: CloudUserFollowBundle): Promise<void> {
-    memoryFollowByKey[key] = bundle;
+    const cleanBundle = normalizeFollowBundle(bundle);
+    memoryFollowByKey[key] = cleanBundle;
+    try {
+        await firebaseKvSetItem(SYNC_FOLLOW_MAP, key, cleanBundle);
+    } catch {
+        // best-effort fallback to Twilio Sync below
+    }
     const auth = getTwilioAuthHeader();
     if (!auth) return;
     try {
         const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${SYNC_FOLLOW_MAP}`;
         const serialized = JSON.stringify({
-            following: dedupFollowList(bundle.following).slice(0, 60),
-            followers: dedupFollowList(bundle.followers).slice(0, 60),
-            notifications: (bundle.notifications || []).slice(0, 30),
-            blockedUsers: (bundle.blockedUsers || []).slice(0, 40),
-            settings: bundle.settings || defaultSettings(),
+            following: dedupFollowList(cleanBundle.following).slice(0, 60),
+            followers: dedupFollowList(cleanBundle.followers).slice(0, 60),
+            notifications: (cleanBundle.notifications || []).slice(0, 30),
+            blockedUsers: (cleanBundle.blockedUsers || []).slice(0, 40),
+            settings: cleanBundle.settings || defaultSettings(),
         });
         const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
             method: 'POST',
