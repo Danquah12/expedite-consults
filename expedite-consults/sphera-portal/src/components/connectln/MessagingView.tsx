@@ -2,6 +2,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
+    BadgeCheck,
+    Calendar,
+    Lock,
+    MoreHorizontal,
+    Phone,
+    Star,
+    Video,
+} from 'lucide-react';
+import {
     getEnclaveB2BThreads,
     getThreadQuickReplies,
     B2BConversationThread,
@@ -5261,13 +5270,13 @@ export function MessagingView({
                         }`}
                     >
                         {/* Conversation Header */}
-                        <div className="p-3 sm:px-4 sm:py-3 border-b border-slate-200 flex flex-col gap-2 bg-white shadow-sm z-10">
-                            <div className="flex flex-wrap items-center justify-between gap-2.5">
-                                <div className="flex items-center gap-2.5 sm:gap-3 min-w-[200px] flex-1">
+                        <div className="px-3 sm:px-4 pt-2.5 pb-0 border-b border-slate-200 flex flex-col bg-white z-10">
+                            <div className="flex items-center justify-between gap-2 flex-nowrap pb-2.5">
+                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                     <button
                                         type="button"
                                         onClick={() => setMobileShowChat(false)}
-                                        className="md:hidden shrink-0 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-extrabold border border-slate-200 flex items-center gap-1 cursor-pointer"
+                                        className="md:hidden shrink-0 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold border border-slate-200 flex items-center gap-1 cursor-pointer"
                                         aria-label="Back to messages list"
                                     >
                                         <span>←</span>
@@ -5281,50 +5290,50 @@ export function MessagingView({
                                                 e.currentTarget.onerror = null;
                                                 e.currentTarget.src = resolveValidMessagingAvatarUrl('', activeThread.title);
                                             }}
-                                            className={`w-11 h-11 object-cover border border-slate-200 shadow-sm ${
+                                            className={`w-9 h-9 object-cover border border-slate-200 ${
                                                 activeThread.channelType === 'People'
                                                     ? 'rounded-full'
                                                     : 'rounded-xl'
                                             }`}
                                         />
                                         {activeThread.onlineStatus === 'online' && (
-                                            <span className="w-3 h-3 rounded-full flex items-center justify-center absolute -bottom-0.5 -right-0.5">
+                                            <span className="w-2.5 h-2.5 rounded-full flex items-center justify-center absolute -bottom-0.5 -right-0.5">
                                                 <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
-                                                <span className="relative w-3 h-3 rounded-full bg-emerald-500 border-2 border-white online-dot-blink" />
+                                                <span className="relative w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white online-dot-blink" />
                                             </span>
                                         )}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                            <h3 className="font-bold text-sm sm:text-base text-slate-900 truncate flex items-center gap-1.5">
-                                                <span className="truncate">{activeThread.title}</span>
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <h3 className="font-bold text-sm text-slate-900 truncate">
+                                                {activeThread.title}
                                             </h3>
                                             {activeThread.isVerified && (
-                                                <span className="bg-blue-50 text-[#0A66C2] text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-200 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
-                                                    ✓ Verified
+                                                <span
+                                                    title="Verified ConnectLn Member"
+                                                    className="inline-flex items-center shrink-0 text-[#0A66C2]"
+                                                >
+                                                    <BadgeCheck className="h-3.5 w-3.5" />
                                                 </span>
                                             )}
                                             {activeThread.isExternalEmail && activeThread.recipientEmail && (
-                                                <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-200 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
-                                                    {activeThread.verifiedBadge || `📧 External Email · ${activeThread.recipientEmail}`}
+                                                <span className="bg-indigo-50 text-indigo-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-indigo-200 whitespace-nowrap shrink-0">
+                                                    {activeThread.verifiedBadge || activeThread.recipientEmail}
                                                 </span>
                                             )}
-                                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap shrink-0">
-                                                🔒 E2EE
-                                            </span>
                                             {commPrivacy.disappearingByThread[activeThread.id] &&
                                                 commPrivacy.disappearingByThread[activeThread.id] !== 'off' && (
-                                                    <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                                                    <span className="text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0">
                                                         ⏱ {commPrivacy.disappearingByThread[activeThread.id]}
                                                     </span>
                                                 )}
                                             {Boolean(commPrivacy.lockedThreadPins[activeThread.id]) && (
-                                                <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
-                                                    🔐 PIN Lock
+                                                <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                                                    PIN Lock
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-xs text-slate-500 font-medium truncate flex items-center gap-1.5">
+                                        <p className="text-[11.5px] text-slate-500 truncate flex items-center gap-1.5">
                                             {(() => {
                                                 const pRec =
                                                     partnerPresenceMap[
@@ -5334,7 +5343,7 @@ export function MessagingView({
                                                 if (pRec?.status) {
                                                     const m = PRESENCE_META[pRec.status] || PRESENCE_META.available;
                                                     return (
-                                                        <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-slate-700 shrink-0">
+                                                        <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-slate-700 shrink-0">
                                                             <span className={`h-2 w-2 rounded-full ${m.dotClass}`} />
                                                             <span>{m.shortLabel}</span>
                                                             {pRec.customMessage ? ` (${pRec.customMessage})` : ''}
@@ -5345,152 +5354,166 @@ export function MessagingView({
                                                 return null;
                                             })()}
                                             <span className="truncate">{activeThread.subtitle}</span>
+                                            <span className="text-slate-300 shrink-0">·</span>
+                                            <span
+                                                title="End-to-End Encrypted"
+                                                className="inline-flex items-center gap-0.5 text-[10.5px] font-medium text-emerald-700/85 shrink-0"
+                                            >
+                                                <Lock className="h-2.5 w-2.5" />
+                                                <span>E2EE</span>
+                                            </span>
                                         </p>
                                     </div>
                                 </div>
 
-                                {/* Action Buttons (Star, Audio Call, Video Huddle, Schedule) */}
-                                <div className="flex items-center gap-1.5 shrink-0">
+                                {/* Compact Single-Row Action Bar */}
+                                <div className="flex items-center gap-1 shrink-0">
                                     <button
                                         type="button"
                                         onClick={() => toggleStarThread(activeThread.id)}
                                         title={isThreadStarredById(activeThread.id) ? 'Starred (click to unstar)' : 'Star conversation'}
-                                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold border transition-all cursor-pointer ${
+                                        aria-label={isThreadStarredById(activeThread.id) ? 'Unstar conversation' : 'Star conversation'}
+                                        className={`h-8 w-8 rounded-lg flex items-center justify-center border transition-colors cursor-pointer ${
                                             isThreadStarredById(activeThread.id)
-                                                ? 'bg-amber-50 text-amber-500 border-amber-300 shadow-2xs'
-                                                : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-amber-500 hover:bg-amber-50/50'
+                                                ? 'bg-amber-50 text-amber-500 border-amber-200'
+                                                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-amber-500'
                                         }`}
                                     >
-                                        {isThreadStarredById(activeThread.id) ? '★' : '☆'}
+                                        <Star className={`h-3.5 w-3.5 ${isThreadStarredById(activeThread.id) ? 'fill-amber-400 text-amber-500' : ''}`} />
                                     </button>
                                     {activeThread.channelType === 'Companies' && onNavigateJobs && (
                                         <button
+                                            type="button"
                                             onClick={onNavigateJobs}
-                                            className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold flex items-center gap-1 transition-all border border-amber-300 whitespace-nowrap cursor-pointer"
+                                            className="h-8 px-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1 transition-colors border border-slate-200 whitespace-nowrap cursor-pointer"
                                             title="View Matching Jobs"
                                         >
-                                            <span>💼</span>
-                                            <span className="hidden lg:inline">Jobs</span>
+                                            <span>Jobs</span>
                                         </button>
                                     )}
                                     {activeThread.channelType === 'Products' &&
                                         onNavigateMarketplace && (
                                             <button
+                                                type="button"
                                                 onClick={onNavigateMarketplace}
-                                                className="px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 text-xs font-bold flex items-center gap-1 transition-all border border-indigo-200 whitespace-nowrap cursor-pointer"
+                                                className="h-8 px-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1 transition-colors border border-slate-200 whitespace-nowrap cursor-pointer"
                                                 title="Open Vendor Marketplace"
                                             >
-                                                <span>🛒</span>
-                                                <span className="hidden lg:inline">Market</span>
+                                                <span>Market</span>
                                             </button>
                                         )}
                                     <button
+                                        type="button"
                                         onClick={() => {
                                             startOutgoingCallerRingbackTone();
                                             setActiveCallMode('audio');
                                         }}
-                                        className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1 transition-all border border-slate-200 whitespace-nowrap cursor-pointer"
+                                        className="h-8 w-8 rounded-lg bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition-colors border border-slate-200 cursor-pointer"
                                         title="Start Voice Call"
+                                        aria-label="Start Voice Call"
                                     >
-                                        <span>📞</span>
-                                        <span className="hidden xl:inline">Call</span>
+                                        <Phone className="h-3.5 w-3.5" />
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => {
                                             startOutgoingCallerRingbackTone();
                                             setActiveCallMode('video');
                                         }}
-                                        className="px-2.5 py-1.5 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-xs font-bold flex items-center gap-1 transition-all shadow-2xs whitespace-nowrap cursor-pointer"
+                                        className="h-8 px-2.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer"
                                         style={{ color: '#FFFFFF' }}
                                         title="Start Live Video Huddle"
                                     >
-                                        <span>🎥</span>
+                                        <Video className="h-3.5 w-3.5" />
                                         <span className="hidden sm:inline">Video</span>
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => setShowScheduler(true)}
-                                        className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold flex items-center gap-1 transition-all border border-emerald-300 whitespace-nowrap cursor-pointer"
+                                        className="h-8 w-8 rounded-lg bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition-colors border border-slate-200 cursor-pointer"
                                         title="Schedule a meeting with your connections"
+                                        aria-label="Schedule meeting"
                                     >
-                                        <span>📅</span>
-                                        <span className="hidden xl:inline">Schedule</span>
+                                        <Calendar className="h-3.5 w-3.5" />
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setShowThreadControlsDrawer(true)}
                                         aria-label="Thread controls, Noctis AI, and Privacy"
                                         title="Thread Controls, Security, Noctis AI & Linked Devices"
-                                        className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-sm font-black flex items-center justify-center cursor-pointer"
+                                        className="h-8 w-8 rounded-lg bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 flex items-center justify-center transition-colors cursor-pointer"
                                     >
-                                        ⋯
+                                        <MoreHorizontal className="h-4 w-4" />
                                     </button>
                                 </div>
                             </div>
 
-                            {/* Metadata Badges Strip (Clean horizontal row so badges never stack vertically or collide with buttons) */}
+                            {/* Optional Metadata Strip for Companies, Products & Communities */}
                             {(activeThread.companyMetadata ||
                                 activeThread.productMetadata ||
                                 activeThread.communityMetadata) && (
-                                <div className="flex flex-wrap items-center gap-2 pt-1.5 border-t border-slate-100">
+                                <div className="flex flex-wrap items-center gap-1.5 pb-2 border-t border-slate-100 pt-1.5">
                                     {activeThread.companyMetadata && (
                                         <>
-                                            <span className="text-[11px] font-bold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md border border-slate-200 inline-flex items-center gap-1 whitespace-nowrap">
-                                                🏭 {activeThread.companyMetadata.industry}
+                                            <span className="text-[11px] font-medium bg-slate-50 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200 whitespace-nowrap">
+                                                {activeThread.companyMetadata.industry}
                                             </span>
                                             {activeThread.companyMetadata.openJobsCount && (
-                                                <span className="text-[11px] font-bold bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-md border border-amber-200 inline-flex items-center gap-1 whitespace-nowrap">
-                                                    💼 {activeThread.companyMetadata.openJobsCount} Open Roles
+                                                <span className="text-[11px] font-medium bg-slate-50 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200 whitespace-nowrap">
+                                                    {activeThread.companyMetadata.openJobsCount} Open Roles
                                                 </span>
                                             )}
                                         </>
                                     )}
                                     {activeThread.productMetadata && (
                                         <>
-                                            <span className="text-[11px] font-bold bg-indigo-50 text-indigo-800 px-2.5 py-0.5 rounded-md border border-indigo-200 inline-flex items-center gap-1 whitespace-nowrap">
-                                                📦 {activeThread.productMetadata.productName}
+                                            <span className="text-[11px] font-medium bg-slate-50 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200 whitespace-nowrap">
+                                                {activeThread.productMetadata.productName}
                                             </span>
-                                            <span className="text-[11px] font-bold bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-md border border-emerald-200 inline-flex items-center gap-1 whitespace-nowrap">
-                                                💰 {activeThread.productMetadata.price}
+                                            <span className="text-[11px] font-medium bg-slate-50 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200 whitespace-nowrap">
+                                                {activeThread.productMetadata.price}
                                             </span>
                                         </>
                                     )}
                                     {activeThread.communityMetadata && (
                                         <>
-                                            <span className="text-[11px] font-bold bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md border border-emerald-200 inline-flex items-center gap-1 whitespace-nowrap">
-                                                👥 {activeThread.communityMetadata.membersCount.toLocaleString()} Members
+                                            <span className="text-[11px] font-medium bg-slate-50 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200 whitespace-nowrap">
+                                                {activeThread.communityMetadata.membersCount.toLocaleString()} Members
                                             </span>
-                                            <span className="text-[11px] font-bold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md border border-slate-200 inline-flex items-center gap-1 whitespace-nowrap">
-                                                📌 {activeThread.communityMetadata.topic}
+                                            <span className="text-[11px] font-medium bg-slate-50 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200 whitespace-nowrap">
+                                                {activeThread.communityMetadata.topic}
                                             </span>
                                         </>
                                     )}
                                 </div>
                             )}
 
-                            {/* Clean 1-Row Microsoft Teams Channel Tabs (Chat | Files | Tasks | Notes) */}
-                            <div className="flex items-center gap-1 pt-1.5 border-t border-slate-100 overflow-x-auto no-scrollbar">
+                            {/* Minimalist Underline Channel Tabs (Chat | Files | Tasks | Notes) */}
+                            <div className="flex items-center gap-5 border-t border-slate-100 -mb-px overflow-x-auto no-scrollbar">
                                 {(
                                     [
-                                        { id: 'chat', label: '💬 Chat' },
-                                        { id: 'files', label: '📁 Files' },
-                                        { id: 'tasks', label: '✅ Tasks' },
-                                        { id: 'notes', label: '📝 Notes' },
+                                        { id: 'chat', label: 'Chat' },
+                                        { id: 'files', label: 'Files' },
+                                        { id: 'tasks', label: 'Tasks' },
+                                        { id: 'notes', label: 'Notes' },
                                     ] as const
-                                ).map((tab) => (
-                                    <button
-                                        key={tab.id}
-                                        type="button"
-                                        onClick={() => setActiveChannelTab(tab.id)}
-                                        className={`px-3 py-1 rounded-lg text-[11px] font-extrabold whitespace-nowrap cursor-pointer transition-colors ${
-                                            activeChannelTab === tab.id
-                                                ? 'bg-[#0A66C2] text-white shadow-2xs'
-                                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                                        }`}
-                                        style={activeChannelTab === tab.id ? { color: '#FFFFFF' } : undefined}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
+                                ).map((tab) => {
+                                    const isTabActive = activeChannelTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            type="button"
+                                            onClick={() => setActiveChannelTab(tab.id)}
+                                            className={`py-2 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
+                                                isTabActive
+                                                    ? 'border-[#0A66C2] text-[#0A66C2]'
+                                                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                                            }`}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
