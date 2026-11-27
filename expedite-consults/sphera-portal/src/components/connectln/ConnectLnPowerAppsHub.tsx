@@ -170,7 +170,7 @@ export function ConnectLnPowerAppsHub({
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-bold text-[#0B1F3A] dark:text-zinc-100 hover:bg-slate-50 cursor-pointer shrink-0"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              <span>All 20 Power Apps</span>
+              <span>All {CONNECTLN_POWER_APPS.length} Power Apps</span>
             </button>
             <div className="flex items-center gap-2 min-w-0">
               <span
@@ -257,7 +257,7 @@ export function ConnectLnPowerAppsHub({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search 20 Power Apps (e.g. Fetch, Shield, Venues)..."
+                placeholder={`Search ${CONNECTLN_POWER_APPS.length} Power Apps (e.g. Fetch, SkillHands, Shield)...`}
                 className="w-full rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 focus:bg-white focus:border-[#0A66C2] pl-9 pr-8 py-2 text-xs font-medium text-slate-900 dark:text-zinc-100 focus:outline-none"
               />
               {searchQuery && (
@@ -354,7 +354,7 @@ export function ConnectLnPowerAppsHub({
             }}
             className="rounded-lg bg-[#0A66C2] text-white px-4 py-1.5 text-xs font-bold cursor-pointer"
           >
-            Show all 20 apps
+            Show all {CONNECTLN_POWER_APPS.length} apps
           </button>
         </div>
       ) : (

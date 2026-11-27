@@ -145,7 +145,7 @@ export function ConnectLn360LeftRail({
             {
               id: "powerapps",
               shortLabel: "Power",
-              title: "ConnectLn Power Apps — All 20 Apps",
+              title: "ConnectLn Power Apps — All Apps",
               icon: LayoutGrid,
               accentClass: "text-[#4338CA] dark:text-indigo-400",
             },

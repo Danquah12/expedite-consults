@@ -462,7 +462,7 @@ export function ConnectLnNavbar({
     { id: "ext-noctis-ai", label: "Ask Noctis AI", icon: "🌌", badge: "Live App", desc: "Autonomous Cyber & Enterprise Intelligence Assistant (www.dstrike.app/noctis)", url: "https://www.dstrike.app/noctis" },
     { id: "ext-pdfadore", label: "PDFAdore Document Suite", icon: "📑", badge: "Live App", desc: "Sign, convert, redact, and analyze PDF documents", url: "https://www.pdfadore.com" },
     { id: "ext-launchpad", label: "Expedite Launchpad Hub", icon: "⚡", badge: "Live App", desc: "Unified Expedite Consults enterprise application portal", url: "https://launchpad.expediteconsults.com" },
-    { id: "powerapps", label: "ConnectLn Power Apps Hub (All 20 Apps)", icon: "⚡", badge: "Power Apps", desc: "Launch all 20 ConnectLn Power Apps from one uncluttered workspace", url: undefined },
+    { id: "powerapps", label: `ConnectLn Power Apps Hub (All ${CONNECTLN_POWER_APPS.length} Apps)`, icon: "⚡", badge: "Power Apps", desc: `Launch all ${CONNECTLN_POWER_APPS.length} ConnectLn Power Apps from one uncluttered workspace`, url: undefined },
     ...CONNECTLN_POWER_APPS.filter((a) => a.kind === "external").map((app) => ({
       id: `powerapp_${app.id}`,
       label: `${app.name} — Power App`,
@@ -840,7 +840,7 @@ export function ConnectLnNavbar({
                       }}
                       className="rounded-full bg-white dark:bg-zinc-800 border border-indigo-200 dark:border-indigo-800 px-2.5 py-0.5 text-[10px] font-bold text-[#4338CA] dark:text-indigo-300 hover:bg-indigo-50 transition-colors cursor-pointer"
                     >
-                      All 20 Apps →
+                      All {CONNECTLN_POWER_APPS.length} Apps →
                     </button>
                   </div>
                   <div className="grid grid-cols-2 gap-1.5">
