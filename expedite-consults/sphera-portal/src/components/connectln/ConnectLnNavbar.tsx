@@ -71,6 +71,7 @@ import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { getCategorizedMoreMenu, getEnclaveSearchPlaceholder, getEnclaveModules } from "@/lib/connectin-navbar-data"
 import { findEnclaveById, ALL_PROFESSIONS, PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
 import { loadStoredAdminUsers } from "@/lib/connectin-storage"
+import { CONNECTLN_POWER_APPS, loadPinnedPowerAppIds } from "@/lib/connectln-power-apps"
 import { recordLiveDirectoryDiscovery } from "@/lib/connectin-analytics"
 import { ThemeColorSwitcher } from "@/components/theme/ThemeColorSwitcher"
 import { LanguageSwitcher } from "@/components/language/LanguageSwitcher"
@@ -122,6 +123,17 @@ export function ConnectLnNavbar({
   const [isMeOpen, setIsMeOpen] = useState(false)
   const [isMoreOpen, setIsMoreOpen] = useState(false)
   const [isAppLauncherOpen, setIsAppLauncherOpen] = useState(false)
+  const [pinnedPowerAppIds, setPinnedPowerAppIds] = useState<string[]>(["sign", "invoice", "fetch", "services"])
+  useEffect(() => {
+    setPinnedPowerAppIds(loadPinnedPowerAppIds())
+    const syncPins = () => setPinnedPowerAppIds(loadPinnedPowerAppIds())
+    window.addEventListener("connectln_pinned_power_apps_change", syncPins)
+    window.addEventListener("storage", syncPins)
+    return () => {
+      window.removeEventListener("connectln_pinned_power_apps_change", syncPins)
+      window.removeEventListener("storage", syncPins)
+    }
+  }, [])
   const [hoveredWorkBusinessId, setHoveredWorkBusinessId] = useState<WorkBusinessItemId>(activeWorkBusinessItem || 'find_work')
   const [showLegacyHubsInMore, setShowLegacyHubsInMore] = useState(false)
   const [showMeWorkspaceSwitcher, setShowMeWorkspaceSwitcher] = useState(false)
@@ -450,6 +462,15 @@ export function ConnectLnNavbar({
     { id: "ext-noctis-ai", label: "Ask Noctis AI", icon: "🌌", badge: "Live App", desc: "Autonomous Cyber & Enterprise Intelligence Assistant (www.dstrike.app/noctis)", url: "https://www.dstrike.app/noctis" },
     { id: "ext-pdfadore", label: "PDFAdore Document Suite", icon: "📑", badge: "Live App", desc: "Sign, convert, redact, and analyze PDF documents", url: "https://www.pdfadore.com" },
     { id: "ext-launchpad", label: "Expedite Launchpad Hub", icon: "⚡", badge: "Live App", desc: "Unified Expedite Consults enterprise application portal", url: "https://launchpad.expediteconsults.com" },
+    { id: "powerapps", label: "ConnectLn Power Apps Hub (All 20 Apps)", icon: "⚡", badge: "Power Apps", desc: "Launch all 20 ConnectLn Power Apps from one uncluttered workspace", url: undefined },
+    ...CONNECTLN_POWER_APPS.filter((a) => a.kind === "external").map((app) => ({
+      id: `powerapp_${app.id}`,
+      label: `${app.name} — Power App`,
+      icon: app.emoji,
+      badge: "Power App",
+      desc: app.tagline,
+      url: app.liveUrl,
+    })),
   ]
 
   const allEnclaveModules = [
@@ -805,79 +826,73 @@ export function ConnectLnNavbar({
                   </div>
                 </div>
 
-                {/* ConnectLn Power Apps — First-Party Professional Workflow Suite */}
+                {/* ConnectLn Power Apps — Top 4 Pinned + All 20 Hub Link */}
                 <div className="rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/30 p-2.5 space-y-2">
                   <div className="flex items-center justify-between px-0.5">
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#4338CA] dark:text-indigo-400">
                       ConnectLn Power Apps
                     </span>
-                    <span className="rounded-full bg-white dark:bg-zinc-800 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 text-[9.5px] font-bold text-[#4338CA] dark:text-indigo-300">
-                      Built by ConnectLn
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAppLauncherOpen(false)
+                        onSelectTab("powerapps")
+                      }}
+                      className="rounded-full bg-white dark:bg-zinc-800 border border-indigo-200 dark:border-indigo-800 px-2.5 py-0.5 text-[10px] font-bold text-[#4338CA] dark:text-indigo-300 hover:bg-indigo-50 transition-colors cursor-pointer"
+                    >
+                      All 20 Apps →
+                    </button>
                   </div>
                   <div className="grid grid-cols-2 gap-1.5">
-                    {[
-                      {
-                        id: "sign",
-                        label: "Sign",
-                        sub: "E-Signatures & Audit",
-                        icon: FileSignature,
-                        bg: "bg-[#4338CA]",
-                      },
-                      {
-                        id: "invoice",
-                        label: "Invoice",
-                        sub: "Invoices & Ledger",
-                        icon: Receipt,
-                        bg: "bg-[#0F766E]",
-                      },
-                      {
-                        id: "boards",
-                        label: "Boards",
-                        sub: "Kanban & Sprints",
-                        icon: Kanban,
-                        bg: "bg-[#B45309]",
-                      },
-                      {
-                        id: "forms",
-                        label: "Forms",
-                        sub: "Intake & Surveys",
-                        icon: ClipboardList,
-                        bg: "bg-[#9333EA]",
-                      },
-                    ].map((pApp) => {
-                      const PIcon = pApp.icon
-                      const isPActive = activeTab === pApp.id
-                      return (
-                        <button
-                          key={pApp.id}
-                          type="button"
-                          onClick={() => {
-                            setIsAppLauncherOpen(false)
-                            onSelectTab(pApp.id)
-                          }}
-                          className={`flex items-center gap-2.5 rounded-xl border p-2 text-left transition-all cursor-pointer ${
-                            isPActive
-                              ? "border-[#4338CA] bg-white dark:bg-zinc-800 shadow-2xs"
-                              : "border-transparent bg-white/85 dark:bg-zinc-900/85 hover:border-indigo-300 dark:hover:border-indigo-700"
-                          }`}
-                        >
-                          <span
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white shadow-2xs ${pApp.bg}`}
+                    {pinnedPowerAppIds
+                      .map((pid) => CONNECTLN_POWER_APPS.find((a) => a.id === pid))
+                      .filter((a): a is (typeof CONNECTLN_POWER_APPS)[number] => Boolean(a))
+                      .slice(0, 4)
+                      .map((pApp) => {
+                        const isPActive =
+                          (pApp.studioTab && activeTab === pApp.studioTab) ||
+                          activeTab === "powerapps"
+                        return (
+                          <button
+                            key={pApp.id}
+                            type="button"
+                            onClick={() => {
+                              setIsAppLauncherOpen(false)
+                              if (pApp.kind === "studio" && pApp.studioTab) {
+                                onSelectTab(pApp.studioTab)
+                              } else {
+                                if (typeof window !== "undefined") {
+                                  window.dispatchEvent(
+                                    new CustomEvent("connectln_open_power_app", {
+                                      detail: { appId: pApp.id },
+                                    })
+                                  )
+                                }
+                                onSelectTab("powerapps")
+                              }
+                            }}
+                            className={`flex items-center gap-2 rounded-xl border p-2 text-left transition-all cursor-pointer ${
+                              isPActive
+                                ? "border-[#4338CA] bg-white dark:bg-zinc-800 shadow-2xs"
+                                : "border-transparent bg-white/85 dark:bg-zinc-900/85 hover:border-indigo-300 dark:hover:border-indigo-700"
+                            }`}
                           >
-                            <PIcon className="h-4 w-4" />
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-[11px] font-extrabold text-[#0B1F3A] dark:text-zinc-100 leading-tight">
-                              {pApp.label}
+                            <span
+                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white text-sm shadow-2xs ${pApp.solidBgClass}`}
+                            >
+                              {pApp.emoji}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[11px] font-extrabold text-[#0B1F3A] dark:text-zinc-100 leading-tight truncate">
+                                {pApp.name}
+                              </div>
+                              <div className="text-[9.5px] text-[#6B7280] dark:text-zinc-400 truncate">
+                                {pApp.category}
+                              </div>
                             </div>
-                            <div className="text-[9.5px] text-[#6B7280] dark:text-zinc-400 truncate">
-                              {pApp.sub}
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    })}
+                          </button>
+                        )
+                      })}
                   </div>
                 </div>
 

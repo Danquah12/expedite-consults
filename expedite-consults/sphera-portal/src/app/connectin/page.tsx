@@ -137,6 +137,7 @@ import {
 import { buildProfessionTieredFeedPosts } from "@/lib/connectin-profession-feed"
 import { ConnectLnStagedVideoModal } from "@/components/connectln/ConnectLnStagedVideoModal"
 import { ConnectLnStudioSuiteView } from "@/components/connectln/studio/ConnectLnStudioSuiteView"
+import { ConnectLnPowerAppsHub } from "@/components/connectln/ConnectLnPowerAppsHub"
 import { LiveHarvestedMediaShowcase } from "@/components/connectln/LiveHarvestedMediaShowcase"
 import {
   loadStoredHarvestedItems,
@@ -243,8 +244,19 @@ export default function ConnectLnPage() {
     | 'invoice'
     | 'boards'
     | 'forms'
+    | 'powerapps'
     | 'plans'
   >('home')
+  const [initialPowerAppId, setInitialPowerAppId] = useState<string | null>(null)
+  useEffect(() => {
+    const handleOpenPowerApp = (ev: Event) => {
+      const appId = (ev as CustomEvent<{ appId?: string }>)?.detail?.appId || null
+      setInitialPowerAppId(appId)
+      setActiveTab('powerapps')
+    }
+    window.addEventListener('connectln_open_power_app', handleOpenPowerApp)
+    return () => window.removeEventListener('connectln_open_power_app', handleOpenPowerApp)
+  }, [])
   const [workBusinessSection, setWorkBusinessSection] = useState<WorkBusinessItemId>('find_work')
 
   const router = useRouter()
@@ -994,6 +1006,8 @@ export default function ConnectLnPage() {
           ? "boards"
           : tabParam === "forms" || tabParam === "form" || tabParam === "survey" || tabParam === "surveys" || tabParam === "intake"
           ? "forms"
+          : tabParam === "powerapps" || tabParam === "power"
+          ? "powerapps"
           : pulseIdParam || pulseTitleParam || tabParam === "pulse" || tabParam === "pulserooms"
           ? "pulserooms"
           : videoParam || plateParam || postIdParam || tabParam === "home"
@@ -3108,6 +3122,7 @@ export default function ConnectLnPage() {
       <main
         className={
           activeTab === 'messaging' ||
+          activeTab === 'powerapps' ||
           activeTab === 'noctissocial' ||
           activeTab === 'noctisclinic' ||
           activeTab === 'docs' ||
@@ -4448,7 +4463,14 @@ export default function ConnectLnPage() {
           />
         )}
 
-        {/* VIEWS 20–26: CONNECTLN 360 STUDIO & POWER APPS — DOCS, SHEETS, SLIDES, SIGN, INVOICE, BOARDS & FORMS */}
+        {/* VIEWS 20–26: CONNECTLN 360 STUDIO & POWER APPS — ALL 20 APPS HUB + DOCS, SHEETS, SLIDES, SIGN, INVOICE, BOARDS & FORMS */}
+        {activeTab === 'powerapps' && (
+          <ConnectLnPowerAppsHub
+            initialAppId={initialPowerAppId}
+            onOpenStudioTab={(tab) => setActiveTab(tab)}
+            onReturnHome={() => setActiveTab('home')}
+          />
+        )}
         {(activeTab === 'docs' || activeTab === 'sheets' || activeTab === 'slides' || activeTab === 'sign' || activeTab === 'invoice' || activeTab === 'boards' || activeTab === 'forms') && (
           <ConnectLnStudioSuiteView
             activeApp={activeTab}
