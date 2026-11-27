@@ -481,3 +481,97 @@ export async function sendNoctisJobApplicationEmail(params: {
   }
 }
 
+export interface SendConnectLnPortalRequestParams {
+  requestId: string
+  fullName: string
+  email: string
+  phoneOrOrg?: string
+  message?: string
+  sourcePage?: string
+  submittedAt: string
+}
+
+/**
+ * Notify ConnectLn administrators and send confirmation receipt when a visitor submits
+ * a consultation or portal request from the bottom portal CTA.
+ */
+export async function sendConnectLnPortalRequestEmail(
+  params: SendConnectLnPortalRequestParams
+): Promise<{ success: boolean; sentTo: string[]; id?: string; error?: string }> {
+  const recipientEmails = buildRecipientList([params.email])
+  try {
+    const resend = getResendClient()
+    if (!resend) {
+      return {
+        success: false,
+        sentTo: recipientEmails,
+        error: "RESEND_API_KEY is not configured.",
+      }
+    }
+
+    const fromAddress = resolveResendFromAddress("ConnectLn Portal Requests")
+    const cleanEmail = String(params.email || "").trim().toLowerCase()
+    const replyTo = EMAIL_FORMAT_RE.test(cleanEmail) ? cleanEmail : DEFAULT_FROM_EMAIL
+    const subject = `[ConnectLn Portal Request ${params.requestId}] ${params.fullName}`
+
+    const plainText = [
+      "New ConnectLn Portal Consultation & Request Submission",
+      `Request ID: ${params.requestId}`,
+      `Full Name: ${params.fullName}`,
+      `Email: ${cleanEmail}`,
+      `Phone / Organization: ${params.phoneOrOrg || "Not provided"}`,
+      `Source Page: ${params.sourcePage || "/connectin"}`,
+      `Submitted At (UTC): ${params.submittedAt}`,
+      "",
+      "Request Details:",
+      params.message || "General consultation / onboarding request.",
+    ].join("\n")
+
+    const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;border:1px solid #d1fae5;border-radius:16px;background:#ffffff;">
+      <div style="background:#041E14;color:#ffffff;padding:20px 24px;border-radius:12px;margin-bottom:20px;">
+        <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#6ee7b7;">ConnectLn Portal Request</p>
+        <h2 style="margin:0;font-size:20px;font-weight:800;">Consultation &amp; Support Request Received</h2>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;background:#f4f7f5;border-radius:10px;overflow:hidden;">
+        <tr><td style="padding:8px 12px;font-weight:700;color:#064e3b;">Reference ID:</td><td style="padding:8px 12px;font-family:monospace;">${escapeEmailHtml(params.requestId)}</td></tr>
+        <tr><td style="padding:8px 12px;font-weight:700;color:#064e3b;">Full Name:</td><td style="padding:8px 12px;">${escapeEmailHtml(params.fullName)}</td></tr>
+        <tr><td style="padding:8px 12px;font-weight:700;color:#064e3b;">Email:</td><td style="padding:8px 12px;">${escapeEmailHtml(cleanEmail)}</td></tr>
+        <tr><td style="padding:8px 12px;font-weight:700;color:#064e3b;">Phone / Org:</td><td style="padding:8px 12px;">${escapeEmailHtml(params.phoneOrOrg || "Not provided")}</td></tr>
+        <tr><td style="padding:8px 12px;font-weight:700;color:#064e3b;">Source:</td><td style="padding:8px 12px;">${escapeEmailHtml(params.sourcePage || "/connectin")}</td></tr>
+        <tr><td style="padding:8px 12px;font-weight:700;color:#064e3b;">UTC Timestamp:</td><td style="padding:8px 12px;">${escapeEmailHtml(params.submittedAt)}</td></tr>
+      </table>
+      <div style="margin-top:16px;padding:14px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;font-size:13px;color:#064e3b;">
+        <strong>Request Details:</strong>
+        <p style="margin:6px 0 0;white-space:pre-wrap;">${escapeEmailHtml(params.message || "General consultation / onboarding request.")}</p>
+      </div>
+    </div>`
+
+    const { data, error } = await resend.emails.send({
+      from: fromAddress,
+      to: recipientEmails,
+      replyTo,
+      subject,
+      text: plainText,
+      html,
+    })
+
+    if (error) {
+      console.error("[sendConnectLnPortalRequestEmail Resend Error]", error)
+      return {
+        success: false,
+        sentTo: recipientEmails,
+        error: error.message || "Failed to dispatch portal request email",
+      }
+    }
+
+    return { success: true, sentTo: recipientEmails, id: data?.id }
+  } catch (err: any) {
+    console.error("[sendConnectLnPortalRequestEmail Exception]", err)
+    return {
+      success: false,
+      sentTo: recipientEmails,
+      error: err?.message || "Portal request email dispatch failed",
+    }
+  }
+}
+

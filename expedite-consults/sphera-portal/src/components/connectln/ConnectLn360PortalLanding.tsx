@@ -48,6 +48,7 @@ import {
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { useLanguage } from "@/context/LanguageContext"
 import type { LanguageCode } from "@/lib/translations"
+import { ConnectLnPortalRequestSection } from "@/components/connectln/ConnectLnPortalRequestSection"
 
 const FOOTER_CURRENCIES = {
   USD: { code: "USD", label: "US Dollar $", symbol: "$", rate: 1 },
@@ -2183,6 +2184,9 @@ export function ConnectLn360PortalLanding() {
           })}
         </div>
       </section>
+
+      {/* ─── BOTTOM PORTAL CONSULTATION & REQUEST CTA ─── */}
+      <ConnectLnPortalRequestSection showFooter={false} sourcePage="/connectin-portal" />
 
       {/* ─── ENTERPRISE MIDNIGHT CONNECTLN 360 PORTAL FOOTER ─── */}
       <footer className="bg-gradient-to-b from-[#04071E] via-[#060B2B] to-[#040822] text-white border-t border-white/10 pt-14 pb-24 sm:pb-16 px-4 sm:px-8">

@@ -21,6 +21,7 @@ import { FeedPostCard } from "@/components/connectln/FeedPostCard"
 import { LinkedInStoriesStrip } from "@/components/connectln/LinkedInStoriesStrip"
 import { RightSidebarNews } from "@/components/connectln/RightSidebarNews"
 import { FloatingMessagingDock, DirectMessageRecipient } from "@/components/connectln/FloatingMessagingDock"
+import { ConnectLnPortalRequestSection } from "@/components/connectln/ConnectLnPortalRequestSection"
 
 const tabLoadingFallback = (label: string) => () => (
   <div className="mx-auto max-w-7xl rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-10 text-center text-sm font-bold text-zinc-500">
@@ -4507,6 +4508,26 @@ export default function ConnectLnPage() {
           />
         )}
       </main>
+
+      {/* Bottom Portal Consultation & Request CTA + Footer (shown on portal views, hidden on full-bleed chat/studio/iframe editors) */}
+      {activeTab !== 'messaging' &&
+        activeTab !== 'noctissocial' &&
+        activeTab !== 'noctisclinic' &&
+        activeTab !== 'docs' &&
+        activeTab !== 'sheets' &&
+        activeTab !== 'slides' &&
+        activeTab !== 'sign' &&
+        activeTab !== 'invoice' &&
+        activeTab !== 'boards' &&
+        activeTab !== 'forms' && (
+          <ConnectLnPortalRequestSection
+            showFooter={true}
+            sourcePage="/connectin"
+            defaultName={isAuthenticated ? userData?.name : ""}
+            defaultEmail={isAuthenticated ? userData?.email : ""}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
       </div>
 
       {/* Unified Persistent Bottom-Right Dock (Messaging + Job Alerts + Ask Noctis; hidden on full Messaging, Studio & embedded 360 Universe apps) */}
