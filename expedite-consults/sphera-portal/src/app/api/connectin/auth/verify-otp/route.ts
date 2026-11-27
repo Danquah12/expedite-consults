@@ -22,6 +22,11 @@ import {
   checkPhoneOwnershipConflict,
   registerWhatsAppMemberNumber,
 } from "@/lib/connectin-whatsapp-directory"
+import {
+  checkLoginLockout,
+  clearLoginLockout,
+  recordFailedLoginAttempt,
+} from "@/lib/connectin-auth-lockout"
 
 export async function POST(req: NextRequest) {
   try {
@@ -67,6 +72,26 @@ export async function POST(req: NextRequest) {
       phoneDigits ? phoneDigits.slice(-10) : null,
     ].filter(Boolean) as string[]))
 
+    const lockCheck = await checkLoginLockout({
+      email: cleanEmail.includes("@") ? cleanEmail : undefined,
+      phone: normIncomingPhone || undefined,
+    })
+    if (lockCheck.locked) {
+      return NextResponse.json(
+        {
+          error: lockCheck.message,
+          code: "ACCOUNT_LOCKED",
+          locked: true,
+          attempts: lockCheck.attempts,
+          maxAttempts: lockCheck.maxAttempts,
+          remainingAttempts: 0,
+          lockedUntilIso: lockCheck.lockedUntilIso,
+          retryAfterSeconds: lockCheck.retryAfterSeconds,
+        },
+        { status: 423 }
+      )
+    }
+
     let isValid = false
     for (const tgt of targetsToCheck) {
       if (await validateOTP(tgt, code, challengeToken)) {
@@ -76,7 +101,37 @@ export async function POST(req: NextRequest) {
     }
 
     if (!isValid) {
-      return NextResponse.json({ error: "Invalid or expired verification code." }, { status: 401 })
+      const failState = await recordFailedLoginAttempt({
+        email: cleanEmail.includes("@") ? cleanEmail : undefined,
+        phone: normIncomingPhone || undefined,
+        reason: "INVALID_OTP",
+        provider: "2FA OTP",
+      })
+      if (failState.locked) {
+        return NextResponse.json(
+          {
+            error: failState.message,
+            code: "ACCOUNT_LOCKED",
+            locked: true,
+            attempts: failState.attempts,
+            maxAttempts: failState.maxAttempts,
+            remainingAttempts: 0,
+            lockedUntilIso: failState.lockedUntilIso,
+            retryAfterSeconds: failState.retryAfterSeconds,
+          },
+          { status: 423 }
+        )
+      }
+      return NextResponse.json(
+        {
+          error: `Invalid or expired verification code. (${failState.remainingAttempts} attempt${failState.remainingAttempts === 1 ? "" : "s"} remaining before account lock.)`,
+          code: "INVALID_OTP",
+          attempts: failState.attempts,
+          maxAttempts: failState.maxAttempts,
+          remainingAttempts: failState.remainingAttempts,
+        },
+        { status: 401 }
+      )
     }
 
     // Determine displayName intelligently from user input or email structure
@@ -273,6 +328,10 @@ export async function POST(req: NextRequest) {
     const timeStr = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
 
     await Promise.all([
+      clearLoginLockout({
+        email: cleanEmail.includes("@") ? cleanEmail : undefined,
+        phone: resolvedVerifiedPhone || undefined,
+      }),
       resolvedVerifiedPhone
         ? registerWhatsAppMemberNumber({
             phone: resolvedVerifiedPhone,

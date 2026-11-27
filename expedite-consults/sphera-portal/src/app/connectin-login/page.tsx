@@ -81,6 +81,11 @@ export default function ConnectInLoginPage() {
   // UI Feedback States
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [lockedAccountInfo, setLockedAccountInfo] = useState<{
+    message: string
+    lockedUntilIso?: string
+    retryAfterSeconds?: number
+  } | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Demo Persona Drawer Toggle
@@ -413,8 +418,18 @@ export default function ConnectInLoginPage() {
 
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
+        if (res.status === 423 || data?.code === "ACCOUNT_LOCKED" || data?.locked) {
+          setLockedAccountInfo({
+            message:
+              data.error ||
+              "Account locked: Your account has been locked after 3 unsuccessful login attempts.",
+            lockedUntilIso: data.lockedUntilIso,
+            retryAfterSeconds: data.retryAfterSeconds,
+          })
+        }
         throw new Error(data.error || "Sign in failed. Please check your credentials.")
       }
+      setLockedAccountInfo(null)
 
       // Single-time phone validation: if this phone number was already validated once, log straight in!
       if (data.alreadyVerified || data.requires2FA === false) {
@@ -607,8 +622,18 @@ export default function ConnectInLoginPage() {
 
       const data = await res.json()
       if (!res.ok) {
+        if (res.status === 423 || data?.code === "ACCOUNT_LOCKED" || data?.locked) {
+          setLockedAccountInfo({
+            message:
+              data.error ||
+              "Account locked: Your account has been locked after 3 unsuccessful login attempts.",
+            lockedUntilIso: data.lockedUntilIso,
+            retryAfterSeconds: data.retryAfterSeconds,
+          })
+        }
         throw new Error(data.error || "Invalid verification code.")
       }
+      setLockedAccountInfo(null)
 
       const effectiveProfessionId = selectedProf?.id || vaultProfile?.professionId || data.profile?.professionId
       const effectiveEnclave = selectedProf?.enclaveId || vaultProfile?.professionEnclave || data.profile?.professionEnclave
@@ -839,8 +864,18 @@ export default function ConnectInLoginPage() {
 
       const data = await res.json()
       if (!res.ok) {
+        if (res.status === 423 || data?.code === "ACCOUNT_LOCKED" || data?.locked) {
+          setLockedAccountInfo({
+            message:
+              data.error ||
+              "Account locked: Your account has been locked after 3 unsuccessful login attempts.",
+            lockedUntilIso: data.lockedUntilIso,
+            retryAfterSeconds: data.retryAfterSeconds,
+          })
+        }
         throw new Error(data.error || "Invalid verification code.")
       }
+      setLockedAccountInfo(null)
 
       const verifiedJoinPhone = data.user?.phone || data.profile?.phone || fullJoinPhone
       const effectiveEnclave = data.profile?.professionEnclave || selectedProf?.enclaveId || joinEnclaveId
@@ -1062,7 +1097,26 @@ export default function ConnectInLoginPage() {
           )}
 
           {/* Feedback Messages */}
-          {errorMessage && (
+          {lockedAccountInfo && (
+            <div
+              data-testid="account-locked-banner"
+              role="alert"
+              className="rounded-2xl bg-red-950/95 border border-red-500/60 p-4 text-xs text-red-100 space-y-1.5 shadow-lg"
+            >
+              <div className="flex items-center gap-2 font-extrabold text-sm text-red-200">
+                <Lock className="h-4 w-4 shrink-0 text-red-400" />
+                <span>Account Locked</span>
+              </div>
+              <p className="text-[11.5px] leading-relaxed text-red-100/90">
+                {lockedAccountInfo.message}
+              </p>
+              <p className="text-[10.5px] font-semibold text-red-300">
+                Security cooldown active (30 minutes). Edit your credentials to try a different account or contact your ConnectLn administrator to unlock.
+              </p>
+            </div>
+          )}
+
+          {errorMessage && !lockedAccountInfo && (
             <div className="rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 p-3 text-xs text-red-700 dark:text-red-300 flex items-center gap-2 font-medium">
               <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
               <span>{errorMessage}</span>
@@ -1160,7 +1214,10 @@ export default function ConnectInLoginPage() {
                         type="text"
                         required={!signInPhone.trim()}
                         value={signInEmail}
-                        onChange={(e) => setSignInEmail(e.target.value)}
+                        onChange={(e) => {
+                          setSignInEmail(e.target.value)
+                          if (lockedAccountInfo) setLockedAccountInfo(null)
+                        }}
                         placeholder="e.g. name@company.com or mobile phone number"
                         className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
@@ -1191,7 +1248,10 @@ export default function ConnectInLoginPage() {
                         <input
                           type="tel"
                           value={signInPhone}
-                          onChange={(e) => setSignInPhone(e.target.value)}
+                          onChange={(e) => {
+                            setSignInPhone(e.target.value)
+                            if (lockedAccountInfo) setLockedAccountInfo(null)
+                          }}
                           placeholder="Mobile number (defaulted for calling)"
                           className="flex-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                         />
@@ -1302,11 +1362,15 @@ export default function ConnectInLoginPage() {
                     {/* Primary Sign In Button */}
                     <button
                       type="submit"
-                      disabled={isLoading}
-                      className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-3 min-h-[48px] text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 touch-manipulation active:scale-[0.99]"
+                      disabled={isLoading || Boolean(lockedAccountInfo)}
+                      className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 min-h-[48px] text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 touch-manipulation active:scale-[0.99]"
                     >
                       {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                      <span>{t("sign_in_btn", "Sign in with 2FA")}</span>
+                      <span>
+                        {lockedAccountInfo
+                          ? "Account Locked"
+                          : t("sign_in_btn", "Sign in with 2FA")}
+                      </span>
                     </button>
                   </form>
 

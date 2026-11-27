@@ -36,6 +36,7 @@ import {
   syncAndLoadConnectLnAdminFromMongo,
   insertConnectLnAdminAuditToMongo,
 } from "@/lib/connectln-mongodb"
+import { clearLoginLockout } from "@/lib/connectin-auth-lockout"
 
 export async function GET(req: NextRequest) {
   try {
@@ -283,6 +284,24 @@ export async function POST(req: NextRequest) {
       ipAddress: '198.51.100.42 (Internal Admin Enclave)',
       timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' EST',
       status: 'Success' as const
+    }
+
+    if (action === "UNLOCK_ACCOUNT") {
+      await clearLoginLockout({
+        email: payload?.email,
+        phone: payload?.phone,
+      })
+      const [, mongoSaved] = await Promise.all([
+        appendCloudTelemetry({ auditLog: auditEntry }).catch(() => {}),
+        insertConnectLnAdminAuditToMongo(auditEntry).catch(() => false),
+      ])
+      return NextResponse.json({
+        success: true,
+        mongoSaved,
+        message: `Unlocked account ${payload?.email || payload?.phone || ""}`,
+        auditLogged: auditEntry,
+        payload,
+      })
     }
 
     if (action === "DELETE_USER_PHONE") {

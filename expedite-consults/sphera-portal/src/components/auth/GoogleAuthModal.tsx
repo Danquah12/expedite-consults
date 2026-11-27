@@ -103,6 +103,7 @@ export function GoogleAuthModal({
   const [isLoading, setIsLoading] = useState(false)
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isAccountLocked, setIsAccountLocked] = useState(false)
   const [successNotice, setSuccessNotice] = useState<string | null>(null)
   const [sessionAccounts, setSessionAccounts] = useState<SessionSsoAccount[]>([])
 
@@ -112,6 +113,7 @@ export function GoogleAuthModal({
     setSessionAccounts(readGoogleSessionAccounts())
     setIsUsingCustom(false)
     setErrorMessage(null)
+    setIsAccountLocked(false)
     setSuccessNotice(null)
     setSelectedEmail(null)
   }, [isOpen])
@@ -157,6 +159,7 @@ export function GoogleAuthModal({
     setIsLoading(true)
     setSelectedEmail(accountEmail)
     setErrorMessage(null)
+    setIsAccountLocked(false)
     setSuccessNotice(`Authenticating with Google Identity Services...`)
 
     try {
@@ -173,6 +176,9 @@ export function GoogleAuthModal({
 
       const data = await res.json()
       if (!res.ok) {
+        if (res.status === 423 || data?.code === "ACCOUNT_LOCKED" || data?.locked) {
+          setIsAccountLocked(true)
+        }
         throw new Error(data.error || "Google authentication failed")
       }
 
@@ -312,7 +318,23 @@ export function GoogleAuthModal({
 
         {/* Notices */}
         <div className="px-6 pt-3">
-          {errorMessage && (
+          {isAccountLocked && errorMessage && (
+            <div
+              data-testid="sso-account-locked-banner"
+              role="alert"
+              className="rounded-2xl bg-red-950/95 border border-red-500/60 p-3.5 text-xs text-red-100 space-y-1.5 mb-3 shadow-md"
+            >
+              <p className="font-extrabold text-red-200 flex items-center gap-1.5">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
+                <span>Account Locked</span>
+              </p>
+              <p className="text-[11px] leading-relaxed text-red-100/90">
+                {errorMessage}
+              </p>
+            </div>
+          )}
+
+          {errorMessage && !isAccountLocked && (
             <div className="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-3 text-xs text-rose-700 dark:text-rose-300 space-y-2 mb-3">
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
@@ -425,6 +447,7 @@ export function GoogleAuthModal({
                 onClick={() => {
                   setIsUsingCustom(true)
                   setErrorMessage(null)
+                  setIsAccountLocked(false)
                 }}
                 disabled={isLoading}
                 className="w-full text-left p-3 sm:p-3.5 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 hover:border-[#4285F4] hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-all flex items-center gap-3 cursor-pointer text-xs font-semibold text-zinc-700 dark:text-zinc-300 min-h-[50px] active:scale-[0.98] touch-manipulation"
@@ -464,7 +487,10 @@ export function GoogleAuthModal({
                   required
                   placeholder="you@gmail.com or you@company.com"
                   value={customEmail}
-                  onChange={(e) => setCustomEmail(e.target.value)}
+                  onChange={(e) => {
+                    setCustomEmail(e.target.value)
+                    if (isAccountLocked) setIsAccountLocked(false)
+                  }}
                   className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent p-3 text-base sm:text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#4285F4]"
                 />
               </div>
@@ -476,6 +502,7 @@ export function GoogleAuthModal({
                     onClick={() => {
                       setIsUsingCustom(false)
                       setErrorMessage(null)
+                      setIsAccountLocked(false)
                     }}
                     className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 font-medium px-2 sm:px-3 py-2 cursor-pointer touch-manipulation"
                   >
@@ -489,11 +516,11 @@ export function GoogleAuthModal({
 
                 <button
                   type="submit"
-                  disabled={isLoading || customName.trim().length < 2 || !customEmail.trim()}
+                  disabled={isLoading || isAccountLocked || customName.trim().length < 2 || !customEmail.trim()}
                   className="rounded-full bg-[#4285F4] hover:bg-[#3367D6] text-white px-5 py-2.5 text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all min-h-[44px] active:scale-[0.98] touch-manipulation"
                 >
                   {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                  <span>{isLoading ? "Signing in..." : "Continue"}</span>
+                  <span>{isAccountLocked ? "Account Locked" : isLoading ? "Signing in..." : "Continue"}</span>
                 </button>
               </div>
             </form>

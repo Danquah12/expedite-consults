@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
 import { normalizeAuthName } from "@/lib/connectin-registered-auth"
+import {
+  checkLoginLockout,
+  clearLoginLockout,
+  recordFailedLoginAttempt,
+} from "@/lib/connectin-auth-lockout"
 import { sendConnectInOTPEmail } from "@/lib/connectin-email"
 import { sendConnectInSMS, formatE164Phone } from "@/lib/connectin-sms"
 import { createDynamicOTP } from "@/lib/connectin-otp"
@@ -74,6 +79,27 @@ export async function POST(req: NextRequest) {
       submittedRawPhone && looksLikeInternationalPhone(submittedRawPhone)
         ? formatE164Phone(submittedRawPhone)
         : ""
+
+    const lockCheck = await checkLoginLockout({
+      email: !isPhoneInput ? cleanTarget : undefined,
+      phone: normSubmittedPhone || undefined,
+    })
+    if (lockCheck.locked) {
+      return NextResponse.json(
+        {
+          error: lockCheck.message,
+          code: "ACCOUNT_LOCKED",
+          locked: true,
+          attempts: lockCheck.attempts,
+          maxAttempts: lockCheck.maxAttempts,
+          remainingAttempts: 0,
+          lockedUntilIso: lockCheck.lockedUntilIso,
+          retryAfterSeconds: lockCheck.retryAfterSeconds,
+        },
+        { status: 423 }
+      )
+    }
+
     const normDigits = normSubmittedPhone.replace(/[^\d]/g, "")
     const last10 = normDigits.slice(-10)
     const syntheticFullPhoneEmail = normDigits ? `${normDigits}@connectin.phone` : ""
@@ -101,14 +127,50 @@ export async function POST(req: NextRequest) {
     const dirCache = await withTimeout(refreshWhatsAppDirectoryCache(true), 3500, new Map())
     const dirMemberPre = normSubmittedPhone ? dirCache.get(normSubmittedPhone) : undefined
 
-    if (candidateUsers.length === 0) {
+    const handleFailedAttempt = async (
+      reason: string,
+      statusCode: number,
+      baseError: string
+    ) => {
+      const failState = await recordFailedLoginAttempt({
+        email: !isPhoneInput ? cleanTarget : undefined,
+        phone: normSubmittedPhone || undefined,
+        reason,
+        ipAddress: geo.ipAddress,
+        provider: "ConnectLn Sign-In",
+      })
+      if (failState.locked) {
+        return NextResponse.json(
+          {
+            error: failState.message,
+            code: "ACCOUNT_LOCKED",
+            locked: true,
+            attempts: failState.attempts,
+            maxAttempts: failState.maxAttempts,
+            remainingAttempts: 0,
+            lockedUntilIso: failState.lockedUntilIso,
+            retryAfterSeconds: failState.retryAfterSeconds,
+          },
+          { status: 423 }
+        )
+      }
       return NextResponse.json(
         {
-          error:
-            "Access denied: No registered ConnectLn account was found. Please create and verify an account first.",
-          code: "NOT_REGISTERED",
+          error: `${baseError} (${failState.remainingAttempts} attempt${failState.remainingAttempts === 1 ? "" : "s"} remaining before account lock.)`,
+          code: reason,
+          attempts: failState.attempts,
+          maxAttempts: failState.maxAttempts,
+          remainingAttempts: failState.remainingAttempts,
         },
-        { status: 403 }
+        { status: statusCode }
+      )
+    }
+
+    if (candidateUsers.length === 0) {
+      return await handleFailedAttempt(
+        "NOT_REGISTERED",
+        403,
+        "Access denied: No registered ConnectLn account was found. Please create and verify an account first."
       )
     }
 
@@ -121,13 +183,10 @@ export async function POST(req: NextRequest) {
         return Boolean(p && normalizeAuthName(p.name) === normalizedIncomingName)
       })
       if (nameMatchedCandidates.length === 0) {
-        return NextResponse.json(
-          {
-            error:
-              "Access denied: The full name entered does not match the registered name for this ConnectLn account.",
-            code: "NAME_MISMATCH",
-          },
-          { status: 403 }
+        return await handleFailedAttempt(
+          "NAME_MISMATCH",
+          403,
+          "Access denied: The full name entered does not match the registered name for this ConnectLn account."
         )
       }
       user =
@@ -156,13 +215,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (!user) {
-      return NextResponse.json(
-        {
-          error:
-            "Access denied: No registered ConnectLn account was found. Please create and verify an account first.",
-          code: "NOT_REGISTERED",
-        },
-        { status: 403 }
+      return await handleFailedAttempt(
+        "NOT_REGISTERED",
+        403,
+        "Access denied: No registered ConnectLn account was found. Please create and verify an account first."
       )
     }
 
@@ -202,13 +258,11 @@ export async function POST(req: NextRequest) {
       claimantName: incomingName,
     })
     if (ownership.conflict) {
-      return NextResponse.json(
-        {
-          error:
-            ownership.reason ||
-            "This mobile phone number belongs to another verified ConnectLn member.",
-        },
-        { status: 409 }
+      return await handleFailedAttempt(
+        "PHONE_OWNERSHIP_CONFLICT",
+        409,
+        ownership.reason ||
+          "This mobile phone number belongs to another verified ConnectLn member."
       )
     }
 
@@ -230,6 +284,7 @@ export async function POST(req: NextRequest) {
     // log the user straight in on this or any other device without blocking or re-validating!
     const activeProfile = connectinDb.findProfileByUserId(user.id)
     if (isPhoneAlreadyValidated && activeProfile) {
+      await clearLoginLockout({ email: user.email, phone: dispatchPhone })
       user.phone = dispatchPhone
       ;(user as any).phoneVerified = true
       if (typeof connectinDb.updateUser === "function") {

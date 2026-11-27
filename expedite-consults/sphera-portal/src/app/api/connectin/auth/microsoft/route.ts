@@ -10,6 +10,11 @@ import {
 import { findProfessionById } from "@/lib/connectin-professions"
 import { resolveRequestGeoLocation, upsertCloudUser, appendCloudTelemetry } from "@/lib/connectin-cloud-sync"
 import { findRegisteredConnectLnUser } from "@/lib/connectin-registered-auth"
+import {
+  checkLoginLockout,
+  clearLoginLockout,
+  recordFailedLoginAttempt,
+} from "@/lib/connectin-auth-lockout"
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,6 +33,23 @@ export async function POST(req: NextRequest) {
     const geo = resolveRequestGeoLocation(req, clientTimezone, body.location)
     const cleanEmail = email.toLowerCase().trim()
 
+    const lockCheck = await checkLoginLockout({ email: cleanEmail })
+    if (lockCheck.locked) {
+      return NextResponse.json(
+        {
+          error: lockCheck.message,
+          code: "ACCOUNT_LOCKED",
+          locked: true,
+          attempts: lockCheck.attempts,
+          maxAttempts: lockCheck.maxAttempts,
+          remainingAttempts: 0,
+          lockedUntilIso: lockCheck.lockedUntilIso,
+          retryAfterSeconds: lockCheck.retryAfterSeconds,
+        },
+        { status: 423 }
+      )
+    }
+
     const lookup = await findRegisteredConnectLnUser({
       email: cleanEmail,
       incomingName: typeof incomingName === "string" ? incomingName : "",
@@ -35,6 +57,39 @@ export async function POST(req: NextRequest) {
     })
 
     if (!lookup.ok) {
+      if (lookup.code === "NOT_REGISTERED" || lookup.code === "NAME_MISMATCH") {
+        const failState = await recordFailedLoginAttempt({
+          email: cleanEmail,
+          reason: lookup.code,
+          ipAddress: geo.ipAddress,
+          provider: "Microsoft Entra ID",
+        })
+        if (failState.locked) {
+          return NextResponse.json(
+            {
+              error: failState.message,
+              code: "ACCOUNT_LOCKED",
+              locked: true,
+              attempts: failState.attempts,
+              maxAttempts: failState.maxAttempts,
+              remainingAttempts: 0,
+              lockedUntilIso: failState.lockedUntilIso,
+              retryAfterSeconds: failState.retryAfterSeconds,
+            },
+            { status: 423 }
+          )
+        }
+        return NextResponse.json(
+          {
+            error: `${lookup.error} (${failState.remainingAttempts} attempt${failState.remainingAttempts === 1 ? "" : "s"} remaining before account lock.)`,
+            code: lookup.code,
+            attempts: failState.attempts,
+            maxAttempts: failState.maxAttempts,
+            remainingAttempts: failState.remainingAttempts,
+          },
+          { status: lookup.status }
+        )
+      }
       return NextResponse.json(
         { error: lookup.error, code: lookup.code },
         { status: lookup.status }
@@ -42,6 +97,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { user, profile } = lookup
+    await clearLoginLockout({ email: cleanEmail, phone: user.phone })
     const displayName = profile.name
     const isSuperAdmin = isSuperAdminUser({ name: displayName, email: cleanEmail })
     const userRole = isSuperAdmin ? "admin" : user.role
