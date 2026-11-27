@@ -16,6 +16,7 @@ interface GoogleAuthModalProps {
   initialName?: string
   professionId?: string
   onSuccess?: (user: any) => void
+  onSwitchToRegister?: () => void
 }
 
 interface SessionSsoAccount {
@@ -93,7 +94,8 @@ export function GoogleAuthModal({
   initialEmail = "",
   initialName = "",
   professionId = "auto_detect",
-  onSuccess
+  onSuccess,
+  onSwitchToRegister
 }: GoogleAuthModalProps) {
   const [isUsingCustom, setIsUsingCustom] = useState(false)
   const [customName, setCustomName] = useState("")
@@ -174,9 +176,9 @@ export function GoogleAuthModal({
         throw new Error(data.error || "Google authentication failed")
       }
 
-      // Save user session in ConnectLn client storage with strict name & avatar isolation
+      // Save user session in ConnectLn client storage using canonical registered profile name
       const rawProfile = data.profile || data.user
-      const finalName = cleanName || rawProfile?.name || resolveDisplayName("", accountEmail)
+      const finalName = rawProfile?.name || cleanName || resolveDisplayName("", accountEmail)
       const safeAvatar = (rawProfile?.avatar && !isForeignPersonaAvatar(rawProfile.avatar, { name: finalName, email: accountEmail }))
         ? rawProfile.avatar
         : getDefaultPortraitForUser({ name: finalName, email: accountEmail, professionEnclave: rawProfile?.professionEnclave } as any)
@@ -256,6 +258,10 @@ export function GoogleAuthModal({
 
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (customName.trim().length < 2) {
+      setErrorMessage("Please enter your registered full name (at least 2 characters).")
+      return
+    }
     if (!customEmail.trim() || !customEmail.includes("@")) {
       setErrorMessage("Please enter a valid Google email address.")
       return
@@ -307,9 +313,20 @@ export function GoogleAuthModal({
         {/* Notices */}
         <div className="px-6 pt-3">
           {errorMessage && (
-            <div className="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-3 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2 mb-3">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{errorMessage}</span>
+            <div className="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-3 text-xs text-rose-700 dark:text-rose-300 space-y-2 mb-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>{errorMessage}</span>
+              </div>
+              {onSwitchToRegister && (
+                <button
+                  type="button"
+                  onClick={onSwitchToRegister}
+                  className="inline-flex items-center gap-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 text-[11px] font-bold transition-colors cursor-pointer"
+                >
+                  <span>Create a ConnectLn Account →</span>
+                </button>
+              )}
             </div>
           )}
 
@@ -417,7 +434,7 @@ export function GoogleAuthModal({
                 </div>
                 <div>
                   <p>Use another Google account</p>
-                  <p className="text-[10px] font-normal text-zinc-400">Sign in with any @gmail.com or Workspace email</p>
+                  <p className="text-[10px] font-normal text-zinc-400">Sign in with any registered @gmail.com or Workspace email</p>
                 </div>
               </button>
             </>
@@ -426,12 +443,13 @@ export function GoogleAuthModal({
             <form onSubmit={handleCustomSubmit} className="space-y-3 pt-1">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                  Full Name (for your profile &amp; signature)
+                  Registered Full Name *
                 </label>
                 <input
                   type="text"
+                  required
                   autoFocus
-                  placeholder="e.g. Michael Mensah"
+                  placeholder="Enter your registered full name"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
                   className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent p-3 text-base sm:text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#4285F4]"
@@ -465,13 +483,13 @@ export function GoogleAuthModal({
                   </button>
                 ) : (
                   <span className="text-[11px] text-zinc-400">
-                    Session-private sign-in
+                    Registered members only
                   </span>
                 )}
 
                 <button
                   type="submit"
-                  disabled={isLoading || !customEmail.trim()}
+                  disabled={isLoading || customName.trim().length < 2 || !customEmail.trim()}
                   className="rounded-full bg-[#4285F4] hover:bg-[#3367D6] text-white px-5 py-2.5 text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all min-h-[44px] active:scale-[0.98] touch-manipulation"
                 >
                   {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}

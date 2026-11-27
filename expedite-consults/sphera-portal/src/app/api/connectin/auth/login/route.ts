@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
+import { normalizeAuthName } from "@/lib/connectin-registered-auth"
 import { sendConnectInOTPEmail } from "@/lib/connectin-email"
 import { sendConnectInSMS, formatE164Phone } from "@/lib/connectin-sms"
 import { createDynamicOTP } from "@/lib/connectin-otp"
@@ -99,27 +100,71 @@ export async function POST(req: NextRequest) {
 
     const dirCache = await withTimeout(refreshWhatsAppDirectoryCache(true), 3500, new Map())
     const dirMemberPre = normSubmittedPhone ? dirCache.get(normSubmittedPhone) : undefined
-    let user =
-      (!isPhoneInput ? candidateUsers.find((u) => u.email.toLowerCase().trim() === cleanTarget) : undefined) ||
-      (syntheticLast10Email
-        ? candidateUsers.find((u) => u.email.toLowerCase().trim() === syntheticLast10Email)
-        : undefined) ||
-      (syntheticFullPhoneEmail
-        ? candidateUsers.find((u) => u.email.toLowerCase().trim() === syntheticFullPhoneEmail)
-        : undefined) ||
-      candidateUsers.find((u) => {
+
+    if (candidateUsers.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Access denied: No registered ConnectLn account was found. Please create and verify an account first.",
+          code: "NOT_REGISTERED",
+        },
+        { status: 403 }
+      )
+    }
+
+    const normalizedIncomingName = normalizeAuthName(incomingName)
+    let user: (typeof candidateUsers)[number] | undefined
+
+    if (normalizedIncomingName) {
+      const nameMatchedCandidates = candidateUsers.filter((u) => {
         const p = connectinDb.findProfileByUserId(u.id)
-        if (!p) return false
-        const pName = p.name.toLowerCase().trim()
-        if (incomingName) {
-          return pName === incomingName.toLowerCase()
-        }
-        if (dirMemberPre?.name && pName === dirMemberPre.name.toLowerCase().trim()) {
-          return true
-        }
-        return Boolean(pName && pName !== "connectin member" && pName !== "expedite consults llc")
-      }) ||
-      candidateUsers[0]
+        return Boolean(p && normalizeAuthName(p.name) === normalizedIncomingName)
+      })
+      if (nameMatchedCandidates.length === 0) {
+        return NextResponse.json(
+          {
+            error:
+              "Access denied: The full name entered does not match the registered name for this ConnectLn account.",
+            code: "NAME_MISMATCH",
+          },
+          { status: 403 }
+        )
+      }
+      user =
+        (!isPhoneInput
+          ? nameMatchedCandidates.find((u) => u.email.toLowerCase().trim() === cleanTarget)
+          : undefined) || nameMatchedCandidates[0]
+    } else {
+      user =
+        (!isPhoneInput ? candidateUsers.find((u) => u.email.toLowerCase().trim() === cleanTarget) : undefined) ||
+        (syntheticLast10Email
+          ? candidateUsers.find((u) => u.email.toLowerCase().trim() === syntheticLast10Email)
+          : undefined) ||
+        (syntheticFullPhoneEmail
+          ? candidateUsers.find((u) => u.email.toLowerCase().trim() === syntheticFullPhoneEmail)
+          : undefined) ||
+        candidateUsers.find((u) => {
+          const p = connectinDb.findProfileByUserId(u.id)
+          if (!p) return false
+          const pName = p.name.toLowerCase().trim()
+          if (dirMemberPre?.name && pName === dirMemberPre.name.toLowerCase().trim()) {
+            return true
+          }
+          return Boolean(pName && pName !== "connectin member" && pName !== "expedite consults llc")
+        }) ||
+        candidateUsers[0]
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          error:
+            "Access denied: No registered ConnectLn account was found. Please create and verify an account first.",
+          code: "NOT_REGISTERED",
+        },
+        { status: 403 }
+      )
+    }
 
     let existingAccountPhone =
       user?.phone && looksLikeInternationalPhone(user.phone) ? formatE164Phone(user.phone) : ""
@@ -167,49 +212,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (!user) {
-      const defaultName =
-        incomingName ||
-        dirMember?.name ||
-        (isPhoneInput
-          ? "ConnectIn Member"
-          : (cleanTarget.split("@")[0] || "Member").replace(/[._-]/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase()))
-
-      const created = connectinDb.createUser(
-        {
-          email: isPhoneInput ? `${cleanTarget.replace(/[^\d]/g, "")}@connectin.phone` : cleanTarget,
-          phone: dispatchPhone,
-          role: "personal",
-          status: "Active",
-          mfaEnabled: true,
-          mfaChannel: "sms"
-        },
-        {
-          name: defaultName,
-          headline: dirMember?.headline || profDef?.defaultHeadline || "Verified Professional · ConnectIn Member",
-          avatar:
-            dirMember?.avatar ||
-            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(defaultName + "-" + cleanTarget)}&backgroundColor=0a66c2`,
-          coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
-          location: geo.locationLabel,
-          about: "Verified member on ConnectIn Zero-Trust Network.",
-          skills: profDef?.typicalSkills || [],
-          clearanceLevel: "Standard Verified Identity (Level 2)",
-          fido2MfaVerified: true,
-          cryptoVerificationBadge: "0xED25519_SESSION_INITIALIZED",
-          skillMatrixScore: 88.0,
-          connectionsCount: 0,
-          followersCount: 0,
-          profileViews: 0,
-          postImpressions: 0,
-          profession: profDef?.title,
-          professionId: profDef?.id,
-          professionCategory: profDef?.categoryName,
-          professionEnclave: profDef?.enclaveId
-        }
-      )
-      user = created.user
-    } else if (!user.phone) {
+    if (!user.phone) {
       user.phone = dispatchPhone
     }
 
@@ -231,9 +234,6 @@ export async function POST(req: NextRequest) {
       ;(user as any).phoneVerified = true
       if (typeof connectinDb.updateUser === "function") {
         connectinDb.updateUser(user.id, { phone: dispatchPhone })
-      }
-      if (incomingName && incomingName.trim()) {
-        activeProfile.name = incomingName.trim()
       }
       if (profDef) {
         activeProfile.profession = profDef.title

@@ -1952,6 +1952,13 @@ export default function ConnectInLoginPage() {
         initialEmail={signInEmail || joinEmail}
         initialName={signInName || `${joinFirstName} ${joinLastName}`.trim()}
         professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : joinProfessionId}
+        onSwitchToRegister={() => {
+          setIsGoogleModalOpen(false)
+          setActiveView('join')
+          setJoinStep('form')
+          setErrorMessage(null)
+          setSuccessMessage(null)
+        }}
         onSuccess={(ssoUser) => {
           if (inviteContext) {
             const fresh = createFreshInvitedUserProfile({
@@ -1974,6 +1981,13 @@ export default function ConnectInLoginPage() {
         initialEmail={signInEmail || joinEmail}
         initialName={signInName || `${joinFirstName} ${joinLastName}`.trim()}
         professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : joinProfessionId}
+        onSwitchToRegister={() => {
+          setIsMicrosoftModalOpen(false)
+          setActiveView('join')
+          setJoinStep('form')
+          setErrorMessage(null)
+          setSuccessMessage(null)
+        }}
         onSuccess={(ssoUser) => {
           if (inviteContext) {
             const fresh = createFreshInvitedUserProfile({

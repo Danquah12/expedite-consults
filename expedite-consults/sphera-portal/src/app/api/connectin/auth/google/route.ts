@@ -3,13 +3,13 @@ import { connectinDb } from "@/lib/connectin-db"
 import {
   isSuperAdminUser,
   isDedicatedAdminAccount,
-  resolveDisplayName,
   getKnownDemoPersonaAvatar,
   generatePersonalSignatureAvatar,
   isForeignPersonaAvatar
 } from "@/lib/connectin-profile"
-import { findProfessionById, findEnclaveById } from "@/lib/connectin-professions"
+import { findProfessionById } from "@/lib/connectin-professions"
 import { resolveRequestGeoLocation, upsertCloudUser, appendCloudTelemetry } from "@/lib/connectin-cloud-sync"
+import { findRegisteredConnectLnUser } from "@/lib/connectin-registered-auth"
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,7 +17,6 @@ export async function POST(req: NextRequest) {
     const {
       email,
       name: incomingName,
-      avatar: incomingAvatar,
       professionId: incomingProfessionId,
       clientTimezone
     } = body
@@ -28,110 +27,35 @@ export async function POST(req: NextRequest) {
 
     const geo = resolveRequestGeoLocation(req, clientTimezone, body.location)
     const cleanEmail = email.toLowerCase().trim()
-    const displayName = incomingName?.trim() || resolveDisplayName("", cleanEmail)
-    const isSuperAdmin = isSuperAdminUser({ name: displayName, email: cleanEmail })
-    const userRole = isSuperAdmin ? "admin" : "personal"
 
-    const resolvedAvatar =
-      (incomingAvatar && !isForeignPersonaAvatar(incomingAvatar, { name: displayName, email: cleanEmail }))
-        ? incomingAvatar
-        : getKnownDemoPersonaAvatar({ name: displayName, email: cleanEmail }) ||
-          generatePersonalSignatureAvatar({ name: displayName, email: cleanEmail })
-
-    const matchingUsers = connectinDb.getUsers().filter(u => u.email.toLowerCase().trim() === cleanEmail)
-    let user = matchingUsers.find(u => {
-      const p = connectinDb.findProfileByUserId(u.id)
-      if (!p) return false
-      if (incomingName && incomingName.trim()) {
-        return p.name.toLowerCase().trim() === displayName.toLowerCase().trim()
-      }
-      return true
+    const lookup = await findRegisteredConnectLnUser({
+      email: cleanEmail,
+      incomingName: typeof incomingName === "string" ? incomingName : "",
+      requireName: true,
     })
 
-    if (!user) {
-      const created = connectinDb.createUser(
-        {
-          email: cleanEmail,
-          phone: "+12402607898",
-          role: userRole,
-          status: "Active",
-          mfaEnabled: true,
-          mfaChannel: "email"
-        },
-        {
-          name: displayName,
-          headline: isSuperAdmin
-            ? "Platform IAM Architect & Root Authority · Expedite Consults"
-            : "Verified Professional · ConnectLn Member",
-          avatar: resolvedAvatar,
-          coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
-          location: geo.locationLabel,
-          about: `Verified member on ConnectLn Zero-Trust Network authenticated via Google Identity Services (${cleanEmail}).`,
-          skills: ["Google Cloud", "Zero-Trust Architecture", "ASPM", "DevSecOps", "Cloud Security"],
-          clearanceLevel: isSuperAdmin ? "Top Secret / Sovereign Enclave Root" : "Standard Verified Identity (Level 2)",
-          fido2MfaVerified: true,
-          cryptoVerificationBadge: "GOOGLE_WORKSPACE_VERIFIED_OAUTH2",
-          skillMatrixScore: isSuperAdmin ? 99.8 : 78.5,
-          connectionsCount: 42,
-          followersCount: 156,
-          profileViews: 320,
-          postImpressions: 1250,
-          profession: isSuperAdmin ? "Platform IAM Architect" : "Master Carpenter (Framing & Finish Joinery)",
-          professionId: isSuperAdmin ? "platform_admin" : (incomingProfessionId || "carpenter"),
-          professionCategory: isSuperAdmin ? "Legal & Governance" : "Skilled Trades & Construction",
-          professionEnclave: isSuperAdmin ? "law_gov_defense" : "trades_construction"
-        }
+    if (!lookup.ok) {
+      return NextResponse.json(
+        { error: lookup.error, code: lookup.code },
+        { status: lookup.status }
       )
-      user = created.user
     }
 
-    if (user.status === "Suspended" || user.status === "Banned") {
-      return NextResponse.json({ error: "This account is suspended. Contact security administrator." }, { status: 403 })
-    }
+    const { user, profile } = lookup
+    const displayName = profile.name
+    const isSuperAdmin = isSuperAdminUser({ name: displayName, email: cleanEmail })
+    const userRole = isSuperAdmin ? "admin" : user.role
 
-    let profile = connectinDb.findProfileByUserId(user.id)
-    if (!profile) {
-      profile = {
-        id: `prof_${user.id}`,
-        userId: user.id,
-        name: displayName,
-        headline: isSuperAdmin
-          ? "Platform IAM Architect & Root Authority · Expedite Consults"
-          : "Verified Professional · ConnectLn Member",
-        avatar: resolvedAvatar,
-        coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
-        location: geo.locationLabel,
-        about: `Verified member on ConnectLn Zero-Trust Network authenticated via Google Identity Services (${cleanEmail}).`,
-        skills: ["Google Cloud", "Zero-Trust Architecture", "ASPM"],
-        clearanceLevel: isSuperAdmin ? "Top Secret / Sovereign Enclave Root" : "Standard Verified Identity (Level 2)",
-        fido2MfaVerified: true,
-        cryptoVerificationBadge: "GOOGLE_WORKSPACE_VERIFIED_OAUTH2",
-        skillMatrixScore: isSuperAdmin ? 99.8 : 78.5,
-        connectionsCount: 42,
-        followersCount: 156,
-        profileViews: 320,
-        postImpressions: 1250,
-        profession: isSuperAdmin ? "Platform IAM Architect" : "Master Carpenter (Framing & Finish Joinery)",
-        professionId: isSuperAdmin ? "platform_admin" : (incomingProfessionId || "carpenter"),
-        professionCategory: isSuperAdmin ? "Legal & Governance" : "Skilled Trades & Construction",
-        professionEnclave: isSuperAdmin ? "law_gov_defense" : "trades_construction",
-        badges: ["GOOGLE_VERIFIED"]
-      }
-    } else {
-      if (incomingName?.trim() && profile.name !== displayName) {
-        profile.name = displayName
-      }
-      if (
-        (incomingName?.trim() && profile.name === displayName) ||
-        !profile.avatar ||
-        profile.avatar.includes("api.dicebear.com") ||
-        isForeignPersonaAvatar(profile.avatar, { name: profile.name, email: cleanEmail })
-      ) {
-        profile.avatar =
-          getKnownDemoPersonaAvatar({ name: profile.name, email: cleanEmail }) ||
-          generatePersonalSignatureAvatar({ name: profile.name, email: cleanEmail, professionEnclave: profile.professionEnclave })
-      }
+    if (
+      !profile.avatar ||
+      profile.avatar.includes("api.dicebear.com") ||
+      isForeignPersonaAvatar(profile.avatar, { name: profile.name, email: cleanEmail })
+    ) {
+      profile.avatar =
+        getKnownDemoPersonaAvatar({ name: profile.name, email: cleanEmail }) ||
+        generatePersonalSignatureAvatar({ name: profile.name, email: cleanEmail, professionEnclave: profile.professionEnclave })
     }
+    const resolvedAvatar = profile.avatar
 
     // Mark login timestamp, move user to top of directory, and record server-side activity log
     const nowIso = new Date().toISOString()
