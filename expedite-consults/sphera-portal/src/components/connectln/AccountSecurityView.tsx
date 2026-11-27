@@ -18,7 +18,13 @@ import {
   Sparkles,
   ArrowRight,
   Trash2,
-  Fingerprint
+  Fingerprint,
+  MapPin,
+  Monitor,
+  Clock,
+  MailCheck,
+  Send,
+  ShieldAlert,
 } from "lucide-react"
 import {
   USER_ACCOUNT_SECURITY_DATA,
@@ -39,6 +45,21 @@ import {
   updateCommPrivacySettings,
 } from "@/lib/connectln-comm-pro"
 import { getMobileAndSfuReadiness } from "@/lib/connectln-native-bridge"
+
+interface SecurityEmailLogItem {
+  alertId: string
+  email: string
+  headline: string
+  summary?: string
+  locationDisplay: string
+  deviceDisplay: string
+  timestampDisplay: string
+  mapImageUrl?: string
+  profiles?: string[]
+  status?: "pending" | "secured_locked" | "confirmed_me"
+  emailSent?: boolean
+  notMeUrl?: string
+}
 
 interface AccountSecurityViewProps {
   currentUser: UserProfile
@@ -94,6 +115,12 @@ export function AccountSecurityView({
     () => String((currentUser as any)?.phone || "")
   )
   const [deleteConfirmText, setDeleteConfirmText] = useState<string>("")
+  const [newPassword, setNewPassword] = useState<string>("")
+  const [confirmPassword, setConfirmPassword] = useState<string>("")
+  const [passwordBusy, setPasswordBusy] = useState<boolean>(false)
+  const [testAlertBusy, setTestAlertBusy] = useState<boolean>(false)
+  const [latestSecurityAlert, setLatestSecurityAlert] = useState<SecurityEmailLogItem | null>(null)
+  const [officialSecurityEmails, setOfficialSecurityEmails] = useState<SecurityEmailLogItem[]>([])
   const [sfuTransportStatus, setSfuTransportStatus] = useState<{
     sfuConfigured: boolean
     coturnConfigured: boolean
@@ -125,6 +152,16 @@ export function AccountSecurityView({
         }
       })
       .catch(() => {})
+    fetch(`/api/connectin/security-alert?check=1&email=${encodeURIComponent(userEmail)}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!mounted || !Array.isArray(d?.emails)) return
+        setOfficialSecurityEmails(d.emails)
+        if (d.emails.length > 0) {
+          setLatestSecurityAlert((prev) => prev || d.emails[0])
+        }
+      })
+      .catch(() => {})
     fetch("/api/v1/calls/sfu-token?status=1", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -139,7 +176,7 @@ export function AccountSecurityView({
     return () => {
       mounted = false
     }
-  }, [commUserKey])
+  }, [commUserKey, userEmail, secData.passkeysCount])
 
   // Fetch ONLY this user's own authenticated sessions from /api/connectin/auth/me (strictly filtered by userId)
   useEffect(() => {
@@ -217,6 +254,92 @@ export function AccountSecurityView({
     setTimeout(() => setStatusFeedback(null), 3000)
   }
 
+  const triggerSecurityAlertRequest = async (opts: {
+    testAlertOnly?: boolean
+    newPassword?: string
+    eventType?: "password_change" | "phone_change" | "passkey_added"
+    phone?: string
+  }) => {
+    const clientTimezone =
+      typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "America/New_York"
+    const res = await fetch("/api/connectin/auth/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: userEmail,
+        fullName: currentUser.name,
+        phone: opts.phone || (currentUser as any)?.phone || "",
+        newPassword: opts.newPassword,
+        eventType: opts.eventType || "password_change",
+        testAlertOnly: Boolean(opts.testAlertOnly),
+        clientTimezone,
+        clientLocation: currentUser.location || "",
+      }),
+    })
+    const data = await res.json().catch(() => null)
+    if (!res.ok || !data?.ok) {
+      throw new Error(data?.error || "Failed to dispatch security alert.")
+    }
+    if (data?.alert) {
+      const merged: SecurityEmailLogItem = { ...data.alert, notMeUrl: data.notMeUrl }
+      setLatestSecurityAlert(merged)
+      setOfficialSecurityEmails((prev) => [
+        merged,
+        ...prev.filter((item) => item.alertId !== merged.alertId),
+      ].slice(0, 15))
+    }
+    return data
+  }
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newPassword.length < 8) {
+      setStatusFeedback("⚠️ Password must be at least 8 characters long.")
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setStatusFeedback("⚠️ New password and confirmation do not match.")
+      return
+    }
+    setPasswordBusy(true)
+    try {
+      const data = await triggerSecurityAlertRequest({
+        newPassword,
+        eventType: "password_change",
+      })
+      setNewPassword("")
+      setConfirmPassword("")
+      setStatusFeedback(
+        data.emailSent
+          ? `✓ Password updated & Security Alert emailed to ${userEmail} (ID: ${data.alertId}).`
+          : `✓ Password updated & Security Alert logged in your Security Email Registry (ID: ${data.alertId}).`
+      )
+    } catch (err: any) {
+      setStatusFeedback(`⚠️ ${err?.message || "Failed to update password."}`)
+    } finally {
+      setPasswordBusy(false)
+    }
+  }
+
+  const handleSendTestSecurityAlert = async () => {
+    setTestAlertBusy(true)
+    try {
+      const data = await triggerSecurityAlertRequest({
+        testAlertOnly: true,
+        eventType: "password_change",
+      })
+      setStatusFeedback(
+        data.emailSent
+          ? `✓ Security Alert email dispatched to ${userEmail} with regional map & "This wasn't me" protection.`
+          : `✓ Security Alert card generated & logged to your Official Security Emails list (ID: ${data.alertId}).`
+      )
+    } catch (err: any) {
+      setStatusFeedback(`⚠️ ${err?.message || "Failed to send test security alert."}`)
+    } finally {
+      setTestAlertBusy(false)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-24">
       {/* Top Banner */}
@@ -259,8 +382,116 @@ export function AccountSecurityView({
 
       {/* 2-COLUMN SECURITY TILES */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Authentication Methods & Passkeys (6 Cols) */}
+        {/* Left Column: Password Alerts, Authentication Methods & OAuth (6 Cols) */}
         <div className="lg:col-span-6 space-y-5">
+          {/* Card 0: Password & Security Alert Notifications */}
+          <div
+            data-testid="account-password-security-card"
+            className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4 text-[#0064E0]" />
+                  <span>Password &amp; Security Alert Notifications</span>
+                </h3>
+                <p className="text-[11px] text-zinc-500 mt-0.5">
+                  Every password change immediately sends a geo-mapped security alert email with a 1-click &quot;This wasn&apos;t me&quot; lockdown link.
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={testAlertBusy}
+                data-testid="send-test-security-alert-btn"
+                onClick={handleSendTestSecurityAlert}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] font-bold text-[#0064E0] hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/40 dark:text-sky-300 shrink-0 cursor-pointer disabled:opacity-60"
+              >
+                <Send className="h-3 w-3" />
+                {testAlertBusy ? "Sending..." : "Send Test Alert"}
+              </button>
+            </div>
+
+            <form onSubmit={handlePasswordUpdate} className="space-y-2.5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="New password (8+ chars)"
+                  className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100"
+                />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={passwordBusy}
+                data-testid="change-password-submit-btn"
+                className="w-full cursor-pointer rounded-xl bg-[#0064E0] hover:bg-[#0052ba] px-4 py-2 text-xs font-bold text-white shadow-xs disabled:opacity-60"
+              >
+                {passwordBusy ? "Updating & Dispatching Alert..." : "Update Password & Send Security Alert"}
+              </button>
+            </form>
+
+            {latestSecurityAlert && (
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800/40 p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                    {latestSecurityAlert.headline}
+                  </span>
+                  <span className="rounded-full bg-blue-100 text-[#0064E0] dark:bg-blue-950 dark:text-sky-300 px-2 py-0.5 text-[10px] font-bold">
+                    {latestSecurityAlert.status === "secured_locked"
+                      ? "Secured & Locked"
+                      : latestSecurityAlert.status === "confirmed_me"
+                      ? "Confirmed"
+                      : "Was this you?"}
+                  </span>
+                </div>
+                {latestSecurityAlert.mapImageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={latestSecurityAlert.mapImageUrl}
+                    alt={`Security map for ${latestSecurityAlert.locationDisplay}`}
+                    className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 object-cover"
+                  />
+                )}
+                <div className="space-y-1 text-[11px] text-zinc-700 dark:text-zinc-300">
+                  <p className="flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-[#0064E0]" />
+                    <span>{latestSecurityAlert.locationDisplay}</span>
+                  </p>
+                  <p className="flex items-center gap-1.5">
+                    <Monitor className="h-3.5 w-3.5 text-[#0064E0]" />
+                    <span>{latestSecurityAlert.deviceDisplay}</span>
+                  </p>
+                  <p className="flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-[#0064E0]" />
+                    <span>{latestSecurityAlert.timestampDisplay}</span>
+                  </p>
+                </div>
+                {Array.isArray(latestSecurityAlert.profiles) && latestSecurityAlert.profiles.length > 0 && (
+                  <div className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">Profiles in this account: </span>
+                    {latestSecurityAlert.profiles.join(" · ")}
+                  </div>
+                )}
+                {latestSecurityAlert.notMeUrl && (
+                  <a
+                    href={latestSecurityAlert.notMeUrl}
+                    className="block w-full rounded-lg bg-[#0064E0] py-2 text-center text-xs font-bold text-white hover:bg-[#0052ba]"
+                  >
+                    Open &quot;This wasn&apos;t me&quot; Lockdown Console
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Card 1: Multi-Factor & Passkeys */}
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
             <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -310,6 +541,7 @@ export function AccountSecurityView({
                         setCloudPasskeys(nextPasskeys)
                         persistSecurityPatch({ passkeys: nextPasskeys })
                         setPasskeysCount(secData.passkeysCount + nextPasskeys.length)
+                        void triggerSecurityAlertRequest({ testAlertOnly: true, eventType: "passkey_added" }).catch(() => {})
                         setStatusFeedback("✓ WebAuthn hardware/biometric Passkey registered & saved to your account!")
                       } else {
                         const nextPasskeys = [
@@ -323,6 +555,7 @@ export function AccountSecurityView({
                         setCloudPasskeys(nextPasskeys)
                         persistSecurityPatch({ passkeys: nextPasskeys })
                         setPasskeysCount(secData.passkeysCount + nextPasskeys.length)
+                        void triggerSecurityAlertRequest({ testAlertOnly: true, eventType: "passkey_added" }).catch(() => {})
                         setStatusFeedback("✓ Passkey profile enrolled & persisted (WebAuthn API unavailable in headless mode).")
                       }
                     } catch {
@@ -418,8 +651,73 @@ export function AccountSecurityView({
           </div>
         </div>
 
-        {/* Right Column: Active Sessions & Real-Time Device Map (6 Cols) */}
+        {/* Right Column: Official Emails, Active Sessions & Data Rights (6 Cols) */}
         <div className="lg:col-span-6 space-y-5">
+          {/* Official Security Emails Log ("Check Email") */}
+          <div
+            data-testid="official-security-emails-card"
+            className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <MailCheck className="h-4 w-4 text-[#0064E0]" />
+                  <span>Official Security Emails Sent to You ({officialSecurityEmails.length})</span>
+                </h3>
+                <p className="text-[11px] text-zinc-500 mt-0.5">
+                  Wondering if a security email is really from us? Every authentic ConnectLn alert is logged here.
+                </p>
+              </div>
+              <a
+                href={`/connectin/security-alert?check=1&email=${encodeURIComponent(userEmail)}`}
+                className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-zinc-700 px-2.5 py-1 text-[11px] font-bold text-[#0064E0] hover:bg-zinc-50 dark:hover:bg-zinc-800 shrink-0"
+              >
+                Help Center
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+
+            {officialSecurityEmails.length === 0 ? (
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 p-3.5 text-xs text-zinc-500">
+                No security alert emails recorded yet for <span className="font-mono text-zinc-700 dark:text-zinc-300">{userEmail}</span>. Click &quot;Send Test Alert&quot; or update your password to verify live email alerts.
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-56 overflow-y-auto pr-1 text-xs">
+                {officialSecurityEmails.slice(0, 5).map((item) => (
+                  <div
+                    key={item.alertId}
+                    className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 p-3 flex items-start justify-between gap-2"
+                  >
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-zinc-900 dark:text-zinc-100">{item.headline}</p>
+                      <p className="text-[11px] text-zinc-500">
+                        {item.locationDisplay} · {item.deviceDisplay}
+                      </p>
+                      <p className="text-[10px] text-zinc-400 font-mono">
+                        {item.timestampDisplay} · {item.alertId}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0 ${
+                        item.status === "secured_locked"
+                          ? "bg-rose-100 text-rose-800"
+                          : item.status === "confirmed_me"
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-blue-100 text-[#0064E0]"
+                      }`}
+                    >
+                      {item.status === "secured_locked"
+                        ? "Locked"
+                        : item.status === "confirmed_me"
+                        ? "Confirmed"
+                        : "Dispatched"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -612,7 +910,12 @@ export function AccountSecurityView({
                         )
                       }
                     } catch {}
-                    setStatusFeedback(`✓ Updated calling phone to ${clean} (mailbox & threads preserved).`)
+                    void triggerSecurityAlertRequest({
+                      testAlertOnly: true,
+                      eventType: "phone_change",
+                      phone: clean,
+                    }).catch(() => {})
+                    setStatusFeedback(`✓ Updated calling phone to ${clean} (mailbox & threads preserved, security alert dispatched).`)
                   }}
                   className="rounded-lg bg-[#0A66C2] text-white px-3 py-1.5 font-bold cursor-pointer"
                 >
@@ -681,4 +984,3 @@ export function AccountSecurityView({
     </div>
   )
 }
-

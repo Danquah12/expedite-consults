@@ -54,7 +54,10 @@ export function buildLockoutKeys(params: {
   return Array.from(keys)
 }
 
-function formatLockedMessage(lockedUntilMs: number): string {
+function formatLockedMessage(lockedUntilMs: number, reason?: string): string {
+  if (reason === "SECURITY_ALERT_THIS_WASNT_ME") {
+    return "Account locked: This account was locked via a ConnectLn Security Alert ('This wasn't me'). Contact a ConnectLn administrator or complete identity recovery to unlock."
+  }
   const mins = Math.max(1, Math.ceil((lockedUntilMs - Date.now()) / 60000))
   return `Account locked: Your account has been locked after ${MAX_FAILED_LOGIN_ATTEMPTS} unsuccessful login attempts. Try again in ${mins} minute(s) or contact a ConnectLn administrator.`
 }
@@ -84,6 +87,7 @@ export async function checkLoginLockout(params: {
 
   let activeLockedUntilMs: number | null = null
   let activeLockedAttempts = 0
+  let activeLockedReason: string | undefined
   let maxActiveAttempts = 0
 
   for (const rec of records) {
@@ -92,6 +96,7 @@ export async function checkLoginLockout(params: {
       if (!activeLockedUntilMs || rec.lockedUntilMs > activeLockedUntilMs) {
         activeLockedUntilMs = rec.lockedUntilMs
         activeLockedAttempts = rec.attempts || MAX_FAILED_LOGIN_ATTEMPTS
+        activeLockedReason = rec.lastReason
       }
     } else if (rec.lastFailedAtMs && now - rec.lastFailedAtMs <= ATTEMPT_WINDOW_MS) {
       if ((rec.attempts || 0) > maxActiveAttempts) {
@@ -109,7 +114,7 @@ export async function checkLoginLockout(params: {
       lockedUntilMs: activeLockedUntilMs,
       lockedUntilIso: new Date(activeLockedUntilMs).toISOString(),
       retryAfterSeconds: Math.max(1, Math.ceil((activeLockedUntilMs - now) / 1000)),
-      message: formatLockedMessage(activeLockedUntilMs),
+      message: formatLockedMessage(activeLockedUntilMs, activeLockedReason),
     }
   }
 
@@ -261,4 +266,79 @@ export async function clearLoginLockout(params: {
   await Promise.allSettled(
     keys.map((key) => firebaseKvDeleteItem(LOCKOUT_KV_MAP, key))
   )
+}
+
+export async function lockAccountImmediately(params: {
+  email?: string
+  phone?: string
+  reason?: string
+  ipAddress?: string
+  durationMs?: number
+}): Promise<LockoutStatusResult> {
+  const keys = buildLockoutKeys(params)
+  if (keys.length === 0) {
+    return {
+      locked: false,
+      attempts: 0,
+      maxAttempts: MAX_FAILED_LOGIN_ATTEMPTS,
+      remainingAttempts: MAX_FAILED_LOGIN_ATTEMPTS,
+      lockedUntilMs: null,
+      lockedUntilIso: null,
+      retryAfterSeconds: 0,
+      message: "",
+    }
+  }
+
+  const now = Date.now()
+  const durationMs =
+    typeof params.durationMs === "number" && params.durationMs > 0
+      ? params.durationMs
+      : 24 * 60 * 60 * 1000
+  const lockedUntilMs = now + durationMs
+  const reason = params.reason || "SECURITY_ALERT_THIS_WASNT_ME"
+  const ttlSeconds = Math.max(3600, Math.ceil(durationMs / 1000))
+
+  await Promise.allSettled(
+    keys.map((key) =>
+      firebaseKvSetItem(
+        LOCKOUT_KV_MAP,
+        key,
+        {
+          key,
+          attempts: MAX_FAILED_LOGIN_ATTEMPTS,
+          firstFailedAtMs: now,
+          lastFailedAtMs: now,
+          lockedUntilMs,
+          lastReason: reason,
+          lastProvider: "Security Alert Response",
+          lastIp: params.ipAddress,
+        } satisfies LoginLockoutRecord,
+        ttlSeconds
+      )
+    )
+  )
+
+  const targetDesc = params.email || params.phone || keys[0]
+  void appendCloudTelemetry({
+    socEvent: {
+      id: `SOC-SEC-${Date.now().toString().slice(-6)}`,
+      severity: "Critical",
+      eventType: "Emergency Account Lockout (Security Alert: This wasn't me)",
+      sourceIp: params.ipAddress || "Unknown",
+      targetAccount: targetDesc,
+      mitigationAction: `Account immediately locked & active sessions revoked after user reported unauthorized change (${reason})`,
+      timestamp: "Just Now",
+    },
+  }).catch(() => {})
+
+  return {
+    locked: true,
+    attempts: MAX_FAILED_LOGIN_ATTEMPTS,
+    maxAttempts: MAX_FAILED_LOGIN_ATTEMPTS,
+    remainingAttempts: 0,
+    lockedUntilMs,
+    lockedUntilIso: new Date(lockedUntilMs).toISOString(),
+    retryAfterSeconds: Math.max(1, Math.ceil((lockedUntilMs - now) / 1000)),
+    message: formatLockedMessage(lockedUntilMs, reason),
+  }
 }

@@ -575,3 +575,229 @@ export async function sendConnectLnPortalRequestEmail(
   }
 }
 
+export interface SendConnectLnSecurityAlertParams {
+  toEmail: string
+  firstName: string
+  subject: string
+  headline: string
+  summaryText: string
+  locationDisplay: string
+  deviceDisplay: string
+  timestampDisplay: string
+  mapImageUrl: string
+  profiles: string[]
+  notMeUrl: string
+  checkEmailUrl: string
+}
+
+/**
+ * Send Meta-style ConnectLn security alert email (e.g. password change, phone change, passkey added)
+ * featuring a regional geo map card, metadata rows, connected ConnectLn profiles,
+ * full-width "This wasn't me" lockdown CTA, and "Visit the Help Center to confirm" link.
+ */
+export async function sendConnectLnSecurityAlertEmail(
+  params: SendConnectLnSecurityAlertParams
+): Promise<{ success: boolean; error?: string; id?: string }> {
+  const cleanEmail = String(params.toEmail || "").trim().toLowerCase()
+  if (
+    !cleanEmail ||
+    !EMAIL_FORMAT_RE.test(cleanEmail) ||
+    cleanEmail.endsWith(".conectln.com") ||
+    cleanEmail.endsWith("@conectln.com") ||
+    cleanEmail.endsWith("@connectin.app") ||
+    cleanEmail.endsWith("@connectin.phone")
+  ) {
+    return { success: false, error: "Skipped synthetic or non-deliverable email address." }
+  }
+
+  try {
+    const resend = getResendClient()
+    if (!resend) {
+      const err = "RESEND_API_KEY is not configured in environment variables."
+      console.warn(`[sendConnectLnSecurityAlertEmail] ${err}`)
+      return { success: false, error: err }
+    }
+
+    const fromAddress = resolveResendFromAddress("ConnectLn Security")
+    const firstName = escapeEmailHtml(params.firstName || "there")
+    const headline = escapeEmailHtml(params.headline)
+    const summaryText = escapeEmailHtml(params.summaryText)
+    const locationDisplay = escapeEmailHtml(params.locationDisplay)
+    const deviceDisplay = escapeEmailHtml(params.deviceDisplay)
+    const timestampDisplay = escapeEmailHtml(params.timestampDisplay)
+    const mapImageUrl = escapeEmailHtml(params.mapImageUrl)
+    const notMeUrl = escapeEmailHtml(params.notMeUrl)
+    const checkEmailUrl = escapeEmailHtml(params.checkEmailUrl)
+    const escapedEmail = escapeEmailHtml(cleanEmail)
+
+    const profilesHtml = params.profiles
+      .map((p) => `<li style="margin:0 0 6px 0;color:#1c1e21;font-size:15px;line-height:1.45;">${escapeEmailHtml(p)}</li>`)
+      .join("")
+
+    const plainText = [
+      params.headline,
+      "",
+      `Hi ${params.firstName || "there"},`,
+      "",
+      params.summaryText,
+      "",
+      "Was this you?",
+      `- Location: ${params.locationDisplay}`,
+      `- Device: ${params.deviceDisplay}`,
+      `- Time: ${params.timestampDisplay}`,
+      "",
+      "Profiles in this account:",
+      ...params.profiles.map((p) => `* ${p}`),
+      "",
+      `This wasn't me (Lock account & review): ${params.notMeUrl}`,
+      "",
+      "If this was you, you can ignore this email.",
+      "",
+      "Thanks,",
+      "ConnectLn Security",
+      "",
+      `Wondering if this email is really from us? Visit the Help Center to confirm: ${params.checkEmailUrl}`,
+      "",
+      `This message was sent to ${cleanEmail}.`,
+      "Expedite Consults LLC · ConnectLn Security Support · Laurel, MD 20707",
+      "To help keep your profile secure, please don't forward this email.",
+    ].join("\n")
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${headline}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1c1e21;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#ffffff;">
+    <tr>
+      <td align="center" style="padding:28px 16px 40px 16px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;text-align:left;background-color:#ffffff;">
+          <tr>
+            <td style="padding:0 0 22px 0;">
+              <h1 style="margin:0;font-size:26px;line-height:1.25;font-weight:700;color:#1c1e21;letter-spacing:-0.02em;">${headline}</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 0 16px 0;font-size:15px;line-height:1.5;color:#1c1e21;">
+              Hi ${firstName},
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 0 26px 0;font-size:15px;line-height:1.5;color:#1c1e21;">
+              ${summaryText}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 0 12px 0;font-size:15px;font-weight:700;color:#1c1e21;">
+              Was this you?
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 0 24px 0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #e4e6eb;border-radius:12px;background-color:#ffffff;">
+                <tr>
+                  <td style="padding:14px;">
+                    <img src="${mapImageUrl}" alt="Location map for ${locationDisplay}" width="510" style="width:100%;max-width:532px;height:auto;border-radius:10px;display:block;border:0;margin-bottom:14px;" />
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:15px;line-height:1.45;color:#1c1e21;">
+                      <tr>
+                        <td width="30" valign="top" style="padding:5px 8px 6px 2px;font-size:16px;color:#1c1e21;">&#128205;</td>
+                        <td valign="top" style="padding:5px 0 6px 0;font-size:15px;color:#1c1e21;">${locationDisplay}</td>
+                      </tr>
+                      <tr>
+                        <td width="30" valign="top" style="padding:5px 8px 6px 2px;font-size:16px;color:#1c1e21;">&#128187;</td>
+                        <td valign="top" style="padding:5px 0 6px 0;font-size:15px;color:#1c1e21;">${deviceDisplay}</td>
+                      </tr>
+                      <tr>
+                        <td width="30" valign="top" style="padding:5px 8px 2px 2px;font-size:16px;color:#1c1e21;">&#128338;</td>
+                        <td valign="top" style="padding:5px 0 2px 0;font-size:15px;color:#1c1e21;">${timestampDisplay}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 0 8px 0;font-size:15px;color:#1c1e21;">
+              Profiles in this account:
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 0 22px 0;">
+              <ul style="margin:0;padding:0 0 0 20px;">
+                ${profilesHtml}
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 0 24px 0;">
+              <a href="${notMeUrl}" target="_blank" style="display:block;width:100%;background-color:#0064E0;color:#ffffff;text-align:center;font-size:15px;font-weight:700;padding:13px 20px;border-radius:8px;text-decoration:none;box-sizing:border-box;">This wasn't me</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 0 22px 0;font-size:15px;line-height:1.5;color:#1c1e21;">
+              If this was you, you can ignore this email.
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 0 22px 0;font-size:15px;line-height:1.5;color:#1c1e21;">
+              Thanks,<br />ConnectLn Security
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 0 22px 0;font-size:15px;line-height:1.5;color:#65676b;">
+              Wondering if this email is really from us? Visit the Help Center to confirm:<br />
+              <a href="${checkEmailUrl}" target="_blank" style="color:#0064E0;text-decoration:none;word-break:break-all;">conectln.com/help/check-email</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 0 0 0;border-top:1px solid #e4e6eb;font-size:11px;line-height:1.55;color:#8a8d91;">
+              This message was sent to <a href="mailto:${escapedEmail}" style="color:#0064E0;text-decoration:none;">${escapedEmail}</a>.<br />
+              Expedite Consults LLC, Attention: ConnectLn Security Support, Laurel, MD 20707<br />
+              To help keep your profile secure, please don't forward this email. <a href="${checkEmailUrl}" target="_blank" style="color:#0064E0;text-decoration:none;">Learn more</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+
+    let { data, error } = await resend.emails.send({
+      from: fromAddress,
+      to: [cleanEmail],
+      replyTo: DEFAULT_FROM_EMAIL,
+      subject: params.subject,
+      text: plainText,
+      html,
+    })
+
+    if (error && !fromAddress.toLowerCase().includes(DEFAULT_FROM_EMAIL)) {
+      const retryRes = await resend.emails.send({
+        from: `ConnectLn Security <${DEFAULT_FROM_EMAIL}>`,
+        to: [cleanEmail],
+        replyTo: DEFAULT_FROM_EMAIL,
+        subject: params.subject,
+        text: plainText,
+        html,
+      })
+      data = retryRes.data
+      error = retryRes.error
+    }
+
+    if (error) {
+      console.error("[sendConnectLnSecurityAlertEmail Resend Error]", error)
+      return { success: false, error: error.message || "Failed to send security alert email" }
+    }
+
+    return { success: true, id: data?.id }
+  } catch (err: any) {
+    console.error("[sendConnectLnSecurityAlertEmail Exception]", err)
+    return { success: false, error: err?.message || "Security alert email dispatch failed" }
+  }
+}
+
