@@ -12,7 +12,10 @@ import {
     ConnectLnMyPhoneNumberCard,
     ConnectLnWhatsAppCallModal,
     buildInternationalPhone,
+    GroupCallInitialConfig,
+    GroupCallInviteeOption,
 } from './ConnectLnWhatsAppCallModal';
+import { ConnectLnGroupCallConfigModal } from './ConnectLnGroupCallConfigModal';
 import {
     CONNECTLN_RINGTONE_PRESETS,
     ConnectLnRingtoneId,
@@ -1759,7 +1762,10 @@ export function WhatsAppModeWorkspace({
         email?: string;
         avatar?: string;
         mode: 'audio' | 'video';
+        groupInvitees?: GroupCallInviteeOption[];
+        groupConfig?: GroupCallInitialConfig;
     } | null>(null);
+    const [showGroupCallConfigModal, setShowGroupCallConfigModal] = useState(false);
     const [selectedRingtoneId, setSelectedRingtoneId] = useState<ConnectLnRingtoneId>(() =>
         getSelectedConnectLnRingtoneId()
     );
@@ -1947,6 +1953,53 @@ export function WhatsAppModeWorkspace({
             email: emailOverride,
             avatar,
             mode: callMode,
+        });
+        startOutgoingCallerRingbackTone();
+    };
+
+    const launchConfiguredGroupCall = (payload: {
+        mode: 'audio' | 'video';
+        roomTitle: string;
+        invitees: GroupCallInviteeOption[];
+        config: GroupCallInitialConfig;
+        callId: string;
+    }) => {
+        if (!ensureVerifiedCallerBeforeCalling()) return;
+        const count = payload.invitees.length;
+        const displayLabel =
+            payload.roomTitle ||
+            (count > 1
+                ? `${payload.invitees[0].name} + ${count - 1} others`
+                : count === 1
+                ? payload.invitees[0].name
+                : 'ConnectLn Group Call');
+        const avatar =
+            payload.invitees[0]?.avatar ||
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayLabel)}&backgroundColor=7c4225`;
+
+        setCallLogs((prev) => [
+            {
+                id: `call_grp_${Date.now()}`,
+                name: displayLabel,
+                avatar,
+                direction: 'outgoing',
+                timeLabel: 'Just now',
+                callType: payload.mode === 'video' ? 'video' : 'voice',
+                subtitle: count > 0 ? `Group Call (${count} invited)` : 'Open Group Room',
+            },
+            ...prev.filter((c) => c.name !== displayLabel),
+        ]);
+
+        setShowGroupCallConfigModal(false);
+        setActiveWhatsAppCall({
+            callId: payload.callId,
+            label: displayLabel,
+            phone: payload.invitees[0]?.phone,
+            email: payload.invitees[0]?.email,
+            avatar,
+            mode: payload.mode,
+            groupInvitees: payload.invitees,
+            groupConfig: payload.config,
         });
         startOutgoingCallerRingbackTone();
     };
@@ -4961,20 +5014,31 @@ export function WhatsAppModeWorkspace({
                                 </button>
                             </div>
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => onStartLiveCall('video')}
-                            title="Launch ConnectLn Studio Call"
-                            className="w-9 h-9 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] flex items-center justify-center shadow-sm cursor-pointer transition-colors"
-                            style={{ color: '#FBF8F3' }}
-                        >
-                            {/* ConnectLn Studio Acoustic Capsule Icon */}
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                <rect x="8.5" y="3.5" width="7" height="11" rx="3.5" />
-                                <path strokeLinecap="round" d="M5 10v1a7 7 0 0 0 14 0v-1" />
-                                <line x1="12" y1="18" x2="12" y2="21" strokeLinecap="round" />
-                            </svg>
-                        </button>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setShowGroupCallConfigModal(true)}
+                                title="Group Call & Config"
+                                className="h-9 rounded-xl bg-emerald-800 hover:bg-emerald-900 px-2.5 flex items-center gap-1 text-[11px] font-bold shadow-sm cursor-pointer transition-colors"
+                                style={{ color: '#FBF8F3' }}
+                            >
+                                <span>👥 Group</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onStartLiveCall('video')}
+                                title="Launch ConnectLn Studio Call"
+                                className="w-9 h-9 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] flex items-center justify-center shadow-sm cursor-pointer transition-colors"
+                                style={{ color: '#FBF8F3' }}
+                            >
+                                {/* ConnectLn Studio Acoustic Capsule Icon */}
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                    <rect x="8.5" y="3.5" width="7" height="11" rx="3.5" />
+                                    <path strokeLinecap="round" d="M5 10v1a7 7 0 0 0 14 0v-1" />
+                                    <line x1="12" y1="18" x2="12" y2="21" strokeLinecap="round" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     {callsSidebarTab === 'voicemail' ? (
@@ -5472,8 +5536,8 @@ export function WhatsAppModeWorkspace({
                         </div>
                     </div>
 
-                    {/* 4 ConnectLn Desk Note Tile Buttons: Start call, New call link, Call a number, Schedule call */}
-                    <div className="flex flex-wrap items-center justify-center gap-6">
+                    {/* 5 ConnectLn Desk Note Tile Buttons: Start call, Group Call / Config, New call link, Call a number, Schedule call */}
+                    <div className="flex flex-wrap items-center justify-center gap-5 sm:gap-6">
                         <button
                             type="button"
                             onClick={() => {
@@ -5500,6 +5564,27 @@ export function WhatsAppModeWorkspace({
                                 </svg>
                             </span>
                             <span className="text-xs font-semibold text-[#57534E]">Start call</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            data-testid="call-menu-group-config-btn"
+                            onClick={() => setShowGroupCallConfigModal(true)}
+                            className="flex flex-col items-center gap-2 group cursor-pointer"
+                            title="Pre-select multiple members, configure group settings & check live transport status"
+                        >
+                            <span className="relative w-12 h-12 rounded-2xl bg-emerald-800 group-hover:bg-emerald-900 border border-emerald-700 text-[#FBF8F3] flex items-center justify-center shadow-sm transition-colors">
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <circle cx="9" cy="7" r="3" />
+                                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                                <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-[#FBF8F3] text-emerald-900 border border-emerald-800 flex items-center justify-center text-[9px] font-black shadow-2xs">
+                                    ⚙
+                                </span>
+                            </span>
+                            <span className="text-xs font-bold text-emerald-900">Group Call / Config</span>
                         </button>
 
                         <button
@@ -5581,6 +5666,15 @@ export function WhatsAppModeWorkspace({
                         </div>
                     )}
 
+                    {/* Pre-Call Group Call & Config Modal */}
+                    <ConnectLnGroupCallConfigModal
+                        open={showGroupCallConfigModal}
+                        onClose={() => setShowGroupCallConfigModal(false)}
+                        callerName={userName}
+                        members={callDirectoryMembers}
+                        onLaunchGroupCall={launchConfiguredGroupCall}
+                    />
+
                     {/* WhatsApp-Style Direct WebRTC + Push Ringing Voice & Video Call Modal (fresh callId & state per call) */}
                     {activeWhatsAppCall && (
                         <ConnectLnWhatsAppCallModal
@@ -5596,6 +5690,8 @@ export function WhatsAppModeWorkspace({
                             callerName={userName}
                             callerEmail={currentUser?.email}
                             callerAvatar={userAvatar}
+                            initialGroupInvitees={activeWhatsAppCall.groupInvitees}
+                            initialGroupConfig={activeWhatsAppCall.groupConfig}
                             onBridgeCarrierFallback={(phoneOrName) => {
                                 setActiveWhatsAppCall(null);
                                 launchCellPhoneCall(phoneOrName);

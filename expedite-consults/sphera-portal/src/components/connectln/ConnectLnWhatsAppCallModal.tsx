@@ -1178,6 +1178,20 @@ interface DirectoryContactOption {
   headline?: string
 }
 
+export interface GroupCallInviteeOption {
+  name: string
+  phone?: string
+  email?: string
+  avatar?: string
+}
+
+export interface GroupCallInitialConfig {
+  roomTitle?: string
+  lobbyEnabled?: boolean
+  muteOnEntry?: boolean
+  autoNotetaker?: boolean
+}
+
 export interface ConnectLnWhatsAppCallModalProps {
   open: boolean
   onClose: () => void
@@ -1192,6 +1206,8 @@ export interface ConnectLnWhatsAppCallModalProps {
   callerEmail?: string
   callerAvatar?: string
   onBridgeCarrierFallback?: (phoneOrName: string) => void
+  initialGroupInvitees?: GroupCallInviteeOption[]
+  initialGroupConfig?: GroupCallInitialConfig
 }
 
 let pdfJsLoadPromise: Promise<any> | null = null
@@ -1250,12 +1266,16 @@ export function ConnectLnWhatsAppCallModal({
   callerEmail,
   callerAvatar,
   onBridgeCarrierFallback,
+  initialGroupInvitees,
+  initialGroupConfig,
 }: ConnectLnWhatsAppCallModalProps) {
   const [callId, setCallId] = useState<string>(
     () => initialCallId || `wa_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`
   )
   const [isVideoOn, setIsVideoOn] = useState<boolean>(initialMode === "video")
-  const [isMicMuted, setIsMicMuted] = useState<boolean>(false)
+  const [isMicMuted, setIsMicMuted] = useState<boolean>(() =>
+    Boolean(initialGroupConfig?.muteOnEntry)
+  )
   const [cameraFacing, setCameraFacing] = useState<"user" | "environment">("user")
   const [recipientName, setRecipientName] = useState<string>(targetLabel || "ConnectLn Call")
   const [recipientPhone, setRecipientPhone] = useState<string>(targetPhone || "")
@@ -2750,24 +2770,51 @@ export function ConnectLnWhatsAppCallModal({
     if (!isIncomingAnswer) {
       if (dialedOutboundCallIdRef.current !== callId) {
         dialedOutboundCallIdRef.current = callId
-        addPersonToActiveCall({
-          targetPhone: targetPhone || (looksLikeClientPhone(targetLabel) ? targetLabel : undefined),
-          targetName: targetLabel,
-          targetEmail,
-          targetAvatar,
-        }).then((data) => {
-          if (cancelled || !data?.ok) return
-          const respName = String(data.recipient?.name || "").trim()
-          const isStaleFounderAlias =
-            respName.toLowerCase() === "expedite consults llc" &&
-            targetLabel &&
-            !looksLikeClientPhone(targetLabel) &&
-            !targetLabel.toLowerCase().includes("expedite")
-          if (respName && !isStaleFounderAlias) setRecipientName(respName)
-          if (data.recipient?.phone) setRecipientPhone(data.recipient.phone)
-          if (data.recipient?.email) targetEmailRef.current = data.recipient.email
-          if (data.recipient?.avatar) setRecipientAvatar(data.recipient.avatar)
-        })
+        if (initialGroupInvitees && initialGroupInvitees.length > 0) {
+          const customTitle = initialGroupConfig?.roomTitle?.trim()
+          const fallbackTitle =
+            initialGroupInvitees.length > 1
+              ? `${initialGroupInvitees[0].name} + ${initialGroupInvitees.length - 1} others`
+              : initialGroupInvitees[0].name
+          setRecipientName(customTitle || fallbackTitle)
+          Promise.allSettled(
+            initialGroupInvitees.map((inv) =>
+              addPersonToActiveCall({
+                targetPhone: inv.phone || (looksLikeClientPhone(inv.name) ? inv.name : undefined),
+                targetName: inv.name,
+                targetEmail: inv.email,
+                targetAvatar: inv.avatar,
+              })
+            )
+          ).then((results) => {
+            if (cancelled) return
+            for (const r of results) {
+              if (r.status === "fulfilled" && r.value?.ok && r.value?.recipient?.phone) {
+                setRecipientPhone((prev) => prev || r.value.recipient.phone)
+                break
+              }
+            }
+          })
+        } else {
+          addPersonToActiveCall({
+            targetPhone: targetPhone || (looksLikeClientPhone(targetLabel) ? targetLabel : undefined),
+            targetName: targetLabel,
+            targetEmail,
+            targetAvatar,
+          }).then((data) => {
+            if (cancelled || !data?.ok) return
+            const respName = String(data.recipient?.name || "").trim()
+            const isStaleFounderAlias =
+              respName.toLowerCase() === "expedite consults llc" &&
+              targetLabel &&
+              !looksLikeClientPhone(targetLabel) &&
+              !targetLabel.toLowerCase().includes("expedite")
+            if (respName && !isStaleFounderAlias) setRecipientName(respName)
+            if (data.recipient?.phone) setRecipientPhone(data.recipient.phone)
+            if (data.recipient?.email) targetEmailRef.current = data.recipient.email
+            if (data.recipient?.avatar) setRecipientAvatar(data.recipient.avatar)
+          })
+        }
       }
     } else {
       const origin = typeof window !== "undefined" ? window.location.origin : "https://conectln.com"
@@ -3990,9 +4037,10 @@ export function ConnectLnWhatsAppCallModal({
     maxRemoteCountSeenRef.current = totalRemoteCount
   }
   const modalRoomTitle =
-    totalRemoteCount >= 2
+    initialGroupConfig?.roomTitle?.trim() ||
+    (totalRemoteCount >= 2
       ? "ConnectLn Group Call"
-      : remoteWebRtcPeers[0]?.name || cellLegs[0]?.name || recipientName || "ConnectLn Call"
+      : remoteWebRtcPeers[0]?.name || cellLegs[0]?.name || recipientName || "ConnectLn Call")
   const notetaker = useNoctisCallNotetaker({
     callId,
     roomTitle: modalRoomTitle,
@@ -4226,6 +4274,30 @@ export function ConnectLnWhatsAppCallModal({
     },
     [callId, callerName, localPeerUid]
   )
+
+  const appliedGroupConfigCallIdRef = useRef<string>("")
+  useEffect(() => {
+    if (!open || isIncomingAnswer || !initialGroupConfig) return
+    if (appliedGroupConfigCallIdRef.current === callId) return
+    appliedGroupConfigCallIdRef.current = callId
+
+    if (initialGroupConfig.muteOnEntry) {
+      isMicMutedRef.current = true
+      setIsMicMuted(true)
+      if (localStreamRef.current) {
+        localStreamRef.current.getAudioTracks().forEach((t) => {
+          t.enabled = false
+        })
+      }
+    }
+    if (initialGroupConfig.autoNotetaker) {
+      notetaker.setNotetakerActive(true)
+    }
+    if (initialGroupConfig.lobbyEnabled && !teamsState.lobby_enabled) {
+      void sendTeamsSignal("toggle_lobby")
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isIncomingAnswer, callId, initialGroupConfig])
 
   // Check SFU / Coturn transport capability cleanly when call opens
   useEffect(() => {
