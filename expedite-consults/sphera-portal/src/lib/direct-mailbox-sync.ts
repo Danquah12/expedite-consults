@@ -957,7 +957,7 @@ export function mergeBilateralAndServerThreads(
     mergedByPartner.set(normTitle, {
       ...existing,
       ...lt,
-      id: existing.id.startsWith("dm_pair__") ? existing.id : lt.id,
+      id: existing.id || lt.id,
       recipientEmail: mergedRecipientEmail,
       isExternalEmail: mergedIsExternal,
       isVerified: mergedIsExternal ? false : (existing.isVerified ?? lt.isVerified),
