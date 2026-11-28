@@ -187,30 +187,88 @@ export function VideoShareBanner({
     })
   }, [autoPlayOnScroll, resolvedPlayHandler, resolvedYtId, videoUrl])
 
-  // Ensure direct HTML5 <video> unmutes when in view (falling back to muted only on cold browser block, then auto-unmuting on first gesture)
+  // Ensure direct HTML5 <video> unmutes ONLY when Noctis translation is NOT active
   useEffect(() => {
     if (!isPlayingInline || resolvedYtId) return
     const vid = directVideoRef.current
     if (!vid) return
-    vid.muted = false
-    vid.volume = 1
-    vid.play().catch(() => {
+
+    const isNoctisTranslationMutingActive = () => {
+      if (typeof window === "undefined") return false
+      if ((window as any).__noctisVoiceDuckingActive) return true
+      const prefLang = String((window as any).__noctisPreferredAudioLang || "").toLowerCase()
+      if (prefLang && prefLang !== "en") return true
+      try {
+        const storedLang = (localStorage.getItem("sphera-lang") || "").toLowerCase()
+        if (storedLang && storedLang !== "en") return true
+      } catch {}
+      return false
+    }
+
+    const syncDirectMuteState = () => {
+      if (!directVideoRef.current) return
+      if (isNoctisTranslationMutingActive()) {
+        directVideoRef.current.muted = true
+        directVideoRef.current.volume = 0
+        setIsDirectMuted(true)
+      }
+    }
+
+    if (isNoctisTranslationMutingActive()) {
       vid.muted = true
+      vid.volume = 0
       setIsDirectMuted(true)
       vid.play().catch(() => {})
-    })
+    } else {
+      vid.muted = false
+      vid.volume = 1
+      vid.play().catch(() => {
+        vid.muted = true
+        setIsDirectMuted(true)
+        vid.play().catch(() => {})
+      })
+    }
+
     const unlockDirect = () => {
-      if (directVideoRef.current && !directVideoRef.current.paused) {
+      if (!directVideoRef.current) return
+      if (isNoctisTranslationMutingActive()) {
+        directVideoRef.current.muted = true
+        directVideoRef.current.volume = 0
+        setIsDirectMuted(true)
+        return
+      }
+      if (!directVideoRef.current.paused) {
         directVideoRef.current.muted = false
         directVideoRef.current.volume = 1
         setIsDirectMuted(false)
       }
     }
+
+    const onDuckOrLangChange = (e: Event) => {
+      const custom = e as CustomEvent<{ duck?: boolean } | string>
+      if (e.type === "connectln:noctis-voice-duck") {
+        const duck = Boolean((custom.detail as any)?.duck)
+        if (duck) {
+          syncDirectMuteState()
+        } else if (!isNoctisTranslationMutingActive() && directVideoRef.current && !directVideoRef.current.paused) {
+          directVideoRef.current.muted = false
+          directVideoRef.current.volume = 1
+          setIsDirectMuted(false)
+        }
+      } else {
+        syncDirectMuteState()
+      }
+    }
+
     window.addEventListener("pointerdown", unlockDirect, { passive: true })
     window.addEventListener("keydown", unlockDirect, { passive: true })
+    window.addEventListener("connectln:noctis-voice-duck", onDuckOrLangChange)
+    window.addEventListener("sphera-lang-changed", onDuckOrLangChange)
     return () => {
       window.removeEventListener("pointerdown", unlockDirect)
       window.removeEventListener("keydown", unlockDirect)
+      window.removeEventListener("connectln:noctis-voice-duck", onDuckOrLangChange)
+      window.removeEventListener("sphera-lang-changed", onDuckOrLangChange)
     }
   }, [isPlayingInline, resolvedYtId])
 

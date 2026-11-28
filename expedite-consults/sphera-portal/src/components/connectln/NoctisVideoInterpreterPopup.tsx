@@ -1212,13 +1212,28 @@ function getSharedNoctisAudio(): HTMLAudioElement | null {
   return win.__noctisSharedAudioEl as HTMLAudioElement
 }
 
+export const NOCTIS_VOICE_DUCK_EVENT = "connectln:noctis-voice-duck"
+
+export function broadcastNoctisVoiceDuck(duck: boolean) {
+  if (typeof window === "undefined") return
+  ;(window as any).__noctisVoiceDuckingActive = duck
+  window.dispatchEvent(new CustomEvent(NOCTIS_VOICE_DUCK_EVENT, { detail: { duck } }))
+}
+
 function getSharedNoctisPreloadAudio(): HTMLAudioElement | null {
   if (typeof window === "undefined") return null
   const win = window as any
   if (!win.__noctisSharedPreloadAudioEl) {
     const preload = new Audio()
     preload.preload = "auto"
+    preload.muted = true
+    preload.volume = 0
+    preload.autoplay = false
     win.__noctisSharedPreloadAudioEl = preload
+  } else {
+    win.__noctisSharedPreloadAudioEl.muted = true
+    win.__noctisSharedPreloadAudioEl.volume = 0
+    win.__noctisSharedPreloadAudioEl.autoplay = false
   }
   return win.__noctisSharedPreloadAudioEl as HTMLAudioElement
 }
@@ -1673,6 +1688,7 @@ export function NoctisVideoInterpreterPopup({
             ) {
               isSpeakingRef.current = false
               setIsSpeaking(false)
+              broadcastNoctisVoiceDuck(false)
               if (onMuteOriginalVideoRef.current) {
                 onMuteOriginalVideoRef.current(false)
               }
@@ -1699,11 +1715,16 @@ export function NoctisVideoInterpreterPopup({
       stopAudioOutput(true)
       claimExclusiveInterpreter(instanceIdRef.current)
       ;(window as any).__activePlayingNoctisInstanceId = instanceIdRef.current
+      broadcastNoctisVoiceDuck(true)
+      if (onMuteOriginalVideoRef.current) {
+        onMuteOriginalVideoRef.current(true)
+      }
+      setPageVideoElementsDucking(true)
       isSpeakingRef.current = true
       setIsSpeaking(true)
       speakSentenceAtIndex(startIndex)
     },
-    [speakSentenceAtIndex, stopAudioOutput]
+    [setPageVideoElementsDucking, speakSentenceAtIndex, stopAudioOutput]
   )
 
   const stopContinuousInterpretation = useCallback(
@@ -1712,6 +1733,7 @@ export function NoctisVideoInterpreterPopup({
       setIsSpeaking(false)
       stopAudioOutput(false)
       if (restoreFullOriginalVolume) {
+        broadcastNoctisVoiceDuck(false)
         if (onMuteOriginalVideoRef.current) {
           onMuteOriginalVideoRef.current(false)
         }
@@ -1841,13 +1863,20 @@ export function NoctisVideoInterpreterPopup({
         ;(window as any).__noctisPreferredAudioLang = language
       }
       userManuallyPausedDubRef.current = false
-      if ((isPlayingRef.current || isPopupOpenRef.current) && language !== sourceLangRef.current) {
+      const win = typeof window !== "undefined" ? (window as any) : {}
+      const isPrimaryActive =
+        win.__activePlayingNoctisInstanceId === instanceIdRef.current ||
+        (!win.__activePlayingNoctisInstanceId && (isPlayingRef.current || isPopupOpenRef.current))
+      if (isPrimaryActive && (isPlayingRef.current || isPopupOpenRef.current) && language !== sourceLangRef.current) {
         selectSpokenAudioLanguage(language, false)
       } else {
-        if (language === sourceLangRef.current) {
+        if (language === sourceLangRef.current && isSpeakingRef.current) {
           setForceSpeakEvenIfSameLang(false)
           forceSpeakRef.current = false
           stopContinuousInterpretation(true)
+        } else if (language === sourceLangRef.current) {
+          setForceSpeakEvenIfSameLang(false)
+          forceSpeakRef.current = false
         }
         setAudioLang(language)
         audioLangRef.current = language
@@ -1861,7 +1890,11 @@ export function NoctisVideoInterpreterPopup({
       const custom = e as CustomEvent<{ langCode?: LanguageCode }>
       const targetCode = custom.detail?.langCode
       if (!targetCode) return
-      if (isPlayingRef.current || isPopupOpenRef.current) {
+      const win = typeof window !== "undefined" ? (window as any) : {}
+      const isPrimaryActive =
+        win.__activePlayingNoctisInstanceId === instanceIdRef.current ||
+        (!win.__activePlayingNoctisInstanceId && (isPlayingRef.current || isPopupOpenRef.current))
+      if (isPrimaryActive && (isPlayingRef.current || isPopupOpenRef.current)) {
         selectSpokenAudioLanguage(targetCode, false)
       } else {
         userManuallyPausedDubRef.current = false

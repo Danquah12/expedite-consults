@@ -498,11 +498,16 @@ export function ConnectLnStudioPlayer({
     [effectiveProvider, isHtml5Direct, moreVideosList, sendYtCommand]
   )
 
+  const duckReinforceTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([])
+
   const shouldMuteForTranslation = useCallback(() => {
     if (isVoiceDuckingRef.current || isInterpretingNeededRef.current) return true
-    if (typeof window !== "undefined" && (window as any).__noctisPreferredAudioLang) {
-      const pref = String((window as any).__noctisPreferredAudioLang).toLowerCase()
-      if (pref !== sourceLangRef.current) return true
+    if (typeof window !== "undefined") {
+      if ((window as any).__noctisVoiceDuckingActive === true) return true
+      if ((window as any).__noctisPreferredAudioLang) {
+        const pref = String((window as any).__noctisPreferredAudioLang).toLowerCase()
+        if (pref !== sourceLangRef.current) return true
+      }
     }
     return false
   }, [])
@@ -510,6 +515,9 @@ export function ConnectLnStudioPlayer({
   // Duck or restore audio safely via official player APIs (YouTube IFrame API or HTML5 <video>.muted)
   const applyVoiceDuckingToPlayer = useCallback(
     (shouldDuck: boolean) => {
+      duckReinforceTimersRef.current.forEach((t) => clearTimeout(t))
+      duckReinforceTimersRef.current = []
+
       const muteActive = shouldDuck || shouldMuteForTranslation()
       if (isHtml5Direct && html5VideoRef.current) {
         html5VideoRef.current.muted = muteActive
@@ -522,6 +530,19 @@ export function ConnectLnStudioPlayer({
           sendYtCommand("setVolume", [0])
           sendYtCommand("mute")
           setIsMutedState(true)
+          const t1 = setTimeout(() => {
+            if (shouldMuteForTranslation()) {
+              sendYtCommand("setVolume", [0])
+              sendYtCommand("mute")
+            }
+          }, 150)
+          const t2 = setTimeout(() => {
+            if (shouldMuteForTranslation()) {
+              sendYtCommand("setVolume", [0])
+              sendYtCommand("mute")
+            }
+          }, 450)
+          duckReinforceTimersRef.current.push(t1, t2)
         } else if (!initialMuted && hasSessionAudioActivation()) {
           sendYtCommand("unMute")
           sendYtCommand("setVolume", [100])
@@ -531,6 +552,41 @@ export function ConnectLnStudioPlayer({
     },
     [effectiveProvider, initialMuted, isHtml5Direct, sendYtCommand, shouldMuteForTranslation]
   )
+
+  useEffect(() => {
+    const syncMuteOnLangOrDuck = (forcedDuck?: boolean) => {
+      const targetPref =
+        typeof window !== "undefined" && (window as any).__noctisPreferredAudioLang
+          ? String((window as any).__noctisPreferredAudioLang).toLowerCase()
+          : language
+      const differsFromSource =
+        language !== sourceLangRef.current || targetPref !== sourceLangRef.current
+      const globalDuck =
+        typeof window !== "undefined" && (window as any).__noctisVoiceDuckingActive === true
+      const shouldMute = Boolean(forcedDuck || differsFromSource || globalDuck)
+      isVoiceDuckingRef.current = shouldMute
+      applyVoiceDuckingToPlayer(shouldMute)
+    }
+
+    syncMuteOnLangOrDuck()
+
+    const handleLangEvt = () => syncMuteOnLangOrDuck()
+    const handleDuckEvt = (e: Event) => {
+      const custom = e as CustomEvent<{ duck?: boolean }>
+      syncMuteOnLangOrDuck(Boolean(custom.detail?.duck))
+    }
+
+    window.addEventListener("sphera-lang-changed", handleLangEvt)
+    window.addEventListener("connectln:noctis-command-language", handleLangEvt)
+    window.addEventListener("connectln:noctis-voice-duck", handleDuckEvt)
+    return () => {
+      duckReinforceTimersRef.current.forEach((t) => clearTimeout(t))
+      duckReinforceTimersRef.current = []
+      window.removeEventListener("sphera-lang-changed", handleLangEvt)
+      window.removeEventListener("connectln:noctis-command-language", handleLangEvt)
+      window.removeEventListener("connectln:noctis-voice-duck", handleDuckEvt)
+    }
+  }, [language, isInterpretingNeeded, applyVoiceDuckingToPlayer])
 
   // Single-video mutual exclusion + incoming ConnectLn call pause across all providers
   useEffect(() => {
@@ -650,8 +706,17 @@ export function ConnectLnStudioPlayer({
           if (typeof data.info.duration === "number" && data.info.duration > 0) {
             setDuration(data.info.duration)
           }
-          if (typeof data.info.muted === "boolean") {
-            setIsMutedState(data.info.muted)
+          const translationMuting = shouldMuteForTranslation()
+          if (
+            translationMuting &&
+            (data.info.muted === false ||
+              (typeof data.info.volume === "number" && data.info.volume > 0))
+          ) {
+            sendYtCommand("setVolume", [0])
+            sendYtCommand("mute")
+            setIsMutedState(true)
+          } else if (typeof data.info.muted === "boolean") {
+            setIsMutedState(translationMuting ? true : data.info.muted)
           }
           if (typeof data.info.playerState === "number") {
             const pState = data.info.playerState
@@ -955,12 +1020,24 @@ export function ConnectLnStudioPlayer({
             autoPlay={effectiveAutoPlay}
             muted={initialMuted || shouldMuteForTranslation()}
             data-connectln-player-id={effectivePlayerId}
-            onPlay={() => {
+            onPlay={(e) => {
               notifyExclusiveVideoPlay(effectivePlayerId)
+              if (shouldMuteForTranslation()) {
+                e.currentTarget.muted = true
+                e.currentTarget.volume = 0
+                setIsMutedState(true)
+              }
               setIsPlaying(true)
               setPlaybackPhase("playing")
               setShowMoreVideosOverlay(false)
               dismissedPauseOverlayRef.current = false
+            }}
+            onVolumeChange={(e) => {
+              if (shouldMuteForTranslation() && (!e.currentTarget.muted || e.currentTarget.volume > 0)) {
+                e.currentTarget.muted = true
+                e.currentTarget.volume = 0
+                setIsMutedState(true)
+              }
             }}
             onPause={(e) => {
               setIsPlaying(false)
