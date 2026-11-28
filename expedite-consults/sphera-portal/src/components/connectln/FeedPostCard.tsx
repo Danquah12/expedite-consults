@@ -704,7 +704,15 @@ export function FeedPostCard({
         </div>
       </div>
 
-      {/* Post Text Content — LinkedIn 14px Regular #191919 */}
+      {/* Post Text Content — LinkedIn 14px Regular #191919 (hidden when rendering full Keepsake Stationery Card below) */}
+      {!(
+        post.media?.type === "image" &&
+        (post.hashtags?.some((h) => /keepsake/i.test(String(h))) ||
+          post.media?.url?.includes("connectln-cards") ||
+          post.media?.url?.includes("/cards/") ||
+          post.author?.headline?.toLowerCase().includes("keepsake") ||
+          post.content?.includes("#ConnectLnKeepsake"))
+      ) && (
       <div
         style={{ fontWeight: 400 }}
         className="px-4 py-2 text-[14px] leading-[1.42857] text-[#191919] dark:text-zinc-100 whitespace-pre-line"
@@ -740,6 +748,7 @@ export function FeedPostCard({
           </div>
         )}
       </div>
+      )}
 
       {/* Hashtags (Shown cleanly when expanded or on text-only posts so video posts stay clean like WSJ) */}
       {post.hashtags && post.hashtags.length > 0 && (isExpanded || !post.media) && (
@@ -1257,7 +1266,138 @@ export function FeedPostCard({
               </div>
             </div>
           ) : (
-            /* 4. STANDARD FULL-BLEED ACTION PHOTO WITH OPTIONAL CALLOUT BANNER */
+            post.hashtags?.some((h) => /keepsake/i.test(String(h))) ||
+            post.media.url?.includes("connectln-cards") ||
+            post.media.url?.includes("/cards/") ||
+            post.author?.headline?.toLowerCase().includes("keepsake") ||
+            post.content?.includes("#ConnectLnKeepsake")
+          ) ? (
+            /* 4A. KEEPSAKE VERTICAL STATIONERY CARD (Matches Exact Email & Social Card Specification) */
+            (() => {
+              const rawLines = (post.content || "")
+                .split(/\r?\n/)
+                .map((l) => l.trim())
+              const nonEmptyLines = rawLines.filter(Boolean)
+              const cardTitle =
+                post.media?.title && !post.media.title.includes("\n")
+                  ? post.media.title
+                  : nonEmptyLines[0] || "Golden Harvest"
+              const senderMatch = (post.content || "").match(/^\s*—\s*(.+)$/m)
+              const senderDisplay =
+                senderMatch?.[1]?.trim() ||
+                (resolvedAuthorName && resolvedAuthorName !== "ConnectLn Keepsake"
+                  ? resolvedAuthorName
+                  : "Kwesi Asiedu")
+              const urlMatch = (post.content || "").match(
+                /https?:\/\/[^\s]+/
+              )
+              const cardHref =
+                urlMatch?.[0] || "https://connectln-cards.vercel.app"
+              const msgLines = nonEmptyLines.filter(
+                (l, i) =>
+                  !(i === 0 && l === cardTitle) &&
+                  !l.startsWith("—") &&
+                  !l.startsWith("Open your interactive card") &&
+                  !l.startsWith("Open card") &&
+                  !l.startsWith("http://") &&
+                  !l.startsWith("https://") &&
+                  !l.startsWith("#")
+              )
+              const cardMessage =
+                msgLines.join(" ").trim() ||
+                "Grateful for every shared table, warm conversation, and autumn memory we gather this Thanksgiving."
+              const rawOccasion =
+                post.author?.headline?.split("·")[0]?.trim() || "Thanksgiving"
+              const occasionDisplay =
+                rawOccasion.toLowerCase().includes("thanksgiving") ||
+                cardTitle.toLowerCase().includes("harvest")
+                  ? "Thanksgiving · Action de Grâce"
+                  : rawOccasion.toLowerCase().includes("christmas") ||
+                      cardTitle.toLowerCase().includes("noel")
+                    ? "Christmas · Noël"
+                    : rawOccasion.includes("·")
+                      ? rawOccasion
+                      : "Thanksgiving · Action de Grâce"
+              const artUrl =
+                post.media?.url && !post.media.url.includes("/api/share/card-image")
+                  ? post.media.url
+                  : "https://connectln-cards.vercel.app/cards/thanksgiving.png"
+
+              return (
+                <div className="w-full bg-[#FAF9F7] px-3 py-5 sm:px-6">
+                  <div
+                    data-testid="connectln-feed-keepsake-card"
+                    className="mx-auto max-w-[600px] overflow-hidden rounded-[20px] border border-[#E5E0D8] bg-white shadow-xs"
+                  >
+                    {/* 1. Top Navy Banner */}
+                    <div className="bg-[#1B2A4A] px-8 py-6 text-center">
+                      <p className="m-0 text-[10px] font-bold uppercase tracking-[3px] text-[#B8935A]">
+                        CONNECTLN KEEPSAKE
+                      </p>
+                      <h3 className="mt-2 font-serif text-[26px] font-semibold leading-tight text-white">
+                        {cardTitle}
+                      </h3>
+                      <p className="mt-1 text-xs text-[#CBD5E1]">
+                        {occasionDisplay}
+                      </p>
+                    </div>
+
+                    {/* 2. Upper Cream Artwork Stage */}
+                    <div className="bg-[#F3F1EC] px-8 pt-7 pb-4 text-center">
+                      <img
+                        src={artUrl}
+                        alt={cardTitle}
+                        className="mx-auto block h-auto w-full max-w-[300px] rounded-[12px] border border-[#D8D0C5] bg-white shadow-xs"
+                      />
+                    </div>
+
+                    {/* 3. Lower White Message Body */}
+                    <div className="bg-white px-7 py-7 sm:px-9 text-left">
+                      <p className="mb-3 text-[13px] font-semibold text-[#7C6239]">
+                        Warm greetings,
+                      </p>
+
+                      <div className="rounded-r-[12px] border-l-[3px] border-[#B8935A] bg-[#FAF9F7] px-[18px] py-3">
+                        <p className="m-0 font-serif text-[19px] italic leading-[1.6] text-[#1B2A4A]">
+                          &ldquo;{cardMessage}&rdquo;
+                        </p>
+                      </div>
+
+                      <p className="mt-5 text-right font-serif text-[17px] font-semibold text-[#1B2A4A]">
+                        {senderDisplay}
+                      </p>
+                      <p className="mt-1.5 text-right text-[11px] text-[#5A6475]">
+                        Presented on Handmade Stock · Cotton Ivory Envelope
+                      </p>
+
+                      <div className="mt-6 text-center">
+                        <a
+                          href={cardHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block rounded-full bg-[#1B2A4A] px-6 py-[11px] text-[13px] font-semibold text-white no-underline transition hover:bg-[#121D34]"
+                        >
+                          Send Your Own Keepsake Card
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* 4. Bottom Footer Strip */}
+                    <div className="border-t border-[#E5E0D8] bg-[#F3F1EC] px-8 py-4 text-center">
+                      <p className="m-0 text-[11px] text-[#5A6475]">
+                        Sent via{" "}
+                        <strong className="font-semibold text-[#1B2A4A]">
+                          ConnectLn Keepsake
+                        </strong>{" "}
+                        · Fine Letterpress &amp; Digital Stationery
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()
+          ) : (
+            /* 4B. STANDARD FULL-BLEED ACTION PHOTO WITH OPTIONAL CALLOUT BANNER */
             <div className="relative w-full overflow-hidden bg-zinc-900">
               <img
                 src={post.media.url}
@@ -1281,7 +1421,14 @@ export function FeedPostCard({
           )}
 
           {/* LinkedIn-Style Guide / Article Caption + Full-Width Download Button (Matches Fisher Investments Screenshot) */}
-          {(post.media.title || post.media.downloadGuide) && (
+          {(post.media.title || post.media.downloadGuide) &&
+            !(
+              post.hashtags?.some((h) => /keepsake/i.test(String(h))) ||
+              post.media.url?.includes("connectln-cards") ||
+              post.media.url?.includes("/cards/") ||
+              post.author?.headline?.toLowerCase().includes("keepsake") ||
+              post.content?.includes("#ConnectLnKeepsake")
+            ) && (
             <div className="bg-white dark:bg-zinc-900">
               <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <h4 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-snug">

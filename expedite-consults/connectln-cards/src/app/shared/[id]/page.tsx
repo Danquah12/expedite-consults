@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SharedCardViewerClient } from "@/components/SharedCardViewerClient";
 import {
+  encodeSharedCardSnapshotToken,
   getEffectivePublicBaseUrl,
   resolveSharedCardSnapshot,
 } from "@/lib/storage";
@@ -26,15 +27,16 @@ export async function generateMetadata({
   }
 
   const publicBaseUrl = await getEffectivePublicBaseUrl();
-  const ogArtworkKey =
-    snapshot.artworkKey ||
-    snapshot.imageUrl?.match(/\/cards\/([a-z0-9-]+)\.(png|jpg|jpeg)/i)?.[1] ||
-    "thanksgiving";
-  const ogImageUrl = `${publicBaseUrl}/cards/og/${ogArtworkKey}.jpg`;
-  const canonicalUrl = `${publicBaseUrl}/shared/${snapshot.id}`;
+  const effectiveToken = token || encodeSharedCardSnapshotToken(snapshot);
+  const ogImageUrl = `${publicBaseUrl}/api/share/card-image?c=${encodeURIComponent(
+    effectiveToken
+  )}`;
+  const canonicalUrl = `${publicBaseUrl}/shared/${snapshot.id}${
+    effectiveToken ? `?c=${encodeURIComponent(effectiveToken)}` : ""
+  }`;
 
   const title = `${snapshot.title} — Keepsake Card from ${snapshot.senderName}`;
-  const description = snapshot.message.slice(0, 160);
+  const description = `“${snapshot.message.slice(0, 140)}” — ${snapshot.senderName} · Presented on ${snapshot.paperStock || "Handmade Stock"} · ${snapshot.envelopeColor || "Cotton Ivory"} Envelope`;
 
   return {
     metadataBase: new URL(publicBaseUrl),
@@ -50,9 +52,9 @@ export async function generateMetadata({
         {
           url: ogImageUrl,
           secureUrl: ogImageUrl,
-          width: 1200,
-          height: 630,
-          type: "image/jpeg",
+          width: 800,
+          height: 1120,
+          type: "image/png",
           alt: snapshot.title,
         },
       ],

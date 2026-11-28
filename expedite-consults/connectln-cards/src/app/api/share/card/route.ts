@@ -74,13 +74,16 @@ export async function POST(request: Request) {
     const token = encodeSharedCardSnapshotToken(snapshot);
     const sharePath = `/shared/${snapshot.id}?c=${encodeURIComponent(token)}`;
     const shareUrl = `${origin}${sharePath}`;
-    const ogImageUrl = `${origin}/cards/og/${artworkSlug}.jpg`;
+    const ogImageUrl = `${origin}/api/share/card-image?c=${encodeURIComponent(
+      token
+    )}`;
 
     return NextResponse.json({
       snapshot,
       sharePath,
       shareUrl,
       ogImageUrl,
+      artworkImageUrl: `${origin}/cards/${artworkSlug}.png`,
       publicBaseUrl: origin,
     });
   } catch (error) {

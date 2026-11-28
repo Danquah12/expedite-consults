@@ -166,9 +166,11 @@ export default function MultiChannelShareBar({
       renderPersonalizedCardPng({
         title,
         occasion,
+        artworkKey,
         message: message || "Warm wishes from ConnectLn Keepsake.",
         senderName,
         envelopeColor,
+        paperStock,
         imageUrl: resolvedImageUrl || undefined,
       })
         .then((img) => {
