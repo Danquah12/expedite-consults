@@ -80,6 +80,18 @@ export function notifyExclusiveVideoPlay(activePlayerId: string) {
   }
 }
 
+/** Stop every ConnectLn video + Noctis dub voice (used when switching tabs or hiding the browser tab). */
+export const CONNECTLN_STOP_ALL_PLAYER_ID = "__connectln_stop_all_media__"
+export function stopAllConnectLnMedia() {
+  if (typeof window === "undefined") return
+  notifyExclusiveVideoPlay(CONNECTLN_STOP_ALL_PLAYER_ID)
+  const w = window as any
+  w.__connectlnActiveVideoPlayerId = null
+  w.__activePlayingNoctisInstanceId = ""
+  w.__activeNoctisInterpreterId = ""
+  w.__noctisVoiceDuckingActive = false
+}
+
 function hasSessionAudioActivation(): boolean {
   if (typeof window === "undefined") return false
   if ((window as any).__connectlnAudioUnlocked) return true
@@ -532,6 +544,21 @@ export function ConnectLnStudioPlayer({
   const duckReinforceTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([])
 
   const shouldMuteForTranslation = useCallback(() => {
+    if (typeof window !== "undefined") {
+      const w = window as any
+      const shared = w.__noctisSharedAudioEl
+      const sharedPlaying = Boolean(
+        shared instanceof HTMLAudioElement &&
+          !shared.paused &&
+          !shared.ended &&
+          shared.src &&
+          !shared.src.startsWith("data:")
+      )
+      // User pressed "Pause dub": the ORIGINAL speaker is the only voice, so never keep it muted
+      if (w.__noctisDubPausedByUser === true && !sharedPlaying && w.__noctisVoiceDuckingActive !== true) {
+        return false
+      }
+    }
     if (isVoiceDuckingRef.current || isInterpretingNeededRef.current) return true
     if (typeof window !== "undefined") {
       const w = window as any

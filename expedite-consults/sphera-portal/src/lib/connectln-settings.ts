@@ -78,6 +78,8 @@ function computeVisibleRatio(el: HTMLElement, vh: number): number {
 
 function evaluateViewportAutoplayNow() {
   if (typeof window === "undefined") return
+  // Never start videos while the browser tab is hidden
+  if (typeof document !== "undefined" && document.visibilityState === "hidden") return
   const vh = window.innerHeight || document.documentElement.clientHeight || 800
 
   // Always check whether a manually started video has been scrolled out of view FIRST
@@ -179,6 +181,19 @@ function ensureGlobalListeners() {
   window.addEventListener("resize", requestViewportAutoplayEvaluation, { passive: true })
   window.addEventListener("popstate", requestViewportAutoplayEvaluation, { passive: true })
   window.addEventListener("connectln:call-silence-change", requestViewportAutoplayEvaluation)
+  // Tab switch / hidden browser tab: forget the previous player, then let the visible view pick its in-view video
+  window.addEventListener("connectln:exclusive-video-play", (e: Event) => {
+    const id = (e as CustomEvent<{ playerId?: string }>).detail?.playerId
+    if (id !== "__connectln_stop_all_media__") return
+    currentAutoActiveId = null
+    manualOverrideId = null
+    manualOverrideElement = null
+    window.setTimeout(requestViewportAutoplayEvaluation, 350)
+    window.setTimeout(requestViewportAutoplayEvaluation, 900)
+  })
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") requestViewportAutoplayEvaluation()
+  })
   window.addEventListener(
     "click",
     () => {

@@ -137,6 +137,7 @@ import {
 } from "@/lib/connectin-videos"
 import { buildProfessionTieredFeedPosts } from "@/lib/connectin-profession-feed"
 import { ConnectLnStagedVideoModal } from "@/components/connectln/ConnectLnStagedVideoModal"
+import { stopAllConnectLnMedia } from "@/components/connectln/ConnectLnStudioPlayer"
 import { ConnectLnStudioSuiteView } from "@/components/connectln/studio/ConnectLnStudioSuiteView"
 import { ConnectLnPowerAppsHub } from "@/components/connectln/ConnectLnPowerAppsHub"
 import { LiveHarvestedMediaShowcase } from "@/components/connectln/LiveHarvestedMediaShowcase"
@@ -248,6 +249,22 @@ export default function ConnectLnPage() {
     | 'powerapps'
     | 'plans'
   >('home')
+  // Only the visible tab may play video: stop every player + Noctis dub voice when the tab changes
+  // or when the browser tab is hidden, so a Home video never keeps talking on another tab.
+  const prevActiveTabRef = useRef(activeTab)
+  useEffect(() => {
+    if (prevActiveTabRef.current !== activeTab) {
+      prevActiveTabRef.current = activeTab
+      stopAllConnectLnMedia()
+    }
+  }, [activeTab])
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") stopAllConnectLnMedia()
+    }
+    document.addEventListener("visibilitychange", onVisibility)
+    return () => document.removeEventListener("visibilitychange", onVisibility)
+  }, [])
   const [initialPowerAppId, setInitialPowerAppId] = useState<string | null>(null)
   useEffect(() => {
     const handleOpenPowerApp = (ev: Event) => {

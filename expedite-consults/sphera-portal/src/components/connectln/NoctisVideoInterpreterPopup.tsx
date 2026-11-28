@@ -1739,6 +1739,8 @@ export function NoctisVideoInterpreterPopup({
   const startContinuousInterpretation = useCallback(
     (startIndex = 0) => {
       if (typeof window === "undefined") return
+      // Dubbing is (re)starting: the user is no longer asking for the original speaker only
+      ;(window as any).__noctisDubPausedByUser = false
       stopAudioOutput(true)
       claimExclusiveInterpreter(instanceIdRef.current)
       ;(window as any).__activePlayingNoctisInstanceId = instanceIdRef.current
@@ -2273,6 +2275,10 @@ export function NoctisVideoInterpreterPopup({
       e.stopPropagation()
       if (isSpeaking) {
         userManuallyPausedDubRef.current = true
+        // Hand the voice back to the ORIGINAL speaker so exactly one person is heard
+        if (typeof window !== "undefined") {
+          ;(window as any).__noctisDubPausedByUser = true
+        }
         stopContinuousInterpretation(true)
       } else {
         userManuallyPausedDubRef.current = false

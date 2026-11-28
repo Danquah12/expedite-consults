@@ -168,7 +168,13 @@ export function VideoShareBanner({
   // Auto-play inline AND unmute speaker when scrolled into viewport across all ConnectLn feeds
   useEffect(() => {
     if (!autoPlayOnScroll || resolvedPlayHandler) return
-    const playable = Boolean(resolvedYtId || videoUrl)
+    // Skip dead blob: URLs persisted from another origin/session (they can never play and would hijack the in-view slot)
+    const isDeadBlob =
+      !resolvedYtId &&
+      typeof videoUrl === "string" &&
+      videoUrl.startsWith("blob:") &&
+      (typeof window === "undefined" || !videoUrl.startsWith(`blob:${window.location.origin}`))
+    const playable = Boolean(resolvedYtId || videoUrl) && !isDeadBlob
     if (!playable) return
 
     return registerViewportVideoSlot({
