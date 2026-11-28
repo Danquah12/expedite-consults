@@ -98,6 +98,7 @@ export function dispatchNoctisLanguageCommand(langCode: LanguageCode) {
 }
 
 export interface NoctisVideoInterpreterProps {
+  playerId?: string
   youtubeId?: string
   title: string
   speaker?: string
@@ -1279,6 +1280,7 @@ const QUICK_AUDIO_LANG_CHIPS: LanguageCode[] = ["es", "pl", "fr", "zh", "vi", "e
 const EMPTY_TAKEAWAYS: string[] = []
 
 export function NoctisVideoInterpreterPopup({
+  playerId,
   youtubeId,
   title,
   speaker = "ConnectLn Instructor",
@@ -1298,6 +1300,8 @@ export function NoctisVideoInterpreterPopup({
   const { language, setLanguage, languages } = useLanguage()
   const normalizedSourceLang = (sourceLanguage || "en").toLowerCase() as LanguageCode
   const instanceIdRef = useRef<string>(`noctis-int-${Math.random().toString(36).slice(2, 10)}`)
+  const playerIdRef = useRef<string>(playerId || "")
+  playerIdRef.current = playerId || ""
 
   // `audioLang` is the active spoken target language for this video's audio translation.
   // It syncs automatically when the user changes the global navbar language, AND can also be switched
@@ -1526,33 +1530,43 @@ export function NoctisVideoInterpreterPopup({
   const sentencesRef = useRef<string[]>(interpreterSentences)
   sentencesRef.current = interpreterSentences
 
-  const stopAudioOutput = useCallback((forceStopShared = false) => {
-    if (nextSentenceTimerRef.current) {
-      clearTimeout(nextSentenceTimerRef.current)
-      nextSentenceTimerRef.current = null
-    }
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      try {
-        window.speechSynthesis.cancel()
-      } catch {}
-    }
-    const isCurrentActiveOwner =
-      typeof window !== "undefined" &&
-      (forceStopShared || (window as any).__activeNoctisInterpreterId === instanceIdRef.current)
-
-    if (isCurrentActiveOwner) {
-      const win = window as any
-      win.__noctisAudioPlaySeq = (win.__noctisAudioPlaySeq || 0) + 1
-      const sharedAudio = getSharedNoctisAudio()
-      if (sharedAudio) {
+  const stopAudioOutput = useCallback(
+    (forceStopShared = false) => {
+      if (nextSentenceTimerRef.current) {
+        clearTimeout(nextSentenceTimerRef.current)
+        nextSentenceTimerRef.current = null
+      }
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
         try {
-          sharedAudio.onended = null
-          sharedAudio.onerror = null
-          sharedAudio.pause()
+          window.speechSynthesis.cancel()
         } catch {}
       }
-    }
-  }, [])
+      const isCurrentActiveOwner =
+        typeof window !== "undefined" &&
+        (forceStopShared || (window as any).__activeNoctisInterpreterId === instanceIdRef.current)
+
+      if (isCurrentActiveOwner) {
+        const win = window as any
+        win.__noctisAudioPlaySeq = (win.__noctisAudioPlaySeq || 0) + 1
+        if (win.__activeNoctisInterpreterId === instanceIdRef.current) {
+          win.__activeNoctisInterpreterId = ""
+          win.__activeNoctisPlayerId = ""
+        }
+        win.__noctisVoiceDuckingActive = false
+        const sharedAudio = getSharedNoctisAudio()
+        if (sharedAudio) {
+          try {
+            sharedAudio.onended = null
+            sharedAudio.onerror = null
+            sharedAudio.pause()
+          } catch {}
+        }
+        broadcastNoctisVoiceDuck(false)
+        setPageVideoElementsDucking(false)
+      }
+    },
+    [setPageVideoElementsDucking]
+  )
 
   // Stop this instance if another video card claims exclusive interpreter
   useEffect(() => {
@@ -1744,6 +1758,7 @@ export function NoctisVideoInterpreterPopup({
       stopAudioOutput(true)
       claimExclusiveInterpreter(instanceIdRef.current)
       ;(window as any).__activePlayingNoctisInstanceId = instanceIdRef.current
+      ;(window as any).__activeNoctisPlayerId = playerIdRef.current || ""
       broadcastNoctisVoiceDuck(true)
       if (onMuteOriginalVideoRef.current) {
         onMuteOriginalVideoRef.current(true)
@@ -1763,6 +1778,7 @@ export function NoctisVideoInterpreterPopup({
       stopAudioOutput(true)
       if (typeof window !== "undefined") {
         ;(window as any).__activeNoctisInterpreterId = ""
+        ;(window as any).__activeNoctisPlayerId = ""
       }
       if (restoreFullOriginalVolume) {
         broadcastNoctisVoiceDuck(false)

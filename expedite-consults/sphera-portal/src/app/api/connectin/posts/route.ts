@@ -15,6 +15,16 @@ import {
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS })
+}
+
 export async function GET() {
   try {
     const [{ posts: cloudPosts, interactions, mongoConnected }] = await Promise.all([
@@ -34,10 +44,13 @@ export async function GET() {
         interactions,
         mongoConnected,
       },
-      { headers: { "Cache-Control": "no-store, max-age=0" } }
+      { headers: { "Cache-Control": "no-store, max-age=0", ...CORS_HEADERS } }
     )
   } catch {
-    return NextResponse.json({ error: "Failed to fetch posts" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to fetch posts" },
+      { status: 500, headers: CORS_HEADERS }
+    )
   }
 }
 
@@ -50,10 +63,16 @@ export async function POST(req: NextRequest) {
       const content = String(incomingFullPost.content || "").trim()
       const authorName = String(incomingFullPost?.author?.name || body?.authorName || "").trim()
       if (!content && !incomingFullPost.media && !incomingFullPost.poll && !incomingFullPost.document) {
-        return NextResponse.json({ error: "Post content or media is required" }, { status: 400 })
+        return NextResponse.json(
+          { error: "Post content or media is required" },
+          { status: 400, headers: CORS_HEADERS }
+        )
       }
       if (!authorName) {
-        return NextResponse.json({ error: "Author name is required" }, { status: 400 })
+        return NextResponse.json(
+          { error: "Author name is required" },
+          { status: 400, headers: CORS_HEADERS }
+        )
       }
 
       const persistedResult = await upsertConnectLnSharedPost({
@@ -95,17 +114,20 @@ export async function POST(req: NextRequest) {
         timestampIso: new Date().toISOString(),
       }).catch(() => {})
 
-      return NextResponse.json({
-        success: true,
-        post: persistedResult.post,
-        persisted: persistedResult.ok,
-        mongoConnected: persistedResult.mongoConnected,
-      })
+      return NextResponse.json(
+        {
+          success: true,
+          post: persistedResult.post,
+          persisted: persistedResult.ok,
+          mongoConnected: persistedResult.mongoConnected,
+        },
+        { headers: CORS_HEADERS }
+      )
     }
 
     const {
       authorId,
-      authorName,
+      authorName: rawAuthorName,
       authorEmail,
       authorHeadline,
       authorRole,
@@ -115,11 +137,20 @@ export async function POST(req: NextRequest) {
       feedSubCategory,
       hashtags = [],
       tags = [],
-      mediaUrl,
+      mediaUrl: rawMediaUrl,
+      cardAttachment,
     } = body
 
+    const authorName = String(
+      rawAuthorName || cardAttachment?.senderName || "ConnectLn Keepsake"
+    ).trim()
+    const mediaUrl = rawMediaUrl || cardAttachment?.imageUrl
+
     if (!content || !authorName) {
-      return NextResponse.json({ error: "Content and author name are required" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Content and author name are required" },
+        { status: 400, headers: CORS_HEADERS }
+      )
     }
 
     const normalizedHashtags = Array.isArray(hashtags) && hashtags.length > 0
@@ -131,7 +162,13 @@ export async function POST(req: NextRequest) {
         })
       : []
 
-    const headline = String(authorHeadline || authorRole || "ConnectLn Member")
+    const headline = String(
+      authorHeadline ||
+        authorRole ||
+        (cardAttachment?.occasion
+          ? `${cardAttachment.occasion} · ConnectLn Keepsake Studio`
+          : "ConnectLn Member")
+    )
     const post = connectinDb.createPost({
       authorId: authorId || "USR-MEMBER",
       authorName,
@@ -199,14 +236,20 @@ export async function POST(req: NextRequest) {
       timestampIso: new Date().toISOString(),
     }).catch(() => {})
 
-    return NextResponse.json({
-      success: true,
-      post: persistedResult.post,
-      persisted: persistedResult.ok,
-      mongoConnected: persistedResult.mongoConnected,
-    })
+    return NextResponse.json(
+      {
+        success: true,
+        post: persistedResult.post,
+        persisted: persistedResult.ok,
+        mongoConnected: persistedResult.mongoConnected,
+      },
+      { headers: CORS_HEADERS }
+    )
   } catch {
-    return NextResponse.json({ error: "Failed to create post" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to create post" },
+      { status: 500, headers: CORS_HEADERS }
+    )
   }
 }
 

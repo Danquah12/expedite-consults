@@ -76,17 +76,16 @@ function HarvestedMp4Player({
   const isNoctisTranslationMutingActive = useCallback((incomingLang?: string) => {
     if (typeof window === "undefined") return false
     const w = window as any
-    if (w.__noctisVoiceDuckingActive === true) return true
     const shared = w.__noctisSharedAudioEl
-    if (
+    const sharedPlaying = Boolean(
       shared instanceof HTMLAudioElement &&
-      !shared.paused &&
-      !shared.ended &&
-      shared.src &&
-      !shared.src.startsWith("data:")
-    ) {
-      return true
-    }
+        !shared.paused &&
+        !shared.ended &&
+        shared.src &&
+        !shared.src.startsWith("data:")
+    )
+    if (sharedPlaying) return true
+    if (w.__noctisDubPausedByUser === true) return false
     let storedLang = ""
     try {
       storedLang = (localStorage.getItem("sphera-lang") || "").toLowerCase()

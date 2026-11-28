@@ -159,6 +159,72 @@ export const LIVE_YOUTUBE_RSS_CHANNELS: LiveRssChannelConfig[] = [
     jobCompany: "Regional Clinical & Hospital Systems",
     jobSalary: "$145,000 – $285,000",
   },
+  {
+    channelId: "UCEBb1b_L6zDS3xTUrIALZOw",
+    organization: "MIT OpenCourseWare",
+    authorName: "MIT Engineering & Systems Faculty",
+    authorRole: "Robotics, Power Electronics, AI & Structural Engineering",
+    authorAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=MIT&backgroundColor=7f1d1d",
+    enclaveId: "tech_cybersecurity",
+    category: "Systems & Robotics Engineering",
+    jobCompany: "MIT Lincoln Lab & Enterprise R&D",
+    jobSalary: "$168,000 – $255,000",
+  },
+  {
+    channelId: "UCWo4IA01TXzBeGJJKWHOG9g",
+    organization: "Harvard Business Review",
+    authorName: "HBR Executive Strategy Desk",
+    authorRole: "Enterprise Operations, Capital Strategy & Organizational Leadership",
+    authorAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=HBR&backgroundColor=1e293b",
+    enclaveId: "business_finance",
+    category: "Executive Leadership & Operations",
+    jobCompany: "Global Strategy & Advisory Practice",
+    jobSalary: "$160,000 – $250,000",
+  },
+  {
+    channelId: "UC9-y-6csu5WGm29I7JiwpnA",
+    organization: "Computerphile",
+    authorName: "Prof. Mike Pound & Systems Guild",
+    authorRole: "Cryptography, Kernel Security & Network Architecture",
+    authorAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=CP&backgroundColor=0f172a",
+    enclaveId: "tech_cybersecurity",
+    category: "Cryptography & Network Defense",
+    jobCompany: "Zero-Trust Security & SOC Operations",
+    jobSalary: "$162,000 – $235,000",
+  },
+  {
+    channelId: "UClqhvGmHcvWL9w3R48t9QXQ",
+    organization: "Engineering Explained",
+    authorName: "Jason Fenske · Mechanical Engineer",
+    authorRole: "Powertrain Thermodynamics, EV Inverters & Chassis Dynamics",
+    authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&auto=format&fit=crop&q=80",
+    enclaveId: "automotive_mechanics",
+    category: "Powertrain & EV Engineering",
+    jobCompany: "OEM Powertrain & Fleet Engineering",
+    jobSalary: "$118,000 – $172,000",
+  },
+  {
+    channelId: "UC_aJf73s8ca6394A01eJ74w",
+    organization: "Perkins Builder Brothers",
+    authorName: "Erik & Jaime Perkins · Master Builders",
+    authorRole: "Custom Residential Framing, Finish Carpentry & Site Management",
+    authorAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80",
+    enclaveId: "trades_construction",
+    category: "Custom Framing & Finish Carpentry",
+    jobCompany: "Perkins Custom Builders & Guild",
+    jobSalary: "$108,000 – $162,000",
+  },
+  {
+    channelId: "UC9RM-iSvTu1uPJb8X5yp3EQ",
+    organization: "Wendover Productions",
+    authorName: "Sam Denby · Logistics & Aviation Desk",
+    authorRole: "Aviation Operations, Maritime Freight & Energy Infrastructure",
+    authorAvatar: "https://api.dicebear.com/7.x/initials/svg?seed=WP&backgroundColor=0369a1",
+    enclaveId: "aviation_aerospace_maritime",
+    category: "Aviation & Global Supply Chain",
+    jobCompany: "Global Freight & Aerospace Logistics",
+    jobSalary: "$135,000 – $210,000",
+  },
 ]
 
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000
@@ -339,7 +405,7 @@ async function fetchSingleChannelRss(cfg: LiveRssChannelConfig): Promise<Harvest
       }
     }
 
-    return [...fullVideos, ...shortVideos].slice(0, 4)
+    return [...fullVideos, ...shortVideos].slice(0, 6)
   } catch {
     return []
   } finally {

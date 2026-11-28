@@ -31,19 +31,31 @@ export const CONNECTLN_VIDEO_PLAY_EVENT = "connectln:exclusive-video-play"
 export function notifyExclusiveVideoPlay(activePlayerId: string) {
   if (typeof window === "undefined") return
   const win = window as any
+  const previousPlayerId = win.__connectlnActiveVideoPlayerId
   win.__connectlnActiveVideoPlayerId = activePlayerId
-  win.__noctisAudioPlaySeq = (win.__noctisAudioPlaySeq || 0) + 1
-  if (win.__noctisSharedAudioEl instanceof HTMLAudioElement) {
-    try {
-      win.__noctisSharedAudioEl.onended = null
-      win.__noctisSharedAudioEl.onerror = null
-      win.__noctisSharedAudioEl.pause()
-    } catch {}
-  }
-  if ("speechSynthesis" in window) {
-    try {
-      window.speechSynthesis.cancel()
-    } catch {}
+  const shouldStopNoctisAudio =
+    activePlayerId === CONNECTLN_STOP_ALL_PLAYER_ID ||
+    activePlayerId === "__connectln_call_silence__" ||
+    (win.__activeNoctisPlayerId && win.__activeNoctisPlayerId !== activePlayerId) ||
+    (!win.__activeNoctisPlayerId && previousPlayerId && previousPlayerId !== activePlayerId)
+
+  if (shouldStopNoctisAudio) {
+    win.__noctisAudioPlaySeq = (win.__noctisAudioPlaySeq || 0) + 1
+    win.__noctisVoiceDuckingActive = false
+    win.__activeNoctisInterpreterId = ""
+    win.__activeNoctisPlayerId = ""
+    if (win.__noctisSharedAudioEl instanceof HTMLAudioElement) {
+      try {
+        win.__noctisSharedAudioEl.onended = null
+        win.__noctisSharedAudioEl.onerror = null
+        win.__noctisSharedAudioEl.pause()
+      } catch {}
+    }
+    if ("speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel()
+      } catch {}
+    }
   }
   window.dispatchEvent(
     new CustomEvent(CONNECTLN_VIDEO_PLAY_EVENT, {
@@ -191,39 +203,39 @@ function getProviderMeta(provider: LearnVideoSourceProvider): {
   switch (provider) {
     case "vimeo":
       return {
-        badge: "Vimeo · In ConnectLn",
-        pillClass: "bg-sky-500/20 text-sky-200 border-sky-400/30",
+        badge: "ConnectLn Studio · Vimeo Stream",
+        pillClass: "bg-sky-500/20 text-sky-200 border-sky-400/40",
       }
     case "archive_org":
       return {
-        badge: "Internet Archive · Open",
-        pillClass: "bg-emerald-500/20 text-emerald-200 border-emerald-400/30",
+        badge: "ConnectLn Studio · Open Archive",
+        pillClass: "bg-emerald-500/20 text-emerald-200 border-emerald-400/40",
       }
     case "ted":
       return {
-        badge: "TED Talks · In ConnectLn",
-        pillClass: "bg-rose-500/20 text-rose-200 border-rose-400/30",
+        badge: "ConnectLn Studio · TED Briefing",
+        pillClass: "bg-rose-500/20 text-rose-200 border-rose-400/40",
       }
     case "peertube":
       return {
-        badge: "PeerTube · Federated",
-        pillClass: "bg-orange-500/20 text-orange-200 border-orange-400/30",
+        badge: "ConnectLn Studio · Open Craft",
+        pillClass: "bg-amber-500/20 text-amber-200 border-amber-400/40",
       }
     case "dailymotion":
       return {
-        badge: "Dailymotion · In ConnectLn",
-        pillClass: "bg-indigo-500/20 text-indigo-200 border-indigo-400/30",
+        badge: "ConnectLn Studio · Creator Stream",
+        pillClass: "bg-indigo-500/20 text-indigo-200 border-indigo-400/40",
       }
     case "connectln_native":
       return {
-        badge: "ConnectLn Original",
-        pillClass: "bg-amber-500/20 text-amber-200 border-amber-400/30",
+        badge: "ConnectLn Studio",
+        pillClass: "bg-amber-500/20 text-amber-200 border-amber-400/40",
       }
     case "youtube":
     default:
       return {
-        badge: "ConnectLn Studio",
-        pillClass: "bg-red-500/20 text-red-200 border-red-400/30",
+        badge: "ConnectLn Studio · Creator Stream",
+        pillClass: "bg-sky-500/20 text-sky-200 border-sky-400/40",
       }
   }
 }
@@ -554,24 +566,10 @@ export function ConnectLnStudioPlayer({
           shared.src &&
           !shared.src.startsWith("data:")
       )
+      if (sharedPlaying) return true
       // User pressed "Pause dub": the ORIGINAL speaker is the only voice, so never keep it muted
-      if (w.__noctisDubPausedByUser === true && !sharedPlaying && w.__noctisVoiceDuckingActive !== true) {
+      if (w.__noctisDubPausedByUser === true) {
         return false
-      }
-    }
-    if (isVoiceDuckingRef.current || isInterpretingNeededRef.current) return true
-    if (typeof window !== "undefined") {
-      const w = window as any
-      if (w.__noctisVoiceDuckingActive === true) return true
-      const shared = w.__noctisSharedAudioEl
-      if (
-        shared instanceof HTMLAudioElement &&
-        !shared.paused &&
-        !shared.ended &&
-        shared.src &&
-        !shared.src.startsWith("data:")
-      ) {
-        return true
       }
       const activeTarget = (
         w.__noctisPreferredAudioLang ||
@@ -582,6 +580,7 @@ export function ConnectLnStudioPlayer({
         .toLowerCase()
       if (activeTarget && activeTarget !== sourceLangRef.current) return true
     }
+    if (isVoiceDuckingRef.current || isInterpretingNeededRef.current) return true
     return false
   }, [])
 
@@ -633,10 +632,18 @@ export function ConnectLnStudioPlayer({
             }
           }, 1000)
           duckReinforceTimersRef.current.push(t1, t2, t3)
-        } else if (!initialMuted && hasSessionAudioActivation()) {
+        } else if (!initialMuted) {
           sendYtCommand("unMute")
           sendYtCommand("setVolume", [100])
           setIsMutedState(false)
+          const u1 = setTimeout(() => {
+            if (!shouldMuteForTranslation() && !initialMuted) {
+              sendYtCommand("unMute")
+              sendYtCommand("setVolume", [100])
+              setIsMutedState(false)
+            }
+          }, 220)
+          duckReinforceTimersRef.current.push(u1)
         }
       }
     },
@@ -662,12 +669,15 @@ export function ConnectLnStudioPlayer({
       )
         .toString()
         .toLowerCase()
-      const differsFromSource = Boolean(activeTarget && activeTarget !== sourceLangRef.current)
-      const globalDuck = w.__noctisVoiceDuckingActive === true
+      const differsFromSource = Boolean(
+        activeTarget &&
+          activeTarget !== sourceLangRef.current &&
+          w.__noctisDubPausedByUser !== true
+      )
       const shouldMute = Boolean(
         forcedDuck ||
           sharedPlaying ||
-          (forcedDuck === undefined ? differsFromSource || globalDuck : globalDuck)
+          (forcedDuck === undefined ? differsFromSource : false)
       )
       isVoiceDuckingRef.current = shouldMute
       if (!shouldMute) {
@@ -688,17 +698,55 @@ export function ConnectLnStudioPlayer({
       syncMuteOnLangOrDuck(Boolean(custom.detail?.duck))
     }
 
+    const handleUserGestureUnmute = () => {
+      if (typeof window !== "undefined") {
+        ;(window as any).__connectlnAudioUnlocked = true
+      }
+      if (!isPlayingStateRef.current || initialMuted) return
+      if (shouldMuteForTranslation()) return
+      isVoiceDuckingRef.current = false
+      isInterpretingNeededRef.current = false
+      if (isHtml5Direct && html5VideoRef.current) {
+        if (html5VideoRef.current.muted || html5VideoRef.current.volume === 0) {
+          html5VideoRef.current.muted = false
+          html5VideoRef.current.volume = 1
+          setIsMutedState(false)
+        }
+      } else if (effectiveProvider === "youtube") {
+        sendYtCommand("unMute")
+        sendYtCommand("setVolume", [100])
+        setIsMutedState(false)
+      } else if (effectiveProvider === "vimeo") {
+        const extWin = externalIframeRef.current?.contentWindow
+        if (extWin) {
+          try {
+            extWin.postMessage(JSON.stringify({ method: "setMuted", value: false }), "*")
+            extWin.postMessage(JSON.stringify({ method: "setVolume", value: 1 }), "*")
+          } catch {}
+        }
+        setIsMutedState(false)
+      }
+    }
+
     window.addEventListener("sphera-lang-changed", handleLangEvt)
     window.addEventListener("connectln:noctis-command-language", handleLangEvt)
     window.addEventListener("connectln:noctis-voice-duck", handleDuckEvt)
+    window.addEventListener("pointerdown", handleUserGestureUnmute, { passive: true })
+    window.addEventListener("keydown", handleUserGestureUnmute, { passive: true })
+    window.addEventListener("touchstart", handleUserGestureUnmute, { passive: true })
+    window.addEventListener("click", handleUserGestureUnmute, { passive: true })
     return () => {
       duckReinforceTimersRef.current.forEach((t) => clearTimeout(t))
       duckReinforceTimersRef.current = []
       window.removeEventListener("sphera-lang-changed", handleLangEvt)
       window.removeEventListener("connectln:noctis-command-language", handleLangEvt)
       window.removeEventListener("connectln:noctis-voice-duck", handleDuckEvt)
+      window.removeEventListener("pointerdown", handleUserGestureUnmute)
+      window.removeEventListener("keydown", handleUserGestureUnmute)
+      window.removeEventListener("touchstart", handleUserGestureUnmute)
+      window.removeEventListener("click", handleUserGestureUnmute)
     }
-  }, [language, isInterpretingNeeded, applyVoiceDuckingToPlayer])
+  }, [language, isInterpretingNeeded, applyVoiceDuckingToPlayer, effectiveProvider, initialMuted, isHtml5Direct, sendYtCommand, shouldMuteForTranslation])
 
   // Single-video mutual exclusion + incoming ConnectLn call pause across all providers
   useEffect(() => {
@@ -740,9 +788,17 @@ export function ConnectLnStudioPlayer({
       } else if (wasPlayingBeforeCallRef.current) {
         wasPlayingBeforeCallRef.current = false
         setIsStoppedByOther(false)
+        const muteForTrans = shouldMuteForTranslation()
         if (isHtml5Direct && html5VideoRef.current) {
+          html5VideoRef.current.muted = initialMuted || muteForTrans
+          html5VideoRef.current.volume = initialMuted || muteForTrans ? 0 : 1
           html5VideoRef.current.play().catch(() => {})
         } else if (effectiveProvider === "youtube") {
+          if (!initialMuted && !muteForTrans) {
+            sendYtCommand("unMute")
+            sendYtCommand("setVolume", [100])
+            setIsMutedState(false)
+          }
           sendYtCommand("playVideo")
         }
         setIsPlaying(true)
@@ -755,7 +811,7 @@ export function ConnectLnStudioPlayer({
       window.removeEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
       window.removeEventListener("connectln:call-silence-change", handleCallSilenceChange)
     }
-  }, [effectivePlayerId, effectiveProvider, isHtml5Direct, sendYtCommand])
+  }, [effectivePlayerId, effectiveProvider, initialMuted, isHtml5Direct, sendYtCommand, shouldMuteForTranslation])
 
   // Auto-pause and unmount inline player when scrolled out of viewport so top videos never play over bottom ones
   useEffect(() => {
@@ -810,7 +866,7 @@ export function ConnectLnStudioPlayer({
     setShowMoreVideosOverlay(false)
     dismissedPauseOverlayRef.current = false
     lastInterceptedYtIdRef.current = ""
-    setIsMutedState(initialMuted || shouldMuteForTranslation() || !hasSessionAudioActivation())
+    setIsMutedState(initialMuted || shouldMuteForTranslation())
     if (effectiveAutoPlay) {
       notifyExclusiveVideoPlay(effectivePlayerId)
     }
@@ -871,6 +927,15 @@ export function ConnectLnStudioPlayer({
             sendYtCommand("setVolume", [0])
             sendYtCommand("mute")
             setIsMutedState(true)
+          } else if (
+            !translationMuting &&
+            !initialMuted &&
+            (data.info.muted === true ||
+              (typeof data.info.volume === "number" && data.info.volume === 0))
+          ) {
+            sendYtCommand("unMute")
+            sendYtCommand("setVolume", [100])
+            setIsMutedState(false)
           } else if (typeof data.info.muted === "boolean") {
             setIsMutedState(translationMuting ? true : data.info.muted)
           }
@@ -895,6 +960,10 @@ export function ConnectLnStudioPlayer({
                 sendYtCommand("setVolume", [0])
                 sendYtCommand("mute")
                 setIsMutedState(true)
+              } else if (!initialMuted) {
+                sendYtCommand("unMute")
+                sendYtCommand("setVolume", [100])
+                setIsMutedState(false)
               }
             } else if (pState === 2) {
               setIsPlaying(false)
@@ -956,20 +1025,28 @@ export function ConnectLnStudioPlayer({
     const targetSec = Math.max(0, Math.floor(seekRequest.seconds))
     notifyExclusiveVideoPlay(effectivePlayerId)
     setIsStoppedByOther(false)
+    const muteForTrans = shouldMuteForTranslation()
     if (isHtml5Direct && html5VideoRef.current) {
       try {
+        html5VideoRef.current.muted = initialMuted || muteForTrans
+        html5VideoRef.current.volume = initialMuted || muteForTrans ? 0 : 1
         html5VideoRef.current.currentTime = targetSec
         html5VideoRef.current.play().catch(() => {})
       } catch {
         // ignore seek error before metadata load
       }
     } else if (effectiveProvider === "youtube") {
+      if (!initialMuted && !muteForTrans) {
+        sendYtCommand("unMute")
+        sendYtCommand("setVolume", [100])
+        setIsMutedState(false)
+      }
       sendYtCommand("seekTo", [targetSec, true])
       sendYtCommand("playVideo")
     }
     setCurrentTime(targetSec)
     setIsPlaying(true)
-  }, [seekRequest?.nonce, seekRequest?.seconds, effectivePlayerId, effectiveProvider, isHtml5Direct, sendYtCommand])
+  }, [seekRequest?.nonce, seekRequest?.seconds, effectivePlayerId, effectiveProvider, initialMuted, isHtml5Direct, sendYtCommand, shouldMuteForTranslation])
 
   // Computed official embed URL for iframe-based non-YouTube providers
   const resolvedExternalEmbedSrc = useMemo(() => {
@@ -1004,7 +1081,7 @@ export function ConnectLnStudioPlayer({
 
   const compliantYouTubeSrc = useMemo(() => {
     if (!activeYoutubeId) return ""
-    const muteFlag = initialMuted || shouldMuteForTranslation() ? 1 : hasSessionAudioActivation() ? 0 : 1
+    const muteFlag = initialMuted || shouldMuteForTranslation() ? 1 : 0
     const params = new URLSearchParams({
       autoplay: effectiveAutoPlay ? "1" : "0",
       mute: String(muteFlag),
@@ -1031,7 +1108,11 @@ export function ConnectLnStudioPlayer({
     dismissedPauseOverlayRef.current = false
     setPlaybackPhase("playing")
     setIsPlaying(true)
+    const muteForTrans = shouldMuteForTranslation()
     if (isHtml5Direct && html5VideoRef.current) {
+      html5VideoRef.current.muted = initialMuted || muteForTrans
+      html5VideoRef.current.volume = initialMuted || muteForTrans ? 0 : 1
+      setIsMutedState(initialMuted || muteForTrans)
       if (playbackPhase === "ended") {
         try {
           html5VideoRef.current.currentTime = 0
@@ -1042,10 +1123,19 @@ export function ConnectLnStudioPlayer({
       if (playbackPhase === "ended") {
         sendYtCommand("seekTo", [0, true])
       }
+      if (initialMuted || muteForTrans) {
+        sendYtCommand("setVolume", [0])
+        sendYtCommand("mute")
+        setIsMutedState(true)
+      } else {
+        sendYtCommand("unMute")
+        sendYtCommand("setVolume", [100])
+        setIsMutedState(false)
+      }
       sendYtCommand("playVideo")
     }
     revealControlsTemporarily()
-  }, [effectivePlayerId, effectiveProvider, isHtml5Direct, playbackPhase, revealControlsTemporarily, sendYtCommand])
+  }, [effectivePlayerId, effectiveProvider, initialMuted, isHtml5Direct, playbackPhase, revealControlsTemporarily, sendYtCommand, shouldMuteForTranslation])
 
   const handleCanvasClick = useCallback(() => {
     if (isPlaying) {
@@ -1189,6 +1279,10 @@ export function ConnectLnStudioPlayer({
                 e.currentTarget.muted = true
                 e.currentTarget.volume = 0
                 setIsMutedState(true)
+              } else if (!initialMuted) {
+                e.currentTarget.muted = false
+                e.currentTarget.volume = 1
+                setIsMutedState(false)
               }
               setIsPlaying(true)
               setPlaybackPhase("playing")
@@ -1251,6 +1345,17 @@ export function ConnectLnStudioPlayer({
                 sendYtCommand("setVolume", [0])
                 sendYtCommand("mute")
                 setIsMutedState(true)
+              } else if (!initialMuted) {
+                sendYtCommand("unMute")
+                sendYtCommand("setVolume", [100])
+                setIsMutedState(false)
+                setTimeout(() => {
+                  if (!shouldMuteForTranslation() && !initialMuted) {
+                    sendYtCommand("unMute")
+                    sendYtCommand("setVolume", [100])
+                    setIsMutedState(false)
+                  }
+                }, 350)
               }
             }}
             className="h-full w-full border-0 pointer-events-none select-none"
@@ -1315,6 +1420,9 @@ export function ConnectLnStudioPlayer({
                       <span>Back</span>
                     </button>
                   )}
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#0A66C2]/90 text-white px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shrink-0 shadow-sm">
+                    ConnectLn Studio
+                  </span>
                   <span className="text-[11px] font-semibold text-white/95 line-clamp-1 drop-shadow">
                     {activeTitle}
                   </span>
@@ -1618,6 +1726,7 @@ export function ConnectLnStudioPlayer({
       {/* DOCKED NOCTIS LIVE VIDEO LANGUAGE INTERPRETER & VOICE DUBBING BAR (Cleanly Below Video Frame) */}
       {!isStoppedByOther && (
         <NoctisVideoInterpreterPopup
+          playerId={effectivePlayerId}
           dockedBelow={true}
           youtubeId={activeYoutubeId || undefined}
           title={activeTitle}

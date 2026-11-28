@@ -641,7 +641,7 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
 
   const expandedProfessionVideoPosts: Post[] = scopedProfessionTalks
     .filter(talk => talk.youtubeId && !usedVideoIds.has(talk.youtubeId))
-    .slice(0, 18)
+    .slice(0, 48)
     .map((talk, idx) => {
       usedVideoIds.add(talk.youtubeId)
       const talkEnclave =

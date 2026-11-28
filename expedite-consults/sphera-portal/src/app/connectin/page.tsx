@@ -786,7 +786,7 @@ export default function ConnectLnPage() {
       setHarvestedHomeItems(homeItems)
       if (homeItems.length === 0) return
 
-      const candidates = homeItems.slice(0, 48)
+      const candidates = homeItems.slice(0, 120)
       const freshById = new Map<string, Post>()
       for (const item of candidates) {
         const built = buildFeedPostFromHarvestedItem(item)
@@ -825,6 +825,9 @@ export default function ConnectLnPage() {
       })
     }
 
+    // Immediately inject all local & foundational professional videos into the Home Feed on mount
+    injectHarvestedHomeItemsIntoFeed(loadStoredHarvestedItems())
+
     const LAST_24H_SYNC_KEY = "connectln_last_24h_sync_ms"
     const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000
 
@@ -849,7 +852,7 @@ export default function ConnectLnPage() {
           window.localStorage.setItem(LAST_24H_SYNC_KEY, String(nowMs))
         } catch {}
         const timeLabel = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-        setLastFeedVideoSyncNote(`24h schedule active (${timeLabel}) · All videos preserved`)
+        setLastFeedVideoSyncNote(`Live synced (${timeLabel}) · ${merged.length} professional videos active`)
       } catch {
         // ignore transient network errors
       }
@@ -874,9 +877,7 @@ export default function ConnectLnPage() {
       }
     }
 
-    const lastStoredSync = Number(window.localStorage.getItem(LAST_24H_SYNC_KEY) || "0")
-    const dueFor24hForce = Date.now() - lastStoredSync >= TWENTY_FOUR_HOURS_MS
-    syncHarvestedMediaTick(dueFor24hForce)
+    syncHarvestedMediaTick(true)
 
     window.addEventListener(HARVESTER_EVENT_NAME, handleHarvesterUpdatedEvent)
     window.addEventListener("storage", handleCrossTabStorage)
@@ -1377,59 +1378,190 @@ export default function ConnectLnPage() {
     return () => { isMounted = false }
   }, [router])
 
-  // Direct Deep-Link Handler for Shared Feed Posts (?postId=...)
+  // Direct Deep-Link Handler for Shared Feed Posts (?postId=...) & Embedded Power Apps Post Bridge
   useEffect(() => {
     if (typeof window === "undefined") return
     const urlParams = new URLSearchParams(window.location.search)
     const sharedPostId = (urlParams.get("postId") || "").trim()
-    const sharedPostTitle = (urlParams.get("postTitle") || "").trim()
+    const sharedPostTitle = (urlParams.get("postTitle") || urlParams.get("compose") || "").trim()
     const sharedPostAuthor = (urlParams.get("postAuthor") || "").trim()
     const sharedVideoId = (urlParams.get("video") || "").trim()
-    if (!sharedPostId) return
+    const sharedImageUrl = (urlParams.get("postImage") || "").trim()
 
-    setActiveTab("home")
-    setPosts((prev) => {
-      const existing = prev.find((p) => p.id === sharedPostId)
-      if (existing) {
-        return [existing, ...prev.filter((p) => p.id !== sharedPostId)]
-      }
-      if (!sharedPostTitle) return prev
-      const constructedPost: Post = {
-        id: sharedPostId,
-        author: {
-          name: sharedPostAuthor || "ConnectLn Member",
-          headline: "Shared via ConnectLn Direct Link",
-          avatar: generatePersonalSignatureAvatar(sharedPostAuthor || "ConnectLn Member"),
-          isVerified: true,
-        },
-        timestamp: "Shared just now",
-        content: sharedPostTitle,
-        likes: 42,
-        commentsCount: 8,
-        reposts: 12,
-        userReaction: null,
-        isSaved: false,
-        comments: [],
-        media: sharedVideoId
-          ? {
-              type: "video",
-              url: `https://www.youtube.com/watch?v=${sharedVideoId}`,
-              youtubeId: sharedVideoId,
-              title: sharedPostTitle,
+    if (sharedPostId || sharedPostTitle) {
+      const effectivePostId = sharedPostId || `user_post_keepsake_${Date.now()}`
+      setActiveTab("home")
+      setPosts((prev) => {
+        const existing = prev.find((p) => p.id === effectivePostId)
+        if (existing) {
+          return [existing, ...prev.filter((p) => p.id !== effectivePostId)]
+        }
+        if (!sharedPostTitle) return prev
+        const constructedPost: Post = {
+          id: effectivePostId,
+          isUserCreated: true,
+          author: {
+            name: sharedPostAuthor || "ConnectLn Keepsake",
+            headline: "Shared via ConnectLn Keepsake Studio",
+            avatar: generatePersonalSignatureAvatar(sharedPostAuthor || "ConnectLn Keepsake"),
+            isVerified: true,
+            connectionDegree: "1st",
+          },
+          timestamp: "Just now · 🌐",
+          visibility: "Public",
+          content: sharedPostTitle,
+          hashtags: ["ConnectLnKeepsake", "Celebration"],
+          postType: "standard",
+          likes: 1,
+          commentsCount: 0,
+          reposts: 0,
+          stats: {
+            likesCount: 1,
+            commentsCount: 0,
+            repostsCount: 0,
+            reactionsBreakdown: {
+              like: 1,
+              celebrate: 0,
+              support: 0,
+              love: 0,
+              insightful: 0,
+              funny: 0,
+            },
+          },
+          userReaction: null,
+          isSaved: false,
+          comments: [],
+          media: sharedVideoId
+            ? {
+                type: "video",
+                url: `https://www.youtube.com/watch?v=${sharedVideoId}`,
+                youtubeId: sharedVideoId,
+                title: sharedPostTitle,
+              }
+            : sharedImageUrl
+            ? {
+                type: "image",
+                url: sharedImageUrl,
+                title: sharedPostTitle.split("\n")[0] || "ConnectLn Keepsake Card",
+              }
+            : undefined,
+        }
+        const updated = [constructedPost, ...prev]
+        saveStoredPosts(updated)
+        return updated
+      })
+
+      setTimeout(() => {
+        const el = document.getElementById(`connectln-post-${effectivePostId}`)
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" })
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" })
+        }
+      }, 350)
+    }
+
+    const handlePowerAppMessage = (event: MessageEvent) => {
+      const data = event?.data
+      if (!data || typeof data !== "object") return
+      if (
+        data.type === "CONNECTLN_KEEPSAKE_CARD_PUBLISHED" ||
+        data.type === "CONNECTLN_OPEN_FEED"
+      ) {
+        const card = data.card || {}
+        const incomingPost = data.post
+        const postId = String(
+          incomingPost?.id || card?.id || data.postId || `user_post_keepsake_${Date.now()}`
+        ).trim()
+        const caption = String(
+          incomingPost?.content || card?.caption || card?.message || ""
+        ).trim()
+        const sender = String(
+          incomingPost?.author?.name || card?.senderName || userData?.name || "ConnectLn Keepsake"
+        ).trim()
+        const imageUrl = String(
+          incomingPost?.media?.url || card?.imageUrl || ""
+        ).trim()
+
+        if (caption || imageUrl) {
+          setPosts((prev) => {
+            const existing = prev.find((p) => p.id === postId)
+            if (existing) {
+              return [existing, ...prev.filter((p) => p.id !== postId)]
             }
-          : undefined,
-      }
-      return [constructedPost, ...prev]
-    })
+            const newCardPost: Post = {
+              id: postId,
+              isUserCreated: true,
+              feedCategory: "for_you",
+              feedSubCategory: "All",
+              author: {
+                id: userData?.id || "USR-KEEPSAKE",
+                name: sender,
+                headline: card?.occasion
+                  ? `${card.occasion} · ConnectLn Keepsake Studio`
+                  : "ConnectLn Keepsake Studio",
+                avatar:
+                  userData?.avatar ||
+                  generatePersonalSignatureAvatar(sender),
+                isVerified: true,
+                connectionDegree: "You",
+              },
+              timestamp: "Just now · 🌐",
+              visibility: "Public",
+              content: caption || `${card?.title || "Keepsake Card"}`,
+              hashtags: ["ConnectLnKeepsake", "Celebration"],
+              postType: "standard",
+              media: imageUrl
+                ? {
+                    type: "image",
+                    url: imageUrl,
+                    title: String(card?.title || "ConnectLn Keepsake Card"),
+                  }
+                : undefined,
+              stats: {
+                likesCount: 1,
+                commentsCount: 0,
+                repostsCount: 0,
+                reactionsBreakdown: {
+                  like: 0,
+                  celebrate: 1,
+                  support: 0,
+                  love: 0,
+                  insightful: 0,
+                  funny: 0,
+                },
+              },
+              userReaction: "celebrate",
+              comments: [],
+            }
+            const next = [newCardPost, ...prev]
+            saveStoredPosts(next)
+            return next
+          })
+        }
 
-    const timer = setTimeout(() => {
-      const el = document.getElementById(`connectln-post-${sharedPostId}`)
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" })
+        if (data.type === "CONNECTLN_OPEN_FEED") {
+          setActiveTab("home")
+          setActiveFeedCategory("for_you")
+          setActiveFeedSubCategory("All")
+          setFeedTypeFilter("all")
+          setSelectedTagFilter(null)
+          setSearchQuery("")
+          setTimeout(() => {
+            const el = document.getElementById(`connectln-post-${postId}`)
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "center" })
+            } else {
+              window.scrollTo({ top: 0, behavior: "smooth" })
+            }
+          }, 150)
+        }
       }
-    }, 350)
-    return () => clearTimeout(timer)
-  }, [])
+    }
+
+    window.addEventListener("message", handlePowerAppMessage)
+    return () => window.removeEventListener("message", handlePowerAppMessage)
+  }, [userData?.avatar, userData?.id, userData?.name])
 
   // Hard guard: Normal users must never land on the adminiam tab
   const [focusedLearnLessonId, setFocusedLearnLessonId] = useState<string | null>(null)
@@ -2797,12 +2929,12 @@ export default function ConnectLnPage() {
       const isLiveSyncedEligible = Boolean(
         isLiveHarvestedPost &&
           isPlayableVideoPost &&
-          (isAllSelected || matchesSelectedEnclave || !hasEnclaveLiveSyncedVideo)
+          (isAllSelected || activeFeedCategory === 'for_you' || matchesSelectedEnclave || !hasEnclaveLiveSyncedVideo)
       )
       const isProfessionCatalogVideo = Boolean(
         post.isProfessionTiered &&
           isPlayableVideoPost &&
-          (isAllSelected || isActiveProfTiered || matchesSelectedEnclave)
+          (isAllSelected || activeFeedCategory === 'for_you' || isActiveProfTiered || matchesSelectedEnclave)
       )
       if (!isAllSelected && activeFeedCategory === 'for_you' && !searchQuery && !selectedTagFilter) {
         if (!isUserOwnPost && !isFollowedAuthor && !isActiveProfTiered && !isProfessionCatalogVideo && !isLiveSyncedEligible) {
@@ -2955,7 +3087,7 @@ export default function ConnectLnPage() {
   const remainingStreamPosts = communityFeedPosts.slice(3)
 
   useEffect(() => {
-    setVisibleStreamCount(12)
+    setVisibleStreamCount(24)
   }, [activeFeedCategory, activeFeedSubCategory, feedTypeFilter, selectedTagFilter, searchQuery, selectedEnclaves])
 
   useEffect(() => {
@@ -2965,7 +3097,7 @@ export default function ConnectLnPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          setVisibleStreamCount((prev) => Math.min(remainingStreamPosts.length, prev + 12))
+          setVisibleStreamCount((prev) => Math.min(remainingStreamPosts.length, prev + 16))
         }
       },
       { rootMargin: '400px' }

@@ -43,6 +43,7 @@ import { resolveUserProfilePicture, isKwesiAccount } from "@/lib/connectin-stora
 import { buildSharePreviewUrl } from "@/lib/connectin-share"
 import { VideoShareBanner } from "./VideoShareBanner"
 import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
+import { ConnectLnProfessionAnimatedVideo } from "./ConnectLnProfessionAnimatedVideo"
 import { stageConnectLnVideo } from "@/lib/connectln-video-stage"
 import {
   useAutoplayVideosPref,
@@ -168,6 +169,7 @@ export function ConnectInVideoWheel({
   const autoplayPrefRef = useRef(autoplayPref)
   autoplayPrefRef.current = autoplayPref
   const [visibleWheelCardsLimit, setVisibleWheelCardsLimit] = useState(12)
+  const [showAnimatedProfessionStudio, setShowAnimatedProfessionStudio] = useState(true)
   const heroUserManuallyStoppedRef = useRef<boolean>(false)
   const wheelHeroPlayerIdRef = useRef<string>(`wheel-hero-${Math.random().toString(36).slice(2, 10)}`)
   const wheelModalPlayerIdRef = useRef<string>(`wheel-modal-${Math.random().toString(36).slice(2, 10)}`)
@@ -552,8 +554,11 @@ export function ConnectInVideoWheel({
       <div className="flex flex-col gap-3 border-b border-[#35302B] pb-3.5">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#12100E] text-amber-300 text-[11px] font-black border border-amber-500/40">C · CONNECTLN STUDIO · 
-              🎡
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#12100E] text-amber-300 text-[11px] font-black border border-amber-500/40">
+              C · CONNECTLN STUDIO · 🎡
+            </span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500 text-zinc-950 text-[10px] font-black uppercase tracking-wider shadow-xs">
+              ConnectLn Studio · Curated Stream
             </span>
             <h2 className="font-bold text-sm sm:text-base text-white tracking-wide flex items-center gap-2 flex-wrap">
               <span>{title}</span>
@@ -570,15 +575,30 @@ export function ConnectInVideoWheel({
         {/* Carousel & Action Controls */}
         <div className="flex items-center justify-between gap-2 w-full pt-1 flex-wrap">
           {/* Submit New Video to Wheel Button */}
-          <button
-            type="button"
-            onClick={() => setIsSubmitModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
-            title="Submit a masterclass video for any profession"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>Add Video to Wheel</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setShowAnimatedProfessionStudio(prev => !prev)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-extrabold text-xs shadow-md transition-all cursor-pointer border ${
+                showAnimatedProfessionStudio
+                  ? "bg-[#A64532] text-white border-amber-400/60"
+                  : "bg-white/10 hover:bg-white/15 text-amber-300 border-amber-500/40"
+              }`}
+              title="Toggle ConnectLn Original 60fps Animated Workflow Videos for all professions"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{showAnimatedProfessionStudio ? "🎬 Animated Profession Videos: ON" : "🎬 Watch Animated Profession Videos"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsSubmitModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
+              title="Submit a masterclass video for any profession"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Add Video to Wheel</span>
+            </button>
+          </div>
 
           {onOpenVideoGuide && (
             <button
@@ -760,6 +780,29 @@ export function ConnectInVideoWheel({
         </span>
       </div>
 
+      {/* ConnectLn Original 60fps Animated Workflow Video Studio for All 22 Enclaves & 300+ Professions */}
+      {showAnimatedProfessionStudio && (
+        <div className="mb-3.5">
+          <ConnectLnProfessionAnimatedVideo
+            enclaveId={
+              selectedFilter !== "all" && selectedFilter !== "my_enclave" && selectedFilter !== "my_profession"
+                ? selectedFilter
+                : assignedUserVideo?.enclaveId || effectiveEnclaveId
+            }
+            professionId={
+              selectedProfessionId !== "all"
+                ? selectedProfessionId
+                : assignedUserVideo?.professionId || resolvedUserProf?.id
+            }
+            professionTitle={
+              selectedProfessionId !== "all"
+                ? availableProfessions.find(p => p.id === selectedProfessionId)?.title
+                : resolvedUserProf?.title || shortProfLabel
+            }
+          />
+        </div>
+      )}
+
       {/* Featured Inline 16:9 Profession Video Stage — Directly Shows the Video for the Logged-In User's Profession */}
       {assignedUserVideo && (
         <div ref={heroStageRef} className="mb-3 rounded-2xl border border-amber-500/50 bg-[#141210] overflow-hidden shadow-lg">
@@ -777,6 +820,9 @@ export function ConnectInVideoWheel({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 text-zinc-950 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                    ConnectLn Studio · Curated Stream
+                  </span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-400/40 px-2 py-0.5 text-[10px] font-extrabold text-amber-300">
                     🎯 Showing Video for Your Logged-In Profession: {shortProfLabel}
                   </span>
@@ -1002,7 +1048,7 @@ export function ConnectInVideoWheel({
                   <div className="absolute inset-0 bg-linear-to-t from-[#1C1916] via-[#1C1916]/40 to-transparent" />
 
                   {/* Signature Left Circular Profile Picture with ConnectLn Logo Pill */}
-                  <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 rounded-full bg-[#171513]/90 pr-2.5 p-0.5 border border-[#A64532]/70 backdrop-blur-xs shadow-md">
+                  <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 rounded-full bg-[#171513]/95 pr-2.5 p-0.5 border border-[#A64532]/80 backdrop-blur-xs shadow-md">
                     <img
                       src={userProfilePic}
                       alt={user?.name || "Kwesi Asiedu"}
@@ -1016,8 +1062,8 @@ export function ConnectInVideoWheel({
                       alt="ConnectLn"
                       className="h-4 w-4 rounded-xs object-contain"
                     />
-                    <span className="text-[9px] font-extrabold tracking-tight text-[#F5F0EB]">
-                      ConnectLn
+                    <span className="text-[9px] font-extrabold tracking-tight text-amber-300">
+                      ConnectLn Studio
                     </span>
                   </div>
 
@@ -1768,21 +1814,21 @@ export function ConnectInVideoWheel({
                 className="w-full rounded-xl border px-3 py-2 text-xs font-mono font-semibold focus:outline-none focus:border-[#0066FF]"
               />
 
-              {/* Instant Signature Profile Picture + DSTRIKE Video Banner Live Preview */}
+              {/* Instant Signature Profile Picture + ConnectLn Video Banner Live Preview */}
               {extractedVideoId && (
                 <div className="pt-1 space-y-1.5">
                   <p className="text-[11px] font-extrabold flex items-center gap-1" style={{ color: '#059669' }}>
                     <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>Valid Video Identified — Your Signature Profile + Video Share Card Preview:</span>
+                    <span>Valid Video Identified — Your Signature Profile + ConnectLn Video Share Card Preview:</span>
                   </p>
                   <VideoShareBanner
                     compact
                     avatarUrl={userProfilePic}
                     authorName={submitSpeaker.trim() || user?.name || "Kwesi Asiedu"}
                     authorHeadline={submitSpeakerTitle.trim() || user?.headline || "Verified Guild Master"}
-                    brandName="DSTRIKE"
+                    brandName="ConnectLn"
                     videoTitle={submitTitle.trim() || "Masterclass Technical Briefing"}
-                    videoSubtitle={submitSummary.trim() || "ConnectIn Verified Video Masterclass"}
+                    videoSubtitle={submitSummary.trim() || "ConnectLn Original · ConnectLn Studio"}
                     youtubeId={extractedVideoId}
                     thumbnailUrl={`https://i.ytimg.com/vi/${extractedVideoId}/hqdefault.jpg`}
                     videoUrl={`https://www.youtube.com/watch?v=${extractedVideoId}`}
