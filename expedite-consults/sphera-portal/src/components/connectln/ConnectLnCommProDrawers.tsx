@@ -378,27 +378,84 @@ export function ConnectLnRichBubbleContent({
   }
 
   if (parsed.voice) {
+    const fallbackTtsAudioSrc = `/api/connectin/tts?text=${encodeURIComponent(
+      parsed.voice.transcript || "Voicemail recorded on ConnectLn"
+    )}&lang=en&speaker=${encodeURIComponent(msg.sender?.name || "Caller")}`
+    const playableAudioSrc =
+      parsed.voice.dataUrl && parsed.voice.dataUrl.startsWith("data:audio/")
+        ? parsed.voice.dataUrl
+        : fallbackTtsAudioSrc
+    const audioFileName = `Voicemail_${(msg.sender?.name || "Caller").replace(/\s+/g, "_")}_${parsed.voice.durationSec}s.mp3`
     return (
-      <div className="min-w-0 max-w-full space-y-1.5 break-words [overflow-wrap:anywhere]">
+      <div
+        data-testid="voicemail-inbox-bubble"
+        className="min-w-0 max-w-full space-y-2 break-words [overflow-wrap:anywhere]"
+      >
         {quoteBlock}
         <div
-          className={`rounded-xl p-2.5 border space-y-1.5 ${
-            isMe ? "bg-white/15 border-white/25" : "bg-emerald-50/70 border-emerald-200 text-slate-800"
+          className={`rounded-xl p-3 border space-y-2.5 ${
+            isMe
+              ? "bg-white/15 border-white/30 text-white"
+              : "bg-emerald-50/80 border-emerald-200 text-slate-900"
           }`}
         >
           <div className="flex items-center justify-between gap-2 text-xs font-extrabold">
             <span className="flex items-center gap-1.5">
               <Mic className="h-3.5 w-3.5 shrink-0" />
-              <span>Voice Note · {parsed.voice.durationSec}s</span>
+              <span>📼 Recorded Voicemail · {parsed.voice.durationSec}s</span>
             </span>
+            <a
+              href={playableAudioSrc}
+              download={audioFileName}
+              className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-bold ${
+                isMe
+                  ? "bg-white/20 text-white hover:bg-white/30"
+                  : "bg-white text-emerald-800 border border-emerald-300 hover:bg-emerald-100"
+              }`}
+            >
+              <Download className="h-3 w-3" />
+              <span>Save Audio</span>
+            </a>
           </div>
-          {parsed.voice.dataUrl && parsed.voice.dataUrl.startsWith("data:audio/") && (
-            <audio controls src={parsed.voice.dataUrl} className="w-full h-9 max-w-[260px]" />
-          )}
+
+          {/* Attached Recorded Audio Player */}
+          <div className="space-y-1">
+            <audio
+              controls
+              preload="none"
+              src={playableAudioSrc}
+              className="w-full h-9 max-w-[300px]"
+            />
+            <div
+              className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-bold ${
+                isMe ? "bg-black/20 text-emerald-200" : "bg-white text-slate-600 border border-slate-200"
+              }`}
+            >
+              <span>📎 Attached Audio:</span>
+              <span className="font-mono">{audioFileName}</span>
+            </div>
+          </div>
+
+          {/* Word-for-Word Speech-to-Text Transcription Box */}
           {parsed.voice.transcript && (
-            <p className={`text-xs ${isMe ? "text-white/90" : "text-slate-700"}`}>
-              “{parsed.voice.transcript}”
-            </p>
+            <div
+              className={`rounded-lg p-2.5 border ${
+                isMe
+                  ? "bg-black/25 border-white/20 text-white"
+                  : "bg-white border-emerald-200 text-slate-800"
+              }`}
+            >
+              <p
+                className={`text-[10px] font-black uppercase tracking-wider mb-0.5 ${
+                  isMe ? "text-amber-300" : "text-emerald-800"
+                }`}
+              >
+                📝 Transcribed to Text (Inbox Transcript)
+              </p>
+              <p className="text-xs font-semibold leading-relaxed">
+                “{parsed.voice.transcript}”
+              </p>
+            </div>
           )}
         </div>
       </div>

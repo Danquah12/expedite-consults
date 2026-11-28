@@ -632,7 +632,8 @@ async function synthesizeStudioHumanVoiceAttempt(text: string, voiceName: string
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
-      const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voiceName}'><prosody pitch='+0Hz' rate='+0%' volume='+30%'>${escaped}</prosody></voice></speak>`
+      const voiceLocale = voiceName.split("-").slice(0, 2).join("-") || "en-US"
+      const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='${voiceLocale}'><voice name='${voiceName}'><prosody pitch='-1Hz' rate='+2%' volume='+30%'>${escaped}</prosody></voice></speak>`
       const ssmlMsg =
         `X-RequestId:${reqId}\r\n` +
         `Content-Type:application/ssml+xml\r\n` +
@@ -743,7 +744,7 @@ function isFemaleSpeakerName(speaker: string, genderParam: string): boolean {
   if (genderParam === "female") return true
   if (genderParam === "male") return false
   const s = (speaker || "").toLowerCase()
-  return /\b(sarah|elena|maria|sophie|claire|anna|priya|fatima|amina|grace|hannah|rachel|jessica|emily|laura|natalie)\b/.test(
+  return /\b(sarah|elena|maria|sophie|claire|anna|priya|fatima|amina|grace|hannah|rachel|jessica|emily|laura|natalie|hiroko|lisa|karla|destiny|clara|rhoda|maya|nina|diana|victoria)\b/.test(
     s
   )
 }
@@ -822,7 +823,7 @@ async function fetchStreamAudioBackup(text: string, tl: string): Promise<ArrayBu
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const rawTextParam = (searchParams.get("text") || "").trim().slice(0, 260)
+  const rawTextParam = (searchParams.get("text") || "").trim().slice(0, 900)
   const rawLang = (searchParams.get("lang") || "en").trim().toLowerCase()
   const speaker = (searchParams.get("speaker") || "").trim()
   const genderParam = (searchParams.get("gender") || "").trim().toLowerCase()
@@ -832,7 +833,10 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Missing text", { status: 400 })
   }
 
-  const strippedRaw = rawTextParam.replace(/^\s*\[\d{1,2}:\d{2}(?::\d{2})?\]\s*/g, "").trim()
+  const strippedRaw = rawTextParam
+    .replace(/^\s*\[\d{1,2}:\d{2}(?::\d{2})?\]\s*/g, "")
+    .replace(/\bProperty of ConnectLn\.?\s*/gi, "")
+    .trim()
   const rawText = shouldTranslate
     ? await translateTextIfRequested(strippedRaw, rawLang)
     : strippedRaw

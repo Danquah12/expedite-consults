@@ -1692,6 +1692,30 @@ export function TeamsVoicemailRecorderModal({
     setSending(true)
     setError("")
     try {
+      const cleanTranscript =
+        transcript.trim() ||
+        `Hi ${recipientName}, sorry I missed you on ConnectLn. Please call or message me back when you are free.`
+      const durationVal = Math.max(3, sec || 8)
+      let finalAudioUrl = audioDataUrl
+
+      // Ensure a recorded playable audio dataUrl is always attached even if hardware mic was unavailable
+      if (!finalAudioUrl || !finalAudioUrl.startsWith("data:audio/")) {
+        try {
+          const ttsRes = await fetch(
+            `/api/connectin/tts?text=${encodeURIComponent(cleanTranscript)}&lang=en&speaker=${encodeURIComponent(callerName)}`
+          )
+          if (ttsRes.ok) {
+            const buf = await ttsRes.arrayBuffer()
+            const bytes = new Uint8Array(buf)
+            let bin = ""
+            for (let i = 0; i < bytes.byteLength; i++) {
+              bin += String.fromCharCode(bytes[i])
+            }
+            finalAudioUrl = `data:audio/mpeg;base64,${btoa(bin)}`
+          }
+        } catch {}
+      }
+
       const res = await fetch("/api/connectin/voicemail", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1703,9 +1727,9 @@ export function TeamsVoicemailRecorderModal({
           recipientName,
           recipientPhone,
           recipientEmail,
-          audioDataUrl,
-          durationSec: Math.max(1, sec),
-          transcript: transcript.trim(),
+          audioDataUrl: finalAudioUrl,
+          durationSec: durationVal,
+          transcript: cleanTranscript,
         }),
       })
       const data = await res.json()
@@ -1713,6 +1737,28 @@ export function TeamsVoicemailRecorderModal({
         setError(data?.error || "Could not send voicemail.")
         return
       }
+
+      // Also deliver BOTH the transcribed words and the attached recorded voicemail audio directly into the person's message box / inbox!
+      const safeTr = cleanTranscript.replace(/[\r\n|[\]]+/g, " ").trim().slice(0, 240)
+      const voiceMarker = `[[VOICE|${durationVal}|${safeTr}|${finalAudioUrl || ""}]]`
+      const attachmentName = `Voicemail_${recipientName.replace(/\s+/g, "_")}_${durationVal}s.mp3`
+      await fetch("/api/connectin/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "send_message",
+          enclave: "trades_construction",
+          threadId: `dm_voicemail_${recipientName.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
+          text: voiceMarker,
+          attachment: attachmentName,
+          senderName: callerName,
+          senderEmail: callerEmail,
+          recipientName,
+          recipientEmail,
+          channelType: "People",
+        }),
+      }).catch(() => {})
+
       onSent?.()
       onClose()
     } catch {

@@ -1344,8 +1344,12 @@ export async function POST(request: Request) {
         appendedMessagesByThreadId[threadId].push(userMsg);
         readThreadIds.add(threadId);
 
+        const isCallOrVoicemailLog =
+            text.startsWith('[[VOICE|') ||
+            /voicemail|missed\s+(voice|video)|video\s+huddle\s+completed|voice\s+call\s+completed/i.test(text);
+
         let autoReplyMsg: B2BMessageItem | null = null;
-        if (targetThread) {
+        if (targetThread && !isCallOrVoicemailLog) {
             const replyText = generateAutoReply(targetThread, text);
             autoReplyMsg = {
                 id: `msg-${Date.now()}-reply`,

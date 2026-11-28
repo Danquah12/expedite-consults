@@ -808,7 +808,7 @@ export function parseRichMessage(rawText: string): ParsedRichMessage {
     return out
   }
 
-  const voiceMatch = /^\[\[VOICE\|(\d+)\|([^|\]]*)\|([\s\S]*)\]\]$/.exec(trimmed)
+  const voiceMatch = /^\[\[VOICE\|(\d+)\|([^|\]]*)\|([^\]]*)\]\]/.exec(trimmed)
   if (voiceMatch) {
     out.voice = {
       durationSec: Number(voiceMatch[1]) || 1,

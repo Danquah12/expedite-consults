@@ -2097,55 +2097,67 @@ export function ConnectLnNavbar({
                       </p>
                     </div>
 
-                    {/* Core Desks */}
+                    {/* Core Desks — Purely Original ConnectLn 360 Sovereign Geometric SVG Emblems */}
                     <div className="space-y-1.5">
                       {[
                         {
                           id: "my_services_inquiries" as WorkBusinessItemId,
                           label: "Deal & Quote Desk",
                           sub: "Inquiries, estimates & bookings",
-                          icon: Compass,
-                          badgeBg: "bg-[#0B1F3A] text-[#E6C687]",
+                          code: "DQ",
+                          badgeBg: "bg-[#0B1F3A] text-[#E6C687] border border-[#B8935A]/40",
+                          svg: (
+                            <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none">
+                              <polygon points="12,2 21,7 21,17 12,22 3,17 3,7" stroke="currentColor" strokeWidth="1.8" />
+                              <polygon points="12,6.5 16.5,12 12,17.5 7.5,12" fill="currentColor" fillOpacity="0.25" stroke="currentColor" strokeWidth="1.5" />
+                              <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+                            </svg>
+                          ),
                         },
                         {
                           id: "my_communities" as WorkBusinessItemId,
                           label: "Enclave Guilds",
                           sub: "Trade chapters & veteran circles",
-                          icon: Users,
-                          badgeBg: "bg-[#14335A] text-sky-200",
+                          code: "EG",
+                          badgeBg: "bg-[#14335A] text-amber-200 border border-amber-300/30",
+                          svg: (
+                            <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none">
+                              <circle cx="9.5" cy="10" r="4.5" stroke="currentColor" strokeWidth="1.7" />
+                              <circle cx="15" cy="10" r="4.5" stroke="currentColor" strokeWidth="1.7" />
+                              <circle cx="12.25" cy="14.8" r="4.5" stroke="currentColor" strokeWidth="1.7" />
+                              <circle cx="12.25" cy="11.5" r="1.5" fill="currentColor" />
+                            </svg>
+                          ),
                         },
-                      ].map((desk) => {
-                        const DeskIcon = desk.icon
-                        return (
-                          <button
-                            key={desk.id}
-                            type="button"
-                            onClick={() => {
-                              if (onSelectWorkBusinessItem) {
-                                onSelectWorkBusinessItem(desk.id)
-                              } else {
-                                onSelectTab("workbusiness")
-                              }
-                              setIsMoreOpen(false)
-                            }}
-                            className="group w-full rounded-xl px-2.5 py-2 flex items-center gap-3.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-zinc-800/70 transition-all cursor-pointer"
+                      ].map((desk) => (
+                        <button
+                          key={desk.id}
+                          type="button"
+                          onClick={() => {
+                            if (onSelectWorkBusinessItem) {
+                              onSelectWorkBusinessItem(desk.id)
+                            } else {
+                              onSelectTab("workbusiness")
+                            }
+                            setIsMoreOpen(false)
+                          }}
+                          className="group w-full rounded-xl px-2.5 py-2 flex items-center gap-3.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-zinc-800/70 transition-all cursor-pointer"
+                        >
+                          <span
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-2xs transition-transform group-hover:scale-105 ${desk.badgeBg}`}
                           >
-                            <span
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-2xs transition-transform group-hover:scale-105 ${desk.badgeBg}`}
-                            >
-                              <DeskIcon className="h-4.5 w-4.5" />
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-[13.5px] font-bold text-[#0B1F3A] dark:text-zinc-100 group-hover:text-[#9A7438] dark:group-hover:text-amber-300 transition-colors">
-                                {desk.label}
-                              </p>
-                              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-                                {desk.sub}
-                              </p>
-                            </div>
-                          </button>
-                        )
-                      })}
+                            {desk.svg}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13.5px] font-bold text-[#0B1F3A] dark:text-zinc-100 group-hover:text-[#9A7438] dark:group-hover:text-amber-300 transition-colors">
+                              {desk.label}
+                            </p>
+                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                              {desk.sub}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
                     </div>
 
                     {/* Pillar: Talent & Intelligence */}
@@ -2158,48 +2170,58 @@ export function ConnectLnNavbar({
                           id: "noctis_talent_match" as WorkBusinessItemId,
                           label: "Noctis Talent Match",
                           sub: "AI role builder & candidate shortlists",
-                          icon: Sparkles,
-                          badgeBg: "bg-gradient-to-br from-[#0B1F3A] to-[#234876] text-[#E6C687]",
+                          badgeBg: "bg-gradient-to-br from-[#0B1F3A] to-[#234876] text-[#E6C687] border border-[#B8935A]/45",
+                          svg: (
+                            <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none">
+                              <ellipse cx="12" cy="12" rx="9" ry="4.2" transform="rotate(-30 12 12)" stroke="currentColor" strokeWidth="1.6" />
+                              <ellipse cx="12" cy="12" rx="9" ry="4.2" transform="rotate(30 12 12)" stroke="currentColor" strokeWidth="1.6" />
+                              <polygon points="12,7 14,12 12,17 10,12" fill="currentColor" />
+                            </svg>
+                          ),
                         },
                         {
                           id: "workforce_radar" as WorkBusinessItemId,
                           label: "Workforce Radar",
                           sub: "Regional rates & credential supply",
-                          icon: TrendingUp,
                           badgeBg: "bg-[#F3EFE6] text-[#0B1F3A] border border-[#DFD5C5]",
+                          svg: (
+                            <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none">
+                              <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.6" strokeDasharray="4 2" />
+                              <circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+                              <path d="M12 12 L18 7.5" stroke="#B8935A" strokeWidth="2.2" strokeLinecap="round" />
+                              <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+                            </svg>
+                          ),
                         },
-                      ].map((desk) => {
-                        const DeskIcon = desk.icon
-                        return (
-                          <button
-                            key={desk.id}
-                            type="button"
-                            onClick={() => {
-                              if (onSelectWorkBusinessItem) {
-                                onSelectWorkBusinessItem(desk.id)
-                              } else {
-                                onSelectTab("workbusiness")
-                              }
-                              setIsMoreOpen(false)
-                            }}
-                            className="group w-full rounded-xl px-2.5 py-2 flex items-center gap-3.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-zinc-800/70 transition-all cursor-pointer"
+                      ].map((desk) => (
+                        <button
+                          key={desk.id}
+                          type="button"
+                          onClick={() => {
+                            if (onSelectWorkBusinessItem) {
+                              onSelectWorkBusinessItem(desk.id)
+                            } else {
+                              onSelectTab("workbusiness")
+                            }
+                            setIsMoreOpen(false)
+                          }}
+                          className="group w-full rounded-xl px-2.5 py-2 flex items-center gap-3.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-zinc-800/70 transition-all cursor-pointer"
+                        >
+                          <span
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-2xs transition-transform group-hover:scale-105 ${desk.badgeBg}`}
                           >
-                            <span
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-2xs transition-transform group-hover:scale-105 ${desk.badgeBg}`}
-                            >
-                              <DeskIcon className="h-4.5 w-4.5" />
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-[13.5px] font-bold text-[#0B1F3A] dark:text-zinc-100 group-hover:text-[#9A7438] dark:group-hover:text-amber-300 transition-colors">
-                                {desk.label}
-                              </p>
-                              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-                                {desk.sub}
-                              </p>
-                            </div>
-                          </button>
-                        )
-                      })}
+                            {desk.svg}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13.5px] font-bold text-[#0B1F3A] dark:text-zinc-100 group-hover:text-[#9A7438] dark:group-hover:text-amber-300 transition-colors">
+                              {desk.label}
+                            </p>
+                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                              {desk.sub}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
                     </div>
 
                     {/* Pillar: Field Commerce */}
@@ -2219,8 +2241,11 @@ export function ConnectLnNavbar({
                         }}
                         className="group w-full rounded-xl px-2.5 py-2 flex items-center gap-3.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-zinc-800/70 transition-all cursor-pointer"
                       >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-950 text-emerald-300 shadow-2xs transition-transform group-hover:scale-105">
-                          <ShieldCheck className="h-4.5 w-4.5" />
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-950 text-emerald-300 border border-emerald-500/30 shadow-2xs transition-transform group-hover:scale-105">
+                          <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none">
+                            <polygon points="12,2.5 20.5,8.5 17.5,19.5 6.5,19.5 3.5,8.5" stroke="currentColor" strokeWidth="1.7" />
+                            <path d="M8.5 12.5 L11 15 L16 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="text-[13.5px] font-bold text-[#0B1F3A] dark:text-zinc-100 group-hover:text-[#9A7438] dark:group-hover:text-amber-300 transition-colors">

@@ -1723,6 +1723,18 @@ export function ConnectLnStudioPlayer({
         </div>
       </div>
 
+      {/* Deep Subject Reference Links & "Other Videos from This Creator" Strip */}
+      <ConnectLnCreatorSubjectStrip
+        activeTitle={activeTitle}
+        activeSpeaker={activeSpeaker}
+        activeSpeakerRole={activeSpeakerRole}
+        activeDescription={activeDescription}
+        activeTakeaways={activeTakeaways}
+        activeYoutubeId={activeYoutubeId}
+        moreVideosList={moreVideosList}
+        onPlayVideoInline={playVideoInline}
+      />
+
       {/* DOCKED NOCTIS LIVE VIDEO LANGUAGE INTERPRETER & VOICE DUBBING BAR (Cleanly Below Video Frame) */}
       {!isStoppedByOther && (
         <NoctisVideoInterpreterPopup
@@ -1766,6 +1778,172 @@ export function ConnectLnStudioPlayer({
             applyVoiceDuckingToPlayer(shouldDuck)
           }}
         />
+      )}
+    </div>
+  )
+}
+
+function ConnectLnCreatorSubjectStrip({
+  activeTitle,
+  activeSpeaker,
+  activeSpeakerRole,
+  activeDescription,
+  activeTakeaways,
+  activeYoutubeId,
+  moreVideosList,
+  onPlayVideoInline,
+}: {
+  activeTitle: string
+  activeSpeaker: string
+  activeSpeakerRole?: string
+  activeDescription?: string
+  activeTakeaways?: string[]
+  activeYoutubeId?: string
+  moreVideosList: StagedConnectLnVideo[]
+  onPlayVideoInline: (v: StagedConnectLnVideo) => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+
+  // Match other videos by the same creator/channel first, then related subject videos
+  const creatorAndSubjectVideos = useMemo(() => {
+    const cleanSpeaker = (activeSpeaker || "").toLowerCase().trim()
+    const speakerTokens = cleanSpeaker
+      .split(/[^a-z0-9]+/)
+      .filter((t) => t.length >= 3 && !["connectln", "original", "guild", "studio", "master", "the", "and"].includes(t))
+    const bySameCreator = moreVideosList.filter((v) => {
+      if (v.youtubeId && v.youtubeId === activeYoutubeId) return false
+      const sp = (v.speaker || "").toLowerCase()
+      return (
+        (cleanSpeaker && sp === cleanSpeaker) ||
+        speakerTokens.some((tok) => sp.includes(tok) || (v.title || "").toLowerCase().includes(tok))
+      )
+    })
+    const remaining = moreVideosList.filter(
+      (v) =>
+        (!v.youtubeId || v.youtubeId !== activeYoutubeId) &&
+        !bySameCreator.some((c) => (c.youtubeId || c.title) === (v.youtubeId || v.title))
+    )
+    return [...bySameCreator, ...remaining].slice(0, 6)
+  }, [activeSpeaker, activeYoutubeId, moreVideosList])
+
+  const subjectReferenceLinks = useMemo(() => {
+    const q = encodeURIComponent(`${activeTitle} ${activeSpeaker || ""}`.trim())
+    const creatorQ = encodeURIComponent(activeSpeaker || activeTitle)
+    return [
+      {
+        label: `More from ${activeSpeaker || "Creator"} (Channel & Archive)`,
+        href: `https://www.youtube.com/results?search_query=${creatorQ}`,
+      },
+      {
+        label: "Subject Standards & Technical Reference",
+        href: `https://scholar.google.com/scholar?q=${encodeURIComponent(activeTitle)}`,
+      },
+      {
+        label: "Video Topic Deep-Dive & Field Guides",
+        href: `https://www.youtube.com/results?search_query=${q}`,
+      },
+    ]
+  }, [activeTitle, activeSpeaker])
+
+  return (
+    <div className="bg-zinc-950 border-t border-zinc-800/80 px-3 py-1.5 text-[11px] text-zinc-300">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <button
+          type="button"
+          data-testid="toggle-subject-links-creator-videos"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-300 hover:text-amber-200 cursor-pointer"
+        >
+          <span>📚 Subject Deep-Dive, Reference Links &amp; More Videos from {activeSpeaker || "Creator"}</span>
+          <span>{expanded ? "▴" : "▾"}</span>
+        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {subjectReferenceLinks.slice(0, 2).map((lnk) => (
+            <a
+              key={lnk.label}
+              href={lnk.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] font-semibold text-sky-300 hover:text-sky-200 underline"
+            >
+              {lnk.label} ↗
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="mt-2.5 pt-2.5 border-t border-zinc-800 space-y-3">
+          {/* Subject Summary & Key Takeaways */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-extrabold text-white">
+              {activeTitle} — <span className="text-amber-300">{activeSpeaker}</span>
+              {activeSpeakerRole ? <span className="text-zinc-400 font-normal"> · {activeSpeakerRole}</span> : null}
+            </p>
+            {activeDescription && (
+              <p className="text-[11px] text-zinc-300 leading-relaxed">{activeDescription}</p>
+            )}
+            {activeTakeaways && activeTakeaways.length > 0 && (
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-1">
+                {activeTakeaways.slice(0, 4).map((tk, i) => (
+                  <li key={i} className="text-[10.5px] text-emerald-300 flex items-start gap-1.5">
+                    <span>✓</span>
+                    <span>{tk}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Clickable Reference Links */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400">
+              Reference Links:
+            </span>
+            {subjectReferenceLinks.map((lnk) => (
+              <a
+                key={lnk.label}
+                href={lnk.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg border border-sky-500/30 bg-sky-950/40 hover:bg-sky-900/50 px-2.5 py-1 text-[10.5px] font-bold text-sky-200"
+              >
+                🔗 {lnk.label} ↗
+              </a>
+            ))}
+          </div>
+
+          {/* Other Videos from This Person / Creator & Subject */}
+          {creatorAndSubjectVideos.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10.5px] font-extrabold uppercase tracking-wider text-amber-300">
+                Other Videos from {activeSpeaker || "This Creator"} &amp; Subject Enclave ({creatorAndSubjectVideos.length})
+              </p>
+              <div className="flex gap-2.5 overflow-x-auto pb-1">
+                {creatorAndSubjectVideos.map((vid, idx) => (
+                  <button
+                    key={`${vid.youtubeId || vid.title}-${idx}`}
+                    type="button"
+                    onClick={() => onPlayVideoInline(vid)}
+                    className="group w-44 shrink-0 rounded-xl border border-zinc-800 bg-zinc-900/90 hover:border-amber-400 p-2 text-left transition-all cursor-pointer flex flex-col justify-between"
+                  >
+                    <div>
+                      <p className="text-[11px] font-bold text-white line-clamp-2 group-hover:text-amber-300 leading-snug">
+                        {vid.title}
+                      </p>
+                      <p className="text-[10px] text-zinc-400 truncate mt-1">
+                        {vid.speaker || activeSpeaker}
+                      </p>
+                    </div>
+                    <span className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-extrabold text-sky-300">
+                      ▶ Play in ConnectLn
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
