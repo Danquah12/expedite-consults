@@ -3134,14 +3134,14 @@ export default function ConnectLnPage() {
           activeTab === 'boards' ||
           activeTab === 'forms'
             ? "mx-auto max-w-[1480px] px-2 sm:px-4 pt-3 pb-24 lg:pb-4"
-            : "mx-auto max-w-7xl px-3 sm:px-6 pt-5 pb-24 lg:pb-12"
+            : "mx-auto max-w-[1460px] px-3 sm:px-4 pt-5 pb-24 lg:pb-12"
         }
       >
         {/* VIEW 1: HOME FEED */}
         {activeTab === 'home' && (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-[216px_minmax(0,862px)] xl:grid-cols-[210px_minmax(0,862px)_minmax(200px,1fr)] min-[1420px]:grid-cols-[224px_862px_minmax(210px,1fr)] gap-4">
             {/* Left Rail (Profile summary & communities on desktop/tablet) */}
-            <div className="hidden md:block md:col-span-4 lg:col-span-3 min-w-0">
+            <div className="hidden md:block md:col-span-4 lg:col-span-1 min-w-0">
               <LeftSidebarProfile
                 user={userData}
                 onViewProfile={() => {
@@ -3175,8 +3175,8 @@ export default function ConnectLnPage() {
               />
             </div>
 
-            {/* Center Rail (Post Creator & Post Feed) */}
-            <div className="md:col-span-8 lg:col-span-6 min-w-0 space-y-3">
+            {/* Center Rail (Post Creator & Post Feed — 860px Studio Stage) */}
+            <div className="md:col-span-8 lg:col-span-1 min-w-0 space-y-3">
               {/* Mobile Quick Profile Header Card (< md) */}
               <div className="md:hidden flex items-center justify-between rounded-2xl border border-zinc-200/90 bg-white p-3 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
                 <button
@@ -3967,7 +3967,7 @@ export default function ConnectLnPage() {
             </div>
 
             {/* Right Rail (ConnectIn News & Follow Suggestions) */}
-            <div className="hidden lg:block lg:col-span-3 min-w-0">
+            <div className="hidden xl:block xl:col-span-1 min-w-0">
               <RightSidebarNews
                 news={trendingNews}
                 suggestedPeople={suggestedPeople}

@@ -336,7 +336,7 @@ export function MediaView({
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-24">
+    <div className="mx-auto max-w-[1440px] space-y-6 pb-24">
       {/* 1. MEDIA HUB BANNER & NAV */}
       <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -518,7 +518,7 @@ export function MediaView({
             {selectedVideo && (
               <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-md dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
                 {/* Video Player Display Container */}
-                <div ref={mediaStageRef} className="relative aspect-video w-full bg-slate-950 overflow-hidden group">
+                <div ref={mediaStageRef} data-testid="mediaview-video-stage" className="relative w-full max-w-[860px] mx-auto aspect-[860/496] bg-slate-950 overflow-hidden group">
                   {isPlaying && selectedVideo.videoUrl && !selectedVideo.youtubeId ? (
                     <video
                       key={`${selectedVideo.id}-${selectedVideo.videoUrl}`}
@@ -1343,7 +1343,7 @@ export function MediaView({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Live Stream Stage (8 Cols) */}
             <div className="lg:col-span-8 rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-md dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
-              <div className="relative aspect-video w-full bg-slate-950 overflow-hidden">
+              <div className="relative w-full max-w-[860px] mx-auto aspect-[860/496] bg-slate-950 overflow-hidden">
                 {LIVE_STREAMS_DATA[0].youtubeId ? (
                   <ConnectLnStudioPlayer
                     youtubeId={LIVE_STREAMS_DATA[0].youtubeId}

@@ -1442,7 +1442,7 @@ export function SkilledTradesLearnByDoingSection({
                           handleWatchAction(lesson)
                         }
                       }}
-                      className="relative aspect-[16/10] sm:aspect-video w-full overflow-hidden cursor-pointer group bg-zinc-950"
+                      className="relative w-full max-w-[860px] mx-auto aspect-[860/496] overflow-hidden cursor-pointer group bg-zinc-950"
                     >
                       <img
                         src={cardThumbUrl}

@@ -378,7 +378,7 @@ export function VideoShareBanner({
                   className="w-full"
                 />
               ) : (
-                <div className="relative aspect-video w-full bg-black">
+                <div data-testid="connectln-video-stage" className="relative w-full max-w-[860px] mx-auto aspect-[860/496] bg-black">
                   <video
                     ref={directVideoRef}
                     src={videoUrl}
@@ -416,10 +416,9 @@ export function VideoShareBanner({
             <div className="flex flex-col w-full bg-black">
               {/* Clean WSJ-Format Full-Bleed Poster Stage (Zero Top Clutter, Editorial Serif Bottom Headline + Monogram) */}
               <div
+                data-testid="connectln-video-stage"
                 onClick={handlePlayTrigger}
-                className={`relative w-full cursor-pointer group overflow-hidden bg-zinc-950 ${
-                  editorialFeedMode ? "aspect-[16/10] sm:aspect-video" : "aspect-video"
-                }`}
+                className="relative w-full max-w-[860px] mx-auto aspect-[860/496] cursor-pointer group overflow-hidden bg-zinc-950"
               >
                 {resolvedThumb && (
                   <img

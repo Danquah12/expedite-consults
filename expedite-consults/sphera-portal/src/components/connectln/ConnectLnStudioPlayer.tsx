@@ -913,9 +913,10 @@ export function ConnectLnStudioPlayer({
       ref={containerRef}
       className={`flex flex-col w-full bg-black overflow-hidden ${className}`}
     >
-      {/* Full Uncropped 16:9 Video Canvas (Strict Sandbox + Native ConnectLn Controls & In-Player Shelf) */}
+      {/* 860x496 Ultra-Wide Studio Stage Video Canvas (Strict Sandbox + Native ConnectLn Controls & In-Player Shelf) */}
       <div
-        className="relative w-full aspect-video min-h-[200px] bg-black overflow-hidden group/canvas"
+        data-testid="connectln-studio-player-stage"
+        className="relative w-full max-w-[860px] mx-auto aspect-[860/496] min-h-[200px] bg-black overflow-hidden group/canvas"
         onMouseMove={revealControlsTemporarily}
         onTouchStart={revealControlsTemporarily}
       >

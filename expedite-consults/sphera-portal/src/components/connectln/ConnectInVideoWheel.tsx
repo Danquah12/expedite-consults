@@ -823,8 +823,8 @@ export function ConnectInVideoWheel({
             </div>
           </div>
 
-          {/* 16:9 Video Stage Showing the Logged-In Profession's Video */}
-          <div className="relative aspect-video w-full bg-black overflow-hidden">
+          {/* 860x496 Ultra-Wide Studio Stage Showing the Logged-In Profession's Video */}
+          <div className="relative w-full max-w-[860px] mx-auto aspect-[860/496] bg-black overflow-hidden">
             {isPlayingHeroInline ? (
               <ConnectLnStudioPlayer
                 key={`${assignedUserVideo.id}-${assignedUserVideo.youtubeId}`}
