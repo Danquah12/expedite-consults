@@ -51,7 +51,7 @@ import {
 } from "@/lib/skilled-trades-learn-by-doing-data"
 import { UserProfile } from "@/lib/connectln-data"
 import { useLanguage } from "@/context/LanguageContext"
-import { ConnectLnStudioPlayer, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
+import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
 import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
 import { LinkedInLearningShelfHub } from "./LinkedInLearningShelfHub"
 import {
@@ -489,6 +489,21 @@ export function SkilledTradesLearnByDoingSection({
       cleanups.forEach((fn) => fn())
     }
   }, [mode, selectedCategory, homeVisibleLimit, allLessons])
+
+  // Unmount active Learn-by-Doing inline player whenever another video on the page claims exclusive play
+  useEffect(() => {
+    const playerPrefix = mode === 'home_videos_only' ? 'lbd-home-player-' : 'lbd-player-'
+    const handleExclusivePlay = (e: Event) => {
+      const activeId = (e as CustomEvent<{ playerId?: string }>).detail?.playerId
+      if (!activeId) return
+      setActiveVideoLessonId((prev) => {
+        if (!prev) return null
+        return activeId === `${playerPrefix}${prev}` ? prev : null
+      })
+    }
+    window.addEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+    return () => window.removeEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+  }, [mode])
 
   // If autoplay is switched off in Settings, stop a Home video that was started automatically
   useEffect(() => {

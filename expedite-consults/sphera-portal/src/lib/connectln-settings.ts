@@ -80,6 +80,26 @@ function evaluateViewportAutoplayNow() {
   if (typeof window === "undefined") return
   const vh = window.innerHeight || document.documentElement.clientHeight || 800
 
+  // Always check whether a manually started video has been scrolled out of view FIRST
+  if (manualOverrideId) {
+    const manualEl =
+      manualOverrideElement || registeredSlots.get(manualOverrideId)?.getElement() || null
+    if (manualEl && document.body.contains(manualEl) && computeVisibleRatio(manualEl, vh) >= 0.16) {
+      if ((window as any).__connectlnCallSilenceActive) {
+        const prevManual = registeredSlots.get(manualOverrideId)
+        manualOverrideId = null
+        manualOverrideElement = null
+        prevManual?.stopAutoplay()
+      }
+      return
+    }
+    const prevManualId = manualOverrideId
+    const prevManualSlot = registeredSlots.get(prevManualId)
+    manualOverrideId = null
+    manualOverrideElement = null
+    prevManualSlot?.stopAutoplay()
+  }
+
   // Pause all viewport autoplay while an incoming or active ConnectLn call is in progress
   if (!getAutoplayVideosPref() || (window as any).__connectlnCallSilenceActive) {
     if (currentAutoActiveId) {
@@ -88,17 +108,6 @@ function evaluateViewportAutoplayNow() {
       prev?.stopAutoplay()
     }
     return
-  }
-
-  // Respect user's manual video click while that video remains in view
-  if (manualOverrideId) {
-    const manualEl =
-      manualOverrideElement || registeredSlots.get(manualOverrideId)?.getElement() || null
-    if (manualEl && document.body.contains(manualEl) && computeVisibleRatio(manualEl, vh) >= 0.16) {
-      return
-    }
-    manualOverrideId = null
-    manualOverrideElement = null
   }
 
   const focalY = STICKY_HEADER_HEIGHT + (vh - STICKY_HEADER_HEIGHT) * 0.38
@@ -198,6 +207,12 @@ export function notifyManualVideoOverride(id: string | null, el?: HTMLElement | 
     const prev = registeredSlots.get(currentAutoActiveId)
     currentAutoActiveId = null
     prev?.stopAutoplay()
+  }
+  if (manualOverrideId && manualOverrideId !== id) {
+    const prevManual = registeredSlots.get(manualOverrideId)
+    manualOverrideId = null
+    manualOverrideElement = null
+    prevManual?.stopAutoplay()
   }
   manualOverrideId = id
   manualOverrideElement = el || null

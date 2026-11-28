@@ -75,17 +75,33 @@ function HarvestedMp4Player({
 
   const isNoctisTranslationMutingActive = useCallback((incomingLang?: string) => {
     if (typeof window === "undefined") return false
-    if ((window as any).__noctisVoiceDuckingActive === true) return true
-    if (incomingLang && incomingLang.trim().toLowerCase() !== "en") return true
-    const prefLang = ((window as any).__noctisPreferredAudioLang || "").toString().toLowerCase()
-    if (prefLang && prefLang !== "en") return true
-    const htmlLang = (document.documentElement.getAttribute("lang") || "").toLowerCase()
-    if (htmlLang && htmlLang !== "en") return true
+    const w = window as any
+    if (w.__noctisVoiceDuckingActive === true) return true
+    const shared = w.__noctisSharedAudioEl
+    if (
+      shared instanceof HTMLAudioElement &&
+      !shared.paused &&
+      !shared.ended &&
+      shared.src &&
+      !shared.src.startsWith("data:")
+    ) {
+      return true
+    }
+    let storedLang = ""
     try {
-      const storedLang = (localStorage.getItem("sphera-lang") || "").toLowerCase()
-      if (storedLang && storedLang !== "en") return true
+      storedLang = (localStorage.getItem("sphera-lang") || "").toLowerCase()
     } catch {}
-    return false
+    const effectiveLang = (
+      incomingLang ||
+      w.__noctisPreferredAudioLang ||
+      document.documentElement.getAttribute("lang") ||
+      storedLang ||
+      "en"
+    )
+      .toString()
+      .trim()
+      .toLowerCase()
+    return effectiveLang !== "en"
   }, [])
 
   // Start unmuted when in view; if cold-load browser policy temporarily blocks unmuted HTML5 audio, fall back cleanly and auto-unmute on first gesture
@@ -147,12 +163,39 @@ function HarvestedMp4Player({
       }
     }
 
+    const observer =
+      typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            (entries) => {
+              for (const entry of entries) {
+                if (
+                  (!entry.isIntersecting || entry.intersectionRatio < 0.08) &&
+                  videoRef.current &&
+                  !videoRef.current.paused &&
+                  !document.fullscreenElement
+                ) {
+                  videoRef.current.muted = true
+                  videoRef.current.pause()
+                  setIsPlaying(false)
+                }
+              }
+            },
+            {
+              root: null,
+              rootMargin: "-52px 0px 0px 0px",
+              threshold: [0, 0.08],
+            }
+          )
+        : null
+    observer?.observe(vid)
+
     window.addEventListener("pointerdown", unlockMp4, { passive: true })
     window.addEventListener("keydown", unlockMp4, { passive: true })
     window.addEventListener("connectln:noctis-voice-duck", onDuckOrLangChange)
     window.addEventListener("sphera-lang-changed", onDuckOrLangChange)
     window.addEventListener("connectln:noctis-command-language", onDuckOrLangChange)
     return () => {
+      observer?.disconnect()
       window.removeEventListener("pointerdown", unlockMp4)
       window.removeEventListener("keydown", unlockMp4)
       window.removeEventListener("connectln:noctis-voice-duck", onDuckOrLangChange)

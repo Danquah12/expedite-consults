@@ -195,17 +195,33 @@ export function VideoShareBanner({
 
     const isNoctisTranslationMutingActive = (incomingLang?: string) => {
       if (typeof window === "undefined") return false
-      if ((window as any).__noctisVoiceDuckingActive) return true
-      if (incomingLang && incomingLang.trim().toLowerCase() !== "en") return true
-      const prefLang = String((window as any).__noctisPreferredAudioLang || "").toLowerCase()
-      if (prefLang && prefLang !== "en") return true
-      const htmlLang = (document.documentElement.getAttribute("lang") || "").toLowerCase()
-      if (htmlLang && htmlLang !== "en") return true
+      const w = window as any
+      if (w.__noctisVoiceDuckingActive === true) return true
+      const shared = w.__noctisSharedAudioEl
+      if (
+        shared instanceof HTMLAudioElement &&
+        !shared.paused &&
+        !shared.ended &&
+        shared.src &&
+        !shared.src.startsWith("data:")
+      ) {
+        return true
+      }
+      let storedLang = ""
       try {
-        const storedLang = (localStorage.getItem("sphera-lang") || "").toLowerCase()
-        if (storedLang && storedLang !== "en") return true
+        storedLang = (localStorage.getItem("sphera-lang") || "").toLowerCase()
       } catch {}
-      return false
+      const effectiveLang = (
+        incomingLang ||
+        w.__noctisPreferredAudioLang ||
+        document.documentElement.getAttribute("lang") ||
+        storedLang ||
+        "en"
+      )
+        .toString()
+        .trim()
+        .toLowerCase()
+      return effectiveLang !== "en"
     }
 
     const syncDirectMuteState = (incomingLang?: string) => {
@@ -457,9 +473,13 @@ export function VideoShareBanner({
                     loop
                     onPlay={(e) => {
                       const w = typeof window !== "undefined" ? (window as any) : {}
+                      const shared = w.__noctisSharedAudioEl
+                      const sharedPlaying = Boolean(
+                        shared instanceof HTMLAudioElement && !shared.paused && !shared.ended && shared.src && !shared.src.startsWith("data:")
+                      )
                       const htmlLang = typeof document !== "undefined" ? (document.documentElement.getAttribute("lang") || "").toLowerCase() : ""
-                      const prefLang = String(w.__noctisPreferredAudioLang || "").toLowerCase()
-                      if (w.__noctisVoiceDuckingActive || (prefLang && prefLang !== "en") || (htmlLang && htmlLang !== "en")) {
+                      const effectiveLang = (w.__noctisPreferredAudioLang || htmlLang || "en").toString().trim().toLowerCase()
+                      if (w.__noctisVoiceDuckingActive || sharedPlaying || effectiveLang !== "en") {
                         e.currentTarget.muted = true
                         e.currentTarget.volume = 0
                         setIsDirectMuted(true)
@@ -467,11 +487,13 @@ export function VideoShareBanner({
                     }}
                     onVolumeChange={(e) => {
                       const w = typeof window !== "undefined" ? (window as any) : {}
-                      const htmlLang = typeof document !== "undefined" ? (document.documentElement.getAttribute("lang") || "").toLowerCase() : ""
-                      const prefLang = String(w.__noctisPreferredAudioLang || "").toLowerCase()
-                      const shouldForceMute = Boolean(
-                        w.__noctisVoiceDuckingActive || (prefLang && prefLang !== "en") || (htmlLang && htmlLang !== "en")
+                      const shared = w.__noctisSharedAudioEl
+                      const sharedPlaying = Boolean(
+                        shared instanceof HTMLAudioElement && !shared.paused && !shared.ended && shared.src && !shared.src.startsWith("data:")
                       )
+                      const htmlLang = typeof document !== "undefined" ? (document.documentElement.getAttribute("lang") || "").toLowerCase() : ""
+                      const effectiveLang = (w.__noctisPreferredAudioLang || htmlLang || "en").toString().trim().toLowerCase()
+                      const shouldForceMute = Boolean(w.__noctisVoiceDuckingActive || sharedPlaying || effectiveLang !== "en")
                       if (shouldForceMute && (!e.currentTarget.muted || e.currentTarget.volume > 0)) {
                         e.currentTarget.muted = true
                         e.currentTarget.volume = 0
@@ -488,9 +510,13 @@ export function VideoShareBanner({
                       onClick={(e) => {
                         e.stopPropagation()
                         const w = typeof window !== "undefined" ? (window as any) : {}
+                        const shared = w.__noctisSharedAudioEl
+                        const sharedPlaying = Boolean(
+                          shared instanceof HTMLAudioElement && !shared.paused && !shared.ended && shared.src && !shared.src.startsWith("data:")
+                        )
                         const htmlLang = typeof document !== "undefined" ? (document.documentElement.getAttribute("lang") || "").toLowerCase() : ""
-                        const prefLang = String(w.__noctisPreferredAudioLang || "").toLowerCase()
-                        if (w.__noctisVoiceDuckingActive || (prefLang && prefLang !== "en") || (htmlLang && htmlLang !== "en")) {
+                        const effectiveLang = (w.__noctisPreferredAudioLang || htmlLang || "en").toString().trim().toLowerCase()
+                        if (w.__noctisVoiceDuckingActive || sharedPlaying || effectiveLang !== "en") {
                           return
                         }
                         if (directVideoRef.current) {

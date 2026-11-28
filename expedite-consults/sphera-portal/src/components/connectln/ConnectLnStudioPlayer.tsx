@@ -30,19 +30,50 @@ export const CONNECTLN_VIDEO_PLAY_EVENT = "connectln:exclusive-video-play"
 
 export function notifyExclusiveVideoPlay(activePlayerId: string) {
   if (typeof window === "undefined") return
-  ;(window as any).__connectlnActiveVideoPlayerId = activePlayerId
+  const win = window as any
+  win.__connectlnActiveVideoPlayerId = activePlayerId
+  win.__noctisAudioPlaySeq = (win.__noctisAudioPlaySeq || 0) + 1
+  if (win.__noctisSharedAudioEl instanceof HTMLAudioElement) {
+    try {
+      win.__noctisSharedAudioEl.onended = null
+      win.__noctisSharedAudioEl.onerror = null
+      win.__noctisSharedAudioEl.pause()
+    } catch {}
+  }
+  if ("speechSynthesis" in window) {
+    try {
+      window.speechSynthesis.cancel()
+    } catch {}
+  }
   window.dispatchEvent(
     new CustomEvent(CONNECTLN_VIDEO_PLAY_EVENT, {
       detail: { playerId: activePlayerId },
     })
   )
-  // Also pause any HTML5 <video> elements on the page (except live WebRTC camera streams with srcObject)
+  // Also pause any HTML5 <video> elements AND YouTube/Vimeo <iframe> players on the page (except active player / WebRTC streams)
   try {
     const videos = document.querySelectorAll("video")
     videos.forEach((v) => {
       if (!v.srcObject && v.dataset.connectlnPlayerId !== activePlayerId && !v.paused) {
         v.pause()
       }
+    })
+    const iframes = document.querySelectorAll("iframe")
+    iframes.forEach((frame) => {
+      if (frame.dataset.connectlnPlayerId === activePlayerId) return
+      const src = (frame.src || "").toLowerCase()
+      const fWin = frame.contentWindow
+      if (!fWin) return
+      try {
+        if (src.includes("youtube.com") || src.includes("youtube-nocookie.com")) {
+          fWin.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [0] }), "*")
+          fWin.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
+          fWin.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [] }), "*")
+        } else if (src.includes("vimeo.com")) {
+          fWin.postMessage(JSON.stringify({ method: "setVolume", value: 0 }), "*")
+          fWin.postMessage(JSON.stringify({ method: "pause" }), "*")
+        }
+      } catch {}
     })
   } catch {
     // ignore
@@ -503,9 +534,20 @@ export function ConnectLnStudioPlayer({
   const shouldMuteForTranslation = useCallback(() => {
     if (isVoiceDuckingRef.current || isInterpretingNeededRef.current) return true
     if (typeof window !== "undefined") {
-      if ((window as any).__noctisVoiceDuckingActive === true) return true
+      const w = window as any
+      if (w.__noctisVoiceDuckingActive === true) return true
+      const shared = w.__noctisSharedAudioEl
+      if (
+        shared instanceof HTMLAudioElement &&
+        !shared.paused &&
+        !shared.ended &&
+        shared.src &&
+        !shared.src.startsWith("data:")
+      ) {
+        return true
+      }
       const activeTarget = (
-        (window as any).__noctisPreferredAudioLang ||
+        w.__noctisPreferredAudioLang ||
         document.documentElement.getAttribute("lang") ||
         ""
       )
@@ -576,19 +618,34 @@ export function ConnectLnStudioPlayer({
 
   useEffect(() => {
     const syncMuteOnLangOrDuck = (forcedDuck?: boolean, incomingLang?: string) => {
+      const w = typeof window !== "undefined" ? (window as any) : {}
+      const shared = w.__noctisSharedAudioEl
+      const sharedPlaying = Boolean(
+        shared instanceof HTMLAudioElement &&
+          !shared.paused &&
+          !shared.ended &&
+          shared.src &&
+          !shared.src.startsWith("data:")
+      )
       const activeTarget = (
         incomingLang ||
-        (typeof window !== "undefined" && (window as any).__noctisPreferredAudioLang) ||
+        w.__noctisPreferredAudioLang ||
         language ||
         ""
       )
         .toString()
         .toLowerCase()
       const differsFromSource = Boolean(activeTarget && activeTarget !== sourceLangRef.current)
-      const globalDuck =
-        typeof window !== "undefined" && (window as any).__noctisVoiceDuckingActive === true
-      const shouldMute = Boolean(forcedDuck || differsFromSource || globalDuck)
+      const globalDuck = w.__noctisVoiceDuckingActive === true
+      const shouldMute = Boolean(
+        forcedDuck ||
+          sharedPlaying ||
+          (forcedDuck === undefined ? differsFromSource || globalDuck : globalDuck)
+      )
       isVoiceDuckingRef.current = shouldMute
+      if (!shouldMute) {
+        isInterpretingNeededRef.current = false
+      }
       applyVoiceDuckingToPlayer(shouldMute)
     }
 
@@ -672,6 +729,50 @@ export function ConnectLnStudioPlayer({
       window.removeEventListener("connectln:call-silence-change", handleCallSilenceChange)
     }
   }, [effectivePlayerId, effectiveProvider, isHtml5Direct, sendYtCommand])
+
+  // Auto-pause and unmount inline player when scrolled out of viewport so top videos never play over bottom ones
+  useEffect(() => {
+    if (isStagedPlayer || typeof IntersectionObserver === "undefined") return
+    const target = containerRef.current
+    if (!target) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (
+            (!entry.isIntersecting || entry.intersectionRatio < 0.08) &&
+            isPlayingStateRef.current &&
+            !document.fullscreenElement
+          ) {
+            if (isHtml5Direct && html5VideoRef.current) {
+              html5VideoRef.current.pause()
+            } else if (effectiveProvider === "youtube") {
+              sendYtCommand("setVolume", [0])
+              sendYtCommand("mute")
+              sendYtCommand("pauseVideo")
+            } else if (effectiveProvider === "vimeo") {
+              const extWin = externalIframeRef.current?.contentWindow
+              if (extWin) {
+                try {
+                  extWin.postMessage(JSON.stringify({ method: "setVolume", value: 0 }), "*")
+                  extWin.postMessage(JSON.stringify({ method: "pause" }), "*")
+                } catch {}
+              }
+            }
+            setIsPlaying(false)
+            setPlaybackPhase("paused")
+            onExclusiveStopRef.current?.()
+          }
+        }
+      },
+      {
+        root: null,
+        rootMargin: "-52px 0px 0px 0px",
+        threshold: [0, 0.08, 0.16],
+      }
+    )
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [effectiveProvider, isHtml5Direct, isStagedPlayer, sendYtCommand])
 
   // YouTube official IFrame postMessage telemetry listener (routes any unexpected switch inline into ConnectLn)
   useEffect(() => {
@@ -1107,6 +1208,7 @@ export function ConnectLnStudioPlayer({
           <iframe
             ref={ytIframeRef}
             key={activeYoutubeId}
+            data-connectln-player-id={effectivePlayerId}
             src={compliantYouTubeSrc}
             title={activeTitle}
             sandbox="allow-scripts allow-same-origin allow-presentation"
@@ -1130,6 +1232,7 @@ export function ConnectLnStudioPlayer({
           <iframe
             ref={externalIframeRef}
             key={resolvedExternalEmbedSrc}
+            data-connectln-player-id={effectivePlayerId}
             src={resolvedExternalEmbedSrc}
             title={activeTitle}
             sandbox="allow-scripts allow-same-origin allow-presentation"
@@ -1521,6 +1624,9 @@ export function ConnectLnStudioPlayer({
           }}
           onMuteOriginalVideo={(shouldDuck) => {
             isVoiceDuckingRef.current = shouldDuck
+            if (!shouldDuck) {
+              isInterpretingNeededRef.current = false
+            }
             applyVoiceDuckingToPlayer(shouldDuck)
           }}
         />

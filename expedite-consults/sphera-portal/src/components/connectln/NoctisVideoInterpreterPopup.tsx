@@ -1693,6 +1693,12 @@ export function NoctisVideoInterpreterPopup({
         }
       }
 
+      broadcastNoctisVoiceDuck(true)
+      if (onMuteOriginalVideoRef.current) {
+        onMuteOriginalVideoRef.current(true)
+      }
+      setPageVideoElementsDucking(true)
+
       const playPromise = audio.play()
       if (playPromise && typeof playPromise.catch === "function") {
         playPromise.catch((err: any) => {
@@ -1752,7 +1758,10 @@ export function NoctisVideoInterpreterPopup({
     (restoreFullOriginalVolume = true) => {
       isSpeakingRef.current = false
       setIsSpeaking(false)
-      stopAudioOutput(false)
+      stopAudioOutput(true)
+      if (typeof window !== "undefined") {
+        ;(window as any).__activeNoctisInterpreterId = ""
+      }
       if (restoreFullOriginalVolume) {
         broadcastNoctisVoiceDuck(false)
         if (onMuteOriginalVideoRef.current) {
@@ -1872,7 +1881,7 @@ export function NoctisVideoInterpreterPopup({
     const handleSyncNavbarLangChange = (e: Event) => {
       const custom = e as CustomEvent<LanguageCode>
       const newLang = custom.detail
-      if (!newLang || prevGlobalLangRef.current === newLang) return
+      if (!newLang) return
       prevGlobalLangRef.current = newLang
       if (typeof window !== "undefined") {
         ;(window as any).__noctisPreferredAudioLang = newLang
@@ -1894,6 +1903,12 @@ export function NoctisVideoInterpreterPopup({
           stopContinuousInterpretationRef.current(true)
         }
       } else {
+        if (isSpeakingRef.current) {
+          isSpeakingRef.current = false
+          setIsSpeaking(false)
+          setForceSpeakEvenIfSameLang(false)
+          forceSpeakRef.current = false
+        }
         setAudioLang(newLang)
         audioLangRef.current = newLang
       }
@@ -1929,6 +1944,22 @@ export function NoctisVideoInterpreterPopup({
       }
     }
   }, [language])
+
+  // Stop local speaking state immediately if another video claims exclusive play
+  useEffect(() => {
+    const handleOtherVideoPlayed = () => {
+      setTimeout(() => {
+        if (!isPlayingRef.current && isSpeakingRef.current && !isPopupOpenRef.current) {
+          isSpeakingRef.current = false
+          setIsSpeaking(false)
+          forceSpeakRef.current = false
+          setForceSpeakEvenIfSameLang(false)
+        }
+      }, 0)
+    }
+    window.addEventListener("connectln:exclusive-video-play", handleOtherVideoPlayed)
+    return () => window.removeEventListener("connectln:exclusive-video-play", handleOtherVideoPlayed)
+  }, [])
 
   // Continuously reinforce video/iframe muting while Noctis interpretation is actively speaking
   useEffect(() => {
@@ -2182,7 +2213,9 @@ export function NoctisVideoInterpreterPopup({
           startContinuousInterpretation(0)
         }
       }
-    } else if (!isPlaying && isSpeakingRef.current && !isPopupOpen && !forceSpeakRef.current) {
+    } else if (!isPlaying && isSpeakingRef.current && !isPopupOpen) {
+      setForceSpeakEvenIfSameLang(false)
+      forceSpeakRef.current = false
       stopContinuousInterpretation(true)
     }
   }, [
