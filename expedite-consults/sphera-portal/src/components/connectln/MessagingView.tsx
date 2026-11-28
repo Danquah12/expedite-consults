@@ -1601,8 +1601,30 @@ export function MessagingView({
     const unansweredVmStreamRef = useRef<MediaStream | null>(null);
     const unansweredVmTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const unansweredVmSpeechRef = useRef<any>(null);
+    const unansweredVmChunksRef = useRef<BlobPart[]>([]);
+    const unansweredVmAudioDataUrlRef = useRef<string>('');
 
-    const stopUnansweredVmCapture = () => {
+    const convertAudioBlobToCleanDataUrl = (blob: Blob): Promise<string> =>
+        new Promise((resolve) => {
+            if (!blob || blob.size === 0) {
+                resolve('');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                const rawResult = String(reader.result || '');
+                // Normalize "data:audio/webm;codecs=opus;base64,..." -> "data:audio/webm;base64,..." for universal HTML5 <audio> support
+                const normalized = rawResult.replace(
+                    /^data:audio\/([a-z0-9.+-]+);[^,]*;base64,/i,
+                    'data:audio/$1;base64,'
+                );
+                resolve(normalized);
+            };
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(blob);
+        });
+
+    const stopUnansweredVmCapture = async (): Promise<string> => {
         if (unansweredVmTimerRef.current) {
             clearInterval(unansweredVmTimerRef.current);
             unansweredVmTimerRef.current = null;
@@ -1610,40 +1632,110 @@ export function MessagingView({
         try {
             unansweredVmSpeechRef.current?.stop?.();
         } catch {}
-        if (unansweredVmRecRef.current && unansweredVmRecRef.current.state !== 'inactive') {
-            try {
-                unansweredVmRecRef.current.stop();
-            } catch {}
+
+        let finalizedDataUrl = unansweredVmAudioDataUrlRef.current || unansweredVmAudioDataUrl;
+        const mr = unansweredVmRecRef.current;
+        if (mr && mr.state !== 'inactive') {
+            finalizedDataUrl = await new Promise<string>((resolve) => {
+                let settled = false;
+                const finish = async () => {
+                    if (settled) return;
+                    settled = true;
+                    const mime = (mr.mimeType || 'audio/webm').split(';')[0] || 'audio/webm';
+                    const blob = new Blob(unansweredVmChunksRef.current, { type: mime });
+                    const url = await convertAudioBlobToCleanDataUrl(blob);
+                    if (url) {
+                        unansweredVmAudioDataUrlRef.current = url;
+                        setUnansweredVmAudioDataUrl(url);
+                    }
+                    resolve(url || unansweredVmAudioDataUrlRef.current);
+                };
+                const prevOnStop = mr.onstop;
+                mr.onstop = async (ev) => {
+                    try {
+                        prevOnStop?.call(mr, ev);
+                    } catch {}
+                    await finish();
+                };
+                try {
+                    mr.requestData?.();
+                } catch {}
+                try {
+                    mr.stop();
+                } catch {
+                    void finish();
+                }
+                setTimeout(() => {
+                    void finish();
+                }, 450);
+            });
+        } else if (!finalizedDataUrl && unansweredVmChunksRef.current.length > 0) {
+            const blob = new Blob(unansweredVmChunksRef.current, { type: 'audio/webm' });
+            finalizedDataUrl = await convertAudioBlobToCleanDataUrl(blob);
+            if (finalizedDataUrl) {
+                unansweredVmAudioDataUrlRef.current = finalizedDataUrl;
+                setUnansweredVmAudioDataUrl(finalizedDataUrl);
+            }
         }
+
         if (unansweredVmStreamRef.current) {
             unansweredVmStreamRef.current.getTracks().forEach((t) => t.stop());
             unansweredVmStreamRef.current = null;
         }
         setUnansweredVmRecording(false);
+        return finalizedDataUrl;
     };
 
     const startUnansweredVmCapture = async () => {
+        // Release any active WebRTC call microphone stream & call-silence lock so the user's mic records cleanly
+        stopCurrentCallMedia();
+        setCallMediaSilenceActive(false, 'messaging-huddle-call');
         setUnansweredVmAudioDataUrl('');
+        unansweredVmAudioDataUrlRef.current = '';
+        unansweredVmChunksRef.current = [];
         setUnansweredVmSec(0);
+        // Clear auto-filled template text when user starts recording their own live voice
+        setUnansweredVmTranscript((prev) =>
+            /^Hi\s+.+,\s+I tried (reaching|calling) you on a /i.test(prev.trim()) ? '' : prev
+        );
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                },
+                video: false,
+            });
             unansweredVmStreamRef.current = stream;
             const chunks: BlobPart[] = [];
-            const mr = new MediaRecorder(stream);
+            unansweredVmChunksRef.current = chunks;
+            const preferredMime =
+                typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported?.('audio/webm;codecs=opus')
+                    ? 'audio/webm;codecs=opus'
+                    : typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported?.('audio/mp4')
+                    ? 'audio/mp4'
+                    : undefined;
+            const mr = preferredMime
+                ? new MediaRecorder(stream, { mimeType: preferredMime, audioBitsPerSecond: 32000 })
+                : new MediaRecorder(stream);
             unansweredVmRecRef.current = mr;
             mr.ondataavailable = (e) => {
-                if (e.data && e.data.size > 0) chunks.push(e.data);
+                if (e.data && e.data.size > 0) {
+                    chunks.push(e.data);
+                }
             };
-            mr.onstop = () => {
-                const blob = new Blob(chunks, { type: mr.mimeType || 'audio/webm' });
-                const reader = new FileReader();
-                reader.onload = () => {
-                    setUnansweredVmAudioDataUrl(String(reader.result || ''));
-                };
-                reader.readAsDataURL(blob);
+            mr.onstop = async () => {
+                const mime = (mr.mimeType || 'audio/webm').split(';')[0] || 'audio/webm';
+                const blob = new Blob(chunks, { type: mime });
+                const cleanUrl = await convertAudioBlobToCleanDataUrl(blob);
+                if (cleanUrl) {
+                    unansweredVmAudioDataUrlRef.current = cleanUrl;
+                    setUnansweredVmAudioDataUrl(cleanUrl);
+                }
                 stream.getTracks().forEach((t) => t.stop());
             };
-            mr.start(250);
+            mr.start(200);
             setUnansweredVmRecording(true);
             unansweredVmTimerRef.current = setInterval(() => setUnansweredVmSec((s) => s + 1), 1000);
 
@@ -1679,6 +1771,9 @@ export function MessagingView({
 
     const openUnansweredVoicemailStage = () => {
         stopOutgoingCallerRingbackTone();
+        // Free the WebRTC call microphone stream & call-silence lock immediately so voicemail recording & playback work at full volume
+        stopCurrentCallMedia();
+        setCallMediaSilenceActive(false, 'messaging-huddle-call');
         const callKind = activeCallMode === 'video' ? 'video call' : 'voice call';
         if (!unansweredVmTranscript.trim() && activeThread) {
             setUnansweredVmTranscript(
@@ -1690,23 +1785,36 @@ export function MessagingView({
 
     const handleSendUnansweredVoicemailToInbox = async () => {
         if (!activeThread || unansweredVmSending) return;
-        stopUnansweredVmCapture();
         setUnansweredVmSending(true);
         try {
+            const capturedDataUrl = await stopUnansweredVmCapture();
+            const resolvedRecordedAudio =
+                capturedDataUrl || unansweredVmAudioDataUrlRef.current || unansweredVmAudioDataUrl;
             const callKindLabel = activeCallMode === 'video' ? 'Video Call' : 'Voice Call';
             const cleanTranscript =
                 unansweredVmTranscript.trim() ||
-                `Hi ${activeThread.title}, I tried reaching you on a ${callKindLabel.toLowerCase()} and missed you. Please check this voicemail and reply when free.`;
-            const durSec = Math.max(4, unansweredVmSec || 9);
+                (resolvedRecordedAudio && resolvedRecordedAudio.startsWith('data:audio/')
+                    ? `Recorded voice message (${Math.max(1, unansweredVmSec || 9)}s) from ${
+                          currentUser?.name || 'Kwesi Asiedu'
+                      } for ${activeThread.title}.`
+                    : `Hi ${activeThread.title}, I tried reaching you on a ${callKindLabel.toLowerCase()} and missed you. Please check this voicemail and reply when free.`);
+            const durSec = Math.max(1, unansweredVmSec || 9);
             const streamTtsUrl = `/api/connectin/tts?text=${encodeURIComponent(cleanTranscript)}&lang=en&speaker=${encodeURIComponent(
                 currentUser?.name || 'Kwesi Asiedu'
             )}`;
+            // Keep the user's real recorded microphone audio up to 5 MB (previously 35 KB truncated all real recordings > 1.5s!)
             const finalAudioDataUrl =
-                unansweredVmAudioDataUrl &&
-                unansweredVmAudioDataUrl.startsWith('data:audio/') &&
-                unansweredVmAudioDataUrl.length < 35000
-                    ? unansweredVmAudioDataUrl
+                resolvedRecordedAudio &&
+                resolvedRecordedAudio.startsWith('data:audio/') &&
+                resolvedRecordedAudio.length > 100 &&
+                resolvedRecordedAudio.length < 5_000_000
+                    ? resolvedRecordedAudio
                     : streamTtsUrl;
+
+            // Ensure all call silence locks are released so the voicemail audio player in the thread plays loud and unmuted
+            setCallMediaSilenceActive(false, 'messaging-huddle-call');
+            setCallMediaSilenceActive(false, 'incoming-call-banner');
+            setCallMediaSilenceActive(false, 'incoming-call-ringtone');
 
             // 1. Save to /api/connectin/voicemail asynchronously so UI updates immediately
             void fetch('/api/connectin/voicemail', {
@@ -1719,8 +1827,8 @@ export function MessagingView({
                     recipientName: activeThread.title,
                     recipientEmail: activeThread.recipientEmail,
                     audioDataUrl:
-                        unansweredVmAudioDataUrl && unansweredVmAudioDataUrl.startsWith('data:audio/')
-                            ? unansweredVmAudioDataUrl
+                        resolvedRecordedAudio && resolvedRecordedAudio.startsWith('data:audio/')
+                            ? resolvedRecordedAudio
                             : undefined,
                     durationSec: durSec,
                     transcript: cleanTranscript,
@@ -1753,6 +1861,8 @@ export function MessagingView({
             const voiceMarkerText = encodeVoiceNoteMarker(durSec, cleanTranscript, finalAudioDataUrl);
             setUnansweredVmTranscript('');
             setUnansweredVmAudioDataUrl('');
+            unansweredVmAudioDataUrlRef.current = '';
+            unansweredVmChunksRef.current = [];
             setUnansweredVmSec(0);
             await sendChatText(voiceMarkerText);
             triggerToast(`📼 Voicemail audio & transcribed text delivered to ${activeThread.title}'s message box!`);
@@ -3250,13 +3360,15 @@ export function MessagingView({
                     (typeof window !== 'undefined'
                         ? window.localStorage.getItem('connectln_my_whatsapp_phone_v1') || ''
                         : '');
+                const isFreshOutgoingSession =
+                    Date.now() - (callStartMsRef.current || Date.now()) < 15000;
                 const res = await fetch('/api/v1/calls', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     signal: controller.signal,
                     body: JSON.stringify({
                         action: isFirst ? 'join' : 'heartbeat',
-                        reopen: isFirst,
+                        reopen: isFirst || isFreshOutgoingSession,
                         call_id: activeThread.id,
                         user_id: huddleLocalPeerId,
                         peer_id: huddleMyPeerId || undefined,
@@ -3286,7 +3398,11 @@ export function MessagingView({
                 const data = await res.json();
                 if (!mounted) return;
 
-                if ((data?.call?.state === 'ENDED' || data?.event_type === 'call.ended') && !isFirst) {
+                if (
+                    (data?.call?.state === 'ENDED' || data?.event_type === 'call.ended') &&
+                    !isFirst &&
+                    !isFreshOutgoingSession
+                ) {
                     verifiedRemoteFramesRef.current.clear();
                     setRemoteHuddleParticipants([]);
                     setHuddleRemoteStreams({});
@@ -3470,6 +3586,7 @@ export function MessagingView({
         const onGlobalCallEnded = (ev: Event) => {
             const endedId = String((ev as CustomEvent)?.detail?.callId || '');
             if (!endedId || endedId !== activeThread.id) return;
+            if (Date.now() - (callStartMsRef.current || Date.now()) < 15000) return;
             verifiedRemoteFramesRef.current.clear();
             setRemoteHuddleParticipants([]);
             setHuddleRemoteStreams({});
