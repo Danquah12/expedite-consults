@@ -515,6 +515,13 @@ export function MessagingView({
     });
     const [activeMailboxFolder, setActiveMailboxFolder] = useState<ConnectLnMailboxFolder>('inbox');
     const [showMailFoldersRail, setShowMailFoldersRail] = useState<boolean>(true);
+    const [showSmartMoreFolders, setShowSmartMoreFolders] = useState<boolean>(false);
+    const [inboxQuickViewFilter, setInboxQuickViewFilter] = useState<'all' | 'unread' | 'flagged'>('all');
+    const [onlyWithAttachmentsFilter, setOnlyWithAttachmentsFilter] = useState<boolean>(false);
+    const [showViewsDropdown, setShowViewsDropdown] = useState<boolean>(false);
+    const [showNewMailSplitMenu, setShowNewMailSplitMenu] = useState<boolean>(false);
+    const [openThreadTabIds, setOpenThreadTabIds] = useState<string[]>([]);
+    const [lastClosedThreadTabId, setLastClosedThreadTabId] = useState<string | null>(null);
     const [activeCustomLabel, setActiveCustomLabel] = useState<string | null>(null);
     const [starredIds, setStarredIds] = useState<string[]>(() => {
         if (typeof window === 'undefined') return ['thread_trade_people_gus'];
@@ -1934,6 +1941,57 @@ export function MessagingView({
     const countByMailboxFolder = (folder: ConnectLnMailboxFolder): number =>
         threads.filter((t) => matchesMailboxFolder(t, folder)).length;
 
+    const getThreadTimeBucket = (
+        t: B2BConversationThread,
+        formattedLabel: string
+    ): 'Today' | 'Yesterday' | 'Last 7 days' => {
+        const raw = `${t.lastMessageTime || ''} ${formattedLabel || ''}`.toLowerCase();
+        if (
+            raw.includes('just now') ||
+            raw.includes('today') ||
+            /\b\d+\s*(m|min|mins|h|hr|hrs)\s*ago\b/.test(raw)
+        ) {
+            return 'Today';
+        }
+        if (raw.includes('yesterday') || /\b1\s*d\s*ago\b/.test(raw)) {
+            return 'Yesterday';
+        }
+        const lastMsg = t.messages?.[t.messages.length - 1];
+        const ts = Number((lastMsg as any)?.createdAtMs || 0);
+        if (ts > 0) {
+            const diffHrs = (Date.now() - ts) / (1000 * 60 * 60);
+            if (diffHrs < 24) return 'Today';
+            if (diffHrs < 48) return 'Yesterday';
+        }
+        return 'Last 7 days';
+    };
+
+    const getThreadAttachmentSizeLabel = (t: B2BConversationThread): string | null => {
+        for (const m of t.messages || []) {
+            for (const a of m.attachments || []) {
+                const sizeMatch = String(a?.name || '').match(/\((\d+(?:\.\d+)?\s*(?:KB|MB))\)/i);
+                if (sizeMatch?.[1]) return sizeMatch[1].toUpperCase();
+            }
+            const textMatch = String(m.text || '').match(/\((\d+(?:\.\d+)?\s*(?:KB|MB))\)/i);
+            if (textMatch?.[1]) return textMatch[1].toUpperCase();
+        }
+        if (hasAttachmentInThread(t)) {
+            const seed = t.id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+            return `${32 + (seed % 140)} KB`;
+        }
+        return null;
+    };
+
+    // Keep up to 3 open thread tabs in the top bar without crowding
+    useEffect(() => {
+        if (!selectedThreadId) return;
+        setOpenThreadTabIds((prev) => {
+            if (prev.includes(selectedThreadId)) return prev;
+            const next = [...prev, selectedThreadId];
+            return next.length > 3 ? next.slice(next.length - 3) : next;
+        });
+    }, [selectedThreadId]);
+
     // Filter threads based on activeMailboxFolder, activeCustomLabel, activeChannel & searchQuery
     // When a custom label or explicit channel tab is selected, filter across all threads so the thread list count matches the badge count
     const filteredThreads = threads.filter((t) => {
@@ -1943,6 +2001,13 @@ export function MessagingView({
                 : matchesMailboxFolder(t, activeMailboxFolder);
         const matchesLabel = matchesCustomLabel(t, activeCustomLabel);
         const matchesChannel = activeChannel === 'All' || t.channelType === activeChannel;
+        const matchesQuickView =
+            inboxQuickViewFilter === 'all'
+                ? true
+                : inboxQuickViewFilter === 'unread'
+                ? (t.unreadCount || 0) > 0
+                : isThreadStarredById(t.id);
+        const matchesAttachmentFilter = !onlyWithAttachmentsFilter || hasAttachmentInThread(t);
         const q = searchQuery.trim();
         const draftPreview = getEffectiveDraftForThread(t);
         const matchesSearch =
@@ -1959,7 +2024,14 @@ export function MessagingView({
                 ],
                 q
             ) > 0;
-        return matchesFolder && matchesLabel && matchesChannel && matchesSearch;
+        return (
+            matchesFolder &&
+            matchesLabel &&
+            matchesChannel &&
+            matchesQuickView &&
+            matchesAttachmentFilter &&
+            matchesSearch
+        );
     });
 
     const matchedDirectoryPeopleForSidebar: ShareTarget[] = (() => {
@@ -4450,19 +4522,159 @@ export function MessagingView({
                             </span>
                             <span className="text-[10px] opacity-75">{showEnclaveFilterBar ? '▴' : '▾'}</span>
                         </button>
+
+                        {/* Lightweight Open-Thread Workspace Tabs + Restore 1 Tab (Inline, zero extra height) */}
+                        {workspaceMode === 'chats' && (openThreadTabIds.length > 0 || lastClosedThreadTabId) && (
+                            <div
+                                data-testid="connectln-mail-open-tabs"
+                                className="hidden lg:flex items-center gap-1 pl-1 border-l border-slate-200 max-w-[520px] overflow-x-auto no-scrollbar"
+                            >
+                                {openThreadTabIds.map((tabThreadId) => {
+                                    const tabThread = threads.find((t) => t.id === tabThreadId);
+                                    if (!tabThread) return null;
+                                    const isActiveTab = activeThread?.id === tabThread.id;
+                                    return (
+                                        <div
+                                            key={tabThread.id}
+                                            onClick={() => handleSelectThread(tabThread)}
+                                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer shrink-0 ${
+                                                isActiveTab
+                                                    ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                                                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                                            }`}
+                                        >
+                                            <span className="max-w-[115px] truncate">{tabThread.title}</span>
+                                            {openThreadTabIds.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Close ${tabThread.title} tab`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setLastClosedThreadTabId(tabThread.id);
+                                                        setOpenThreadTabIds((prev) => {
+                                                            const next = prev.filter((id) => id !== tabThread.id);
+                                                            if (isActiveTab && next.length > 0) {
+                                                                setSelectedThreadId(next[next.length - 1]);
+                                                            }
+                                                            return next;
+                                                        });
+                                                    }}
+                                                    className={`text-[10px] leading-none px-0.5 rounded hover:bg-white/20 ${
+                                                        isActiveTab ? 'text-white/80 hover:text-white' : 'text-slate-400 hover:text-slate-800'
+                                                    }`}
+                                                >
+                                                    ✕
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                                {lastClosedThreadTabId && (
+                                    <button
+                                        type="button"
+                                        data-testid="connectln-restore-mail-tab"
+                                        onClick={() => {
+                                            const restoreId = lastClosedThreadTabId;
+                                            setLastClosedThreadTabId(null);
+                                            setOpenThreadTabIds((prev) =>
+                                                prev.includes(restoreId) ? prev : [...prev.slice(-2), restoreId]
+                                            );
+                                            setSelectedThreadId(restoreId);
+                                        }}
+                                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50/70 hover:bg-blue-100/80 border border-blue-200 text-[11px] font-bold text-[#0A66C2] cursor-pointer shrink-0"
+                                        title="Restore recently closed conversation tab"
+                                    >
+                                        <span>↺ Restore 1 tab</span>
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <button
-                            onClick={() => {
-                                setWorkspaceMode('chats');
-                                setShowNewMessageModal(true);
-                            }}
-                            className="px-3.5 py-1.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
-                            style={{ color: '#FFFFFF' }}
-                        >
-                            <span>✒️</span> New Message
-                        </button>
+                    {/* Split "New Mail | ▾" Primary CTA Button */}
+                    <div className="relative flex items-center shrink-0">
+                        <div className="inline-flex items-stretch rounded-lg bg-[#0A66C2] shadow-2xs overflow-hidden">
+                            <button
+                                type="button"
+                                data-testid="connectln-new-mail-btn"
+                                onClick={() => {
+                                    setWorkspaceMode('chats');
+                                    setShowNewMailSplitMenu(false);
+                                    setShowNewMessageModal(true);
+                                }}
+                                className="px-3 py-1.5 hover:bg-[#004182] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                                style={{ color: '#FFFFFF' }}
+                            >
+                                <span>✒️</span>
+                                <span>New Mail</span>
+                            </button>
+                            <button
+                                type="button"
+                                data-testid="connectln-new-mail-split-toggle"
+                                aria-label="More new mail options"
+                                onClick={() => setShowNewMailSplitMenu((prev) => !prev)}
+                                className="px-2 py-1.5 border-l border-white/25 hover:bg-[#004182] text-[10px] font-bold flex items-center justify-center transition-colors cursor-pointer"
+                                style={{ color: '#FFFFFF' }}
+                            >
+                                ▾
+                            </button>
+                        </div>
+                        {showNewMailSplitMenu && (
+                            <div className="absolute right-0 top-full mt-1.5 w-52 rounded-xl bg-white border border-slate-200 shadow-xl py-1 z-30 text-xs">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowNewMailSplitMenu(false);
+                                        setWorkspaceMode('chats');
+                                        setShowNewMessageModal(true);
+                                    }}
+                                    className="w-full px-3 py-2 text-left font-bold text-slate-800 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                                >
+                                    <span>✉️</span>
+                                    <span>New Mail / Direct Chat</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowNewMailSplitMenu(false);
+                                        setWorkspaceMode('chats');
+                                        const recipient = activeThread?.title?.split('(')[0]?.trim() || 'Partner';
+                                        const tpl = `Hi ${recipient}, sharing our updated ConnectLn scope and deliverables below. Please confirm your availability for a quick review.`;
+                                        setMessageInput(tpl);
+                                        triggerToast('📋 Loaded executive email template into composer.');
+                                        setTimeout(() => composerInputRef.current?.focus(), 40);
+                                    }}
+                                    className="w-full px-3 py-2 text-left font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                                >
+                                    <span>📋</span>
+                                    <span>Use Email Template</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowNewMailSplitMenu(false);
+                                        setWorkspaceMode('chats');
+                                        setShowScheduleSendPopover(true);
+                                    }}
+                                    className="w-full px-3 py-2 text-left font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                                >
+                                    <span>🕒</span>
+                                    <span>Schedule Mail Delivery</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowNewMailSplitMenu(false);
+                                        setWorkspaceMode('chats');
+                                        setShowScheduler(true);
+                                    }}
+                                    className="w-full px-3 py-2 text-left font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer border-t border-slate-100"
+                                >
+                                    <span>📅</span>
+                                    <span>Invite to Calendar Stream</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -4775,6 +4987,52 @@ export function MessagingView({
                                 </button>
                             );
                         })}
+
+                        {/* Collapsible "More ▾" Smart Folders (Snoozed, Newsletter, Notification, Scheduled) — zero default clutter */}
+                        <button
+                            type="button"
+                            data-testid="connectln-mail-more-folders-toggle"
+                            onClick={() => setShowSmartMoreFolders((prev) => !prev)}
+                            className="shrink-0 md:w-full flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-[#78716C] hover:bg-[#EFE8DA] transition-colors cursor-pointer whitespace-nowrap mt-0.5"
+                        >
+                            <span>More</span>
+                            <span className="text-[10px]">{showSmartMoreFolders ? '▴' : '▾'}</span>
+                        </button>
+
+                        {showSmartMoreFolders &&
+                            (
+                                [
+                                    { id: 'snoozed' as ConnectLnMailboxFolder, label: 'Snoozed', icon: '🕒' },
+                                    { id: 'promotions' as ConnectLnMailboxFolder, label: 'Newsletter', icon: '📰' },
+                                    { id: 'updates' as ConnectLnMailboxFolder, label: 'Notification', icon: '🔔' },
+                                    { id: 'scheduled' as ConnectLnMailboxFolder, label: 'Scheduled', icon: '📅' },
+                                ] as const
+                            ).map((sub) => {
+                                const isActive = activeMailboxFolder === sub.id && !activeCustomLabel;
+                                const count = countByMailboxFolder(sub.id);
+                                return (
+                                    <button
+                                        key={sub.id}
+                                        type="button"
+                                        onClick={() => handleSelectMailboxFolder(sub.id)}
+                                        className={`shrink-0 md:w-full flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer whitespace-nowrap ${
+                                            isActive
+                                                ? 'bg-[#E8D8C8] text-[#3B1E10] font-extrabold shadow-2xs'
+                                                : 'text-slate-600 font-medium hover:bg-[#EFE8DA]'
+                                        }`}
+                                    >
+                                        <span className="flex items-center gap-2 min-w-0 truncate">
+                                            <span className="text-xs shrink-0">{sub.icon}</span>
+                                            <span className="truncate">{sub.label}</span>
+                                        </span>
+                                        {count > 0 && (
+                                            <span className="text-[10px] font-semibold text-slate-500 shrink-0">
+                                                {count}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
                     </div>
                 </div>
                 )}
@@ -5053,6 +5311,72 @@ export function MessagingView({
                                     userEmail={currentUser?.email}
                                 />
                             </div>
+
+                            {/* Compact "▽ Views" & "📎 Attachments" Header Filters (Zero Clutter) */}
+                            <div className="relative flex items-center gap-1 shrink-0">
+                                <button
+                                    type="button"
+                                    data-testid="connectln-mail-views-btn"
+                                    onClick={() => setShowViewsDropdown((prev) => !prev)}
+                                    className={`px-2 py-1 rounded-lg text-[11px] font-bold border flex items-center gap-1 transition-colors cursor-pointer ${
+                                        inboxQuickViewFilter !== 'all'
+                                            ? 'bg-blue-50 text-[#0A66C2] border-blue-200'
+                                            : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+                                    }`}
+                                    title="Filter view (All, Unread, Flagged)"
+                                >
+                                    <span>▽</span>
+                                    <span>
+                                        {inboxQuickViewFilter === 'all'
+                                            ? 'Views'
+                                            : inboxQuickViewFilter === 'unread'
+                                            ? 'Unread'
+                                            : 'Flagged'}
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    data-testid="connectln-mail-attachments-filter-btn"
+                                    onClick={() => setOnlyWithAttachmentsFilter((prev) => !prev)}
+                                    className={`px-2 py-1 rounded-lg text-[11px] font-bold border flex items-center gap-1 transition-colors cursor-pointer ${
+                                        onlyWithAttachmentsFilter
+                                            ? 'bg-blue-50 text-[#0A66C2] border-blue-200'
+                                            : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+                                    }`}
+                                    title="Filter messages with attachments"
+                                >
+                                    <span>📎</span>
+                                    <span className="hidden sm:inline">Files</span>
+                                </button>
+                                {showViewsDropdown && (
+                                    <div className="absolute right-0 top-full mt-1 w-40 rounded-xl bg-white border border-slate-200 shadow-lg py-1 z-30 text-xs">
+                                        {(
+                                            [
+                                                { id: 'all', label: 'All messages' },
+                                                { id: 'unread', label: 'Unread only' },
+                                                { id: 'flagged', label: 'Flagged / Starred' },
+                                            ] as const
+                                        ).map((opt) => (
+                                            <button
+                                                key={opt.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setInboxQuickViewFilter(opt.id);
+                                                    setShowViewsDropdown(false);
+                                                }}
+                                                className={`w-full px-3 py-1.5 text-left flex items-center justify-between hover:bg-slate-50 cursor-pointer ${
+                                                    inboxQuickViewFilter === opt.id
+                                                        ? 'font-extrabold text-[#0A66C2] bg-blue-50/50'
+                                                        : 'font-medium text-slate-700'
+                                                }`}
+                                            >
+                                                <span>{opt.label}</span>
+                                                {inboxQuickViewFilter === opt.id && <span>✓</span>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                                 {(activeCustomLabel || activeMailboxFolder !== 'inbox') && (
                                     <p className="text-[11px] text-slate-500 font-semibold flex items-center gap-1.5 flex-wrap mt-0.5">
@@ -5292,7 +5616,7 @@ export function MessagingView({
                                 </div>
                             </div>
                         ) : (
-                            filteredThreads.map((thread) => {
+                            filteredThreads.map((thread, idx) => {
                                 const isSelected = activeThread?.id === thread.id;
                                 const isStarred = isThreadStarredById(thread.id);
                                 const effectiveDraft = getEffectiveDraftForThread(thread);
@@ -5305,61 +5629,101 @@ export function MessagingView({
                                     lastMsg,
                                     thread.lastMessageTime
                                 );
+                                const timeBucket = getThreadTimeBucket(thread, formattedDateLabel);
+                                const prevThread = idx > 0 ? filteredThreads[idx - 1] : null;
+                                const prevBucket = prevThread
+                                    ? getThreadTimeBucket(
+                                          prevThread,
+                                          formatMessageSentDateTime(
+                                              prevThread.messages?.[prevThread.messages.length - 1],
+                                              prevThread.lastMessageTime
+                                          )
+                                      )
+                                    : null;
+                                const showTimeBucketHeader = idx === 0 || timeBucket !== prevBucket;
+                                const attachmentSizeLabel = getThreadAttachmentSizeLabel(thread);
+                                const isTrustedSender =
+                                    Boolean(thread.isVerified) ||
+                                    Boolean(
+                                        thread.recipientEmail &&
+                                            /@(linkedin\.com|connectln\.com|expedite-consults\.com)$/i.test(
+                                                thread.recipientEmail.trim()
+                                            )
+                                    );
                                 return (
-                                    <div
-                                        key={thread.id}
-                                        onClick={() => handleSelectThread(thread)}
-                                        className={`p-3.5 flex gap-3 cursor-pointer transition-all relative group ${
-                                            isSelected
-                                                ? 'bg-blue-50/90 border-l-4 border-l-[#0A66C2]'
-                                                : 'bg-white hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        {/* Avatar */}
-                                        <div className="relative shrink-0">
-                                            <img
-                                                src={resolveValidMessagingAvatarUrl(thread.avatar, thread.title)}
-                                                alt={thread.title}
-                                                onError={(e) => {
-                                                    e.currentTarget.onerror = null;
-                                                    e.currentTarget.src = resolveValidMessagingAvatarUrl('', thread.title);
-                                                }}
-                                                className={`w-12 h-12 object-cover border border-slate-200 shadow-sm ${
-                                                    thread.channelType === 'People'
-                                                        ? 'rounded-full'
-                                                        : 'rounded-xl'
-                                                }`}
-                                            />
-                                            {thread.onlineStatus === 'online' && (
-                                                <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center absolute -bottom-0.5 -right-0.5">
-                                                    <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
-                                                    <span className="relative w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm online-dot-blink" />
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* Content */}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-baseline mb-0.5 gap-1.5">
-                                                <h4 className="font-bold text-sm text-slate-900 truncate flex items-center gap-1">
-                                                    <span className="truncate">{thread.title}</span>
-                                                    {thread.isVerified && (
-                                                        <svg
-                                                            className="w-3.5 h-3.5 text-[#0A66C2] shrink-0"
-                                                            fill="currentColor"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                                                        </svg>
-                                                    )}
-                                                </h4>
-                                                <span
-                                                    className="text-[10px] font-medium text-slate-400 shrink-0 whitespace-nowrap"
-                                                    title={`Last message date & time: ${formattedDateLabel}`}
-                                                >
-                                                    {formattedDateLabel.split(' · ')[0] || formattedDateLabel}
-                                                </span>
+                                    <React.Fragment key={thread.id}>
+                                        {showTimeBucketHeader && (
+                                            <div
+                                                data-testid="connectln-mail-time-bucket"
+                                                className="px-3.5 py-1 bg-slate-50/90 text-[10px] font-bold text-slate-500 tracking-wide select-none"
+                                            >
+                                                {timeBucket}
                                             </div>
+                                        )}
+                                        <div
+                                            onClick={() => handleSelectThread(thread)}
+                                            className={`p-3.5 flex gap-3 cursor-pointer transition-all relative group ${
+                                                isSelected
+                                                    ? 'bg-blue-50/90 border-l-4 border-l-[#0A66C2]'
+                                                    : 'bg-white hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            {/* Avatar */}
+                                            <div className="relative shrink-0">
+                                                <img
+                                                    src={resolveValidMessagingAvatarUrl(thread.avatar, thread.title)}
+                                                    alt={thread.title}
+                                                    onError={(e) => {
+                                                        e.currentTarget.onerror = null;
+                                                        e.currentTarget.src = resolveValidMessagingAvatarUrl('', thread.title);
+                                                    }}
+                                                    className={`w-12 h-12 object-cover border border-slate-200 shadow-sm ${
+                                                        thread.channelType === 'People'
+                                                            ? 'rounded-full'
+                                                            : 'rounded-xl'
+                                                    }`}
+                                                />
+                                                {thread.onlineStatus === 'online' && (
+                                                    <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center absolute -bottom-0.5 -right-0.5">
+                                                        <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                                                        <span className="relative w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm online-dot-blink" />
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-baseline mb-0.5 gap-1.5">
+                                                    <h4 className="font-bold text-sm text-slate-900 truncate flex items-center gap-1">
+                                                        <span className="truncate">{thread.title}</span>
+                                                        {isTrustedSender && (
+                                                            <svg
+                                                                className="w-3.5 h-3.5 text-[#0A66C2] shrink-0"
+                                                                fill="currentColor"
+                                                                viewBox="0 0 24 24"
+                                                                aria-label="Verified sender"
+                                                            >
+                                                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                                                            </svg>
+                                                        )}
+                                                    </h4>
+                                                    <span
+                                                        className="text-[10px] font-medium text-slate-400 shrink-0 whitespace-nowrap flex items-center gap-1.5"
+                                                        title={`Last message date & time: ${formattedDateLabel}`}
+                                                    >
+                                                        {attachmentSizeLabel && (
+                                                            <span
+                                                                data-testid="connectln-mail-size-pill"
+                                                                className="font-mono text-[9.5px] text-slate-400"
+                                                            >
+                                                                {attachmentSizeLabel}
+                                                            </span>
+                                                        )}
+                                                        <span>
+                                                            {formattedDateLabel.split(' · ')[0] || formattedDateLabel}
+                                                        </span>
+                                                    </span>
+                                                </div>
 
                                             {/* Clean Subtitle */}
                                             <p className="text-[11px] text-slate-500 font-medium truncate mb-0.5">
@@ -5421,6 +5785,7 @@ export function MessagingView({
                                             </div>
                                         </div>
                                     </div>
+                                    </React.Fragment>
                                 );
                             })
                         )}
