@@ -382,7 +382,11 @@ export function ConnectLnRichBubbleContent({
       parsed.voice.transcript || "Voicemail recorded on ConnectLn"
     )}&lang=en&speaker=${encodeURIComponent(msg.sender?.name || "Caller")}`
     const playableAudioSrc =
-      parsed.voice.dataUrl && parsed.voice.dataUrl.startsWith("data:audio/")
+      parsed.voice.dataUrl &&
+      (parsed.voice.dataUrl.startsWith("data:audio/") ||
+        parsed.voice.dataUrl.startsWith("/api/connectin/tts") ||
+        parsed.voice.dataUrl.startsWith("http") ||
+        parsed.voice.dataUrl.startsWith("blob:"))
         ? parsed.voice.dataUrl
         : fallbackTtsAudioSrc
     const audioFileName = `Voicemail_${(msg.sender?.name || "Caller").replace(/\s+/g, "_")}_${parsed.voice.durationSec}s.mp3`

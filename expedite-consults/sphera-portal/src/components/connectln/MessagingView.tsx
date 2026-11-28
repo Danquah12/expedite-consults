@@ -1697,30 +1697,18 @@ export function MessagingView({
                 unansweredVmTranscript.trim() ||
                 `Hi ${activeThread.title}, I tried reaching you on a ${callKindLabel.toLowerCase()} and missed you. Please check this voicemail and reply when free.`;
             const durSec = Math.max(4, unansweredVmSec || 9);
-            let finalAudioDataUrl = unansweredVmAudioDataUrl;
+            const streamTtsUrl = `/api/connectin/tts?text=${encodeURIComponent(cleanTranscript)}&lang=en&speaker=${encodeURIComponent(
+                currentUser?.name || 'Kwesi Asiedu'
+            )}`;
+            const finalAudioDataUrl =
+                unansweredVmAudioDataUrl &&
+                unansweredVmAudioDataUrl.startsWith('data:audio/') &&
+                unansweredVmAudioDataUrl.length < 35000
+                    ? unansweredVmAudioDataUrl
+                    : streamTtsUrl;
 
-            // Ensure a real playable audio file (data:audio/mpeg;base64,...) is ALWAYS attached to the person's message box
-            if (!finalAudioDataUrl || !finalAudioDataUrl.startsWith('data:audio/')) {
-                try {
-                    const ttsRes = await fetch(
-                        `/api/connectin/tts?text=${encodeURIComponent(cleanTranscript)}&lang=en&speaker=${encodeURIComponent(
-                            currentUser?.name || 'Kwesi Asiedu'
-                        )}`
-                    );
-                    if (ttsRes.ok) {
-                        const buf = await ttsRes.arrayBuffer();
-                        const bytes = new Uint8Array(buf);
-                        let bin = '';
-                        for (let i = 0; i < bytes.byteLength; i++) {
-                            bin += String.fromCharCode(bytes[i]);
-                        }
-                        finalAudioDataUrl = `data:audio/mpeg;base64,${btoa(bin)}`;
-                    }
-                } catch {}
-            }
-
-            // 1. Save to /api/connectin/voicemail
-            await fetch('/api/connectin/voicemail', {
+            // 1. Save to /api/connectin/voicemail asynchronously so UI updates immediately
+            void fetch('/api/connectin/voicemail', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1729,7 +1717,10 @@ export function MessagingView({
                     callerEmail: currentUser?.email,
                     recipientName: activeThread.title,
                     recipientEmail: activeThread.recipientEmail,
-                    audioDataUrl: finalAudioDataUrl,
+                    audioDataUrl:
+                        unansweredVmAudioDataUrl && unansweredVmAudioDataUrl.startsWith('data:audio/')
+                            ? unansweredVmAudioDataUrl
+                            : undefined,
                     durationSec: durSec,
                     transcript: cleanTranscript,
                 }),
@@ -1744,7 +1735,7 @@ export function MessagingView({
             verifiedRemoteFramesRef.current.clear();
             stopCurrentCallMedia();
             if (endingThreadId) {
-                fetch('/api/v1/calls', {
+                void fetch('/api/v1/calls', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     keepalive: true,
@@ -1758,13 +1749,11 @@ export function MessagingView({
             }
 
             // 3. Put BOTH the transcribed words AND the attached recorded voicemail audio directly into the person's message box!
-            const attachmentFileName = `Voicemail_${activeThread.title.replace(/\s+/g, '_')}_${durSec}s.mp3`;
             const voiceMarkerText = encodeVoiceNoteMarker(durSec, cleanTranscript, finalAudioDataUrl);
-            setPendingAttachment(attachmentFileName);
-            await sendChatText(voiceMarkerText);
             setUnansweredVmTranscript('');
             setUnansweredVmAudioDataUrl('');
             setUnansweredVmSec(0);
+            await sendChatText(voiceMarkerText);
             triggerToast(`📼 Voicemail audio & transcribed text delivered to ${activeThread.title}'s message box!`);
         } finally {
             setUnansweredVmSending(false);

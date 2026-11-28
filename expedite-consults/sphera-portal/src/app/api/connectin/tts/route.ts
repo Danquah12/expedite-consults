@@ -726,14 +726,14 @@ async function synthesizeStudioHumanVoice(
 ): Promise<{ buffer: Buffer; actor: string } | null> {
   const candidates = [primaryVoiceName, backupVoiceName, "en-US-AndrewMultilingualNeural"]
   for (const voice of candidates) {
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const buf = await synthesizeStudioHumanVoiceAttempt(text, voice)
         if (buf && buf.byteLength > 200) {
           return { buffer: buf, actor: voice }
         }
       } catch {
-        // Retry once on transient socket/clock-skew error, then try next studio human actor
+        // Retry on transient socket/clock-skew error, then try next studio human actor
       }
     }
   }
