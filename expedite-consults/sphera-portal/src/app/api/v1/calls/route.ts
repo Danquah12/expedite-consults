@@ -2487,8 +2487,20 @@ export async function POST(req: NextRequest) {
         isColdForCall || action === "join" || action === "create"
       ).catch(() => {})
 
-      if (action === "create" || (action === "join" && body.reopen && !body.is_answering_recipient)) {
+      if (
+        action === "create" ||
+        ((action === "join" || action === "heartbeat") && body.reopen && !body.is_answering_recipient)
+      ) {
         ENDED_CALL_TOMBSTONES.delete(callId)
+        await firebaseKvDeleteItem(CALLS_SYNC_MAP_NAME, makeCloudEndedKey(callId)).catch(() => {})
+        const prevEnded = ACTIVE_CALLS_STORE.get(callId)
+        if (prevEnded && prevEnded.state === "ENDED") {
+          prevEnded.state = "RINGING"
+          prevEnded.ended_at = null
+          prevEnded.participants = []
+          prevEnded.shared_stage = null
+          prevEnded.state_version += 1
+        }
       }
 
       if (

@@ -3255,7 +3255,7 @@ export function MessagingView({
                     headers: { 'Content-Type': 'application/json' },
                     signal: controller.signal,
                     body: JSON.stringify({
-                        action: 'heartbeat',
+                        action: isFirst ? 'join' : 'heartbeat',
                         reopen: isFirst,
                         call_id: activeThread.id,
                         user_id: huddleLocalPeerId,
@@ -8548,6 +8548,7 @@ export function MessagingView({
 
                             <button
                                 type="button"
+                                data-testid="huddle-end-or-leave-voicemail-btn"
                                 onClick={handleEndCallAndLog}
                                 className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-black cursor-pointer flex items-center gap-1.5"
                                 style={{ color: '#FFFFFF', border: '1px solid rgba(251, 113, 133, 0.5)' }}
