@@ -287,8 +287,7 @@ export function ConnectLnStudioPlayer({
     typeof window !== "undefined" && (window as any).__noctisPreferredAudioLang
       ? String((window as any).__noctisPreferredAudioLang).toLowerCase()
       : language
-  const isInterpretingNeeded =
-    language !== normalizedSourceLang || preferredNoctisLang !== normalizedSourceLang
+  const isInterpretingNeeded = preferredNoctisLang !== normalizedSourceLang
   const isInterpretingNeededRef = useRef(isInterpretingNeeded)
   isInterpretingNeededRef.current = isInterpretingNeeded
   const sourceLangRef = useRef(normalizedSourceLang)
@@ -297,6 +296,7 @@ export function ConnectLnStudioPlayer({
 
   const containerRef = useRef<HTMLDivElement>(null)
   const ytIframeRef = useRef<HTMLIFrameElement>(null)
+  const externalIframeRef = useRef<HTMLIFrameElement>(null)
   const html5VideoRef = useRef<HTMLVideoElement>(null)
   const generatedIdRef = useRef<string>(`cln-studio-${Math.random().toString(36).slice(2, 10)}`)
   const effectivePlayerId = playerId || generatedIdRef.current
@@ -504,10 +504,14 @@ export function ConnectLnStudioPlayer({
     if (isVoiceDuckingRef.current || isInterpretingNeededRef.current) return true
     if (typeof window !== "undefined") {
       if ((window as any).__noctisVoiceDuckingActive === true) return true
-      if ((window as any).__noctisPreferredAudioLang) {
-        const pref = String((window as any).__noctisPreferredAudioLang).toLowerCase()
-        if (pref !== sourceLangRef.current) return true
-      }
+      const activeTarget = (
+        (window as any).__noctisPreferredAudioLang ||
+        document.documentElement.getAttribute("lang") ||
+        ""
+      )
+        .toString()
+        .toLowerCase()
+      if (activeTarget && activeTarget !== sourceLangRef.current) return true
     }
     return false
   }, [])
@@ -522,6 +526,17 @@ export function ConnectLnStudioPlayer({
       if (isHtml5Direct && html5VideoRef.current) {
         html5VideoRef.current.muted = muteActive
         html5VideoRef.current.volume = muteActive ? 0 : 1
+        setIsMutedState(muteActive)
+        return
+      }
+      if (effectiveProvider === "vimeo") {
+        const extWin = externalIframeRef.current?.contentWindow
+        if (extWin) {
+          try {
+            extWin.postMessage(JSON.stringify({ method: "setVolume", value: muteActive ? 0 : 1 }), "*")
+            extWin.postMessage(JSON.stringify({ method: "setMuted", value: muteActive }), "*")
+          } catch {}
+        }
         setIsMutedState(muteActive)
         return
       }
@@ -542,7 +557,13 @@ export function ConnectLnStudioPlayer({
               sendYtCommand("mute")
             }
           }, 450)
-          duckReinforceTimersRef.current.push(t1, t2)
+          const t3 = setTimeout(() => {
+            if (shouldMuteForTranslation()) {
+              sendYtCommand("setVolume", [0])
+              sendYtCommand("mute")
+            }
+          }, 1000)
+          duckReinforceTimersRef.current.push(t1, t2, t3)
         } else if (!initialMuted && hasSessionAudioActivation()) {
           sendYtCommand("unMute")
           sendYtCommand("setVolume", [100])
@@ -554,13 +575,16 @@ export function ConnectLnStudioPlayer({
   )
 
   useEffect(() => {
-    const syncMuteOnLangOrDuck = (forcedDuck?: boolean) => {
-      const targetPref =
-        typeof window !== "undefined" && (window as any).__noctisPreferredAudioLang
-          ? String((window as any).__noctisPreferredAudioLang).toLowerCase()
-          : language
-      const differsFromSource =
-        language !== sourceLangRef.current || targetPref !== sourceLangRef.current
+    const syncMuteOnLangOrDuck = (forcedDuck?: boolean, incomingLang?: string) => {
+      const activeTarget = (
+        incomingLang ||
+        (typeof window !== "undefined" && (window as any).__noctisPreferredAudioLang) ||
+        language ||
+        ""
+      )
+        .toString()
+        .toLowerCase()
+      const differsFromSource = Boolean(activeTarget && activeTarget !== sourceLangRef.current)
       const globalDuck =
         typeof window !== "undefined" && (window as any).__noctisVoiceDuckingActive === true
       const shouldMute = Boolean(forcedDuck || differsFromSource || globalDuck)
@@ -570,7 +594,11 @@ export function ConnectLnStudioPlayer({
 
     syncMuteOnLangOrDuck()
 
-    const handleLangEvt = () => syncMuteOnLangOrDuck()
+    const handleLangEvt = (e: Event) => {
+      const detail = (e as CustomEvent<any>).detail
+      const nextLang = typeof detail === "string" ? detail : detail?.langCode
+      syncMuteOnLangOrDuck(undefined, nextLang)
+    }
     const handleDuckEvt = (e: Event) => {
       const custom = e as CustomEvent<{ duck?: boolean }>
       syncMuteOnLangOrDuck(Boolean(custom.detail?.duck))
@@ -935,6 +963,13 @@ export function ConnectLnStudioPlayer({
 
   const toggleYouTubeMute = useCallback(() => {
     if (isMutedState) {
+      if (shouldMuteForTranslation()) {
+        sendYtCommand("setVolume", [0])
+        sendYtCommand("mute")
+        setIsMutedState(true)
+        revealControlsTemporarily()
+        return
+      }
       ;(window as any).__connectlnAudioUnlocked = true
       sendYtCommand("unMute")
       sendYtCommand("setVolume", [100])
@@ -945,7 +980,7 @@ export function ConnectLnStudioPlayer({
       setIsMutedState(true)
     }
     revealControlsTemporarily()
-  }, [isMutedState, revealControlsTemporarily, sendYtCommand])
+  }, [isMutedState, revealControlsTemporarily, sendYtCommand, shouldMuteForTranslation])
 
   const toggleFullscreen = useCallback(() => {
     const el = containerRef.current
@@ -1083,11 +1118,17 @@ export function ConnectLnStudioPlayer({
               if (win) {
                 win.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*")
               }
+              if (shouldMuteForTranslation()) {
+                sendYtCommand("setVolume", [0])
+                sendYtCommand("mute")
+                setIsMutedState(true)
+              }
             }}
             className="h-full w-full border-0 pointer-events-none select-none"
           />
         ) : resolvedExternalEmbedSrc ? (
           <iframe
+            ref={externalIframeRef}
             key={resolvedExternalEmbedSrc}
             src={resolvedExternalEmbedSrc}
             title={activeTitle}

@@ -193,11 +193,14 @@ export function VideoShareBanner({
     const vid = directVideoRef.current
     if (!vid) return
 
-    const isNoctisTranslationMutingActive = () => {
+    const isNoctisTranslationMutingActive = (incomingLang?: string) => {
       if (typeof window === "undefined") return false
       if ((window as any).__noctisVoiceDuckingActive) return true
+      if (incomingLang && incomingLang.trim().toLowerCase() !== "en") return true
       const prefLang = String((window as any).__noctisPreferredAudioLang || "").toLowerCase()
       if (prefLang && prefLang !== "en") return true
+      const htmlLang = (document.documentElement.getAttribute("lang") || "").toLowerCase()
+      if (htmlLang && htmlLang !== "en") return true
       try {
         const storedLang = (localStorage.getItem("sphera-lang") || "").toLowerCase()
         if (storedLang && storedLang !== "en") return true
@@ -205,9 +208,9 @@ export function VideoShareBanner({
       return false
     }
 
-    const syncDirectMuteState = () => {
+    const syncDirectMuteState = (incomingLang?: string) => {
       if (!directVideoRef.current) return
-      if (isNoctisTranslationMutingActive()) {
+      if (isNoctisTranslationMutingActive(incomingLang)) {
         directVideoRef.current.muted = true
         directVideoRef.current.volume = 0
         setIsDirectMuted(true)
@@ -245,10 +248,10 @@ export function VideoShareBanner({
     }
 
     const onDuckOrLangChange = (e: Event) => {
-      const custom = e as CustomEvent<{ duck?: boolean } | string>
+      const custom = e as CustomEvent<{ duck?: boolean; langCode?: string } | string>
       if (e.type === "connectln:noctis-voice-duck") {
         const duck = Boolean((custom.detail as any)?.duck)
-        if (duck) {
+        if (duck || isNoctisTranslationMutingActive()) {
           syncDirectMuteState()
         } else if (!isNoctisTranslationMutingActive() && directVideoRef.current && !directVideoRef.current.paused) {
           directVideoRef.current.muted = false
@@ -256,7 +259,11 @@ export function VideoShareBanner({
           setIsDirectMuted(false)
         }
       } else {
-        syncDirectMuteState()
+        const detail = custom.detail
+        const incomingLang = typeof detail === "string" ? detail : detail?.langCode
+        if ((incomingLang && incomingLang.toLowerCase() !== "en") || isNoctisTranslationMutingActive(incomingLang)) {
+          syncDirectMuteState(incomingLang)
+        }
       }
     }
 
@@ -264,11 +271,13 @@ export function VideoShareBanner({
     window.addEventListener("keydown", unlockDirect, { passive: true })
     window.addEventListener("connectln:noctis-voice-duck", onDuckOrLangChange)
     window.addEventListener("sphera-lang-changed", onDuckOrLangChange)
+    window.addEventListener("connectln:noctis-command-language", onDuckOrLangChange)
     return () => {
       window.removeEventListener("pointerdown", unlockDirect)
       window.removeEventListener("keydown", unlockDirect)
       window.removeEventListener("connectln:noctis-voice-duck", onDuckOrLangChange)
       window.removeEventListener("sphera-lang-changed", onDuckOrLangChange)
+      window.removeEventListener("connectln:noctis-command-language", onDuckOrLangChange)
     }
   }, [isPlayingInline, resolvedYtId])
 
@@ -446,14 +455,44 @@ export function VideoShareBanner({
                     muted={isDirectMuted}
                     playsInline
                     loop
-                    onVolumeChange={(e) => setIsDirectMuted(e.currentTarget.muted)}
+                    onPlay={(e) => {
+                      const w = typeof window !== "undefined" ? (window as any) : {}
+                      const htmlLang = typeof document !== "undefined" ? (document.documentElement.getAttribute("lang") || "").toLowerCase() : ""
+                      const prefLang = String(w.__noctisPreferredAudioLang || "").toLowerCase()
+                      if (w.__noctisVoiceDuckingActive || (prefLang && prefLang !== "en") || (htmlLang && htmlLang !== "en")) {
+                        e.currentTarget.muted = true
+                        e.currentTarget.volume = 0
+                        setIsDirectMuted(true)
+                      }
+                    }}
+                    onVolumeChange={(e) => {
+                      const w = typeof window !== "undefined" ? (window as any) : {}
+                      const htmlLang = typeof document !== "undefined" ? (document.documentElement.getAttribute("lang") || "").toLowerCase() : ""
+                      const prefLang = String(w.__noctisPreferredAudioLang || "").toLowerCase()
+                      const shouldForceMute = Boolean(
+                        w.__noctisVoiceDuckingActive || (prefLang && prefLang !== "en") || (htmlLang && htmlLang !== "en")
+                      )
+                      if (shouldForceMute && (!e.currentTarget.muted || e.currentTarget.volume > 0)) {
+                        e.currentTarget.muted = true
+                        e.currentTarget.volume = 0
+                        setIsDirectMuted(true)
+                        return
+                      }
+                      setIsDirectMuted(e.currentTarget.muted)
+                    }}
                     className="h-full w-full object-cover bg-black"
                   />
-                  {isDirectMuted && (
+                  {isDirectMuted && (typeof window === "undefined" || !(window as any).__noctisVoiceDuckingActive) && (
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation()
+                        const w = typeof window !== "undefined" ? (window as any) : {}
+                        const htmlLang = typeof document !== "undefined" ? (document.documentElement.getAttribute("lang") || "").toLowerCase() : ""
+                        const prefLang = String(w.__noctisPreferredAudioLang || "").toLowerCase()
+                        if (w.__noctisVoiceDuckingActive || (prefLang && prefLang !== "en") || (htmlLang && htmlLang !== "en")) {
+                          return
+                        }
                         if (directVideoRef.current) {
                           directVideoRef.current.muted = false
                           directVideoRef.current.volume = 1

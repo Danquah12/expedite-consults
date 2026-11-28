@@ -1276,6 +1276,7 @@ function primeSharedAudioOnUserGesture() {
 }
 
 const QUICK_AUDIO_LANG_CHIPS: LanguageCode[] = ["es", "pl", "fr", "zh", "vi", "en", "ak", "ar"]
+const EMPTY_TAKEAWAYS: string[] = []
 
 export function NoctisVideoInterpreterPopup({
   youtubeId,
@@ -1284,7 +1285,7 @@ export function NoctisVideoInterpreterPopup({
   speakerRole = "",
   serialPlate = "CLN-VID",
   description = "",
-  takeaways = [],
+  takeaways = EMPTY_TAKEAWAYS,
   sourceLanguage = "en",
   sourceLanguageLabel,
   currentTime = 0,
@@ -1376,6 +1377,8 @@ export function NoctisVideoInterpreterPopup({
   forceSpeakRef.current = forceSpeakEvenIfSameLang
   const speakerNameRef = useRef(speaker)
   speakerNameRef.current = speaker
+  const takeawaysRef = useRef<string[]>(takeaways)
+  takeawaysRef.current = takeaways
   const onMuteOriginalVideoRef = useRef(onMuteOriginalVideo)
   onMuteOriginalVideoRef.current = onMuteOriginalVideo
   const onRequestPlayVideoRef = useRef(onRequestPlayVideo)
@@ -1393,7 +1396,7 @@ export function NoctisVideoInterpreterPopup({
     ensureSharedAudioBoostGraph(audioEl)
   }, [])
 
-  // Completely MUTE any HTML5 <video> elements on the page when Noctis interpretation is active
+  // Completely MUTE any HTML5 <video> and YouTube/Vimeo <iframe> players on the page when Noctis interpretation is active
   // so you NEVER hear two people talking at the same time on desktop or mobile!
   const setPageVideoElementsDucking = useCallback((duck: boolean) => {
     if (typeof document === "undefined" || typeof window === "undefined") return
@@ -1404,12 +1407,30 @@ export function NoctisVideoInterpreterPopup({
           if (duck) {
             v.volume = 0
             v.muted = true
-          } else {
+          } else if ((window as any).__noctisVoiceDuckingActive !== true && !v.paused) {
             v.volume = 1.0
             v.muted = false
           }
         }
       })
+
+      if (duck) {
+        const iframes = document.querySelectorAll("iframe")
+        iframes.forEach((frame) => {
+          const src = (frame.src || "").toLowerCase()
+          const win = frame.contentWindow
+          if (!win) return
+          try {
+            if (src.includes("youtube.com") || src.includes("youtube-nocookie.com")) {
+              win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [0] }), "*")
+              win.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
+            } else if (src.includes("vimeo.com")) {
+              win.postMessage(JSON.stringify({ method: "setVolume", value: 0 }), "*")
+              win.postMessage(JSON.stringify({ method: "setMuted", value: true }), "*")
+            }
+          } catch {}
+        })
+      }
     } catch {}
   }, [])
 
@@ -1755,17 +1776,33 @@ export function NoctisVideoInterpreterPopup({
   const selectSpokenAudioLanguage = useCallback(
     (targetCode: LanguageCode, alsoSyncPlatformLanguage = false) => {
       userManuallyPausedDubRef.current = false
-      setForceSpeakEvenIfSameLang(true)
-      forceSpeakRef.current = true
-      prevGlobalLangRef.current = targetCode
       if (typeof window !== "undefined") {
         ;(window as any).__noctisPreferredAudioLang = targetCode
+      }
+
+      if (targetCode === sourceLangRef.current) {
+        setForceSpeakEvenIfSameLang(false)
+        forceSpeakRef.current = false
+        setAudioLang(targetCode)
+        audioLangRef.current = targetCode
+        if (alsoSyncPlatformLanguage && targetCode !== language) {
+          prevGlobalLangRef.current = targetCode
+          setLanguage(targetCode)
+        }
+        stopContinuousInterpretation(true)
+        return
+      }
+
+      setForceSpeakEvenIfSameLang(true)
+      forceSpeakRef.current = true
+      if (typeof window !== "undefined") {
         ;(window as any).__activePlayingNoctisInstanceId = instanceIdRef.current
       }
       stopAudioOutput(true)
       setAudioLang(targetCode)
       audioLangRef.current = targetCode
       if (alsoSyncPlatformLanguage && targetCode !== language) {
+        prevGlobalLangRef.current = targetCode
         setLanguage(targetCode)
       }
       if (!isPlayingRef.current && onRequestPlayVideoRef.current) {
@@ -1777,6 +1814,9 @@ export function NoctisVideoInterpreterPopup({
       const cacheKey = `${targetCode}::${scriptIdKey}`
       const cached = TRANSLATED_VIDEO_SCRIPT_CACHE.get(cacheKey)
       if (cached && cached.isFullyTranslated) {
+        setTranslatedTitle(cached.title)
+        setTranslatedOverview(cached.overview)
+        setTranslatedSteps(cached.steps)
         sentencesRef.current = buildContinuousInterpreterSentences(
           cached.title,
           cached.overview,
@@ -1784,9 +1824,10 @@ export function NoctisVideoInterpreterPopup({
         )
         readyScriptKeyRef.current = cacheKey
       } else {
+        const currentTakeaways = takeawaysRef.current
         const baseTakeaways =
-          takeaways && takeaways.length > 0
-            ? takeaways.map(cleanSourceTextForTranslation)
+          currentTakeaways && currentTakeaways.length > 0
+            ? currentTakeaways.map(cleanSourceTextForTranslation)
             : ["Speed Square Layout", "Marking 90° Perpendicular Lines"]
         const cleanDesc =
           description && description.trim().length > 5
@@ -1815,10 +1856,15 @@ export function NoctisVideoInterpreterPopup({
       setLanguage,
       startContinuousInterpretation,
       stopAudioOutput,
-      takeaways,
+      stopContinuousInterpretation,
       youtubeId,
     ]
   )
+
+  const selectSpokenAudioLanguageRef = useRef(selectSpokenAudioLanguage)
+  selectSpokenAudioLanguageRef.current = selectSpokenAudioLanguage
+  const stopContinuousInterpretationRef = useRef(stopContinuousInterpretation)
+  stopContinuousInterpretationRef.current = stopContinuousInterpretation
 
   // Listen synchronously to `sphera-lang-changed` dispatched by the top navbar LanguageSwitcher
   // so `audio.play()` runs synchronously inside the navbar click event!
@@ -1839,13 +1885,13 @@ export function NoctisVideoInterpreterPopup({
 
       if (isPrimaryActive && (isPlayingRef.current || isPopupOpenRef.current)) {
         if (newLang !== sourceLangRef.current) {
-          selectSpokenAudioLanguage(newLang, false)
+          selectSpokenAudioLanguageRef.current(newLang, false)
         } else {
           setForceSpeakEvenIfSameLang(false)
           forceSpeakRef.current = false
           setAudioLang(newLang)
           audioLangRef.current = newLang
-          stopContinuousInterpretation(true)
+          stopContinuousInterpretationRef.current(true)
         }
       } else {
         setAudioLang(newLang)
@@ -1854,7 +1900,7 @@ export function NoctisVideoInterpreterPopup({
     }
     window.addEventListener("sphera-lang-changed", handleSyncNavbarLangChange)
     return () => window.removeEventListener("sphera-lang-changed", handleSyncNavbarLangChange)
-  }, [selectSpokenAudioLanguage, stopContinuousInterpretation])
+  }, [])
 
   useEffect(() => {
     if (prevGlobalLangRef.current !== language) {
@@ -1868,12 +1914,12 @@ export function NoctisVideoInterpreterPopup({
         win.__activePlayingNoctisInstanceId === instanceIdRef.current ||
         (!win.__activePlayingNoctisInstanceId && (isPlayingRef.current || isPopupOpenRef.current))
       if (isPrimaryActive && (isPlayingRef.current || isPopupOpenRef.current) && language !== sourceLangRef.current) {
-        selectSpokenAudioLanguage(language, false)
+        selectSpokenAudioLanguageRef.current(language, false)
       } else {
         if (language === sourceLangRef.current && isSpeakingRef.current) {
           setForceSpeakEvenIfSameLang(false)
           forceSpeakRef.current = false
-          stopContinuousInterpretation(true)
+          stopContinuousInterpretationRef.current(true)
         } else if (language === sourceLangRef.current) {
           setForceSpeakEvenIfSameLang(false)
           forceSpeakRef.current = false
@@ -1882,7 +1928,21 @@ export function NoctisVideoInterpreterPopup({
         audioLangRef.current = language
       }
     }
-  }, [language, selectSpokenAudioLanguage, stopContinuousInterpretation])
+  }, [language])
+
+  // Continuously reinforce video/iframe muting while Noctis interpretation is actively speaking
+  useEffect(() => {
+    if (!isSpeaking) return
+    setPageVideoElementsDucking(true)
+    onMuteOriginalVideoRef.current?.(true)
+    const timer = setInterval(() => {
+      if (isSpeakingRef.current) {
+        setPageVideoElementsDucking(true)
+        onMuteOriginalVideoRef.current?.(true)
+      }
+    }, 700)
+    return () => clearInterval(timer)
+  }, [isSpeaking, setPageVideoElementsDucking])
 
   // Listen for global Noctis language commands (e.g. from sidebar "Ask Noctis" or navbar Q&A: "Play this video in Chinese")
   useEffect(() => {
@@ -1895,7 +1955,7 @@ export function NoctisVideoInterpreterPopup({
         win.__activePlayingNoctisInstanceId === instanceIdRef.current ||
         (!win.__activePlayingNoctisInstanceId && (isPlayingRef.current || isPopupOpenRef.current))
       if (isPrimaryActive && (isPlayingRef.current || isPopupOpenRef.current)) {
-        selectSpokenAudioLanguage(targetCode, false)
+        selectSpokenAudioLanguageRef.current(targetCode, false)
       } else {
         userManuallyPausedDubRef.current = false
         setAudioLang(targetCode)
@@ -1904,7 +1964,7 @@ export function NoctisVideoInterpreterPopup({
     }
     window.addEventListener(NOCTIS_LANGUAGE_COMMAND_EVENT, handleGlobalNoctisCommand)
     return () => window.removeEventListener(NOCTIS_LANGUAGE_COMMAND_EVENT, handleGlobalNoctisCommand)
-  }, [selectSpokenAudioLanguage])
+  }, [])
 
   // Translate the instructor's word-for-word first-person verbatim spoken transcript into `audioLang`
   // and ONLY start speaking once `sentencesRef.current` holds the verbatim spoken lines in `audioLang`!

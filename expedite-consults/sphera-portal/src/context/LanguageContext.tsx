@@ -75,6 +75,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const hasHydratedLangRef = React.useRef(false);
+
   const applyLanguage = useCallback((lang: LanguageCode) => {
     setLanguageState(lang);
     try {
@@ -86,8 +88,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
     applyDomAttributes(lang);
 
-    // Notify other components & embedded iframes
+    // Notify other components & embedded iframes synchronously with updated preferred audio lang
     if (typeof window !== "undefined") {
+      ;(window as any).__noctisPreferredAudioLang = lang;
       window.dispatchEvent(new CustomEvent("sphera-lang-changed", { detail: lang }));
       try {
         window.postMessage({ type: "SPHERA_LANG_CHANGED", language: lang, locale: lang }, "*");
@@ -95,15 +98,24 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   }, [applyDomAttributes]);
 
-  // Initial sync on mount & sync across storage events / custom events
+  // Initial sync strictly once on mount so in-flight storage delays never revert an active language
   useEffect(() => {
+    if (hasHydratedLangRef.current) return;
+    hasHydratedLangRef.current = true;
     const active = getInitialLanguage();
     if (active !== language) {
       applyLanguage(active);
     } else {
+      if (typeof window !== "undefined") {
+        ;(window as any).__noctisPreferredAudioLang = active;
+      }
       applyDomAttributes(active);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // Sync across storage events & custom events without re-reading initial language
+  useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
       if (
         (e.key === "sphera-lang" || e.key === "connectin_lang" || e.key === "vibetok-lang") &&
@@ -111,6 +123,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         SUPPORTED_LANGUAGES.some((l) => l.code === e.newValue)
       ) {
         const newCode = e.newValue as LanguageCode;
+        if (typeof window !== "undefined") {
+          ;(window as any).__noctisPreferredAudioLang = newCode;
+        }
         setLanguageState(newCode);
         applyDomAttributes(newCode);
       }
@@ -119,6 +134,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const handleCustomChange = (e: Event) => {
       const custom = e as CustomEvent<LanguageCode>;
       if (custom.detail && SUPPORTED_LANGUAGES.some((l) => l.code === custom.detail)) {
+        if (typeof window !== "undefined") {
+          ;(window as any).__noctisPreferredAudioLang = custom.detail;
+        }
         setLanguageState(custom.detail);
         applyDomAttributes(custom.detail);
       }
@@ -130,7 +148,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener("sphera-lang-changed", handleCustomChange);
     };
-  }, [applyDomAttributes, applyLanguage, language]);
+  }, [applyDomAttributes]);
 
   // Global DOM-wide translation across all views, tabs, modals, and dynamic cards
   useEffect(() => {

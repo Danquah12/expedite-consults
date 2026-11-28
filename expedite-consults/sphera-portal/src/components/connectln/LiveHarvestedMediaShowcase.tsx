@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useCallback } from "react"
 import {
   Film,
   Image as ImageIcon,
@@ -73,31 +73,93 @@ function HarvestedMp4Player({
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(initialMuted)
 
+  const isNoctisTranslationMutingActive = useCallback((incomingLang?: string) => {
+    if (typeof window === "undefined") return false
+    if ((window as any).__noctisVoiceDuckingActive === true) return true
+    if (incomingLang && incomingLang.trim().toLowerCase() !== "en") return true
+    const prefLang = ((window as any).__noctisPreferredAudioLang || "").toString().toLowerCase()
+    if (prefLang && prefLang !== "en") return true
+    const htmlLang = (document.documentElement.getAttribute("lang") || "").toLowerCase()
+    if (htmlLang && htmlLang !== "en") return true
+    try {
+      const storedLang = (localStorage.getItem("sphera-lang") || "").toLowerCase()
+      if (storedLang && storedLang !== "en") return true
+    } catch {}
+    return false
+  }, [])
+
   // Start unmuted when in view; if cold-load browser policy temporarily blocks unmuted HTML5 audio, fall back cleanly and auto-unmute on first gesture
   useEffect(() => {
     const vid = videoRef.current
     if (!vid) return
-    vid.muted = initialMuted
-    if (!initialMuted) vid.volume = 1
+
+    const syncMp4MuteState = (incomingLang?: string) => {
+      if (!videoRef.current) return
+      if (isNoctisTranslationMutingActive(incomingLang)) {
+        videoRef.current.muted = true
+        videoRef.current.volume = 0
+        setIsMuted(true)
+      }
+    }
+
+    const startMuted = initialMuted || isNoctisTranslationMutingActive()
+    vid.muted = startMuted
+    vid.volume = startMuted ? 0 : 1
+    setIsMuted(startMuted)
     vid.play().catch(() => {
       vid.muted = true
       setIsMuted(true)
       vid.play().catch(() => {})
     })
+
     const unlockMp4 = () => {
-      if (videoRef.current && !videoRef.current.paused && !initialMuted) {
+      if (!videoRef.current) return
+      if (isNoctisTranslationMutingActive()) {
+        videoRef.current.muted = true
+        videoRef.current.volume = 0
+        setIsMuted(true)
+        return
+      }
+      if (!videoRef.current.paused && !initialMuted) {
         videoRef.current.muted = false
         videoRef.current.volume = 1
         setIsMuted(false)
       }
     }
+
+    const onDuckOrLangChange = (e: Event) => {
+      const custom = e as CustomEvent<{ duck?: boolean; langCode?: string } | string>
+      if (e.type === "connectln:noctis-voice-duck") {
+        const duck = Boolean((custom.detail as any)?.duck)
+        if (duck || isNoctisTranslationMutingActive()) {
+          syncMp4MuteState()
+        } else if (!initialMuted && videoRef.current && !videoRef.current.paused) {
+          videoRef.current.muted = false
+          videoRef.current.volume = 1
+          setIsMuted(false)
+        }
+      } else {
+        const detail = custom.detail
+        const incomingLang = typeof detail === "string" ? detail : detail?.langCode
+        if ((incomingLang && incomingLang.toLowerCase() !== "en") || isNoctisTranslationMutingActive(incomingLang)) {
+          syncMp4MuteState(incomingLang)
+        }
+      }
+    }
+
     window.addEventListener("pointerdown", unlockMp4, { passive: true })
     window.addEventListener("keydown", unlockMp4, { passive: true })
+    window.addEventListener("connectln:noctis-voice-duck", onDuckOrLangChange)
+    window.addEventListener("sphera-lang-changed", onDuckOrLangChange)
+    window.addEventListener("connectln:noctis-command-language", onDuckOrLangChange)
     return () => {
       window.removeEventListener("pointerdown", unlockMp4)
       window.removeEventListener("keydown", unlockMp4)
+      window.removeEventListener("connectln:noctis-voice-duck", onDuckOrLangChange)
+      window.removeEventListener("sphera-lang-changed", onDuckOrLangChange)
+      window.removeEventListener("connectln:noctis-command-language", onDuckOrLangChange)
     }
-  }, [initialMuted])
+  }, [initialMuted, isNoctisTranslationMutingActive])
 
   return (
     <div className="bg-black">
@@ -112,16 +174,32 @@ function HarvestedMp4Player({
           playsInline
           onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
           onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 120)}
-          onPlay={() => setIsPlaying(true)}
+          onPlay={(e) => {
+            if (isNoctisTranslationMutingActive()) {
+              e.currentTarget.muted = true
+              e.currentTarget.volume = 0
+              setIsMuted(true)
+            }
+            setIsPlaying(true)
+          }}
           onPause={() => setIsPlaying(false)}
-          onVolumeChange={(e) => setIsMuted(e.currentTarget.muted)}
+          onVolumeChange={(e) => {
+            if (isNoctisTranslationMutingActive() && (!e.currentTarget.muted || e.currentTarget.volume > 0)) {
+              e.currentTarget.muted = true
+              e.currentTarget.volume = 0
+              setIsMuted(true)
+              return
+            }
+            setIsMuted(e.currentTarget.muted)
+          }}
           className="h-full w-full object-cover"
         />
-        {isPlaying && isMuted && (
+        {isPlaying && isMuted && !isNoctisTranslationMutingActive() && (
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation()
+              if (isNoctisTranslationMutingActive()) return
               if (videoRef.current) {
                 videoRef.current.muted = false
                 videoRef.current.volume = 1
@@ -151,7 +229,11 @@ function HarvestedMp4Player({
         }}
         onMuteOriginalVideo={(duck) => {
           // Mute the original audio while Noctis is speaking so two voices never overlap
-          if (videoRef.current) videoRef.current.muted = duck
+          if (videoRef.current) {
+            videoRef.current.muted = duck
+            videoRef.current.volume = duck ? 0 : 1
+            setIsMuted(duck)
+          }
         }}
       />
     </div>
