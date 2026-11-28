@@ -613,7 +613,7 @@ export function ConnectLnNavbar({
   return (
     <>
     <header
-      className="fixed top-0 left-0 right-0 z-50 w-full max-w-full border-b border-[#E7E2DA] bg-white/95 dark:border-zinc-800 dark:bg-zinc-950/95 backdrop-blur-md shadow-xs"
+      className="fixed top-0 left-0 right-0 z-50 w-full max-w-full border-b border-[#E7E2DA] bg-white/95 dark:border-indigo-400/15 dark:bg-[#0B0E1D]/95 backdrop-blur-xl shadow-xs"
       style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
       {/* Mobile Expandable Search Bar Overlay (when search icon tapped on mobile) */}
@@ -1918,7 +1918,7 @@ export function ConnectLnNavbar({
       </div>
 
       {/* Mobile & Tablet Row 2: High-contrast horizontally scrollable Hub & Business strip (< lg) */}
-      <nav aria-label="Mobile hub shortcuts" className="relative lg:hidden border-t border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+      <nav aria-label="Mobile hub shortcuts" className="relative lg:hidden border-t border-zinc-200/80 dark:border-indigo-400/15 bg-white dark:bg-[#0B0E1D]">
         <div
           ref={tabStripRef}
           className="flex items-center overflow-x-auto no-scrollbar px-2.5 py-2 gap-2 whitespace-nowrap scroll-smooth"
@@ -3269,7 +3269,7 @@ export function ConnectLnNavbar({
     <nav
       ref={mobileMoreMenuRef}
       aria-label="Mobile primary navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.06)]"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 dark:border-indigo-400/15 bg-white/95 dark:bg-[#0B0E1D]/95 backdrop-blur-xl shadow-[0_-4px_20px_rgba(0,0,0,0.06)]"
       style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 6px)" }}
     >
       <div className="mx-auto grid grid-cols-6 max-w-2xl px-1 pt-1">

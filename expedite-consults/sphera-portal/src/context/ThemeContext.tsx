@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type Theme =
+  | "midnight"
   | "vibe"
   | "classic"
   | "light"
@@ -22,6 +23,17 @@ export interface ThemeOption {
 }
 
 export const THEME_OPTIONS: ThemeOption[] = [
+  {
+    id: "midnight",
+    label: "VibeLoop Midnight Glass",
+    shortLabel: "Midnight",
+    icon: "🌌",
+    bgHex: "#080a14",
+    cardHex: "#121629",
+    borderHex: "#262d4d",
+    isDark: true,
+    description: "Deep midnight-navy obsidian glass canvas matching the VibeLoop ConnectLn Universe"
+  },
   {
     id: "vibe",
     label: "Editorial Desk Note",
@@ -89,15 +101,16 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: "vibe",
+  theme: "midnight",
   setTheme: () => {},
   toggleTheme: () => {},
-  themeLabel: "Editorial Desk Note",
-  isDark: false,
+  themeLabel: "VibeLoop Midnight Glass",
+  isDark: true,
   themeOption: THEME_OPTIONS[0],
 });
 
 const ALL_THEME_IDS: Theme[] = [
+  "midnight",
   "vibe",
   "classic",
   "light",
@@ -105,22 +118,12 @@ const ALL_THEME_IDS: Theme[] = [
   "slate"
 ];
 
-// v4 key: resets everyone to Editorial Desk Note once; later choices are remembered
-const THEME_STORAGE_KEY = "sphera-theme-v4";
+// v5 key: defaults to VibeLoop Midnight Glass; user choices persist cleanly
+const THEME_STORAGE_KEY = "sphera-theme-v5";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("vibe");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const saved = localStorage.getItem(THEME_STORAGE_KEY) as string | null;
-    if (saved && ALL_THEME_IDS.includes(saved as Theme)) {
-      applyTheme(saved as Theme);
-    } else {
-      applyTheme("vibe");
-    }
-  }, []);
+  const [theme, setThemeState] = useState<Theme>("midnight");
+  const [, setMounted] = useState(false);
 
   const applyTheme = (t: Theme) => {
     setThemeState(t);
@@ -132,15 +135,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const selected = THEME_OPTIONS.find((o) => o.id === t) || THEME_OPTIONS[0];
       const isDarkTheme = selected.isDark;
 
-      // Update root attributes
       document.documentElement.setAttribute("data-theme", t);
       document.body.setAttribute("data-theme", t);
 
-      // Remove previous classes
       document.documentElement.classList.remove("dark", "light", ...ALL_THEME_IDS);
       document.body.classList.remove("dark", "light", ...ALL_THEME_IDS);
 
-      // Apply light or dark flag for Tailwind dark: variants
       if (isDarkTheme) {
         document.documentElement.classList.add("dark");
         document.body.classList.add("dark");
@@ -149,26 +149,33 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         document.body.classList.add("light");
       }
 
-      // Add the specific theme name class
       document.documentElement.classList.add(t);
       document.body.classList.add(t);
 
-      // Update color scheme for native inputs & scrollbars
       document.documentElement.style.colorScheme = isDarkTheme ? "dark" : "light";
     }
   };
+
+  useEffect(() => {
+    setMounted(true);
+    const saved = localStorage.getItem(THEME_STORAGE_KEY) as string | null;
+    if (saved && ALL_THEME_IDS.includes(saved as Theme)) {
+      applyTheme(saved as Theme);
+    } else {
+      applyTheme("midnight");
+    }
+  }, []);
 
   const setTheme = (newTheme: Theme) => {
     applyTheme(newTheme);
   };
 
   const toggleTheme = () => {
-    // Quick toggle between Classic Light and Obsidian Dark
     const currentOpt = THEME_OPTIONS.find((o) => o.id === theme);
     if (currentOpt?.isDark) {
       applyTheme("classic");
     } else {
-      applyTheme("dark");
+      applyTheme("midnight");
     }
   };
 

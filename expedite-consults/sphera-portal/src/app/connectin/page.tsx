@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { ConnectLnNavbar } from "@/components/connectln/ConnectLnNavbar"
 import { ConnectLn360LeftRail } from "@/components/connectln/ConnectLn360LeftRail"
+import { ConnectLnCinemaStageHeader } from "@/components/connectln/ConnectLnCinemaStageHeader"
 import { ConnectLn360UniverseAppView } from "@/components/connectln/ConnectLn360UniverseAppView"
 import { MeetingReminders } from "@/components/connectln/MeetingReminders"
 import { ConnectLnIncomingCallBanner } from "@/components/connectln/ConnectLnIncomingCallBanner"
@@ -560,6 +561,8 @@ export default function ConnectLnPage() {
   const feedLoadMoreRef = React.useRef<HTMLDivElement | null>(null)
   const [showMobileCommunityDrawer, setShowMobileCommunityDrawer] = useState(false)
   const [showMobileSubFilters, setShowMobileSubFilters] = useState(true)
+  const [showProfessionDrawer, setShowProfessionDrawer] = useState(false)
+  const [isMobileStageNavOpen, setIsMobileStageNavOpen] = useState(false)
   const [hasHydrated, setHasHydrated] = useState(false)
   const [harvestedHomeItems, setHarvestedHomeItems] = useState<HarvestedMediaItem[]>(() =>
     loadStoredHarvestedItems().filter(
@@ -3101,7 +3104,7 @@ export default function ConnectLnPage() {
         }}
       />
 
-      {/* Slim ConnectLn 360 Desktop Left App Rail */}
+      {/* Floating VibeLoop-Style Left Sidebar + Mobile Drawer */}
       <ConnectLn360LeftRail
         activeTab={activeTab}
         onSelectTab={(tab) => {
@@ -3116,10 +3119,12 @@ export default function ConnectLnPage() {
         unreadMessagesCount={1}
         onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
         isAdminUser={isSuperAdminUser(userData)}
+        mobileOpen={isMobileStageNavOpen}
+        onCloseMobile={() => setIsMobileStageNavOpen(false)}
       />
 
-      {/* Main Content Area (Shifted beside 68px Desktop Rail on lg+) */}
-      <div className="lg:pl-[68px]">
+      {/* Main Content Area (Shifted beside 224px Floating Sidebar on lg+, full-width on mobile) */}
+      <div className="lg:pl-[244px]">
       <main
         className={
           activeTab === 'messaging' ||
@@ -3139,46 +3144,33 @@ export default function ConnectLnPage() {
       >
         {/* VIEW 1: HOME FEED */}
         {activeTab === 'home' && (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-            {/* Left Rail (Profile summary & communities on desktop/tablet) */}
-            <div className="hidden md:block md:col-span-4 lg:col-span-3 min-w-0">
-              <LeftSidebarProfile
-                user={userData}
-                onViewProfile={() => {
-                  setInspectedMember(null)
-                  setActiveTab('profile')
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+            {/* Main Stage & Stream Column */}
+            <div className="xl:col-span-8 min-w-0 space-y-3.5">
+              {/* VibeLoop Midnight-Glass Cinema Stage Header */}
+              <ConnectLnCinemaStageHeader
+                activeFeedCategory={activeFeedCategory}
+                onChangeFeedCategory={(cat) => {
+                  setActiveFeedCategory(cat)
+                  setActiveFeedSubCategory('All')
                 }}
-                onSelectTag={(tag) => {
-                  setSelectedTagFilter(tag)
-                  setActiveFeedCategory('for_you')
-                }}
-                onNavigateTab={(tab) => {
-                  if (tab === 'profile') setInspectedMember(null)
-                  if (tab === 'network') {
-                    setNetworkInitialSubTab('connections')
-                    setNetworkResetTrigger((prev) => prev + 1)
-                  }
-                  setActiveTab(tab as any)
-                }}
-                onOpenIDModal={() => setIsIDModalOpen(true)}
-                onOpenInboundBountiesModal={() => setIsInboundBountiesModalOpen(true)}
-                onOpenAuthModal={() => setIsAuthModalOpen(true)}
-                onOpenAnalytics={(tab) => {
-                  if (tab === 'viewers') {
-                    setNetworkInitialSubTab('profile_viewers')
-                    setActiveTab('network')
-                  } else {
-                    setAnalyticsModalTab(tab)
-                    setIsAnalyticsModalOpen(true)
-                  }
-                }}
+                featuredPosts={[...communityFeedPosts, ...myPublishedPosts, ...filteredPosts]}
+                currentUser={userData}
+                suggestedPeople={suggestedPeople}
+                activeProfessionTitle={resolvedUserProf?.title || userData.profession || "Master Carpenter"}
+                showProfessionDrawer={showProfessionDrawer}
+                onToggleProfessionDrawer={() => setShowProfessionDrawer((prev) => !prev)}
+                isSyncingVideos={isSyncingFeedVideos}
+                onSyncVideos={handleSyncFreshFeedVideos}
+                onToggleReaction={handleToggleReaction}
+                onToggleSave={handleToggleSave}
+                onSelectMember={handleInspectMember}
+                onNavigateTab={(tab) => setActiveTab(tab as any)}
+                onOpenMobileMenu={() => setIsMobileStageNavOpen(true)}
               />
-            </div>
 
-            {/* Center Rail (Post Creator & Post Feed) */}
-            <div className="md:col-span-8 lg:col-span-6 min-w-0 space-y-3">
-              {/* Mobile Quick Profile Header Card (< md) */}
-              <div className="md:hidden flex items-center justify-between rounded-2xl border border-zinc-200/90 bg-white p-3 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+              {/* Mobile Quick Profile Header Card (< xl) */}
+              <div className="xl:hidden flex items-center justify-between rounded-2xl border border-zinc-200/90 bg-white p-3 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
                 <button
                   type="button"
                   onClick={() => {
@@ -3210,8 +3202,15 @@ export default function ConnectLnPage() {
                 </button>
               </div>
 
-              {/* Active Logged-In Profession Switcher & Feed Indicator */}
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3.5 shadow-xs space-y-2.5">
+              {/* Active Logged-In Profession Switcher & Feed Indicator (toggled via Profession pill) */}
+              <div
+                data-testid="home-profession-switcher-drawer"
+                className={
+                  showProfessionDrawer
+                    ? "rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3.5 shadow-xs space-y-2.5"
+                    : "hidden"
+                }
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
@@ -3966,8 +3965,39 @@ export default function ConnectLnPage() {
               </div>
             </div>
 
-            {/* Right Rail (ConnectIn News & Follow Suggestions) */}
-            <div className="hidden lg:block lg:col-span-3 min-w-0">
+            {/* Right Context Rail (Profile Metrics, Communities & News on xl+) */}
+            <div className="hidden xl:block xl:col-span-4 min-w-0 space-y-4">
+              <LeftSidebarProfile
+                user={userData}
+                onViewProfile={() => {
+                  setInspectedMember(null)
+                  setActiveTab('profile')
+                }}
+                onSelectTag={(tag) => {
+                  setSelectedTagFilter(tag)
+                  setActiveFeedCategory('for_you')
+                }}
+                onNavigateTab={(tab) => {
+                  if (tab === 'profile') setInspectedMember(null)
+                  if (tab === 'network') {
+                    setNetworkInitialSubTab('connections')
+                    setNetworkResetTrigger((prev) => prev + 1)
+                  }
+                  setActiveTab(tab as any)
+                }}
+                onOpenIDModal={() => setIsIDModalOpen(true)}
+                onOpenInboundBountiesModal={() => setIsInboundBountiesModalOpen(true)}
+                onOpenAuthModal={() => setIsAuthModalOpen(true)}
+                onOpenAnalytics={(tab) => {
+                  if (tab === 'viewers') {
+                    setNetworkInitialSubTab('profile_viewers')
+                    setActiveTab('network')
+                  } else {
+                    setAnalyticsModalTab(tab)
+                    setIsAnalyticsModalOpen(true)
+                  }
+                }}
+              />
               <RightSidebarNews
                 news={trendingNews}
                 suggestedPeople={suggestedPeople}

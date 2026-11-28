@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, [data-theme="slate"], [data-theme="slate"] *, .dark, .dark *));
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, [data-theme="slate"], [data-theme="slate"] *, [data-theme="midnight"], [data-theme="midnight"] *, .dark, .dark *));
 
 /* ── Prevent horizontal viewport blowout across mobile devices ── */
 html,
@@ -135,6 +135,56 @@ body {
   --color-text-primary: #f0f6fc;
   --color-text-secondary: #8b949e;
   --color-text-muted: #6e7681;
+}
+
+/* ── 3B. VIBELOOP MIDNIGHT GLASS (Unified Default) ────────────────── */
+[data-theme="midnight"], body[data-theme="midnight"], html.midnight {
+  --bg-core: #080a14;
+  --bg-sidebar: #101324;
+  --bg-surface: #121629;
+  --bg-card: #121629;
+  --bg-card-hover: #181d36;
+  --bg-input: #0d101e;
+
+  --border-subtle: rgba(129, 140, 248, 0.16);
+  --border-hover: rgba(129, 140, 248, 0.34);
+  --border-active: #38bdf8;
+
+  --text-pure: #f8fafc;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --accent-cyan: #38bdf8;
+  --accent-indigo: #818cf8;
+  --ambient-mesh-1: rgba(56, 189, 248, 0.08);
+  --ambient-mesh-2: rgba(139, 92, 246, 0.07);
+
+  --color-bg-primary: #080a14;
+  --color-bg-secondary: #101324;
+  --color-bg-card: #121629;
+  --color-bg-card-hover: #181d36;
+  --color-border-glass: rgba(129, 140, 248, 0.16);
+  --color-border-glow: rgba(56, 189, 248, 0.3);
+  --color-accent-cyan: #38bdf8;
+  --color-accent-purple: #a78bfa;
+  --color-accent-pink: #f472b6;
+  --color-accent-green: #34d399;
+  --color-accent-orange: #fbbf24;
+  --color-accent-red: #f87171;
+  --color-text-primary: #e2e8f0;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  --color-zinc-700: #2b335c;
+  --color-zinc-800: #1d2342;
+  --color-zinc-900: #121629;
+  --color-zinc-950: #080a14;
+
+  background-color: #080a14;
+  background-image:
+    radial-gradient(circle at 18% 8%, rgba(56, 189, 248, 0.09), transparent 42%),
+    radial-gradient(circle at 84% 12%, rgba(139, 92, 246, 0.09), transparent 44%);
 }
 
 /* ── 4. CORPORATE SLATE ─────────────────────────────────────────── */
