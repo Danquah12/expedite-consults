@@ -80,6 +80,7 @@ import {
     CommPrivacySettings,
     approveCloudPairToken,
     encodeQuoteReply,
+    encodeVoiceNoteMarker,
     enqueueOfflineMessage,
     fetchPeerE2eePublicKey,
     getCommPrivacySettings,
