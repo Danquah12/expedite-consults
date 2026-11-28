@@ -182,7 +182,7 @@ export async function GET(request: Request) {
                   color: "#1B2A4A",
                 }}
               >
-                “{message.slice(0, 220)}”
+                {`“${message.slice(0, 220)}”`}
               </div>
             </div>
 
@@ -207,7 +207,7 @@ export async function GET(request: Request) {
                 color: "#5A6475",
               }}
             >
-              Presented on {paperStock} · {envelopeColor} Envelope
+              {`Presented on ${paperStock} · ${envelopeColor} Envelope`}
             </div>
 
             <div
