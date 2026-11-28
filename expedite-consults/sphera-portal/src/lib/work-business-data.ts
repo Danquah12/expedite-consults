@@ -34,6 +34,9 @@ export type WorkBusinessItemId =
   | 'explore_communities'
   | 'learn_practical_skills'
   | 'create_business_page'
+  | 'noctis_talent_match'
+  | 'workforce_radar'
+  | 'spotlight_practice'
 
 export type MemberInterestRole =
   | 'find_work'
@@ -103,10 +106,26 @@ export const WORK_BUSINESS_MENU_ITEMS: WorkBusinessMenuEntry[] = [
     relatedInterests: ['find_work', 'offer_services', 'hire_people', 'manage_business']
   },
   {
+    id: 'noctis_talent_match',
+    column: 'workspace',
+    title: 'Noctis Talent Match',
+    subtitle: 'AI role builder & verified shortlists',
+    footerDescription: 'Generate tailored trade or enterprise role scopes with Noctis AI and instantly shortlist verified professionals with matching licenses and credentials.',
+    relatedInterests: ['hire_people', 'manage_business']
+  },
+  {
+    id: 'workforce_radar',
+    column: 'workspace',
+    title: 'Workforce Radar',
+    subtitle: 'Regional rates & credential supply',
+    footerDescription: 'Benchmark regional hourly and project rates, inspect active licensed supply across enclaves, and review live discovery telemetry.',
+    relatedInterests: ['hire_people', 'offer_services', 'manage_business']
+  },
+  {
     id: 'billing_settings',
     column: 'workspace',
-    title: 'Billing & settings',
-    subtitle: 'Plans, receipts & preferences',
+    title: 'Operations & Treasury',
+    subtitle: 'Plans, escrow receipts & preferences',
     footerDescription: 'Manage account security, privacy settings, role interests, payment methods, invoices, and Desk Note / Noctis workspace links.',
     isBottomDividerItem: true,
     relatedInterests: ['manage_business']
@@ -124,48 +143,56 @@ export const WORK_BUSINESS_MENU_ITEMS: WorkBusinessMenuEntry[] = [
   {
     id: 'post_job_project',
     column: 'grow',
-    title: 'Post a job or project',
-    subtitle: 'Hire employees, crews or specialists',
+    title: 'Publish an Opportunity',
+    subtitle: 'Hire employees, crews or apprentices',
     footerDescription: 'Choose between Employment, Contract project, or Apprenticeship with tailored forms so candidates or contractors respond with the right information.',
     relatedInterests: ['hire_people', 'manage_business']
   },
   {
     id: 'find_professional',
     column: 'grow',
-    title: 'Find a professional',
-    subtitle: 'Discover services near you',
+    title: 'Pro Services Exchange',
+    subtitle: 'Discover verified specialists near you',
     footerDescription: 'Search verified tradespeople, mechanics, painters, and independent specialists near you, inspect work samples, and request a quote.',
     relatedInterests: ['hire_people', 'manage_business']
   },
   {
     id: 'offer_services',
     column: 'grow',
-    title: 'Offer your services',
-    subtitle: 'Show your skills & receive inquiries',
+    title: 'Offer Pro Services',
+    subtitle: 'Publish capabilities & receive quotes',
     footerDescription: 'Publish your trade or professional service with completed work photos, service area, pricing approach, and clearly labeled qualifications.',
     relatedInterests: ['offer_services']
   },
   {
+    id: 'spotlight_practice',
+    column: 'grow',
+    title: 'Spotlight Your Practice',
+    subtitle: 'Boost local directory & enclave reach',
+    footerDescription: 'Highlight your verified business page or service listing within your target service radius and professional enclave directory.',
+    relatedInterests: ['offer_services', 'manage_business']
+  },
+  {
     id: 'explore_communities',
     column: 'grow',
-    title: 'Explore communities',
-    subtitle: 'Connect through work & shared goals',
+    title: 'Enclave Guilds',
+    subtitle: 'Trade chapters, crews & veteran circles',
     footerDescription: 'Discover communities organized around trades and professions, local regions, veterans, apprentices and learners, and franchise networks.',
     relatedInterests: ['find_work', 'offer_services', 'learn']
   },
   {
     id: 'learn_practical_skills',
     column: 'grow',
-    title: 'Learn practical skills',
-    subtitle: 'Trade lessons, mentoring & training',
+    title: 'Team Skill Tracks',
+    subtitle: 'Trade lessons, mentoring & CEU/CPE',
     footerDescription: 'Explore practical training organized by goal: improve a trade skill, price and quote a job, prepare for interviews, or start a service business.',
     relatedInterests: ['learn', 'find_work']
   },
   {
     id: 'create_business_page',
     column: 'grow',
-    title: 'Create a business page',
-    subtitle: 'Businesses, franchises & organizations',
+    title: 'Launch a Business or Franchise Page',
+    subtitle: 'Independent shops, practices & franchises',
     footerDescription: 'Create a public page and private management workspace for an independent business, professional practice, franchise location, training provider, or association.',
     isBottomDividerItem: true,
     relatedInterests: ['manage_business', 'offer_services', 'hire_people']

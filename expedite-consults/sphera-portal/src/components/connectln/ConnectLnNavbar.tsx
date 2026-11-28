@@ -2035,26 +2035,27 @@ export function ConnectLnNavbar({
       </nav>
 
 
-      {/* ── Global "ConnectLn — Work & Business" Two-Column Menu Dropdown (Mobile, Tablet & Desktop) ── */}
+      {/* ── Global "ConnectLn 360 — Sovereign Business Suite" Clean Two-Column Popover ── */}
       {isMoreOpen && (
         <>
           <div
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-2xs transition-opacity"
+            className="fixed inset-0 z-50 bg-[#0B1F3A]/20 backdrop-blur-[1px] transition-opacity"
             onClick={() => setIsMoreOpen(false)}
           />
           <div
             ref={moreDropdownRef}
-            className="fixed z-[60] inset-x-2 sm:inset-x-auto sm:right-4 lg:right-6 top-[calc(var(--safe-top,0px)+4.25rem)] bottom-[calc(var(--safe-bottom,0px)+4.75rem)] sm:bottom-auto max-h-[86vh] sm:w-[680px] max-w-[700px] rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
+            data-testid="connectln-for-business-popover"
+            className="fixed z-[60] inset-x-2 sm:inset-x-auto sm:right-4 lg:right-8 top-[calc(var(--safe-top,0px)+3.65rem)] max-h-[86vh] sm:w-[660px] max-w-[680px] rounded-2xl border border-[#E5DFD5] bg-white shadow-[0_24px_64px_rgba(11,31,58,0.18)] dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
           >
-            {/* Top Bar — "ConnectLn — For Business" matching LinkedIn Business */}
-            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-5 py-3 bg-zinc-50/70 dark:bg-zinc-900/90 shrink-0">
+            {/* Subtle Sovereign Navy & Gold Top Kicker Bar */}
+            <div className="flex items-center justify-between border-b border-[#EFECE6] dark:border-zinc-800 bg-[#FAF7F2] dark:bg-zinc-950 px-6 py-2.5 shrink-0">
               <div className="flex items-center gap-2">
-                <Grid3X3 className="h-4 w-4 text-[#0A66C2]" />
-                <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                  ConnectLn — For Business
+                <span className="inline-block h-2 w-2 rounded-full bg-[#B8935A]" />
+                <span className="text-[10.5px] font-extrabold uppercase tracking-[0.18em] text-[#0B1F3A] dark:text-zinc-200">
+                  ConnectLn 360 · Sovereign Business Suite
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => {
@@ -2065,392 +2066,321 @@ export function ConnectLnNavbar({
                     }
                     setIsMoreOpen(false)
                   }}
-                  className="inline-flex items-center gap-1 rounded-lg bg-[#0A66C2] hover:bg-[#004182] px-3 py-1 text-[11px] font-extrabold text-white transition-colors cursor-pointer"
+                  className="text-[11px] font-bold text-[#0B1F3A] hover:text-[#B8935A] dark:text-zinc-300 transition-colors cursor-pointer"
                 >
-                  <span>🏢 Open Business Workspace →</span>
+                  Full Business Hub →
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    onSelectTab("noctissocial")
-                    setIsMoreOpen(false)
-                  }}
-                  className="hidden sm:inline-flex items-center gap-1 rounded-lg bg-fuchsia-50 dark:bg-fuchsia-950/60 border border-fuchsia-200 dark:border-fuchsia-800 px-2.5 py-1 text-[11px] font-bold text-fuchsia-800 dark:text-fuchsia-200 hover:bg-fuchsia-100 transition-colors cursor-pointer"
-                  title="Open Noctis Social (https://noctis.social) inside ConnectLn 360"
-                >
-                  <PlayCircle className="h-3 w-3" />
-                  <span>Noctis Social</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onSelectTab("noctisclinic")
-                    setIsMoreOpen(false)
-                  }}
-                  className="hidden sm:inline-flex items-center gap-1 rounded-lg bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800 px-2.5 py-1 text-[11px] font-bold text-cyan-800 dark:text-cyan-200 hover:bg-cyan-100 transition-colors cursor-pointer"
-                  title="Open Noctis Clinic (https://www.dstrike.app/noctis) inside ConnectLn 360"
-                >
-                  <Zap className="h-3 w-3" />
-                  <span>Noctis Clinic</span>
-                </button>
-                <a
-                  href="https://desk-note.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
                   onClick={() => setIsMoreOpen(false)}
-                  className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100 transition-colors"
-                  title="Open Desk Note (https://desk-note.app/)"
-                >
-                  <span>📓 Desk Note</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-                <Link
-                  href="/connectin-portal/admin"
-                  onClick={() => setIsMoreOpen(false)}
-                  className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 px-2.5 py-1 text-[11px] font-bold text-slate-800 dark:text-zinc-100 hover:bg-slate-200 transition-colors"
-                  title="Open ConnectLn Administration Guide"
-                >
-                  <ShieldCheck className="h-3 w-3 text-[#0A66C2]" />
-                  <span>Admin Guide</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setIsMoreOpen(false)}
-                  className="rounded-full p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  className="rounded-full p-1 text-zinc-400 hover:text-[#0B1F3A] dark:hover:text-zinc-200 hover:bg-white/80 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                   title="Close"
                   aria-label="Close menu"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
 
-            {/* Scrollable Body */}
+            {/* Clean Two-Column Body: Left = "Command Desks", Right = "Launch & Scale" */}
             <div className="flex-1 min-h-0 overflow-y-auto">
-              {/* Two Columns: Left = "My workspace" (manages existing activity), Right = "Grow with ConnectLn" (starts a new action) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-zinc-200 dark:divide-zinc-800">
-                {/* LEFT COLUMN: My workspace */}
-                <div className="p-4 sm:p-5 space-y-1">
-                  <div className="pb-2">
-                    <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
-                      My workspace
-                    </h3>
-                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                      Manage your existing applications, services, inquiries &amp; pages
-                    </p>
-                  </div>
-
-                  {WORK_BUSINESS_MENU_ITEMS.filter((item) => item.column === 'workspace').map((item) => {
-                    const isHoveredOrActive = hoveredWorkBusinessId === item.id
-                    const renderIcon = () => {
-                      switch (item.id) {
-                        case 'my_work_applications':
-                          return <Briefcase className="h-4 w-4" />
-                        case 'my_services_inquiries':
-                          return <Wrench className="h-4 w-4" />
-                        case 'my_communities':
-                          return <Users className="h-4 w-4" />
-                        case 'my_learning':
-                          return <GraduationCap className="h-4 w-4" />
-                        case 'my_business_pages':
-                          return <Building2 className="h-4 w-4" />
-                        case 'activity_insights':
-                          return <TrendingUp className="h-4 w-4" />
-                        case 'billing_settings':
-                          return <Settings className="h-4 w-4" />
-                        default:
-                          return <Briefcase className="h-4 w-4" />
-                      }
-                    }
-                    return (
-                      <React.Fragment key={item.id}>
-                        {item.isBottomDividerItem && (
-                          <div className="my-2 border-t border-zinc-200 dark:border-zinc-800" />
-                        )}
-                        <button
-                          type="button"
-                          onMouseEnter={() => setHoveredWorkBusinessId(item.id)}
-                          onFocus={() => setHoveredWorkBusinessId(item.id)}
-                          onClick={() => {
-                            setHoveredWorkBusinessId(item.id)
-                            if (onSelectWorkBusinessItem) {
-                              onSelectWorkBusinessItem(item.id)
-                            } else {
-                              onSelectTab('workbusiness')
-                            }
-                            setIsMoreOpen(false)
-                          }}
-                          className={`w-full rounded-xl p-2.5 flex items-start gap-3 text-left transition-all cursor-pointer ${
-                            isHoveredOrActive
-                              ? "bg-blue-50/90 dark:bg-blue-950/40 ring-1 ring-blue-200 dark:ring-blue-800/70"
-                              : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
-                          }`}
-                        >
-                          <div
-                            className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                              isHoveredOrActive
-                                ? "bg-[#0A66C2] text-white"
-                                : "bg-blue-50 dark:bg-zinc-800 text-[#0A66C2] dark:text-blue-400"
-                            }`}
-                          >
-                            {renderIcon()}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-snug">
-                              {item.title}
-                            </p>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-snug mt-0.5">
-                              {item.subtitle}
-                            </p>
-                          </div>
-                        </button>
-                      </React.Fragment>
-                    )
-                  })}
-                </div>
-
-                {/* RIGHT COLUMN: Grow with ConnectLn */}
-                <div className="p-4 sm:p-5 space-y-1">
-                  <div className="pb-2">
-                    <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
-                      Grow with ConnectLn
-                    </h3>
-                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                      Start a new action: find work, hire, offer services or learn
-                    </p>
-                  </div>
-
-                  {WORK_BUSINESS_MENU_ITEMS.filter((item) => item.column === 'grow').map((item) => {
-                    const isHoveredOrActive = hoveredWorkBusinessId === item.id
-                    const renderIcon = () => {
-                      switch (item.id) {
-                        case 'find_work':
-                          return <Search className="h-4 w-4" />
-                        case 'post_job_project':
-                          return <Plus className="h-4 w-4" />
-                        case 'find_professional':
-                          return <CheckCircle2 className="h-4 w-4" />
-                        case 'offer_services':
-                          return <Award className="h-4 w-4" />
-                        case 'explore_communities':
-                          return <Compass className="h-4 w-4" />
-                        case 'learn_practical_skills':
-                          return <GraduationCap className="h-4 w-4" />
-                        case 'create_business_page':
-                          return <Plus className="h-4 w-4" />
-                        default:
-                          return <Compass className="h-4 w-4" />
-                      }
-                    }
-                    return (
-                      <React.Fragment key={item.id}>
-                        {item.isBottomDividerItem && (
-                          <div className="my-2 border-t border-zinc-200 dark:border-zinc-800" />
-                        )}
-                        <button
-                          type="button"
-                          onMouseEnter={() => setHoveredWorkBusinessId(item.id)}
-                          onFocus={() => setHoveredWorkBusinessId(item.id)}
-                          onClick={() => {
-                            setHoveredWorkBusinessId(item.id)
-                            if (onSelectWorkBusinessItem) {
-                              onSelectWorkBusinessItem(item.id)
-                            } else {
-                              onSelectTab('workbusiness')
-                            }
-                            setIsMoreOpen(false)
-                          }}
-                          className={`w-full rounded-xl p-2.5 flex items-start gap-3 text-left transition-all cursor-pointer ${
-                            isHoveredOrActive
-                              ? "bg-blue-50/90 dark:bg-blue-950/40 ring-1 ring-blue-200 dark:ring-blue-800/70"
-                              : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
-                          }`}
-                        >
-                          <div
-                            className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                              isHoveredOrActive
-                                ? "bg-[#0A66C2] text-white"
-                                : "bg-blue-50 dark:bg-zinc-800 text-[#0A66C2] dark:text-blue-400"
-                            }`}
-                          >
-                            {renderIcon()}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-snug">
-                              {item.title}
-                            </p>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-snug mt-0.5">
-                              {item.subtitle}
-                            </p>
-                          </div>
-                        </button>
-                      </React.Fragment>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Bottom Contextual Description Strip matching Screenshot 3 */}
-              {(() => {
-                const activeMenuObj =
-                  WORK_BUSINESS_MENU_ITEMS.find((i) => i.id === hoveredWorkBusinessId) ||
-                  WORK_BUSINESS_MENU_ITEMS.find((i) => i.id === 'find_work')!
-                return (
-                  <div className="border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                        {activeMenuObj.title}
-                      </p>
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 leading-relaxed">
-                        {activeMenuObj.footerDescription}
+              <div className="grid grid-cols-1 sm:grid-cols-12 divide-y sm:divide-y-0 sm:divide-x divide-[#EFECE6] dark:divide-zinc-800">
+                {/* LEFT COLUMN: Command Desks (5 cols) */}
+                <div className="sm:col-span-5 p-6 flex flex-col justify-between bg-white dark:bg-zinc-900">
+                  <div className="space-y-5">
+                    <div>
+                      <h3 className="text-[17px] font-bold tracking-tight text-[#0B1F3A] dark:text-zinc-100">
+                        Command Desks
+                      </h3>
+                      <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                        Your active trade, client &amp; AI desks
                       </p>
                     </div>
+
+                    {/* Core Desks */}
+                    <div className="space-y-1.5">
+                      {[
+                        {
+                          id: "my_services_inquiries" as WorkBusinessItemId,
+                          label: "Deal & Quote Desk",
+                          sub: "Inquiries, estimates & bookings",
+                          icon: Compass,
+                          badgeBg: "bg-[#0B1F3A] text-[#E6C687]",
+                        },
+                        {
+                          id: "my_communities" as WorkBusinessItemId,
+                          label: "Enclave Guilds",
+                          sub: "Trade chapters & veteran circles",
+                          icon: Users,
+                          badgeBg: "bg-[#14335A] text-sky-200",
+                        },
+                      ].map((desk) => {
+                        const DeskIcon = desk.icon
+                        return (
+                          <button
+                            key={desk.id}
+                            type="button"
+                            onClick={() => {
+                              if (onSelectWorkBusinessItem) {
+                                onSelectWorkBusinessItem(desk.id)
+                              } else {
+                                onSelectTab("workbusiness")
+                              }
+                              setIsMoreOpen(false)
+                            }}
+                            className="group w-full rounded-xl px-2.5 py-2 flex items-center gap-3.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-zinc-800/70 transition-all cursor-pointer"
+                          >
+                            <span
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-2xs transition-transform group-hover:scale-105 ${desk.badgeBg}`}
+                            >
+                              <DeskIcon className="h-4.5 w-4.5" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[13.5px] font-bold text-[#0B1F3A] dark:text-zinc-100 group-hover:text-[#9A7438] dark:group-hover:text-amber-300 transition-colors">
+                                {desk.label}
+                              </p>
+                              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                                {desk.sub}
+                              </p>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {/* Pillar: Talent & Intelligence */}
+                    <div className="space-y-1.5 pt-1">
+                      <p className="px-2.5 text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-[#8C734B] dark:text-amber-400/90">
+                        Talent &amp; Intelligence
+                      </p>
+                      {[
+                        {
+                          id: "noctis_talent_match" as WorkBusinessItemId,
+                          label: "Noctis Talent Match",
+                          sub: "AI role builder & candidate shortlists",
+                          icon: Sparkles,
+                          badgeBg: "bg-gradient-to-br from-[#0B1F3A] to-[#234876] text-[#E6C687]",
+                        },
+                        {
+                          id: "workforce_radar" as WorkBusinessItemId,
+                          label: "Workforce Radar",
+                          sub: "Regional rates & credential supply",
+                          icon: TrendingUp,
+                          badgeBg: "bg-[#F3EFE6] text-[#0B1F3A] border border-[#DFD5C5]",
+                        },
+                      ].map((desk) => {
+                        const DeskIcon = desk.icon
+                        return (
+                          <button
+                            key={desk.id}
+                            type="button"
+                            onClick={() => {
+                              if (onSelectWorkBusinessItem) {
+                                onSelectWorkBusinessItem(desk.id)
+                              } else {
+                                onSelectTab("workbusiness")
+                              }
+                              setIsMoreOpen(false)
+                            }}
+                            className="group w-full rounded-xl px-2.5 py-2 flex items-center gap-3.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-zinc-800/70 transition-all cursor-pointer"
+                          >
+                            <span
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-2xs transition-transform group-hover:scale-105 ${desk.badgeBg}`}
+                            >
+                              <DeskIcon className="h-4.5 w-4.5" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[13.5px] font-bold text-[#0B1F3A] dark:text-zinc-100 group-hover:text-[#9A7438] dark:group-hover:text-amber-300 transition-colors">
+                                {desk.label}
+                              </p>
+                              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                                {desk.sub}
+                              </p>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {/* Pillar: Field Commerce */}
+                    <div className="space-y-1.5 pt-1">
+                      <p className="px-2.5 text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-[#8C734B] dark:text-amber-400/90">
+                        Field Commerce
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onSelectWorkBusinessItem) {
+                            onSelectWorkBusinessItem("find_professional")
+                          } else {
+                            onSelectTab("workbusiness")
+                          }
+                          setIsMoreOpen(false)
+                        }}
+                        className="group w-full rounded-xl px-2.5 py-2 flex items-center gap-3.5 text-left hover:bg-[#FAF7F2] dark:hover:bg-zinc-800/70 transition-all cursor-pointer"
+                      >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-950 text-emerald-300 shadow-2xs transition-transform group-hover:scale-105">
+                          <ShieldCheck className="h-4.5 w-4.5" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13.5px] font-bold text-[#0B1F3A] dark:text-zinc-100 group-hover:text-[#9A7438] dark:group-hover:text-amber-300 transition-colors">
+                            Pro Services Exchange
+                          </p>
+                          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                            Verified trades &amp; specialist bids
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Subtle bottom shortcut to My Applications & Saved Work */}
+                  <div className="mt-6 pt-3 border-t border-[#EFECE6] dark:border-zinc-800">
                     <button
                       type="button"
                       onClick={() => {
                         if (onSelectWorkBusinessItem) {
-                          onSelectWorkBusinessItem(activeMenuObj.id)
+                          onSelectWorkBusinessItem("my_work_applications")
                         } else {
-                          onSelectTab('workbusiness')
+                          onSelectTab("workbusiness")
                         }
                         setIsMoreOpen(false)
                       }}
-                      className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-3.5 py-2 text-xs font-bold shrink-0 transition-colors cursor-pointer"
+                      className="w-full rounded-xl px-2.5 py-1.5 flex items-center justify-between text-xs font-bold text-[#0B1F3A] dark:text-zinc-200 hover:bg-[#FAF7F2] dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                     >
-                      Open {activeMenuObj.title} →
+                      <span>My Applications &amp; Quotes</span>
+                      <ChevronRight className="h-3.5 w-3.5 text-[#B8935A]" />
                     </button>
                   </div>
-                )
-              })()}
-
-              {/* Compact Partner & Specialized Shortcuts Footer */}
-              <div className="border-t border-zinc-200 dark:border-zinc-800 px-5 py-2.5 bg-white dark:bg-zinc-950 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('veterans')
-                      setIsMoreOpen(false)
-                    }}
-                    className="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/40 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 cursor-pointer"
-                  >
-                    🎖️ Veterans Network
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('franchises')
-                      setIsMoreOpen(false)
-                    }}
-                    className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-950/40 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-300 hover:bg-amber-100 cursor-pointer"
-                  >
-                    🏪 Franchise Network
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('vibecomms')
-                      setIsMoreOpen(false)
-                    }}
-                    className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
-                  >
-                    💬 NoctisChat
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('procurement')
-                      setIsMoreOpen(false)
-                    }}
-                    className="rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50/70 dark:bg-teal-950/40 px-2.5 py-1 text-[11px] font-bold text-teal-800 dark:text-teal-300 hover:bg-teal-100 cursor-pointer"
-                  >
-                    📋 RFPs
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('launchpad')
-                      setIsMoreOpen(false)
-                    }}
-                    className="rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50/70 dark:bg-purple-950/40 px-2.5 py-1 text-[11px] font-bold text-purple-800 dark:text-purple-300 hover:bg-purple-100 cursor-pointer"
-                  >
-                    🚀 Launchpad
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('careersuite')
-                      setIsMoreOpen(false)
-                    }}
-                    className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
-                  >
-                    📄 Resume Prep
-                  </button>
-                  <a
-                    href="https://www.noctis.social"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsMoreOpen(false)}
-                    className="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/40 px-2.5 py-1 text-[11px] font-bold text-indigo-800 dark:text-indigo-300 hover:bg-indigo-100"
-                  >
-                    🌙 Noctis Social ↗
-                  </a>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowLegacyHubsInMore(!showLegacyHubsInMore)}
-                  className="text-[11px] font-semibold text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 flex items-center gap-1 cursor-pointer"
-                >
-                  <span>All Platform Modules</span>
-                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showLegacyHubsInMore ? "rotate-180" : ""}`} />
-                </button>
-              </div>
 
-              {showLegacyHubsInMore && (
-                <div className="border-t border-zinc-200 dark:border-zinc-800 p-4 space-y-3 bg-zinc-50/50 dark:bg-zinc-900/50">
-                  {categorizedMoreMenu.map((group) => (
-                    <div key={group.category} className="space-y-1">
-                      <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 px-2">
-                        {group.category}
+                {/* RIGHT COLUMN: Launch & Scale (7 cols) */}
+                <div className="sm:col-span-7 p-6 flex flex-col justify-between bg-white dark:bg-zinc-900">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-[17px] font-bold tracking-tight text-[#0B1F3A] dark:text-zinc-100">
+                        Launch &amp; Scale
+                      </h3>
+                      <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                        Grow your practice, crew, or enterprise across ConnectLn
                       </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                        {group.items.map((menu) => (
-                          <button
-                            key={menu.id + menu.label}
-                            type="button"
-                            onClick={() => {
-                              if (menu.url) {
-                                window.open(menu.url, '_blank', 'noopener,noreferrer')
-                              } else {
-                                onSelectTab(menu.id)
-                              }
-                              setIsMoreOpen(false)
-                            }}
-                            className="w-full rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group cursor-pointer"
-                          >
-                            <div className="min-w-0 flex-1 pr-2">
-                              <div className="flex items-center gap-1.5">
-                                <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] truncate">
-                                  {menu.label}
-                                </p>
-                                {menu.badge && (
-                                  <span className="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 shrink-0">
-                                    {menu.badge}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[10px] text-zinc-400 truncate">{menu.desc}</p>
-                            </div>
-                            {menu.url && (
-                              <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
-                            )}
-                          </button>
-                        ))}
-                      </div>
                     </div>
-                  ))}
+
+                    <div className="space-y-1">
+                      {[
+                        {
+                          key: "recruit",
+                          title: "Recruit Verified Pros",
+                          subtitle: "Source licensed trades, engineers, and cleared specialists",
+                          action: () =>
+                            onSelectWorkBusinessItem
+                              ? onSelectWorkBusinessItem("find_work")
+                              : onSelectTab("workbusiness"),
+                        },
+                        {
+                          key: "offer",
+                          title: "Offer Pro Services",
+                          subtitle: "Publish your capabilities, portfolio, and service radius",
+                          action: () =>
+                            onSelectWorkBusinessItem
+                              ? onSelectWorkBusinessItem("offer_services")
+                              : onSelectTab("workbusiness"),
+                        },
+                        {
+                          key: "publish_opp",
+                          title: "Publish an Opportunity",
+                          subtitle: "Post a direct role, contract project, or paid apprenticeship",
+                          action: () =>
+                            onSelectWorkBusinessItem
+                              ? onSelectWorkBusinessItem("post_job_project")
+                              : onSelectTab("workbusiness"),
+                        },
+                        {
+                          key: "spotlight",
+                          title: "Spotlight Your Practice",
+                          subtitle: "Boost local directory placement and enclave reach",
+                          action: () =>
+                            onSelectWorkBusinessItem
+                              ? onSelectWorkBusinessItem("spotlight_practice")
+                              : onSelectTab("workbusiness"),
+                        },
+                        {
+                          key: "upgrade_360",
+                          title: "Upgrade to ConnectLn 360",
+                          subtitle: "Unlock Sovereign Suite, priority escrow, and AI desks",
+                          action: () => onSelectTab("plans"),
+                        },
+                        {
+                          key: "skill_tracks",
+                          title: "Team Skill Tracks",
+                          subtitle: "Assign practical trade lessons and CEU/CPE certifications",
+                          action: () =>
+                            onSelectWorkBusinessItem
+                              ? onSelectWorkBusinessItem("learn_practical_skills")
+                              : onSelectTab("learning"),
+                        },
+                        {
+                          key: "operations",
+                          title: "Operations & Treasury",
+                          subtitle: "Manage billing, escrow receipts, and workspace roles",
+                          action: () =>
+                            onSelectWorkBusinessItem
+                              ? onSelectWorkBusinessItem("billing_settings")
+                              : onSelectTab("workbusiness"),
+                        },
+                      ].map((row) => (
+                        <button
+                          key={row.key}
+                          type="button"
+                          onClick={() => {
+                            row.action()
+                            setIsMoreOpen(false)
+                          }}
+                          className="group w-full rounded-xl px-3 py-2 text-left hover:bg-[#FAF7F2] dark:hover:bg-zinc-800/70 transition-colors flex items-center justify-between gap-2 cursor-pointer"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13.5px] font-bold text-[#0B1F3A] dark:text-zinc-100 group-hover:text-[#9A7438] dark:group-hover:text-amber-300 transition-colors leading-snug">
+                              {row.title}
+                            </p>
+                            <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400 leading-snug mt-0.5">
+                              {row.subtitle}
+                            </p>
+                          </div>
+                          <ChevronRight className="h-3.5 w-3.5 text-zinc-300 group-hover:text-[#B8935A] group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Distinct Sovereign Bottom Action: Launch a Business or Franchise Page */}
+                  <div className="mt-4 pt-3 border-t border-[#EFECE6] dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onSelectWorkBusinessItem) {
+                          onSelectWorkBusinessItem("create_business_page")
+                        } else {
+                          onSelectTab("workbusiness")
+                        }
+                        setIsMoreOpen(false)
+                      }}
+                      className="group w-full rounded-xl border border-[#E5DFD5] dark:border-zinc-700 bg-[#FAF7F2] hover:bg-[#0B1F3A] dark:bg-zinc-800/90 dark:hover:bg-zinc-800 px-3.5 py-2.5 flex items-center justify-between gap-3 transition-all cursor-pointer"
+                    >
+                      <div className="text-left min-w-0">
+                        <p className="text-[13px] font-extrabold text-[#0B1F3A] group-hover:text-white dark:text-zinc-100 transition-colors">
+                          Launch a Business or Franchise Page
+                        </p>
+                        <p className="text-[10.5px] text-zinc-500 group-hover:text-zinc-300 dark:text-zinc-400 truncate transition-colors">
+                          Independent shop, practice, or multi-location franchise
+                        </p>
+                      </div>
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#0B1F3A] text-[#E6C687] group-hover:bg-[#B8935A] group-hover:text-[#0B1F3A] transition-colors">
+                        <Plus className="h-4 w-4" />
+                      </span>
+                    </button>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </>

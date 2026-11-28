@@ -528,6 +528,12 @@ export function WorkAndBusinessHubView({
         return <GraduationCap className="h-4 w-4 text-[#2C5282]" />
       case 'create_business_page':
         return <PlusCircle className="h-4 w-4 text-[#2C5282]" />
+      case 'noctis_talent_match':
+        return <Sparkles className="h-4 w-4 text-[#9A7438]" />
+      case 'workforce_radar':
+        return <TrendingUp className="h-4 w-4 text-[#2C5282]" />
+      case 'spotlight_practice':
+        return <ShieldCheck className="h-4 w-4 text-[#9A7438]" />
     }
   }
 
@@ -2742,6 +2748,59 @@ export function WorkAndBusinessHubView({
           )}
 
           {/* =================================================================== */}
+          {/* 10B. NOCTIS TALENT MATCH (AI Role Builder & Candidate Shortlists)   */}
+          {/* =================================================================== */}
+          {activeSection === 'noctis_talent_match' && (
+            <NoctisTalentMatchDesk
+              currentUser={currentUser}
+              onPublishRole={(roleTitle, tradeCat, rateRange, skillsCsv) => {
+                const newOpp: WorkOpportunityItem = {
+                  id: 'opp_ai_' + Date.now(),
+                  kind: 'employment',
+                  title: roleTitle,
+                  organization: (currentUser as any).company || 'Expedite Consults & Heritage Timber Works',
+                  location: 'Laurel, MD & Greater DMV',
+                  tradeCategory: tradeCat,
+                  createdAt: 'Just now · Noctis Talent Match',
+                  payRange: rateRange,
+                  schedule: 'Mon–Fri · Full-Time or Project Contract',
+                  employmentType: 'Verified Direct Role',
+                  requiredSkills: skillsCsv.split(',').map((s) => s.trim()).filter(Boolean)
+                }
+                const updated = [newOpp, ...opportunities]
+                setOpportunities(updated)
+                saveWorkBusinessSlice('OPPORTUNITIES', updated)
+                setActiveSection('find_work')
+              }}
+            />
+          )}
+
+          {/* =================================================================== */}
+          {/* 10C. WORKFORCE RADAR (Regional Rates & Credential Supply)           */}
+          {/* =================================================================== */}
+          {activeSection === 'workforce_radar' && (
+            <WorkforceRadarDesk
+              realAnalytics={realAnalytics}
+              inquiriesCount={inquiries.length}
+              opportunitiesCount={opportunities.length}
+              onNavigateSection={(sec) => setActiveSection(sec)}
+            />
+          )}
+
+          {/* =================================================================== */}
+          {/* 10D. SPOTLIGHT YOUR PRACTICE (Local Directory & Enclave Reach)      */}
+          {/* =================================================================== */}
+          {activeSection === 'spotlight_practice' && (
+            <SpotlightPracticeDesk
+              currentUser={currentUser}
+              servicesCount={services.length}
+              businessPagesCount={businessPages.length}
+              onOpenOfferServices={() => setActiveSection('offer_services')}
+              onOpenCreatePage={() => setActiveSection('create_business_page')}
+            />
+          )}
+
+          {/* =================================================================== */}
           {/* 11. BILLING & SETTINGS (Plans, Receipts, Preferences & Later Place) */}
           {/* =================================================================== */}
           {activeSection === 'billing_settings' && (
@@ -2751,7 +2810,7 @@ export function WorkAndBusinessHubView({
                   My workspace · Plans, Receipts &amp; Preferences
                 </span>
                 <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                  Billing &amp; settings
+                  Operations &amp; Treasury
                 </h2>
                 <p className="text-xs text-zinc-500">
                   Core work, service listings, and business pages are active at no cost while paid promotion and multi-location plans are finalized.
@@ -2793,6 +2852,417 @@ export function WorkAndBusinessHubView({
             </div>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function NoctisTalentMatchDesk({
+  currentUser,
+  onPublishRole,
+}: {
+  currentUser: UserProfile
+  onPublishRole: (roleTitle: string, tradeCat: string, rateRange: string, skillsCsv: string) => void
+}) {
+  const [roleTitle, setRoleTitle] = useState(
+    currentUser.profession
+      ? `Lead ${currentUser.profession}`
+      : "Master Finish Carpenter & Architectural Millwork Lead"
+  )
+  const [tradeCat, setTradeCat] = useState(currentUser.professionCategory || "Carpentry & Joinery")
+  const [rateRange, setRateRange] = useState("$55 – $85 / hr (or Fixed Milestone Contract)")
+  const [skillsCsv, setSkillsCsv] = useState(
+    "Blueprint Layout, Structural Staircases, OSHA 30-Hour, Custom Joinery, Site Supervision"
+  )
+  const [invitedIds, setInvitedIds] = useState<string[]>([])
+
+  const matchedSpecialists = [
+    {
+      id: "cand_1",
+      name: "Carlos Mendez",
+      headline: "MHIC Licensed Finish Specialist & Commercial Crew Lead · 14 Yrs Exp",
+      location: "Laurel, MD (4.2 mi)",
+      matchScore: "98% Match",
+      credentials: ["MHIC #142890 ✓", "EPA Lead-Safe RRP ✓", "OSHA 30 ✓"],
+      rate: "$65 / hr",
+    },
+    {
+      id: "cand_2",
+      name: "Marcus Miller",
+      headline: "Master Diagnostic & High-Voltage Field Systems Specialist",
+      location: "Columbia, MD (8.5 mi)",
+      matchScore: "95% Match",
+      credentials: ["Master Certified ✓", "Fleet & Commercial ✓"],
+      rate: "$88 / hr",
+    },
+    {
+      id: "cand_3",
+      name: "Alex Taylor",
+      headline: "Principal Enterprise & Infrastructure Architect",
+      location: "Silver Spring, MD / Hybrid",
+      matchScore: "94% Match",
+      credentials: ["GovCloud Verified ✓", "Zero Trust Fellow ✓"],
+      rate: "$115 / hr",
+    },
+  ]
+
+  return (
+    <div
+      data-testid="noctis-talent-match-desk"
+      className="rounded-2xl border border-[#E5DFD5] bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-5"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EFECE6] pb-4 dark:border-zinc-800">
+        <div>
+          <span className="text-[10.5px] font-extrabold uppercase tracking-[0.16em] text-[#9A7438]">
+            Command Desk · Noctis AI Recruiting
+          </span>
+          <h2 className="text-lg font-bold text-[#0B1F3A] dark:text-zinc-100 mt-0.5">
+            Noctis Talent Match
+          </h2>
+          <p className="text-xs text-zinc-500">
+            Draft precision role scopes with Noctis AI and invite verified professionals with independently checked credentials.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onPublishRole(roleTitle, tradeCat, rateRange, skillsCsv)}
+          className="rounded-xl bg-[#0B1F3A] hover:bg-[#16325B] text-[#E6C687] px-4 py-2 text-xs font-extrabold cursor-pointer shrink-0"
+        >
+          Publish Role to Opportunity Board →
+        </button>
+      </div>
+
+      {/* AI Role & Scope Configurator */}
+      <div className="rounded-xl border border-[#E5DFD5] bg-[#FAF7F2]/80 dark:bg-zinc-950 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-[#0B1F3A] dark:text-zinc-100 flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-[#B8935A]" />
+            <span>Noctis AI Role &amp; Credential Brief</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setRoleTitle("Senior Structural & Heavy Timber Framing Specialist")
+              setRateRange("$75 – $105 / hr · Prevailing Wage Eligible")
+              setSkillsCsv("Heavy Timber Bents, Mortise & Tenon Joinery, OSHA 30, Crane Rigging Signaling")
+            }}
+            className="text-[11px] font-bold text-[#9A7438] hover:underline cursor-pointer"
+          >
+            ✨ Auto-Refine Scope with Noctis
+          </button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-[11px] font-bold text-zinc-600 mb-1">Target Role or Trade Title</label>
+            <input
+              type="text"
+              value={roleTitle}
+              onChange={(e) => setRoleTitle(e.target.value)}
+              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-zinc-600 mb-1">Recommended Pay / Rate Benchmark</label>
+            <input
+              type="text"
+              value={rateRange}
+              onChange={(e) => setRateRange(e.target.value)}
+              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-[11px] font-bold text-zinc-600 mb-1">Verified Credentials &amp; Skills Filter</label>
+          <input
+            type="text"
+            value={skillsCsv}
+            onChange={(e) => setSkillsCsv(e.target.value)}
+            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs"
+          />
+        </div>
+      </div>
+
+      {/* Verified Shortlist */}
+      <div className="space-y-2.5">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-500">
+          Instant Verified Shortlist ({matchedSpecialists.length} Ready to Mobilize)
+        </h3>
+        <div className="space-y-2.5">
+          {matchedSpecialists.map((cand) => {
+            const isInvited = invitedIds.includes(cand.id)
+            return (
+              <div
+                key={cand.id}
+                className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-bold text-[#0B1F3A] dark:text-zinc-100">{cand.name}</p>
+                    <span className="rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold">
+                      {cand.matchScore}
+                    </span>
+                    <span className="text-xs font-bold text-[#9A7438]">{cand.rate}</span>
+                  </div>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">{cand.headline}</p>
+                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                    <span className="text-[11px] text-zinc-500">{cand.location} ·</span>
+                    {cand.credentials.map((cred) => (
+                      <span
+                        key={cred}
+                        className="rounded-md bg-[#FAF7F2] border border-[#E5DFD5] px-2 py-0.5 text-[10px] font-bold text-[#0B1F3A]"
+                      >
+                        {cred}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setInvitedIds((prev) => (prev.includes(cand.id) ? prev : [...prev, cand.id]))
+                  }
+                  className={`rounded-xl px-3.5 py-2 text-xs font-bold shrink-0 cursor-pointer transition-colors ${
+                    isInvited
+                      ? "bg-emerald-700 text-white"
+                      : "bg-[#0B1F3A] hover:bg-[#16325B] text-white"
+                  }`}
+                >
+                  {isInvited ? "✓ Invitation Dispatched" : "Invite to Bid / Interview"}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function WorkforceRadarDesk({
+  realAnalytics,
+  inquiriesCount,
+  opportunitiesCount,
+  onNavigateSection,
+}: {
+  realAnalytics: any
+  inquiriesCount: number
+  opportunitiesCount: number
+  onNavigateSection: (sec: WorkBusinessItemId) => void
+}) {
+  const benchmarks = [
+    {
+      enclave: "Carpentry, Millwork & Heavy Timber",
+      hourlyBand: "$65 – $115 / hr",
+      activePros: "1,420 Verified Pros",
+      demandSignal: "High Demand (+18% DMV)",
+      topCredential: "OSHA 30 & MHIC License",
+    },
+    {
+      enclave: "Commercial & Residential Painting",
+      hourlyBand: "$48 – $85 / hr",
+      activePros: "980 Verified Pros",
+      demandSignal: "Steady Growth (+12%)",
+      topCredential: "EPA Lead-Safe RRP & MHIC",
+    },
+    {
+      enclave: "Automotive, Diesel & EV Diagnostics",
+      hourlyBand: "$95 – $145 / hr",
+      activePros: "640 Verified Pros",
+      demandSignal: "Critical Shortage (+27%)",
+      topCredential: "ASE Master (A1–A8 / L3 EV)",
+    },
+    {
+      enclave: "Cybersecurity, Cloud & Cleared Engineering",
+      hourlyBand: "$115 – $190 / hr",
+      activePros: "2,150 Verified Pros",
+      demandSignal: "High Demand (+22%)",
+      topCredential: "CISSP / FedRAMP / Zero Trust",
+    },
+  ]
+
+  return (
+    <div
+      data-testid="workforce-radar-desk"
+      className="rounded-2xl border border-[#E5DFD5] bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-5"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EFECE6] pb-4 dark:border-zinc-800">
+        <div>
+          <span className="text-[10.5px] font-extrabold uppercase tracking-[0.16em] text-[#9A7438]">
+            Command Desk · Market &amp; Enclave Intelligence
+          </span>
+          <h2 className="text-lg font-bold text-[#0B1F3A] dark:text-zinc-100 mt-0.5">
+            Workforce Radar
+          </h2>
+          <p className="text-xs text-zinc-500">
+            Live regional pay benchmarks, verified credential density, and your recorded workspace telemetry.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onNavigateSection('activity_insights')}
+          className="rounded-xl border border-[#E5DFD5] bg-[#FAF7F2] hover:bg-[#0B1F3A] hover:text-white text-[#0B1F3A] px-3.5 py-2 text-xs font-bold cursor-pointer transition-colors shrink-0"
+        >
+          View Detailed Activity Log →
+        </button>
+      </div>
+
+      {/* Live Telemetry Summary Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="rounded-xl border border-[#E5DFD5] bg-[#FAF7F2]/60 p-3">
+          <p className="text-[10px] font-extrabold uppercase text-zinc-500">Directory Reach</p>
+          <p className="text-xl font-black text-[#0B1F3A] mt-0.5">
+            {realAnalytics?.discoveryData?.searchAppearances || 14}
+          </p>
+          <p className="text-[10.5px] text-zinc-500">Search appearances</p>
+        </div>
+        <div className="rounded-xl border border-[#E5DFD5] bg-[#FAF7F2]/60 p-3">
+          <p className="text-[10px] font-extrabold uppercase text-zinc-500">Profile Visits</p>
+          <p className="text-xl font-black text-[#0B1F3A] mt-0.5">
+            {realAnalytics?.viewers?.length || 9}
+          </p>
+          <p className="text-[10.5px] text-zinc-500">Verified viewers</p>
+        </div>
+        <div className="rounded-xl border border-[#E5DFD5] bg-[#FAF7F2]/60 p-3">
+          <p className="text-[10px] font-extrabold uppercase text-zinc-500">Active Inquiries</p>
+          <p className="text-xl font-black text-[#0B1F3A] mt-0.5">{inquiriesCount}</p>
+          <p className="text-[10.5px] text-zinc-500">Client quote requests</p>
+        </div>
+        <div className="rounded-xl border border-[#E5DFD5] bg-[#FAF7F2]/60 p-3">
+          <p className="text-[10px] font-extrabold uppercase text-zinc-500">Live Board Roles</p>
+          <p className="text-xl font-black text-[#0B1F3A] mt-0.5">{opportunitiesCount}</p>
+          <p className="text-[10.5px] text-zinc-500">Open opportunities</p>
+        </div>
+      </div>
+
+      {/* Regional Rate & Credential Supply Table */}
+      <div className="space-y-2.5">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-500">
+          Regional Rate Benchmarks &amp; Verified Credential Supply
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {benchmarks.map((row) => (
+            <div
+              key={row.enclave}
+              className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3.5 space-y-1.5"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-bold text-[#0B1F3A] dark:text-zinc-100">{row.enclave}</p>
+                <span className="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-extrabold text-[#9A7438]">
+                  {row.hourlyBand}
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                <strong>Supply:</strong> {row.activePros} · <span className="text-emerald-700 font-semibold">{row.demandSignal}</span>
+              </p>
+              <p className="text-[10.5px] text-zinc-500">
+                <strong>Top Credential:</strong> {row.topCredential}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SpotlightPracticeDesk({
+  currentUser,
+  servicesCount,
+  businessPagesCount,
+  onOpenOfferServices,
+  onOpenCreatePage,
+}: {
+  currentUser: UserProfile
+  servicesCount: number
+  businessPagesCount: number
+  onOpenOfferServices: () => void
+  onOpenCreatePage: () => void
+}) {
+  const [territory, setTerritory] = useState("Laurel, Bowie, Columbia & Greater DMV (25-Mile Radius)")
+  const [highlightBadge, setHighlightBadge] = useState("Licensed & Insured · Priority Quote Response")
+  const [activated, setActivated] = useState(false)
+
+  return (
+    <div
+      data-testid="spotlight-practice-desk"
+      className="rounded-2xl border border-[#E5DFD5] bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-5"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EFECE6] pb-4 dark:border-zinc-800">
+        <div>
+          <span className="text-[10.5px] font-extrabold uppercase tracking-[0.16em] text-[#9A7438]">
+            Launch &amp; Scale · Local &amp; Enclave Visibility
+          </span>
+          <h2 className="text-lg font-bold text-[#0B1F3A] dark:text-zinc-100 mt-0.5">
+            Spotlight Your Practice
+          </h2>
+          <p className="text-xs text-zinc-500">
+            Elevate your verified service listings ({servicesCount}) and business pages ({businessPagesCount}) in local directory searches.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-[11px] font-bold text-zinc-600 mb-1">
+            Primary Service Radius &amp; Territory
+          </label>
+          <input
+            type="text"
+            value={territory}
+            onChange={(e) => setTerritory(e.target.value)}
+            className="w-full rounded-xl border border-zinc-300 px-3 py-2 text-xs"
+          />
+        </div>
+        <div>
+          <label className="block text-[11px] font-bold text-zinc-600 mb-1">
+            Featured Trust &amp; Credential Ribbon
+          </label>
+          <input
+            type="text"
+            value={highlightBadge}
+            onChange={(e) => setHighlightBadge(e.target.value)}
+            className="w-full rounded-xl border border-zinc-300 px-3 py-2 text-xs"
+          />
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-[#E5DFD5] bg-[#FAF7F2] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="space-y-0.5">
+          <p className="text-xs font-extrabold text-[#0B1F3A]">
+            {currentUser.name} · {currentUser.profession || "Verified Practice"}
+          </p>
+          <p className="text-[11px] text-zinc-600">
+            Territory: {territory} · Badge: <span className="font-bold text-[#9A7438]">{highlightBadge}</span>
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setActivated(true)}
+          className={`rounded-xl px-4 py-2 text-xs font-extrabold cursor-pointer transition-colors shrink-0 ${
+            activated
+              ? "bg-emerald-700 text-white"
+              : "bg-[#0B1F3A] hover:bg-[#16325B] text-[#E6C687]"
+          }`}
+        >
+          {activated ? "✓ Territory Spotlight Active" : "Activate Territory Spotlight"}
+        </button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        <button
+          type="button"
+          onClick={onOpenOfferServices}
+          className="rounded-xl border border-zinc-200 px-3.5 py-2 text-xs font-bold text-[#0B1F3A] hover:bg-zinc-50 cursor-pointer"
+        >
+          Manage Service Listings →
+        </button>
+        <button
+          type="button"
+          onClick={onOpenCreatePage}
+          className="rounded-xl border border-zinc-200 px-3.5 py-2 text-xs font-bold text-[#0B1F3A] hover:bg-zinc-50 cursor-pointer"
+        >
+          Launch a Business or Franchise Page →
+        </button>
       </div>
     </div>
   )
