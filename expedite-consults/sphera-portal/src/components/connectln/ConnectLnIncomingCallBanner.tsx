@@ -1104,7 +1104,7 @@ export function ConnectLnIncomingCallBanner({
     }
 
     return (
-      <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[88] w-[94vw] max-w-xl rounded-2xl bg-[#071E1A] border-2 border-emerald-400 shadow-2xl px-4 py-2.5 text-[#FBF8F3] flex items-center justify-between gap-3">
+      <div className="fixed bottom-20 lg:bottom-5 left-1/2 -translate-x-1/2 z-[45] w-[94vw] max-w-xl rounded-2xl bg-[#071E1A]/95 backdrop-blur-md border-2 border-emerald-400 shadow-2xl px-4 py-2.5 text-[#FBF8F3] flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-extrabold text-emerald-300 flex items-center gap-1.5">
             <Bell className="h-4 w-4 shrink-0" />

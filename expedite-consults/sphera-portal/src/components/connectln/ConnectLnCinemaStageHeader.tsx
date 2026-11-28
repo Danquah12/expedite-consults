@@ -207,11 +207,14 @@ export function ConnectLnCinemaStageHeader({
       {/* Row 2: Compact Control Pill Bar (Mobile Horizontally Scrollable) */}
       <div
         data-testid="stage-control-bar"
-        className="rounded-2xl border border-zinc-200 dark:border-indigo-400/20 bg-white/95 dark:bg-gradient-to-r dark:from-[#12162b] dark:via-[#1b1636] dark:to-[#12162b] px-2.5 sm:px-3.5 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm"
+        className="rounded-2xl border border-zinc-200 dark:border-indigo-400/20 bg-white/95 dark:bg-gradient-to-r dark:from-[#12162b] dark:via-[#1b1636] dark:to-[#12162b] px-2.5 sm:px-3 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm"
       >
         <div className="flex items-center justify-between sm:justify-start gap-2 shrink-0 min-w-0">
-          <span className="text-xs font-semibold text-zinc-600 dark:text-slate-300 truncate">
-            Clip {Math.min(safeIdx + 1, Math.max(stagePosts.length, 1))} of {Math.max(stagePosts.length, 1)} · {activeProfessionTitle}
+          <span
+            title={activeProfessionTitle}
+            className="text-xs font-semibold text-zinc-600 dark:text-slate-300 whitespace-nowrap"
+          >
+            Clip {Math.min(safeIdx + 1, Math.max(stagePosts.length, 1))} of {Math.max(stagePosts.length, 1)}
           </span>
           <div className="flex items-center gap-1 shrink-0">
             <button
